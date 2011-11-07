@@ -16,8 +16,8 @@ def test_capability():
     assumes it will be run from a tty.
 
     """
-    sc = tigetstr('sc')
     t = Terminal()
+    sc = tigetstr('sc')
     eq_(t.save, sc)
     eq_(t.save, sc)  # Make sure caching doesn't screw it up.
 

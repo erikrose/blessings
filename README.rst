@@ -180,6 +180,8 @@ Version History
 1.0.1
   * Fixed a crash when piping output to other programs. Funny how the very act
     of releasing software causes bugs to emerge, isn't it?
+  * Fixed a buggy test that crashed when run with anything but nose-progressive
+    (which was conveniently calling setupterm() itself).
 
 1.0
   * Extracted Terminator from nose-progressive, my `progress-bar-having,
