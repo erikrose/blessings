@@ -79,7 +79,7 @@ Lots of handy formatting codes ("capabilities" in low-level parlance) are
 available as attributes on ``Terminal`` instances. For example::
 
     from terminator import Terminal
-    
+
     term = Terminal()
     print 'I am ' + term.bold + 'bold' + term.normal + '!'
 
@@ -116,7 +116,7 @@ all the time, we simply make such capabilities into callable strings. You can
 pass the parameters right in::
 
     from terminator import Terminal
-    
+
     term = Terminal()
     print 'I am ' + term.color(2) + 'green' + term.normal + '!'
 
@@ -130,6 +130,20 @@ on the `terminfo man page`_ by the name under the "Cap-name" column.
 
 .. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
 
+Height and Width
+----------------
+
+It's simple to get the height and width of the terminal, in characters::
+
+    from terminator import Terminal
+
+    term = Terminal()
+    height = term.height
+    width = term.width
+
+These are newly updated each time you ask for them, so they're safe to use from
+SIGWINCH handlers.
+
 Temporary Repositioning
 -----------------------
 
@@ -138,25 +152,11 @@ return: for example, when updating a progress bar at the bottom of the screen.
 ``Terminal`` provides a context manager for doing this concisely::
 
     from terminator import Terminal
-    
+
     term = Terminal()
     with term.location(0, term.height):
         print 'Here is the bottom.'
     print 'This is back where I came from.'
-
-Height and Width
-----------------
-
-It's simple to get the height and width of the terminal, in characters::
-
-    from terminator import Terminal
-    
-    term = Terminal()
-    height = term.height
-    width = term.width
-
-These are newly updated each time you ask for them, so they're safe to use from
-SIGWINCH handlers.
 
 Pipe Savvy
 ----------

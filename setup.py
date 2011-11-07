@@ -10,7 +10,7 @@ if sys.version_info >= (3,):
 setup(
     name='terminator',
     version='1.0.1',
-    description='A thin, practical wrapper around terminal capabilities',
+    description='A thin, practical wrapper around terminal formatting, positioning, and more',
     long_description=open('README.rst').read(),
     author='Erik Rose',
     author_email='erikrose@grinchcentral.com',
