@@ -8,8 +8,8 @@ if sys.version_info >= (3,):
     extra_setup['use_2to3'] = True
 
 setup(
-    name='terminator',
-    version='1.0.1',
+    name='blessings',
+    version='1.0',
     description='A thin, practical wrapper around terminal formatting, positioning, and more',
     long_description=open('README.rst').read(),
     author='Erik Rose',
@@ -17,7 +17,7 @@ setup(
     license='GPL',
     packages=find_packages(exclude=['ez_setup']),
     tests_require=['Nose'],
-    url='http://pypi.python.org/pypi/terminator/',
+    url='https://github.com/erikrose/blessings',
     include_package_data=True,
     classifiers = [
         'Intended Audience :: Developers',

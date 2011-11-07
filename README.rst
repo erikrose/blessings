@@ -1,5 +1,5 @@
 ==========
-Terminator
+Blessings
 ==========
 
 by Erik Rose
@@ -19,7 +19,7 @@ In essence, you want to act like a well-behaved command-line app, not a
 full-screen pseudo-GUI one.
 
 If that's your use case--or even if you just want to get the noise out of your
-code--Terminator is for you. Without it, this is how you'd print some
+code--Blessings is for you. Without it, this is how you'd print some
 underlined text at the bottom of the screen::
 
     from curses import tigetstr, tigetnum, setupterm, tparm
@@ -50,7 +50,7 @@ underlined text at the bottom of the screen::
     print rc  # Restore cursor position.
 
 Phew! That was long and full of incomprehensible trash! Let's try it again,
-this time with Terminator::
+this time with Blessings::
 
     from terminator import Terminal
 
@@ -67,7 +67,7 @@ want to see.
 What It Provides
 ================
 
-Terminator provides just one top-level object: ``Terminal``. Instantiating a
+Blessings provides just one top-level object: ``Terminal``. Instantiating a
 ``Terminal`` figures out whether you're on a terminal at all and, if so, does
 any necessary terminal setup. After that, you can proceed to ask it all sorts
 of things about the terminal. Terminal terminal terminal.
@@ -97,7 +97,7 @@ off ``bold`` or ``reverse`` is ``normal``, which also cancels any custom
 colors.
 
 Some other terminal libraries implement fancy state machines to hide this
-detail, but I elected to keep Terminator easy to integrate and quick to learn.
+detail, but I elected to keep Blessings easy to integrate and quick to learn.
 
 .. note:: You might notice that these aren't the typical incomprehensible
   terminfo capability names; we alias a few (and soon more) of the
@@ -186,14 +186,8 @@ Bugs or suggestions? Visit the `issue tracker`_.
 Version History
 ===============
 
-1.0.1
-  * Fixed a crash when piping output to other programs. Funny how the very act
-    of releasing software causes bugs to emerge, isn't it?
-  * Fixed a buggy test that crashed when run with anything but nose-progressive
-    (which was conveniently calling setupterm() itself).
-
 1.0
-  * Extracted Terminator from nose-progressive, my `progress-bar-having,
+  * Extracted Blessings from nose-progressive, my `progress-bar-having,
     traceback-shortcutting, rootin', tootin' testrunner`_. It provided the
     tootin' functionality.
 

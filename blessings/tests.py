@@ -6,7 +6,7 @@ from nose.tools import eq_
 
 # This tests that __all__ is correct, since we use below everything that should
 # be imported:
-from terminator import *
+from blessings import *
 
 
 def test_capability():
