@@ -19,7 +19,7 @@ setup(
     tests_require=['Nose'],
     url='https://github.com/erikrose/blessings',
     include_package_data=True,
-    classifiers = [
+    classifiers=[
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'Environment :: Console',
@@ -28,5 +28,6 @@ setup(
         'Topic :: Software Development :: User Interfaces',
         'Topic :: Terminals'
         ],
+    keywords=['terminal', 'tty', 'curses', 'formatting'],
     **extra_setup
 )
