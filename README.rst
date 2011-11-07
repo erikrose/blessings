@@ -75,31 +75,38 @@ of things about the terminal. Terminal terminal terminal.
 Simple Formatting
 -----------------
 
-All terminfo capabilities are available as attributes on ``Terminal``
-instances. For example::
+Lots of handy formatting codes ("capabilities" in low-level parlance) are
+available as attributes on ``Terminal`` instances. For example::
 
     from terminator import Terminal
     
     term = Terminal()
     print 'I am ' + term.bold + 'bold' + term.normal + '!'
 
-Other simple capabilities of interest include ``clear_eol`` (clear to the end
-of the line), ``reverse``, ``underline`` and ``no_underline``. You might notice
-that these aren't the raw capability names; we alias a few (soon more) of the
-harder-to-remember ones for readability. If you need to go beyond these, you
-can also reference any string-returning capability listed on the `terminfo
-man page`_ by its value under the "Cap-name" column: for example, ``term.rsubm``.
+Other simple capabilities of interest include...
 
-.. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
+* ``clear_eol`` (clear to the end of the line)
+* ``reverse``
+* ``underline``
+* ``no_underline`` (which turns off underlining)
+* ``normal`` (which turns off everything)
 
-.. hint:: There's no specific code for undoing most formatting directives.
-  Though the inverse of ``underline`` is ``no_underline``, the only way to turn
-  off ``bold`` or ``reverse`` is ``normal``, which also cancels any custom
-  colors.
-  
-  Some other terminal libraries implement fancy state machines to hide this
-  detail, but I elected to keep Terminator easy to integrate and quick to
-  learn.
+At the lowest level, there's no specific code for undoing most formatting.
+Though the inverse of ``underline`` is ``no_underline``, the only way to turn
+off ``bold`` or ``reverse`` is ``normal``, which also cancels any custom
+colors.
+
+Some other terminal libraries implement fancy state machines to hide this
+detail, but I elected to keep Terminator easy to integrate and quick to learn.
+
+.. note:: You might notice that these aren't the typical incomprehensible
+  terminfo capability names; we alias a few (and soon more) of the
+  harder-to-remember ones for readability. However, **all** capabilities are
+  available: you can reference any string-returning capability listed on the
+  `terminfo man page`_ by the name under the "Cap-name" column: for example,
+  ``rsubm``.
+
+  .. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
 
 Parametrized Capabilities
 -------------------------
@@ -113,11 +120,13 @@ pass the parameters right in::
     term = Terminal()
     print 'I am ' + term.color(2) + 'green' + term.normal + '!'
 
-Parametrized capabilities of interest include ``color``, ``bg_color``
-(background color), and ``position`` (though look to ``location()`` first,
-below). If you need more, you can also reference any string-returning
-capability listed on the `terminfo man page`_ by its value under the "Cap-name"
-column.
+Parametrized capabilities of interest include...
+
+* ``color`` (takes a number 0-15)
+* ``bg_color`` (background color, also takes a number 0-15)
+
+If you need more, you can also reference any string-returning capability listed
+on the `terminfo man page`_ by the name under the "Cap-name" column.
 
 .. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
 
@@ -125,8 +134,8 @@ Temporary Repositioning
 -----------------------
 
 Sometimes you need to flit to a certain location, print something, and then
-return: for example, a progress bar at the bottom of the screen. ``Terminal``
-provides a context manager for doing this concisely::
+return: for example, when updating a progress bar at the bottom of the screen.
+``Terminal`` provides a context manager for doing this concisely::
 
     from terminator import Terminal
     
