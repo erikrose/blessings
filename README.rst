@@ -52,7 +52,7 @@ underlined text at the bottom of the screen::
 Phew! That was long and full of incomprehensible trash! Let's try it again,
 this time with Blessings::
 
-    from terminator import Terminal
+    from blessings import Terminal
 
     term = Terminal()
     with term.location(0, term.height):
@@ -78,7 +78,7 @@ Simple Formatting
 Lots of handy formatting codes ("capabilities" in low-level parlance) are
 available as attributes on ``Terminal`` instances. For example::
 
-    from terminator import Terminal
+    from blessings import Terminal
 
     term = Terminal()
     print 'I am ' + term.bold + 'bold' + term.normal + '!'
@@ -115,7 +115,7 @@ Some capabilities take parameters. Rather than making you dig up ``tparm()``
 all the time, we simply make such capabilities into callable strings. You can
 pass the parameters right in::
 
-    from terminator import Terminal
+    from blessings import Terminal
 
     term = Terminal()
     print 'I am ' + term.color(2) + 'green' + term.normal + '!'
@@ -135,7 +135,7 @@ Height and Width
 
 It's simple to get the height and width of the terminal, in characters::
 
-    from terminator import Terminal
+    from blessings import Terminal
 
     term = Terminal()
     height = term.height
@@ -151,7 +151,7 @@ Sometimes you need to flit to a certain location, print something, and then
 return: for example, when updating a progress bar at the bottom of the screen.
 ``Terminal`` provides a context manager for doing this concisely::
 
-    from terminator import Terminal
+    from blessings import Terminal
 
     term = Terminal()
     with term.location(0, term.height):
@@ -181,7 +181,7 @@ Future Plans
 
 Bugs or suggestions? Visit the `issue tracker`_.
 
-.. _`issue tracker`: https://github.com/erikrose/terminator/issues/new
+.. _`issue tracker`: https://github.com/erikrose/blessings/issues/new
 
 Version History
 ===============
