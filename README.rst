@@ -70,7 +70,7 @@ What It Provides
 Terminator provides just one top-level object: ``Terminal``. Instantiating a
 ``Terminal`` figures out whether you're on a terminal at all and, if so, does
 any necessary terminal setup. After that, you can proceed to ask it all sorts
-of things about the terminal.
+of things about the terminal. Terminal terminal terminal.
 
 Simple Formatting
 -----------------
@@ -169,6 +169,10 @@ Future Plans
   progress bars and other such things that are interesting only in a terminal
   context
 * A relative-positioning version of ``location()``
+
+Bugs or suggestions? Visit the `issue tracker`_.
+
+.. _`issue tracker`: https://github.com/erikrose/terminator/issues/new
 
 Version History
 ===============
