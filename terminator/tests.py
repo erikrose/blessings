@@ -1,4 +1,4 @@
-from cStringIO import StringIO
+from StringIO import StringIO
 from curses import tigetstr, tparm
 import sys
 
@@ -52,7 +52,7 @@ def test_location():
 
     # Then rip it away, replacing it with something we can check later:
     output = t.stream = StringIO()
-    
+
     with t.location(3, 4):
         output.write('hi')
 
@@ -60,3 +60,15 @@ def test_location():
                            tparm(tigetstr('cup'), 4, 3) +
                            'hi' +
                            tigetstr('rc'))
+
+
+def test_null_fileno():
+    """Make sure ``Terinal`` works when ``fileno`` is ``None``.
+
+    This simulates piping output to another program.
+
+    """
+    out = stream=StringIO()
+    out.fileno = None
+    t = Terminal(stream=out)
+    eq_(t.save, '')

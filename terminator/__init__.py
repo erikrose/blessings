@@ -35,7 +35,9 @@ class Terminal(object):
         """
         if stream is None:
             stream = sys.__stdout__
-        if hasattr(stream, 'fileno') and isatty(stream.fileno()):
+        if (hasattr(stream, 'fileno') and
+            callable(stream.fileno) and
+            isatty(stream.fileno())):
             # Make things like tigetstr() work:
             # (Explicit args make setupterm() work even when -s is passed.)
             setupterm(kind or environ.get('TERM', 'unknown'),
