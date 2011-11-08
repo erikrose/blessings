@@ -62,9 +62,9 @@ class Terminal(object):
                   clear_eol='el',
                   position='cup',
 
-                  # TODO: Make this perhaps try setf first then fall back to setaf:
+                  # You can use these if you want, but the named equivalents
+                  # like "red" and "bg_green" are probably easier.
                   color='setaf',
-                  # TODO: Perhaps see if setb is true, then fall back to setab.
                   bg_color='setab',
 
                   normal='sgr0',
@@ -72,6 +72,12 @@ class Terminal(object):
                   # 'bold' is just 'bold'.
                   underline='smul',
                   no_underline='rmul')
+
+    def _color(self, color):
+        return (self.setaf or self.setf)(color)
+
+    def _bg_color(self, color):
+        return (self.setab or self.setb)(color)
 
     def __getattr__(self, attr):
         """Return parametrized terminal capabilities, like bold.
@@ -112,6 +118,51 @@ class Terminal(object):
 
         """
         return Location(x, y, self)
+
+
+def _add_color_methods():  # Really, really private
+    """Return an iterable of method pairs that set fg and bg colors.
+
+    The methods in the pair return the escape sequences to set the foreground
+    or background color, respectively.
+
+    """
+    # TODO: Does curses automatically exchange red and blue and cyan and yellow
+    # when a terminal supports setf/setb rather than setaf/setab? I'll be
+    # blasted if I can find any documentation. The following assumes it does.
+    def colorers(color, offset=0):
+        """Return a method that returns the formatting string to set a certain color.
+
+        curses constants go up to only 7, so pass in an offset to get at the
+        bright colors at 8-15.
+
+        """
+        const = 'COLOR_' + color.upper()
+
+        @property
+        def some_color(self):
+            return self._color(getattr(curses, const) + offset)
+
+        @property
+        def some_bg_color(self):
+            return self._bg_color(getattr(curses, const) + offset)
+
+        return some_color, some_bg_color
+
+    for color in ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']:
+        # Foreground and background:
+        fg_method, bg_method = colorers(color)
+        setattr(Terminal, color, fg_method)
+        setattr(Terminal, 'bg_' + color, bg_method)
+
+        # Foreground and background, bright:
+        fg_method, bg_method = colorers(color, offset=8)
+        setattr(Terminal, 'bright_' + color, fg_method)
+        setattr(Terminal, 'bg_bright_' + color, bg_method)
+
+
+# Add color and background color attrs, like red and bg_red:
+_add_color_methods()
 
 
 class CallableString(str):

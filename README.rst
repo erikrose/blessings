@@ -108,6 +108,35 @@ detail, but I elected to keep Blessings easy to integrate and quick to learn.
 
   .. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
 
+Color
+-----
+
+16 colors, both foreground and background, are available as easy-to-remember
+attributes::
+
+    from blessings import Terminal
+
+    term = Terminal()
+    print term.red + term.bg_green + 'Red on green? Ick!' + term.normal
+    print term.bright_red + term.bg_bright_blue + 'This is even worse!' + term.normal
+
+The available colors are...
+
+* ``black``
+* ``red``
+* ``green``
+* ``yellow``
+* ``blue``
+* ``magenta``
+* ``cyan``
+* ``white``
+
+In addition, there is a ``bright`` version of each. If your terminal does not
+support the bright palette, it will usually render them as black.
+
+You can set the background color instead of the foreground by prepending
+``bg_``, as in ``bg_blue`` or ``bg_bright_white``.
+
 Parametrized Capabilities
 -------------------------
 
@@ -118,15 +147,10 @@ pass the parameters right in::
     from blessings import Terminal
 
     term = Terminal()
-    print 'I am ' + term.color(2) + 'green' + term.normal + '!'
+    print term.create_window(1, 1, 20, 20)
 
-Parametrized capabilities of interest include...
-
-* ``color`` (takes a number 0-15)
-* ``bg_color`` (background color, also takes a number 0-15)
-
-If you need more, you can also reference any string-returning capability listed
-on the `terminfo man page`_ by the name under the "Cap-name" column.
+You can reference any string-returning capability listed on the `terminfo man
+page`_ by the name under the "Cap-name" column.
 
 .. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
 
@@ -185,6 +209,9 @@ Bugs or suggestions? Visit the `issue tracker`_.
 
 Version History
 ===============
+
+1.1
+  * Added nicely named attributes for colors.
 
 1.0
   * Extracted Blessings from nose-progressive, my `progress-bar-having,

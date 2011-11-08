@@ -72,3 +72,18 @@ def test_null_fileno():
     out.fileno = None
     t = Terminal(stream=out)
     eq_(t.save, '')
+
+
+def test_mnemonic_colors():
+    """Make sure color shortcuts work."""
+    # Avoid testing red, blue, yellow, and cyan, since they might someday
+    # chance depending on terminal type.
+    t = Terminal()
+    eq_(t.white, '\x1b[37m')
+    eq_(t.green, '\x1b[32m')  # Make sure it's different than white.
+    eq_(t.bg_black, '\x1b[40m')
+    eq_(t.bg_green, '\x1b[42m')
+    eq_(t.bright_black, '\x1b[90m')
+    eq_(t.bright_green, '\x1b[92m')
+    eq_(t.bg_bright_black, '\x1b[100m')
+    eq_(t.bg_bright_green, '\x1b[102m')
