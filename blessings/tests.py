@@ -26,6 +26,7 @@ def test_capability_without_tty():
     """Assert capability templates are '' when stream is not a tty."""
     t = Terminal(stream=StringIO())
     eq_(t.save, '')
+    eq_(t.red, '')
 
 
 def test_parametrization():
