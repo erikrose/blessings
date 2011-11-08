@@ -195,9 +195,6 @@ Future Plans
 
 * Comb through the terminfo man page for useful capabilities with confounding
   names, and add sugary attribute names for them.
-* A more mnemonic way of specifying colors. Remember that ``setaf`` and
-  ``setf`` take subtly different color mappings, so maybe ``term.red`` would be
-  a good idea.
 * An ``is_terminal`` attr on ``Terminal`` that you can check before drawing
   progress bars and other such things that are interesting only in a terminal
   context
