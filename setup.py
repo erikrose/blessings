@@ -9,7 +9,7 @@ if sys.version_info >= (3,):
 
 setup(
     name='blessings',
-    version='1.0',
+    version='1.1',
     description='A thin, practical wrapper around terminal formatting, positioning, and more',
     long_description=open('README.rst').read(),
     author='Erik Rose',

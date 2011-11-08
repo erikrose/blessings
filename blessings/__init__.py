@@ -111,7 +111,7 @@ class Terminal(object):
         there, then return the cursor to its original position::
 
             term = Terminal()
-            with term.position(2, 5):
+            with term.location(2, 5):
                 print 'Hello, world!'
                 for x in xrange(10):
                     print 'I can do it %i times!' % x
