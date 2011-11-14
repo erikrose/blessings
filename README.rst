@@ -194,14 +194,24 @@ If you want to override this--like if you anticipate your program being piped
 through ``less -r``, which handles terminal escapes just fine--pass
 ``force_styling=True`` to the ``Terminal`` constructor.
 
+In any case, there is an ``is_a_tty`` attribute on ``Terminal`` that lets you
+see whether the attached stream seems to be a terminal. If false, you might
+refrain from drawing progress bars and other frippery, since you're apparently
+headed into a pipe::
+
+    from blessings import Terminal
+
+    term = Terminal()
+    if term.is_a_tty:
+        with term.location(0, term.height):
+            print 'Progress: [=======>   ]'
+    print term.bold + 'Important stuff' + term.normal
+
 Future Plans
 ============
 
 * Comb through the terminfo man page for useful capabilities with confounding
   names, and add sugary attribute names for them.
-* An ``is_terminal`` attr on ``Terminal`` that you can check before drawing
-  progress bars and other such things that are interesting only in a terminal
-  context
 * A relative-positioning version of ``location()``
 
 Bugs or suggestions? Visit the `issue tracker`_.
