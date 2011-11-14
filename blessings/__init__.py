@@ -19,29 +19,58 @@ class Terminal(object):
     to tigetstr() and tparm() out of your code, and it acts intelligently when
     somebody pipes your output to a non-terminal.
 
+    Instance attributes:
+      stream: The stream the terminal outputs to. It's convenient to pass
+        the stream around with the terminal; it's almost always needed when the
+        terminal is and saves sticking lots of extra args on client functions
+        in practice.
+      is_a_tty: Whether ``stream`` appears to be a terminal
+
     """
-    def __init__(self, kind=None, stream=None):
+    def __init__(self, kind=None, stream=None, force_styling=False):
         """Initialize the terminal.
+
+        If ``stream`` is not a tty, I will default to returning '' for all
+        capability values, so things like piping your output to a file won't
+        strew escape sequences all over the place. The ``ls`` command sets a
+        precedent for this: it defaults to columnar output when being sent to a
+        tty and one-item-per-line when not.
 
         :arg kind: A terminal string as taken by setupterm(). Defaults to the
             value of the TERM environment variable.
         :arg stream: A file-like object representing the terminal. Defaults to
             the original value of stdout, like ``curses.initscr()`` does.
-
-        If ``stream`` is not a tty, I will default to returning '' for all
-        capability values, so things like piping your output to a file will
-        work nicely.
+        :arg force_styling: Whether to force the emission of capabilities, even
+            if we don't seem to be in a terminal. This comes in handy if users
+            are trying to pipe your output through something like ``less -r``,
+            which supports terminal codes just fine but doesn't appear itself
+            to be a terminal. Just expose a command-line option, and set
+            ``force_styling`` based on it. Terminal initialization sequences
+            will be sent to ``stream`` if it has a file descriptor and to
+            ``sys.__stdout__`` otherwise. (setupterm() demands to send it
+            somewhere, and stdout is probably where the output is ultimately
+            going. stderr is probably bound to the same terminal anyway.)
 
         """
         if stream is None:
             stream = sys.__stdout__
-        if (hasattr(stream, 'fileno') and
-            callable(stream.fileno) and
-            isatty(stream.fileno())):
-            # Make things like tigetstr() work:
-            # (Explicit args make setupterm() work even when -s is passed.)
+        stream_descriptor = (stream.fileno() if hasattr(stream, 'fileno')
+                                             and callable(stream.fileno)
+                             else None)
+        self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
+        if self.is_a_tty or force_styling:
+            # The desciptor to direct terminal initialization sequences to.
+            # sys.__stdout__ seems to always have a descriptor of 1, even if
+            # output is redirected.
+            init_descriptor = (sys.__stdout__.fileno() if stream_descriptor is None
+                               else stream_descriptor)
+            # Make things like tigetstr() work. Explicit args make setupterm()
+            # work even when -s is passed to nosetests. Lean toward sending
+            # init sequences to the stream if it has a file descriptor, and
+            # send them to stdout as a fallback, since they have to go
+            # somewhere.
             setupterm(kind or environ.get('TERM', 'unknown'),
-                      stream.fileno())
+                      init_descriptor)
             # Cache capability codes, because IIRC tigetstr requires a
             # conversation with the terminal. [Now I can't find any evidence of
             # that.]
@@ -49,9 +78,6 @@ class Terminal(object):
         else:
             self._codes = NullDict(lambda: '')
 
-        # It's convenient to pass the stream around with the terminal; it's
-        # almost always needed when the terminal is and saves sticking lots of
-        # extra args on things in practice.
         self.stream = stream
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips

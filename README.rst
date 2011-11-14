@@ -190,6 +190,10 @@ another command or redirected to a file, all the capability attributes on
 ``Terminal`` will return empty strings. You'll get a nice-looking file without
 any formatting codes gumming up the works.
 
+If you want to override this--like if you anticipate your program being piped
+through ``less -r``, which handles terminal escapes just fine--pass
+``force_styling=True`` to the ``Terminal`` constructor.
+
 Future Plans
 ============
 
@@ -209,6 +213,8 @@ Version History
 
 1.1
   * Added nicely named attributes for colors.
+  * Added ability to make capabilities work, even if the output stream is not a
+    terminal.
 
 1.0
   * Extracted Blessings from nose-progressive, my `progress-bar-having,

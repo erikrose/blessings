@@ -30,6 +30,11 @@ def test_capability_without_tty():
     eq_(t.red, '')
 
 
+def test_capability_with_forced_tty():
+    t = Terminal(stream=StringIO(), force_styling=True)
+    assert t.save != ''
+
+
 def test_parametrization():
     """Test parametrizing a capability."""
     eq_(Terminal().cup(3, 4), tparm(tigetstr('cup'), 3, 4))
