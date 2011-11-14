@@ -28,6 +28,6 @@ setup(
         'Topic :: Software Development :: User Interfaces',
         'Topic :: Terminals'
         ],
-    keywords=['terminal', 'tty', 'curses', 'formatting'],
+    keywords=['terminal', 'tty', 'curses', 'formatting', 'color'],
     **extra_setup
 )

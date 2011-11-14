@@ -7,7 +7,7 @@ by Erik Rose
 The Pitch
 =========
 
-curses is a great library, but there are a couple situations where it doesn't
+curses is a fine library, but there are a couple situations where it doesn't
 fit:
 
 * You want to use bold, color, and maybe a little positioning without clearing

@@ -1,3 +1,4 @@
+from __future__ import with_statement  # Make 2.5-compatible
 from StringIO import StringIO
 from curses import tigetstr, tparm
 import sys
