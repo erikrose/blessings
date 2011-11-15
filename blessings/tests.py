@@ -54,19 +54,22 @@ def test_stream_attr():
 
 def test_location():
     """Make sure ``location()`` does what it claims."""
-    # Let the Terminal grab the actual tty and call setupterm() so things work:
-    t = Terminal()
-
-    # Then rip it away, replacing it with something we can check later:
-    output = t.stream = StringIO()
+    t = Terminal(stream=StringIO(), force_styling=True)
 
     with t.location(3, 4):
-        output.write('hi')
+        t.stream.write('hi')
 
-    eq_(output.getvalue(), tigetstr('sc') +
-                           tparm(tigetstr('cup'), 4, 3) +
-                           'hi' +
-                           tigetstr('rc'))
+    eq_(t.stream.getvalue(), tigetstr('sc') +
+                             tparm(tigetstr('cup'), 4, 3) +
+                             'hi' +
+                             tigetstr('rc'))
+
+def test_horizontal_location():
+    """Make sure we can move the cursor horizontally without changing rows."""
+    t = Terminal(stream=StringIO(), force_styling=True)
+    with t.location(x=5):
+        pass
+    eq_(t.stream.getvalue(), t.save + tparm(tigetstr('hpa'), 5) + t.restore)
 
 
 def test_null_fileno():

@@ -86,7 +86,10 @@ class Terminal(object):
                   restore='rc',
 
                   clear_eol='el',
-                  position='cup',
+                  position='cup',  # deprecated
+                  move='cup',
+                  move_x='hpa',
+                  move_y='vpa',
 
                   # You can use these if you want, but the named equivalents
                   # like "red" and "bg_green" are probably easier.
@@ -143,7 +146,7 @@ class Terminal(object):
     def width(self):
         return height_and_width()[1]
 
-    def location(self, x, y):
+    def location(self, x=None, y=None):
         """Return a context manager for temporarily moving the cursor
 
         Move the cursor to a certain position on entry, let you print stuff
@@ -156,7 +159,7 @@ class Terminal(object):
                     print 'I can do it %i times!' % x
 
         """
-        return Location(x, y, self)
+        return Location(self, x, y)
 
 
 def _add_color_methods():  # Really, really private
@@ -231,15 +234,25 @@ def height_and_width():
 
 
 class Location(object):
-    """Context manager for temporarily moving the cursor"""
-    def __init__(self, x, y, term):
+    """Context manager for temporarily moving the cursor
+
+    On construction, specify ``x`` to move to a certain column, ``y`` to move
+    to a certain row, or both.
+
+    """
+    def __init__(self, term, x=None, y=None):
         self.x, self.y = x, y
         self.term = term
 
     def __enter__(self):
-        """Save position and move to progress bar, col 1."""
+        """Save position and move to the requested position."""
         self.term.stream.write(self.term.save)  # save position
-        self.term.stream.write(self.term.position(self.y, self.x))
+        if self.x and self.y:
+            self.term.stream.write(self.term.move(self.y, self.x))
+        elif self.x:
+            self.term.stream.write(self.term.move_x(self.x))
+        elif self.y:
+            self.term.stream.write(self.term.move_y(self.y))
 
     def __exit__(self, type, value, tb):
         self.term.stream.write(self.term.restore)  # restore position

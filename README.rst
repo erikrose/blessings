@@ -110,7 +110,7 @@ certain pieces of formatting, even at the lowest level.
 
 You might notice that the above aren't the typical incomprehensible terminfo
 capability names; we alias a few of the harder-to-remember ones for
-readability. However, **all** capabilities are available: you can reference any
+readability. However, you aren't limited to these: you can reference any
 string-returning capability listed on the `terminfo man page`_ by the name
 under the "Cap-name" column: for example, ``rum``.
 
@@ -155,10 +155,20 @@ pass the parameters right in::
     from blessings import Terminal
 
     term = Terminal()
-    print term.create_window(1, 1, 20, 20)
+    print term.move(10, 1)
 
-You can reference any string-returning capability listed on the `terminfo man
-page`_ by the name under the "Cap-name" column.
+Here are some of interest:
+
+``move``
+  Position the cursor elsewhere. Parameters are y coordinate, then x
+  coordinate.
+``move_x``
+  Move the cursor to the given column.
+``move_y``
+  Move the cursor to the given row.
+
+You can also reference any other string-returning capability listed on the
+`terminfo man page`_ by its name under the "Cap-name" column.
 
 .. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
 
@@ -189,6 +199,12 @@ return: for example, when updating a progress bar at the bottom of the screen.
     with term.location(0, term.height):
         print 'Here is the bottom.'
     print 'This is back where I came from.'
+
+Parameters to ``location()`` are ``x`` and then ``y``, but you can also pass
+just one of them, leaving the other alone. For example... ::
+
+    with term.location(y=10):
+        print 'We changed just the row.'
 
 Pipe Savvy
 ----------
@@ -252,6 +268,7 @@ Version History
   * Added the ``is_a_tty`` attribute for telling whether the output stream is a
     terminal.
   * Added sugar for the remaining simple formatting capabilities.
+  * Let ``location()`` operate on just an x *or* y coordinate.
 
 1.0
   * Extracted Blessings from nose-progressive, my `progress-bar-having,
