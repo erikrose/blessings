@@ -86,6 +86,8 @@ class Terminal(object):
                   restore='rc',
 
                   clear_eol='el',
+                  clear_bol='el1',
+                  clear_eos='ed',
                   position='cup',  # deprecated
                   move='cup',
                   move_x='hpa',

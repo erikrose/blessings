@@ -90,8 +90,10 @@ Simple capabilities of interest include...
 * ``underline``
 * ``no_underline`` (which turns off underlining)
 * ``blink``
-* ``normal`` (which turns off everything)
+* ``normal`` (which turns off everything, even colors)
 * ``clear_eol`` (clear to the end of the line)
+* ``clear_bol`` (clear to beginning of line)
+* ``clear_eos`` (clear to end of screen)
 
 Here are a few more which are less likely to work on all terminals:
 
@@ -231,25 +233,26 @@ apparently headed into a pipe::
             print 'Progress: [=======>   ]'
     print term.bold + 'Important stuff' + term.normal
 
-Comparison With Other Libraries
-===============================
+Shopping List
+=============
 
-There are a bazillion terminal formatting libraries for Python. Here are a few
-ways Blessings distinguishes itself. Blessings...
+There are decades of legacy tied up in terminal interaction, so attention to
+detail and behavior of edge cases make a difference. Consider which of these
+features matter to you as you shop for a terminal library. Blessings does them
+all.
 
-* ...can output to any file-like object, not just stdout.
-* ...is not hard-coded to work with only a certain terminal type.
-* ...gets up-to-the-moment terminal height and width, so you can respond to
-  terminal size changes (SIGWINCH signals). Many other libraries query the
+* Output to any file-like object, not just stdout.
+* Use the terminfo database so it works with any terminal type.
+* Provide up-to-the-moment terminal height and width, so you can respond to
+  terminal size changes (SIGWINCH signals). (Most other libraries query the
   ``COLUMNS`` and ``LINES`` environment variables or the ``cols`` or ``lines``
-  terminal capabilities, which don't update promptly, if at all.
-* ...helps you avoid making a mess if your output gets piped to a non-terminal.
-* ...doesn't introduce its own templating syntax.
-* ...provides convenient access to all terminal capabilities, not just a
-  sugared few.
-* ...keeps no state internally, so you can feel free to mix and match it with
-  calls to curses or whatever other terminal libraries you like. You won't mess
-  up Blessings.
+  terminal capabilities, which don't update promptly, if at all.)
+* Avoid making a mess if the output gets piped to a non-terminal.
+* Avoid introducing a new templating syntax.
+* Provide convenient access to all terminal capabilities, not just a sugared
+  few.
+* Keep a minimum of internal state, so you can feel free to mix and match with
+  calls to curses or whatever other terminal libraries you like.
 
 Bugs
 ====
