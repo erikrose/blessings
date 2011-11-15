@@ -95,7 +95,20 @@ class Terminal(object):
 
                   normal='sgr0',
                   reverse='rev',
-                  # 'bold' is just 'bold'.
+                  # 'bold' is just 'bold'. Similarly...
+                  # blink
+                  # dim
+                  # flash
+                  italic='sitm',
+                  no_italic='ritm',
+                  shadow='sshm',
+                  no_shadow='rshm',
+                  standout='smso',
+                  no_standout='rmso',
+                  subscript='ssubm',
+                  no_subscript='rsubm',
+                  superscript='ssupm',
+                  no_superscript='rsupm',
                   underline='smul',
                   no_underline='rmul')
 

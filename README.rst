@@ -37,16 +37,16 @@ underlined text at the bottom of the screen::
         cup = tigetstr('cup')
         rc = tigetstr('rc')
         underline = tigetstr('smul')
-        plain = tigetstr('sgr0')
+        normal = tigetstr('sgr0')
     else:
-        sc = cup = rc = underline = plain = ''
+        sc = cup = rc = underline = normal = ''
     print sc  # Save cursor position.
     if cup:
         # tigetnum('lines') doesn't always update promptly, hence this:
         height = struct.unpack('hhhh', ioctl(0, TIOCGWINSZ, '\000' * 8))[0]
         print tparm(cup, height, 0)  # Move cursor to bottom.
-    print 'This is {under}underlined{plain}!'.format(under=underline,
-                                                     plain=plain)
+    print 'This is {under}underlined{normal}!'.format(under=underline,
+                                                      normal=normal)
     print rc  # Restore cursor position.
 
 Phew! That was long and full of incomprehensible trash! Let's try it again,
@@ -56,8 +56,8 @@ this time with Blessings::
 
     term = Terminal()
     with term.location(0, term.height):
-        print 'This is {under}underlined{plain}!'.format(under=term.underline,
-                                                         plain=term.no_underline)
+        print 'This is {under}underlined{normal}!'.format(under=term.underline,
+                                                          normal=term.no_underline)
 
 It's short, it's obvious, and it keeps all those nasty ``tigetstr()`` and
 ``tparm()`` calls out of your code. It also acts intelligently when somebody
@@ -83,30 +83,40 @@ available as attributes on ``Terminal`` instances. For example::
     term = Terminal()
     print 'I am ' + term.bold + 'bold' + term.normal + '!'
 
-Other simple capabilities of interest include...
+Simple capabilities of interest include...
 
 * ``clear_eol`` (clear to the end of the line)
+* ``bold``
 * ``reverse``
 * ``underline``
 * ``no_underline`` (which turns off underlining)
+* ``blink``
 * ``normal`` (which turns off everything)
 
-At the lowest level, there's no specific code for undoing most formatting.
-Though the inverse of ``underline`` is ``no_underline``, the only way to turn
-off ``bold`` or ``reverse`` is ``normal``, which also cancels any custom
-colors.
+Here are a few more which are less likely to work on all terminals:
 
-Some other terminal libraries implement fancy state machines to hide this
-detail, but I elected to keep Blessings easy to integrate and quick to learn.
+* ``dim``
+* ``italic`` and ``no_italic``
+* ``shadow`` and ``no_shadow``
+* ``standout`` and ``no_standout``
+* ``subscript`` and ``no_subscript``
+* ``superscript`` and ``no_superscript``
+* ``flash`` (which flashes the screen once)
 
-.. note:: You might notice that these aren't the typical incomprehensible
-  terminfo capability names; we alias a few (and soon more) of the
-  harder-to-remember ones for readability. However, **all** capabilities are
-  available: you can reference any string-returning capability listed on the
-  `terminfo man page`_ by the name under the "Cap-name" column: for example,
-  ``rsubm``.
+Note that, while the inverse of ``underline`` is ``no_underline``, the only way
+to turn off ``bold`` or ``reverse`` is ``normal``, which also cancels any
+custom colors. This is because there's no way to tell the terminal to undo
+certain pieces of formatting, even at the lowest level. Some other terminal
+libraries implement fancy state machines to hide this detail, but I elected to
+keep Blessings state-free and simpler in API.
 
-  .. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
+Also, you might notice that the above aren't the typical incomprehensible
+terminfo capability names; we alias a few of the harder-to-remember ones for
+readability. However, **all** capabilities are available: you can reference any
+string-returning capability listed on the `terminfo man page`_ by the name
+under the "Cap-name" column: for example, ``rum``.
+
+.. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
 
 Color
 -----
@@ -207,12 +217,29 @@ headed into a pipe::
             print 'Progress: [=======>   ]'
     print term.bold + 'Important stuff' + term.normal
 
-Future Plans
-============
+Comparison With Other Libraries
+===============================
 
-* Comb through the terminfo man page for useful capabilities with confounding
-  names, and add sugary attribute names for them.
-* A relative-positioning version of ``location()``
+There are a bazillion terminal formatting libraries for Python. Here are a few
+ways Blessings distinguishes itself, each of which I've seen done the other
+way. Blessings...
+
+* ...can output to any file-like object, not just stdout.
+* ...is not hard-coded to work with only a certain terminal type.
+* ...gets up-to-the-minute terminal height and width, so you can respond to
+  terminal size changes (SIGWINCH signals). Many other libraries query the
+  ``COLUMNS`` and ``LINES`` environment variables or the ``cols`` or ``lines``
+  terminal capabilities, which don't update promptly, if at all.
+* ...helps you avoid making a mess if your output gets piped to a non-terminal.
+* ...doesn't introduce its own templating syntax.
+* ...provides convenient access to all terminal capabilities, not just a
+  sugared few.
+* ...keeps no state internally, so you can feel free to mix and match it with
+  calls to curses or whatever other terminal libraries you like. You won't mess
+  up Blessings.
+
+Bugs
+====
 
 Bugs or suggestions? Visit the `issue tracker`_.
 
@@ -223,8 +250,11 @@ Version History
 
 1.1
   * Added nicely named attributes for colors.
-  * Added ability to make capabilities work, even if the output stream is not a
+  * Added ability to make capabilities non-empty, even if the output stream is
+    not a terminal.
+  * Added the ``is_a_tty`` attribute for telling whether the output stream is a
     terminal.
+  * Added sugar for the remaining simple formatting capabilities.
 
 1.0
   * Extracted Blessings from nose-progressive, my `progress-bar-having,
