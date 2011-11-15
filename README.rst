@@ -85,13 +85,13 @@ available as attributes on ``Terminal`` instances. For example::
 
 Simple capabilities of interest include...
 
-* ``clear_eol`` (clear to the end of the line)
 * ``bold``
 * ``reverse``
 * ``underline``
 * ``no_underline`` (which turns off underlining)
 * ``blink``
 * ``normal`` (which turns off everything)
+* ``clear_eol`` (clear to the end of the line)
 
 Here are a few more which are less likely to work on all terminals:
 
@@ -106,12 +106,10 @@ Here are a few more which are less likely to work on all terminals:
 Note that, while the inverse of ``underline`` is ``no_underline``, the only way
 to turn off ``bold`` or ``reverse`` is ``normal``, which also cancels any
 custom colors. This is because there's no way to tell the terminal to undo
-certain pieces of formatting, even at the lowest level. Some other terminal
-libraries implement fancy state machines to hide this detail, but I elected to
-keep Blessings state-free and simpler in API.
+certain pieces of formatting, even at the lowest level.
 
-Also, you might notice that the above aren't the typical incomprehensible
-terminfo capability names; we alias a few of the harder-to-remember ones for
+You might notice that the above aren't the typical incomprehensible terminfo
+capability names; we alias a few of the harder-to-remember ones for
 readability. However, **all** capabilities are available: you can reference any
 string-returning capability listed on the `terminfo man page`_ by the name
 under the "Cap-name" column: for example, ``rum``.
@@ -205,9 +203,9 @@ through ``less -r``, which handles terminal escapes just fine--pass
 ``force_styling=True`` to the ``Terminal`` constructor.
 
 In any case, there is an ``is_a_tty`` attribute on ``Terminal`` that lets you
-see whether the attached stream seems to be a terminal. If false, you might
-refrain from drawing progress bars and other frippery, since you're apparently
-headed into a pipe::
+see whether the attached stream seems to be a terminal. If it's false, you
+might refrain from drawing progress bars and other frippery, since you're
+apparently headed into a pipe::
 
     from blessings import Terminal
 
@@ -221,12 +219,11 @@ Comparison With Other Libraries
 ===============================
 
 There are a bazillion terminal formatting libraries for Python. Here are a few
-ways Blessings distinguishes itself, each of which I've seen done the other
-way. Blessings...
+ways Blessings distinguishes itself. Blessings...
 
 * ...can output to any file-like object, not just stdout.
 * ...is not hard-coded to work with only a certain terminal type.
-* ...gets up-to-the-minute terminal height and width, so you can respond to
+* ...gets up-to-the-moment terminal height and width, so you can respond to
   terminal size changes (SIGWINCH signals). Many other libraries query the
   ``COLUMNS`` and ``LINES`` environment variables or the ``cols`` or ``lines``
   terminal capabilities, which don't update promptly, if at all.
