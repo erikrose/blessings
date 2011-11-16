@@ -64,6 +64,7 @@ class Terminal(object):
             # output is redirected.
             init_descriptor = (sys.__stdout__.fileno() if stream_descriptor is None
                                else stream_descriptor)
+
             # Make things like tigetstr() work. Explicit args make setupterm()
             # work even when -s is passed to nosetests. Lean toward sending
             # init sequences to the stream if it has a file descriptor, and
@@ -71,6 +72,7 @@ class Terminal(object):
             # somewhere.
             setupterm(kind or environ.get('TERM', 'unknown'),
                       init_descriptor)
+
             # Cache capability codes, because IIRC tigetstr requires a
             # conversation with the terminal. [Now I can't find any evidence of
             # that.]
@@ -97,6 +99,7 @@ class Terminal(object):
                   # like "red" and "bg_green" are probably easier.
                   color='setaf',
                   bg_color='setab',
+                  reset_colors='op',  # oc doesn't work on my OS X terminal.
 
                   normal='sgr0',
                   reverse='rev',

@@ -56,8 +56,7 @@ this time with Blessings::
 
     term = Terminal()
     with term.location(0, term.height):
-        print 'This is {under}underlined{normal}!'.format(under=term.underline,
-                                                          normal=term.no_underline)
+        print 'This is {t.underline}underlined{t.no_underline}!'.format(t=term)
 
 It's short, it's obvious, and it keeps all those nasty ``tigetstr()`` and
 ``tparm()`` calls out of your code. It also acts intelligently when somebody
@@ -237,8 +236,8 @@ Shopping List
 =============
 
 There are decades of legacy tied up in terminal interaction, so attention to
-detail and behavior of edge cases make a difference. Consider which of these
-features matter to you as you shop for a terminal library. Blessings does them
+detail and behavior in edge cases make a difference. Consider which of these
+features matter to you as you shop for a terminal library. Blessings has them
 all.
 
 * Output to any file-like object, not just stdout.
@@ -253,6 +252,13 @@ all.
   few.
 * Keep a minimum of internal state, so you can feel free to mix and match with
   calls to curses or whatever other terminal libraries you like.
+
+Blessings does not provide...
+
+* Native color support on the Windows command prompt. However, it should work
+  when used in concert with colorama_.
+
+.. _colorama: http://pypi.python.org/pypi/colorama/0.2.4
 
 Bugs
 ====
@@ -270,7 +276,7 @@ Version History
     not a terminal.
   * Added the ``is_a_tty`` attribute for telling whether the output stream is a
     terminal.
-  * Added sugar for the remaining simple formatting capabilities.
+  * Added sugar for the remaining interesting string capabilities.
   * Let ``location()`` operate on just an x *or* y coordinate.
 
 1.0
