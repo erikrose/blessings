@@ -239,6 +239,18 @@ class ParametrizingString(str):
             # progressive. Perhaps the terminal has gone away between calling
             # tigetstr and calling tparm.
             return ''
+        except TypeError:
+            # If the first non-int (i.e. incorrect) arg was a string, suggest
+            # something intelligent:
+            if len(args) == 1 and isinstance(args[0], basestring):
+                raise TypeError(
+                    'A native or nonexistent capability template received '
+                    '%r when it was expecting ints. You probably misspelled a '
+                    'formatting call like bold_red_on_white(...).' % args)
+            else:
+                # Somebody passed a non-string; I don't feel confident
+                # guessing what they were trying to do.
+                raise
 
 
 class FormattingString(str):

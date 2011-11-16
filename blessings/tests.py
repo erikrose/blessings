@@ -117,6 +117,25 @@ def test_formatting_functions_without_tty():
     """Test crazy-ass formatting wrappers when there's no tty."""
     t = Terminal(stream=StringIO())
     eq_(t.green('hi'), 'hi')
-    eq_(t.bold_green('boö'), 'boö')  # unicode
+    eq_(t.bold_green(u'boö'), u'boö')  # unicode
     eq_(t.bold_underline_green_on_red('boo'), 'boo')
     eq_(t.on_bright_red_bold_bright_green_underline('meh'), 'meh')
+
+
+def test_nice_formatting_errors():
+    """Make sure you get nice hints if you misspell a formatting wrapper."""
+    t = Terminal()
+    try:
+        t.bold_misspelled('hey')
+    except TypeError, e:
+        assert 'probably misspelled' in e[0]
+
+    try:
+        t.bold_misspelled(None)  # an arbitrary non-string
+    except TypeError, e:
+        assert 'probably misspelled' not in e[0]
+
+    try:
+        t.bold_misspelled('a', 'b')  # >1 string arg
+    except TypeError, e:
+        assert 'probably misspelled' not in e[0]
