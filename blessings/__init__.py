@@ -78,53 +78,50 @@ class Terminal(object):
             # that.]
             self._codes = {}
         else:
-            self._codes = NullDict(lambda: '')
+            self._codes = NullDict(lambda: NullCallableString(''))
 
         self.stream = stream
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
-    _sugar = dict(save='sc',
-                  restore='rc',
+    _sugar = dict(
+        # Don't use "on" as an underscore-separated chunk in any of these (e.g.
+        # on_cology or rock_on) so we don't interfere with __getattr__.
+        save='sc',
+        restore='rc',
 
-                  clear_eol='el',
-                  clear_bol='el1',
-                  clear_eos='ed',
-                  position='cup',  # deprecated
-                  move='cup',
-                  move_x='hpa',
-                  move_y='vpa',
+        clear_eol='el',
+        clear_bol='el1',
+        clear_eos='ed',
+        position='cup',  # deprecated
+        move='cup',
+        move_x='hpa',
+        move_y='vpa',
 
-                  # You can use these if you want, but the named equivalents
-                  # like "red" and "bg_green" are probably easier.
-                  color='setaf',
-                  bg_color='setab',
-                  reset_colors='op',  # oc doesn't work on my OS X terminal.
+        # You can use these if you want, but the named equivalents
+        # like "red" and "on_green" are probably easier.
+        color='setaf',
+        on_color='setab',
+        reset_colors='op',  # oc doesn't work on my OS X terminal.
 
-                  normal='sgr0',
-                  reverse='rev',
-                  # 'bold' is just 'bold'. Similarly...
-                  # blink
-                  # dim
-                  # flash
-                  italic='sitm',
-                  no_italic='ritm',
-                  shadow='sshm',
-                  no_shadow='rshm',
-                  standout='smso',
-                  no_standout='rmso',
-                  subscript='ssubm',
-                  no_subscript='rsubm',
-                  superscript='ssupm',
-                  no_superscript='rsupm',
-                  underline='smul',
-                  no_underline='rmul')
-
-    def _color(self, color):
-        return (self.setaf or self.setf)(color)
-
-    def _bg_color(self, color):
-        return (self.setab or self.setb)(color)
+        normal='sgr0',
+        reverse='rev',
+        # 'bold' is just 'bold'. Similarly...
+        # blink
+        # dim
+        # flash
+        italic='sitm',
+        no_italic='ritm',
+        shadow='sshm',
+        no_shadow='rshm',
+        standout='smso',
+        no_standout='rmso',
+        subscript='ssubm',
+        no_subscript='rsubm',
+        superscript='ssupm',
+        no_superscript='rsupm',
+        underline='smul',
+        no_underline='rmul')
 
     def __getattr__(self, attr):
         """Return parametrized terminal capabilities, like bold.
@@ -140,8 +137,8 @@ class Terminal(object):
         if attr not in self._codes:
             # Store sugary names under the sugary keys to save a hash lookup.
             # Fall back to '' for codes not supported by this terminal.
-            self._codes[attr] = tigetstr(self._sugar.get(attr, attr)) or ''
-        return CallableString(self._codes[attr])
+            self._codes[attr] = self._resolve_formatter(attr)
+        return self._codes[attr]
 
     @property
     def height(self):
@@ -166,53 +163,72 @@ class Terminal(object):
         """
         return Location(self, x, y)
 
+    def _resolve_formatter(self, attr):
+        """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable string."""
+        def split_into_formatters(compound):
+            """Split a possibly compound format string into segments.
 
-def _add_color_methods():  # Really, really private
-    """Return an iterable of method pairs that set fg and bg colors.
+            >>> split_into_formatters('bold_underline_bright_blue_on_red')
+            ['bold', 'underline', 'bright_blue', 'on_red']
 
-    The methods in the pair return the escape sequences to set the foreground
-    or background color, respectively.
+            """
+            merged_segs = []
+            # These occur only as prefixes, so they can always be merged:
+            mergeable_prefixes = ['on', 'bright', 'on_bright']
+            for s in compound.split('_'):
+                if merged_segs and merged_segs[-1] in mergeable_prefixes:
+                    merged_segs[-1] += '_' + s
+                else:
+                    merged_segs.append(s)
+            return merged_segs
 
-    """
-    # TODO: Does curses automatically exchange red and blue and cyan and yellow
-    # when a terminal supports setf/setb rather than setaf/setab? I'll be
-    # blasted if I can find any documentation. The following assumes it does.
-    def colorers(color, offset=0):
-        """Return a method that returns the formatting string to set a certain color.
+        if attr in colors:
+            return self._resolve_color(attr)
+        else:
+            formatters = split_into_formatters(attr)
+            if len(formatters) > 1 and all(f in compoundables for f in formatters):
+                # It's a compound formatter, like "bold_green_on_red". If we
+                # wanted, we could even get crazy and combine all formatting
+                # into a single escape sequence, but nobody's on a 300 baud
+                # modem anymore.
+                return FormattingString(''.join(self._resolve_formatter(s)
+                                                for s in formatters),
+                                        self)
+            else:
+                return self._resolve_capability(attr)
 
-        curses constants go up to only 7, so pass in an offset to get at the
-        bright colors at 8-15.
+    def _resolve_capability(self, atom):
+        """Return a terminal code for a capname or a sugary name, or ''."""
+        return ParametrizingString(tigetstr(self._sugar.get(atom, atom)) or '')
 
-        """
-        const = 'COLOR_' + color.upper()
-
-        @property
-        def some_color(self):
-            return self._color(getattr(curses, const) + offset)
-
-        @property
-        def some_bg_color(self):
-            return self._bg_color(getattr(curses, const) + offset)
-
-        return some_color, some_bg_color
-
-    for color in ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']:
-        # Foreground and background:
-        fg_method, bg_method = colorers(color)
-        setattr(Terminal, color, fg_method)
-        setattr(Terminal, 'bg_' + color, bg_method)
-
-        # Foreground and background, bright:
-        fg_method, bg_method = colorers(color, offset=8)
-        setattr(Terminal, 'bright_' + color, fg_method)
-        setattr(Terminal, 'bg_bright_' + color, bg_method)
-
-
-# Add color and background color attrs, like red and bg_red:
-_add_color_methods()
+    def _resolve_color(self, color):
+        """Resolve a color like red or on_bright_green into a callable string."""
+        # TODO: Does curses automatically exchange red and blue and cyan and
+        # yellow when a terminal supports setf/setb rather than setaf/setab?
+        # I'll be blasted if I can find any documentation. The following
+        # assumes it does.
+        color_cap = ((self.setab or self.setb) if 'on_' in color else
+                     (self.setaf or self.setf))
+        # curses constants go up to only 7, so pass in an offset to get at the
+        # bright colors at 8-15:
+        offset = 8 if 'bright_' in color else 0
+        base_color = color.rsplit('_', 1)[-1]
+        return FormattingString(
+            color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset),
+            self)
 
 
-class CallableString(str):
+colors = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'])
+colors.update(set([('on_' + c) for c in colors] +
+                  [('bright_' + c) for c in colors] +
+                  [('on_bright_' + c) for c in colors]))
+del c
+compoundables = (colors |
+                 set(['bold', 'underline', 'reverse', 'blink', 'dim', 'italic',
+                      'shadow', 'standout', 'subscript', 'superscript']))
+
+
+class ParametrizingString(str):
     """A string which can be called to parametrize it as a terminal capability"""
     def __call__(self, *args):
         try:
@@ -223,6 +239,34 @@ class CallableString(str):
             # progressive. Perhaps the terminal has gone away between calling
             # tigetstr and calling tparm.
             return ''
+
+
+class FormattingString(str):
+    """A string which can be called upon a piece of text to wrap it in formatting"""
+    def __new__(cls, formatting, term):
+        new = str.__new__(cls, formatting)
+        new._term = term
+        return new
+
+    def __call__(self, text):
+        """Return a new string that is ``text`` formatted with my contents.
+
+        At the beginning of the string, I prepend the formatting that is my
+        contents. At the end, I append the "normal" sequence to set everything
+        back to defaults.
+
+        This should work regardless of whether ``text`` is unicode.
+
+        """
+        return self + text + self._term.normal
+
+
+class NullCallableString(str):
+    """A callable string that returns '' when called with an int and itself when called otherwise."""
+    def __call__(self, arg):
+        if isinstance(arg, int):
+            return ''
+        return arg
 
 
 class NullDict(defaultdict):

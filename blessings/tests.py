@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import with_statement  # Make 2.5-compatible
 from StringIO import StringIO
 from curses import tigetstr, tparm
@@ -91,9 +93,30 @@ def test_mnemonic_colors():
     t = Terminal()
     eq_(t.white, '\x1b[37m')
     eq_(t.green, '\x1b[32m')  # Make sure it's different than white.
-    eq_(t.bg_black, '\x1b[40m')
-    eq_(t.bg_green, '\x1b[42m')
+    eq_(t.on_black, '\x1b[40m')
+    eq_(t.on_green, '\x1b[42m')
     eq_(t.bright_black, '\x1b[90m')
     eq_(t.bright_green, '\x1b[92m')
-    eq_(t.bg_bright_black, '\x1b[100m')
-    eq_(t.bg_bright_green, '\x1b[102m')
+    eq_(t.on_bright_black, '\x1b[100m')
+    eq_(t.on_bright_green, '\x1b[102m')
+
+
+def test_formatting_functions():
+    """Test crazy-ass formatting wrappers, both simple and compound."""
+    t = Terminal()
+    eq_(t.green('hi'), t.green + 'hi' + t.normal)
+    eq_(t.bold_green(u'boö'), t.bold + t.green + u'boö' + t.normal)  # unicode
+    eq_(t.bold_underline_green_on_red('boo'),
+        t.bold + t.underline + t.green + t.on_red + 'boo' + t.normal)
+    # Don't spell things like this:
+    eq_(t.on_bright_red_bold_bright_green_underline('meh'),
+        t.on_bright_red + t.bold + t.bright_green + t.underline + 'meh' + t.normal)
+
+
+def test_formatting_functions_without_tty():
+    """Test crazy-ass formatting wrappers when there's no tty."""
+    t = Terminal(stream=StringIO())
+    eq_(t.green('hi'), 'hi')
+    eq_(t.bold_green('boö'), 'boö')  # unicode
+    eq_(t.bold_underline_green_on_red('boo'), 'boo')
+    eq_(t.on_bright_red_bold_bright_green_underline('meh'), 'meh')

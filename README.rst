@@ -126,8 +126,8 @@ attributes::
     from blessings import Terminal
 
     term = Terminal()
-    print term.red + term.bg_green + 'Red on green? Ick!' + term.normal
-    print term.bright_red + term.bg_bright_blue + 'This is even worse!' + term.normal
+    print term.red + term.on_green + 'Red on green? Ick!' + term.normal
+    print term.bright_red + term.on_bright_blue + 'This is even worse!' + term.normal
 
 The available colors are...
 
@@ -144,7 +144,9 @@ In addition, there is a ``bright`` version of each. If your terminal does not
 support the bright palette, it will usually render them as black.
 
 You can set the background color instead of the foreground by prepending
-``bg_``, as in ``bg_blue`` or ``bg_bright_white``.
+``on_``, as in ``on_blue`` or ``on_bright_white``.
+
+We took what couleur did and expanded upon it. You can specify any mishmash of things; you aren't required to specify a background color if you don't want to.
 
 Parametrized Capabilities
 -------------------------
