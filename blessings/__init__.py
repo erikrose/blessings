@@ -15,8 +15,8 @@ class Terminal(object):
     """An abstraction around terminal capabilities
 
     Unlike curses, this doesn't require clearing the screen before doing
-    anything, and it's a little friendlier to use. It keeps the endless calls
-    to tigetstr() and tparm() out of your code, and it acts intelligently when
+    anything, and it's friendlier to use. It keeps the endless calls to
+    tigetstr() and tparm() out of your code, and it acts intelligently when
     somebody pipes your output to a non-terminal.
 
     Instance attributes:
@@ -24,7 +24,8 @@ class Terminal(object):
         the stream around with the terminal; it's almost always needed when the
         terminal is and saves sticking lots of extra args on client functions
         in practice.
-      is_a_tty: Whether ``stream`` appears to be a terminal
+      is_a_tty: Whether ``stream`` appears to be a terminal. You can examine
+        this value to decide whether to draw progress bars or other frippery.
 
     """
     def __init__(self, kind=None, stream=None, force_styling=False):
@@ -39,7 +40,7 @@ class Terminal(object):
         :arg kind: A terminal string as taken by setupterm(). Defaults to the
             value of the TERM environment variable.
         :arg stream: A file-like object representing the terminal. Defaults to
-            the original value of stdout, like ``curses.initscr()`` does.
+            the original value of stdout, like ``curses.initscr()``.
         :arg force_styling: Whether to force the emission of capabilities, even
             if we don't seem to be in a terminal. This comes in handy if users
             are trying to pipe your output through something like ``less -r``,
@@ -47,9 +48,9 @@ class Terminal(object):
             to be a terminal. Just expose a command-line option, and set
             ``force_styling`` based on it. Terminal initialization sequences
             will be sent to ``stream`` if it has a file descriptor and to
-            ``sys.__stdout__`` otherwise. (setupterm() demands to send it
+            ``sys.__stdout__`` otherwise. (setupterm() demands to send them
             somewhere, and stdout is probably where the output is ultimately
-            going. stderr is probably bound to the same terminal anyway.)
+            headed. If not, stderr is probably bound to the same terminal.)
 
         """
         if stream is None:
@@ -126,10 +127,14 @@ class Terminal(object):
     def __getattr__(self, attr):
         """Return parametrized terminal capabilities, like bold.
 
-        For example, you can say ``some_term.bold`` to get the string that
-        turns on bold formatting and ``some_term.sgr0`` to get the string that
-        turns it off again. For a parametrized capability like ``cup``, pass
-        the parameter too: ``some_term.cup(line, column)``.
+        For example, you can say ``term.bold`` to get the string that turns on
+        bold formatting and ``term.normal`` to get the string that turns it off
+        again. Or you can take a shortcut: ``term.bold('hi')`` bolds its
+        argument and sets everything to normal afterward. You can even combine
+        things: ``term.bold_underline_red_on_bright_green('yowzers!')``.
+
+        For a parametrized capability like ``cup``, pass the parameter too:
+        ``some_term.cup(line, column)``.
 
         ``man terminfo`` for a complete list of capabilities.
 

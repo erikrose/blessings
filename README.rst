@@ -16,11 +16,11 @@ fit:
   your program exits.
 
 In essence, you want to act like a well-behaved command-line app, not a
-full-screen pseudo-GUI one.
+full-screen pseudo-GUI one. Or maybe you just want to get the noise out of your
+code.
 
-If that's your use case--or even if you just want to get the noise out of your
-code--Blessings is for you. Without it, this is how you'd print some
-underlined text at the bottom of the screen::
+If either of these sounds good, Blessings is for you. Without it, this is how
+you'd print some underlined text at the bottom of the screen::
 
     from curses import tigetstr, tigetnum, setupterm, tparm
     from fcntl import ioctl
@@ -82,6 +82,10 @@ available as attributes on ``Terminal`` instances. For example::
     term = Terminal()
     print 'I am ' + term.bold + 'bold' + term.normal + '!'
 
+Or you can use them as wrappers so you don't have to say ``normal`` afterward::
+
+    print 'I am', term.bold('bold') + '!'
+
 Simple capabilities of interest include...
 
 * ``bold``
@@ -113,7 +117,7 @@ You might notice that the above aren't the typical incomprehensible terminfo
 capability names; we alias a few of the harder-to-remember ones for
 readability. However, you aren't limited to these: you can reference any
 string-returning capability listed on the `terminfo man page`_ by the name
-under the "Cap-name" column: for example, ``rum``.
+under the "Cap-name" column: for example, ``term.rum``.
 
 .. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
 
@@ -129,6 +133,12 @@ attributes::
     print term.red + term.on_green + 'Red on green? Ick!' + term.normal
     print term.bright_red + term.on_bright_blue + 'This is even worse!' + term.normal
 
+You can also call them as wrappers, which sets everything back to normal at the
+end::
+
+    print term.red_on_green('Red on green? Ick!')
+    print term.yellow('I can barely see it.')
+
 The available colors are...
 
 * ``black``
@@ -140,13 +150,38 @@ The available colors are...
 * ``cyan``
 * ``white``
 
-In addition, there is a ``bright`` version of each. If your terminal does not
-support the bright palette, it will usually render them as black.
+As hinted above, there is also a ``bright`` version of each. If your terminal
+does not support the bright palette, it will usually render them as black.
 
 You can set the background color instead of the foreground by prepending
 ``on_``, as in ``on_blue`` or ``on_bright_white``.
 
-We took what couleur did and expanded upon it. You can specify any mishmash of things; you aren't required to specify a background color if you don't want to.
+There is also a numerical interface to colors, which takes integers from 0-15::
+
+    term.color(5) + 'Hello' + term.normal
+    term.on_color(3) + 'Hello' + term.normal
+
+Compound Formatting
+-------------------
+
+If you want to do lots of crazy formatting all at once, you can just mash it
+all together::
+
+    from blessings import Terminal
+
+    term = Terminal()
+    print term.bold_underline_green_on_yellow + 'Woo' + term.normal
+
+Or you can use your newly coined attribute as a wrapper, which implicitly sets
+everything back to normal afterward::
+
+    print term.bold_underline_green_on_yellow('Woo')
+
+I'd be remiss if I didn't credit couleur_, where I probably got the idea for
+all this mashing. It doesn't mix non-color styles in, but we started at the
+same place.
+
+.. _couleur: http://pypi.python.org/pypi/couleur
 
 Parametrized Capabilities
 -------------------------
@@ -209,6 +244,8 @@ just one of them, leaving the other alone. For example... ::
     with term.location(y=10):
         print 'We changed just the row.'
 
+If you want to reposition permanently, see ``move``, in an example above.
+
 Pipe Savvy
 ----------
 
@@ -232,28 +269,27 @@ apparently headed into a pipe::
     if term.is_a_tty:
         with term.location(0, term.height):
             print 'Progress: [=======>   ]'
-    print term.bold + 'Important stuff' + term.normal
+    print term.bold('Important stuff')
 
 Shopping List
 =============
 
 There are decades of legacy tied up in terminal interaction, so attention to
-detail and behavior in edge cases make a difference. Consider which of these
-features matter to you as you shop for a terminal library. Blessings has them
-all.
+detail and behavior in edge cases make a difference. Here are some ways
+Blessings has your back:
 
-* Output to any file-like object, not just stdout.
-* Use the terminfo database so it works with any terminal type.
-* Provide up-to-the-moment terminal height and width, so you can respond to
+* Uses the terminfo database so it works with any terminal type
+* Provides up-to-the-moment terminal height and width, so you can respond to
   terminal size changes (SIGWINCH signals). (Most other libraries query the
   ``COLUMNS`` and ``LINES`` environment variables or the ``cols`` or ``lines``
   terminal capabilities, which don't update promptly, if at all.)
-* Avoid making a mess if the output gets piped to a non-terminal.
-* Avoid introducing a new templating syntax.
-* Provide convenient access to all terminal capabilities, not just a sugared
-  few.
-* Keep a minimum of internal state, so you can feel free to mix and match with
-  calls to curses or whatever other terminal libraries you like.
+* Avoids making a mess if the output gets piped to a non-terminal
+* Works great with standard Python string templating
+* Provides convenient access to all terminal capabilities, not just a sugared
+  few
+* Outputs to any file-like object, not just stdout
+* Keeps a minimum of internal state, so you can feel free to mix and match with
+  calls to curses or whatever other terminal libraries you like
 
 Blessings does not provide...
 
@@ -274,11 +310,13 @@ Version History
 
 1.1
   * Added nicely named attributes for colors.
-  * Added ability to make capabilities non-empty, even if the output stream is
+  * Introduced compound formatting.
+  * Added wrapper behavior for styling and colors.
+  * Let you force capabilities to be non-empty, even if the output stream is
     not a terminal.
   * Added the ``is_a_tty`` attribute for telling whether the output stream is a
     terminal.
-  * Added sugar for the remaining interesting string capabilities.
+  * Sugared the remaining interesting string capabilities.
   * Let ``location()`` operate on just an x *or* y coordinate.
 
 1.0
