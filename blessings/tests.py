@@ -104,6 +104,7 @@ def test_mnemonic_colors():
 def test_formatting_functions():
     """Test crazy-ass formatting wrappers, both simple and compound."""
     t = Terminal()
+    eq_(t.bold('hi'), t.bold + 'hi' + t.normal)
     eq_(t.green('hi'), t.green + 'hi' + t.normal)
     eq_(t.bold_green(u'boö'), t.bold + t.green + u'boö' + t.normal)  # unicode
     eq_(t.bold_underline_green_on_red('boo'),
@@ -116,6 +117,7 @@ def test_formatting_functions():
 def test_formatting_functions_without_tty():
     """Test crazy-ass formatting wrappers when there's no tty."""
     t = Terminal(stream=StringIO())
+    eq_(t.bold('hi'), 'hi')
     eq_(t.green('hi'), 'hi')
     eq_(t.bold_green(u'boö'), u'boö')  # unicode
     eq_(t.bold_underline_green_on_red('boo'), 'boo')

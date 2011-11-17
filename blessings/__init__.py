@@ -170,41 +170,26 @@ class Terminal(object):
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable string."""
-        def split_into_formatters(compound):
-            """Split a possibly compound format string into segments.
-
-            >>> split_into_formatters('bold_underline_bright_blue_on_red')
-            ['bold', 'underline', 'bright_blue', 'on_red']
-
-            """
-            merged_segs = []
-            # These occur only as prefixes, so they can always be merged:
-            mergeable_prefixes = ['on', 'bright', 'on_bright']
-            for s in compound.split('_'):
-                if merged_segs and merged_segs[-1] in mergeable_prefixes:
-                    merged_segs[-1] += '_' + s
-                else:
-                    merged_segs.append(s)
-            return merged_segs
-
-        if attr in colors:
+        if attr in COLORS:
             return self._resolve_color(attr)
+        elif attr in COMPOUNDABLES:
+            # Bold, underline, or something that takes no parameters
+            return FormattingString(self._resolve_capability(attr), self)
         else:
             formatters = split_into_formatters(attr)
-            if len(formatters) > 1 and all(f in compoundables for f in formatters):
-                # It's a compound formatter, like "bold_green_on_red". If we
-                # wanted, we could even get crazy and combine all formatting
-                # into a single escape sequence, but nobody's on a 300 baud
-                # modem anymore.
+            if all(f in COMPOUNDABLES for f in formatters):
+                # It's a compound formatter, like "bold_green_on_red". Future
+                # optimization: combine all formatting into a single escape
+                # sequence
                 return FormattingString(''.join(self._resolve_formatter(s)
                                                 for s in formatters),
                                         self)
             else:
-                return self._resolve_capability(attr)
+                return ParametrizingString(self._resolve_capability(attr))
 
     def _resolve_capability(self, atom):
         """Return a terminal code for a capname or a sugary name, or ''."""
-        return ParametrizingString(tigetstr(self._sugar.get(atom, atom)) or '')
+        return tigetstr(self._sugar.get(atom, atom)) or ''
 
     def _resolve_color(self, color):
         """Resolve a color like red or on_bright_green into a callable string."""
@@ -223,12 +208,12 @@ class Terminal(object):
             self)
 
 
-colors = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'])
-colors.update(set([('on_' + c) for c in colors] +
-                  [('bright_' + c) for c in colors] +
-                  [('on_bright_' + c) for c in colors]))
+COLORS = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'])
+COLORS.update(set([('on_' + c) for c in COLORS] +
+                  [('bright_' + c) for c in COLORS] +
+                  [('on_bright_' + c) for c in COLORS]))
 del c
-compoundables = (colors |
+COMPOUNDABLES = (COLORS |
                  set(['bold', 'underline', 'reverse', 'blink', 'dim', 'italic',
                       'shadow', 'standout', 'subscript', 'superscript']))
 
@@ -279,7 +264,7 @@ class FormattingString(str):
 
 
 class NullCallableString(str):
-    """A callable string that returns '' when called with an int and itself when called otherwise."""
+    """A callable string that returns '' when called with an int and the arg otherwise."""
     def __call__(self, arg):
         if isinstance(arg, int):
             return ''
@@ -297,6 +282,24 @@ def height_and_width():
     # tigetnum('lines') and tigetnum('cols') apparently don't update while
     # nose-progressive's progress bar is running.
     return struct.unpack('hhhh', ioctl(0, TIOCGWINSZ, '\000' * 8))[0:2]
+
+
+def split_into_formatters(compound):
+    """Split a possibly compound format string into segments.
+
+    >>> split_into_formatters('bold_underline_bright_blue_on_red')
+    ['bold', 'underline', 'bright_blue', 'on_red']
+
+    """
+    merged_segs = []
+    # These occur only as prefixes, so they can always be merged:
+    mergeable_prefixes = ['on', 'bright', 'on_bright']
+    for s in compound.split('_'):
+        if merged_segs and merged_segs[-1] in mergeable_prefixes:
+            merged_segs[-1] += '_' + s
+        else:
+            merged_segs.append(s)
+    return merged_segs
 
 
 class Location(object):
