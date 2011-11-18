@@ -22,7 +22,7 @@ code.
 If either of these sounds good, Blessings is for you. Without it, this is how
 you'd print some underlined text at the bottom of the screen::
 
-    from curses import tigetstr, tigetnum, setupterm, tparm
+    from curses import tigetstr, setupterm, tparm
     from fcntl import ioctl
     from os import isatty
     import struct
