@@ -86,8 +86,9 @@ class Terminal(object):
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
     _sugar = dict(
-        # Don't use "on" as an underscore-separated chunk in any of these (e.g.
-        # on_cology or rock_on) so we don't interfere with __getattr__.
+        # Don't use "on" or "bright" as an underscore-separated chunk in any of
+        # these (e.g. on_cology or rock_on) so we don't interfere with
+        # __getattr__.
         save='sc',
         restore='rc',
 

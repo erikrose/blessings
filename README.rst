@@ -177,9 +177,13 @@ everything back to normal afterward::
 
     print term.bold_underline_green_on_yellow('Woo')
 
+This compound notation comes in handy if you want to allow users to customize
+the formatting of your app: just have them pass in a format specifier like
+"bold_green" on the command line, and do a quick ``getattr(term,
+that_option)('Your text')`` when you do your formatting.
+
 I'd be remiss if I didn't credit couleur_, where I probably got the idea for
-all this mashing. It doesn't mix non-color styles in, but we started at the
-same place.
+all this mashing.
 
 .. _couleur: http://pypi.python.org/pypi/couleur
 
