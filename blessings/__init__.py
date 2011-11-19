@@ -9,6 +9,7 @@ from termios import TIOCGWINSZ
 
 
 __all__ = ['Terminal']
+__version__ = (1, 1)
 
 
 class Terminal(object):
@@ -16,16 +17,19 @@ class Terminal(object):
 
     Unlike curses, this doesn't require clearing the screen before doing
     anything, and it's friendlier to use. It keeps the endless calls to
-    tigetstr() and tparm() out of your code, and it acts intelligently when
-    somebody pipes your output to a non-terminal.
+    ``tigetstr()`` and ``tparm()`` out of your code, and it acts intelligently
+    when somebody pipes your output to a non-terminal.
 
     Instance attributes:
-      stream: The stream the terminal outputs to. It's convenient to pass
-        the stream around with the terminal; it's almost always needed when the
-        terminal is and saves sticking lots of extra args on client functions
-        in practice.
-      is_a_tty: Whether ``stream`` appears to be a terminal. You can examine
-        this value to decide whether to draw progress bars or other frippery.
+
+      ``stream``
+        The stream the terminal outputs to. It's convenient to pass the stream
+        around with the terminal; it's almost always needed when the terminal
+        is and saves sticking lots of extra args on client functions in
+        practice.
+      ``is_a_tty``
+        Whether ``stream`` appears to be a terminal. You can examine this value
+        to decide whether to draw progress bars or other frippery.
 
     """
     def __init__(self, kind=None, stream=None, force_styling=False):
@@ -37,10 +41,10 @@ class Terminal(object):
         precedent for this: it defaults to columnar output when being sent to a
         tty and one-item-per-line when not.
 
-        :arg kind: A terminal string as taken by setupterm(). Defaults to the
-            value of the TERM environment variable.
+        :arg kind: A terminal string as taken by ``setupterm()``. Defaults to
+            the value of the TERM environment variable.
         :arg stream: A file-like object representing the terminal. Defaults to
-            the original value of stdout, like ``curses.initscr()``.
+            the original value of stdout, like ``curses.initscr()`` does.
         :arg force_styling: Whether to force the emission of capabilities, even
             if we don't seem to be in a terminal. This comes in handy if users
             are trying to pipe your output through something like ``less -r``,
@@ -48,7 +52,7 @@ class Terminal(object):
             to be a terminal. Just expose a command-line option, and set
             ``force_styling`` based on it. Terminal initialization sequences
             will be sent to ``stream`` if it has a file descriptor and to
-            ``sys.__stdout__`` otherwise. (setupterm() demands to send them
+            ``sys.__stdout__`` otherwise. (``setupterm()`` demands to send them
             somewhere, and stdout is probably where the output is ultimately
             headed. If not, stderr is probably bound to the same terminal.)
 
@@ -134,7 +138,7 @@ class Terminal(object):
         argument and sets everything to normal afterward. You can even combine
         things: ``term.bold_underline_red_on_bright_green('yowzers!')``.
 
-        For a parametrized capability like ``cup``, pass the parameter too:
+        For a parametrized capability like ``cup``, pass the parameters too:
         ``some_term.cup(line, column)``.
 
         ``man terminfo`` for a complete list of capabilities.
@@ -148,14 +152,16 @@ class Terminal(object):
 
     @property
     def height(self):
+        """The height of the terminal in characters"""
         return height_and_width()[0]
 
     @property
     def width(self):
+        """The width of the terminal in characters"""
         return height_and_width()[1]
 
     def location(self, x=None, y=None):
-        """Return a context manager for temporarily moving the cursor
+        """Return a context manager for temporarily moving the cursor.
 
         Move the cursor to a certain position on entry, let you print stuff
         there, then return the cursor to its original position::
@@ -165,6 +171,9 @@ class Terminal(object):
                 print 'Hello, world!'
                 for x in xrange(10):
                     print 'I can do it %i times!' % x
+
+        Specify ``x`` to move to a certain column, ``y`` to move to a certain
+        row, or both.
 
         """
         return Location(self, x, y)
@@ -304,18 +313,13 @@ def split_into_formatters(compound):
 
 
 class Location(object):
-    """Context manager for temporarily moving the cursor
-
-    On construction, specify ``x`` to move to a certain column, ``y`` to move
-    to a certain row, or both.
-
-    """
+    """Context manager for temporarily moving the cursor"""
     def __init__(self, term, x=None, y=None):
         self.x, self.y = x, y
         self.term = term
 
     def __enter__(self):
-        """Save position and move to the requested position."""
+        """Save position and move to the requested column, row, or both."""
         self.term.stream.write(self.term.save)  # save position
         if self.x and self.y:
             self.term.stream.write(self.term.move(self.y, self.x))

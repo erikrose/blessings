@@ -2,6 +2,8 @@ import sys
 
 from setuptools import setup, find_packages
 
+from blessings import __version__
+
 
 extra_setup = {}
 if sys.version_info >= (3,):
@@ -9,7 +11,7 @@ if sys.version_info >= (3,):
 
 setup(
     name='blessings',
-    version='1.1',
+    version='.'.join(str(i) for i in __version__),
     description='A thin, practical wrapper around terminal formatting, positioning, and more',
     long_description=open('README.rst').read(),
     author='Erik Rose',
