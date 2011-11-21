@@ -16,11 +16,17 @@ fit:
   your program exits.
 
 In essence, you want to act like a well-behaved command-line app, not a
-full-screen pseudo-GUI one. Or maybe you just want to get the noise out of your
-code.
+full-screen pseudo-GUI one. Or...
 
-If either of these sounds good, Blessings is for you. Without it, this is how
-you'd print some underlined text at the bottom of the screen::
+* You just want to get the noise out of your code.
+
+If these sound good, Blessings is for you.
+
+Before And After
+----------------
+
+Without Blessings, this is how you'd print some underlined text at the bottom
+of the screen::
 
     from curses import tigetstr, setupterm, tparm
     from fcntl import ioctl
@@ -56,7 +62,7 @@ this time with Blessings::
 
     term = Terminal()
     with term.location(0, term.height):
-        print 'This is {t.underline}underlined{t.no_underline}!'.format(t=term)
+        print 'This is', t.underline('pretty!')
 
 It's short, it's obvious, and it keeps all those nasty ``tigetstr()`` and
 ``tparm()`` calls out of your code. It also acts intelligently when somebody
@@ -75,16 +81,23 @@ Simple Formatting
 -----------------
 
 Lots of handy formatting codes ("capabilities" in low-level parlance) are
-available as attributes on ``Terminal`` instances. For example::
+available as attributes on a ``Terminal``. For example::
 
     from blessings import Terminal
 
     term = Terminal()
     print 'I am ' + term.bold + 'bold' + term.normal + '!'
 
-Or you can use them as wrappers so you don't have to say ``normal`` afterward::
+You can also use them as wrappers so you don't have to say ``normal``
+afterward::
 
     print 'I am', term.bold('bold') + '!'
+
+Or, if you want fine-grained control while maintaining some semblance of
+brevity, you can combine it with Python's string formatting, which makes
+attributes easy to access::
+
+    print 'All your {t.red}base {t.underline}are belong to us{t.normal}'.format(t=term)
 
 Simple capabilities of interest include...
 
