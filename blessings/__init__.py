@@ -80,7 +80,7 @@ class Terminal(object):
 
             # Cache capability codes, because IIRC tigetstr requires a
             # conversation with the terminal. [Now I can't find any evidence of
-            # that.]
+            # that.] At any rate, save redoing the work of _resolve_formatter().
             self._codes = {}
         else:
             self._codes = NullDict(lambda: NullCallableString(''))
@@ -218,11 +218,15 @@ class Terminal(object):
             self)
 
 
+def derivative_colors(colors):
+    """Return the names of valid color variants, given the base colors."""
+    return set([('on_' + c) for c in colors] +
+               [('bright_' + c) for c in colors] +
+               [('on_bright_' + c) for c in colors])
+
+
 COLORS = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'])
-COLORS.update(set([('on_' + c) for c in COLORS] +
-                  [('bright_' + c) for c in COLORS] +
-                  [('on_bright_' + c) for c in COLORS]))
-del c
+COLORS.update(derivative_colors(COLORS))
 COMPOUNDABLES = (COLORS |
                  set(['bold', 'underline', 'reverse', 'blink', 'dim', 'italic',
                       'shadow', 'standout', 'subscript', 'superscript']))

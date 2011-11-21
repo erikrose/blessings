@@ -27,9 +27,11 @@ def doc(kind='html'):
     with cd('docs'):
         local('make clean %s' % kind)
 
+
 def test():
     # Just calling nosetests results in SUPPORTS_TRANSACTIONS KeyErrors.
     local('nosetests')
+
 
 def updoc():
     """Build Sphinx docs and upload them to packages.python.org.
