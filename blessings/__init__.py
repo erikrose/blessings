@@ -2,6 +2,12 @@ from collections import defaultdict
 import curses
 from curses import tigetstr, setupterm, tparm
 from fcntl import ioctl
+try:
+    from io import UnsupportedOperation as IOUnsupportedOperation
+except ImportError:
+    class IOUnsupportedOperation(Exception):
+        """A dummy exception to take the place of Python 3's io.UnsupportedOperation one in Python 2"""
+        pass
 from os import isatty, environ
 import struct
 import sys
@@ -59,9 +65,12 @@ class Terminal(object):
         """
         if stream is None:
             stream = sys.__stdout__
-        stream_descriptor = (stream.fileno() if hasattr(stream, 'fileno')
-                                             and callable(stream.fileno)
-                             else None)
+        try:
+            stream_descriptor = (stream.fileno() if hasattr(stream, 'fileno')
+                                                 and callable(stream.fileno)
+                                 else None)
+        except IOUnsupportedOperation:
+            stream_descriptor = None
         self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
         if self.is_a_tty or force_styling:
             # The desciptor to direct terminal initialization sequences to.
