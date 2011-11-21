@@ -43,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Blessings'
-copyright = u'2011, The Mozilla Foundation'
+copyright = u'2011, Erik Rose'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -181,7 +181,7 @@ htmlhelp_basename = 'blessingsdoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'blessings.tex', u'Blessings Documentation',
-   u'Erik Rose, Paul Craciunoiu, and the support.mozilla.com team', 'manual'),
+   u'Erik Rose', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -213,6 +213,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'Blessings', u'django-tidings Documentation',
+    ('index', 'Blessings', u'Blessings Documentation',
      [u'Erik Rose'], 1)
 ]
