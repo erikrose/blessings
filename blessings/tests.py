@@ -10,6 +10,12 @@ from nose.tools import eq_
 # This tests that __all__ is correct, since we use below everything that should
 # be imported:
 from blessings import *
+from blessings import Capability
+
+
+def bytes_eq(bytes1, bytes2):
+    """Make sure ``bytes1`` equals ``bytes2``, the latter of which gets cast to something bytes-like, depending on Python version."""
+    eq_(bytes1, Capability(bytes2))
 
 
 def test_capability():
@@ -28,13 +34,14 @@ def test_capability():
 def test_capability_without_tty():
     """Assert capability templates are '' when stream is not a tty."""
     t = Terminal(stream=StringIO())
-    eq_(t.save, '')
-    eq_(t.red, '')
+    eq_(t.save, Capability(''))
+    eq_(t.red, Capability(''))
 
 
 def test_capability_with_forced_tty():
+    """If we force styling, capabilities had better not (generally) be empty."""
     t = Terminal(stream=StringIO(), force_styling=True)
-    assert t.save != ''
+    assert len(t.save) > 0
 
 
 def test_parametrization():
@@ -63,7 +70,7 @@ def test_location():
 
     eq_(t.stream.getvalue(), tigetstr('sc') +
                              tparm(tigetstr('cup'), 4, 3) +
-                             'hi' +
+                             'hi' +  # TODO: Encode with Terminal's encoding.
                              tigetstr('rc'))
 
 def test_horizontal_location():
@@ -75,7 +82,7 @@ def test_horizontal_location():
 
 
 def test_null_fileno():
-    """Make sure ``Terinal`` works when ``fileno`` is ``None``.
+    """Make sure ``Terminal`` works when ``fileno`` is ``None``.
 
     This simulates piping output to another program.
 
@@ -83,7 +90,7 @@ def test_null_fileno():
     out = stream=StringIO()
     out.fileno = None
     t = Terminal(stream=out)
-    eq_(t.save, '')
+    bytes_eq(t.save, '')
 
 
 def test_mnemonic_colors():
@@ -91,22 +98,23 @@ def test_mnemonic_colors():
     # Avoid testing red, blue, yellow, and cyan, since they might someday
     # chance depending on terminal type.
     t = Terminal()
-    eq_(t.white, '\x1b[37m')
-    eq_(t.green, '\x1b[32m')  # Make sure it's different than white.
-    eq_(t.on_black, '\x1b[40m')
-    eq_(t.on_green, '\x1b[42m')
-    eq_(t.bright_black, '\x1b[90m')
-    eq_(t.bright_green, '\x1b[92m')
-    eq_(t.on_bright_black, '\x1b[100m')
-    eq_(t.on_bright_green, '\x1b[102m')
+    bytes_eq(t.white, '\x1b[37m')
+    bytes_eq(t.green, '\x1b[32m')  # Make sure it's different than white.
+    bytes_eq(t.on_black, '\x1b[40m')
+    bytes_eq(t.on_green, '\x1b[42m')
+    bytes_eq(t.bright_black, '\x1b[90m')
+    bytes_eq(t.bright_green, '\x1b[92m')
+    bytes_eq(t.on_bright_black, '\x1b[100m')
+    bytes_eq(t.on_bright_green, '\x1b[102m')
 
 
 def test_formatting_functions():
     """Test crazy-ass formatting wrappers, both simple and compound."""
-    t = Terminal()
+    t = Terminal(encoding='utf-8')
     eq_(t.bold('hi'), t.bold + 'hi' + t.normal)
     eq_(t.green('hi'), t.green + 'hi' + t.normal)
-    eq_(t.bold_green(u'boö'), t.bold + t.green + u'boö' + t.normal)  # unicode
+    # Test encoding of unicodes:
+    eq_(t.bold_green(u'boö'), t.bold + t.green + u'boö'.encode('utf-8') + t.normal)
     eq_(t.bold_underline_green_on_red('boo'),
         t.bold + t.underline + t.green + t.on_red + 'boo' + t.normal)
     # Don't spell things like this:
@@ -119,7 +127,8 @@ def test_formatting_functions_without_tty():
     t = Terminal(stream=StringIO())
     eq_(t.bold('hi'), 'hi')
     eq_(t.green('hi'), 'hi')
-    eq_(t.bold_green(u'boö'), u'boö')  # unicode
+    # Test encoding of unicodes:
+    eq_(t.bold_green(u'boö'), u'boö'.encode('utf-8'))  # unicode
     eq_(t.bold_underline_green_on_red('boo'), 'boo')
     eq_(t.on_bright_red_bold_bright_green_underline('meh'), 'meh')
 

@@ -8,10 +8,18 @@ except ImportError:
     class IOUnsupportedOperation(Exception):
         """A dummy exception to take the place of Python 3's io.UnsupportedOperation one in Python 2"""
         pass
+import locale
+import os
 from os import isatty, environ
 import struct
 import sys
 from termios import TIOCGWINSZ
+
+
+try:
+    Capability = bytes
+except NameError:
+    Capability = str  # Python 2.5
 
 
 __all__ = ['Terminal']
@@ -38,7 +46,7 @@ class Terminal(object):
         to decide whether to draw progress bars or other frippery.
 
     """
-    def __init__(self, kind=None, stream=None, force_styling=False):
+    def __init__(self, kind=None, stream=None, encoding=None, force_styling=False):
         """Initialize the terminal.
 
         If ``stream`` is not a tty, I will default to returning '' for all
@@ -51,6 +59,10 @@ class Terminal(object):
             the value of the TERM environment variable.
         :arg stream: A file-like object representing the terminal. Defaults to
             the original value of stdout, like ``curses.initscr()`` does.
+        :arg encoding: The encoding to run any Unicode strings through before
+            they're output to the terminal. Terminals take bitstrings, so we've
+            got to pick something. We'll try a pretty fancy cascade of defaults
+            stolen from the standard ``io`` lib if you don't specify.
         :arg force_styling: Whether to force the emission of capabilities, even
             if we don't seem to be in a terminal. This comes in handy if users
             are trying to pipe your output through something like ``less -r``,
@@ -71,6 +83,10 @@ class Terminal(object):
                                  else None)
         except IOUnsupportedOperation:
             stream_descriptor = None
+
+        self.encoding = (self._guess_encoding(stream_descriptor)
+                         if encoding is None else encoding)
+
         self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
         if self.is_a_tty or force_styling:
             # The desciptor to direct terminal initialization sequences to.
@@ -92,9 +108,28 @@ class Terminal(object):
             # that.] At any rate, save redoing the work of _resolve_formatter().
             self._codes = {}
         else:
-            self._codes = NullDict(lambda: NullCallableString(''))
+            self._codes = NullDict(lambda: NullCap('', self.encoding))
 
         self.stream = stream
+
+    def _guess_encoding(self, stream_descriptor):
+        """Return the guessed encoding of the terminal.
+
+        We adapt the algorithm from io.TextIOWrapper, which is what ``print``
+        natively calls in Python 3.
+
+        """
+        encoding = None
+        try:
+            if stream_descriptor is not None:
+                encoding = os.device_encoding(stream_descriptor)
+        except (AttributeError, IOUnsupportedOperation):
+            pass
+        if encoding is None:
+            # getpreferredencoding returns '' in OS X's "Western (NextStep)"
+            # terminal type.
+            encoding = locale.getpreferredencoding() or 'ascii'
+        return encoding
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
@@ -188,30 +223,30 @@ class Terminal(object):
         return Location(self, x, y)
 
     def _resolve_formatter(self, attr):
-        """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable string."""
+        """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable capability."""
         if attr in COLORS:
             return self._resolve_color(attr)
         elif attr in COMPOUNDABLES:
             # Bold, underline, or something that takes no parameters
-            return FormattingString(self._resolve_capability(attr), self)
+            return FormattingCap(self._resolve_capability(attr), self)
         else:
             formatters = split_into_formatters(attr)
             if all(f in COMPOUNDABLES for f in formatters):
                 # It's a compound formatter, like "bold_green_on_red". Future
                 # optimization: combine all formatting into a single escape
                 # sequence
-                return FormattingString(''.join(self._resolve_formatter(s)
-                                                for s in formatters),
-                                        self)
+                return FormattingCap(''.join(self._resolve_formatter(s)
+                                             for s in formatters),
+                                     self)
             else:
-                return ParametrizingString(self._resolve_capability(attr))
+                return ParametrizingCap(self._resolve_capability(attr))
 
     def _resolve_capability(self, atom):
         """Return a terminal code for a capname or a sugary name, or ''."""
         return tigetstr(self._sugar.get(atom, atom)) or ''
 
     def _resolve_color(self, color):
-        """Resolve a color like red or on_bright_green into a callable string."""
+        """Resolve a color like red or on_bright_green into a callable capability."""
         # TODO: Does curses automatically exchange red and blue and cyan and
         # yellow when a terminal supports setf/setb rather than setaf/setab?
         # I'll be blasted if I can find any documentation. The following
@@ -222,7 +257,7 @@ class Terminal(object):
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
-        return FormattingString(
+        return FormattingCap(
             color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset),
             self)
 
@@ -241,8 +276,8 @@ COMPOUNDABLES = (COLORS |
                       'shadow', 'standout', 'subscript', 'superscript']))
 
 
-class ParametrizingString(str):
-    """A string which can be called to parametrize it as a terminal capability"""
+class ParametrizingCap(Capability):
+    """A bytestring which can be called to parametrize it as a terminal capability"""
     def __call__(self, *args):
         try:
             return tparm(self, *args)
@@ -251,7 +286,7 @@ class ParametrizingString(str):
             # running simply `nosetests` (without progressive) on nose-
             # progressive. Perhaps the terminal has gone away between calling
             # tigetstr and calling tparm.
-            return ''
+            return Capability()
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -266,11 +301,11 @@ class ParametrizingString(str):
                 raise
 
 
-class FormattingString(str):
-    """A string which can be called upon a piece of text to wrap it in formatting"""
+class FormattingCap(Capability):
+    """A bytestring which can be called upon a piece of text to wrap it in formatting"""
     def __new__(cls, formatting, term):
-        new = str.__new__(cls, formatting)
-        new._term = term
+        new = Capability.__new__(cls, formatting)
+        new._term = term  # TODO: Kill cycle.
         return new
 
     def __call__(self, text):
@@ -283,15 +318,31 @@ class FormattingString(str):
         This should work regardless of whether ``text`` is unicode.
 
         """
+        if isinstance(text, unicode):
+            text = text.encode(self._term.encoding)
         return self + text + self._term.normal
 
 
-class NullCallableString(str):
-    """A callable string that returns '' when called with an int and the arg otherwise."""
+class NullCap(Capability):
+    """A dummy class to stand in for ``FormattingCap`` and ``ParametrizingCap``
+
+    A callable bytestring that returns ``''`` when called with an int and the
+    arg otherwise. We use this when tehre is no tty and so all capabilities are
+    blank.
+
+    """
+    def __new__(cls, cap, encoding):
+        new = Capability.__new__(cls, cap)
+        new._encoding = encoding
+        return new
+
     def __call__(self, arg):
         if isinstance(arg, int):
-            return ''
-        return arg
+            return Capability()
+        elif isinstance(arg, unicode):
+            return arg.encode(self._encoding)
+        else:
+            return arg
 
 
 class NullDict(defaultdict):
