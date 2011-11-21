@@ -130,14 +130,14 @@ def test_nice_formatting_errors():
     try:
         t.bold_misspelled('hey')
     except TypeError, e:
-        assert 'probably misspelled' in e[0]
+        assert 'probably misspelled' in e.args[0]
 
     try:
         t.bold_misspelled(None)  # an arbitrary non-string
     except TypeError, e:
-        assert 'probably misspelled' not in e[0]
+        assert 'probably misspelled' not in e.args[0]
 
     try:
         t.bold_misspelled('a', 'b')  # >1 string arg
     except TypeError, e:
-        assert 'probably misspelled' not in e[0]
+        assert 'probably misspelled' not in e.args[0]
