@@ -108,7 +108,7 @@ class Terminal(object):
             # that.] At any rate, save redoing the work of _resolve_formatter().
             self._codes = {}
         else:
-            self._codes = NullDict(lambda: NullCap('', self.encoding))
+            self._codes = NullDict(lambda: NullCap(self.encoding))
 
         self.stream = stream
 
@@ -234,16 +234,16 @@ class Terminal(object):
             if all(f in COMPOUNDABLES for f in formatters):
                 # It's a compound formatter, like "bold_green_on_red". Future
                 # optimization: combine all formatting into a single escape
-                # sequence
-                return FormattingCap(''.join(self._resolve_formatter(s)
-                                             for s in formatters),
-                                     self)
+                # sequence.
+                return FormattingCap(
+                    Capability().join(self._resolve_formatter(s) for s in formatters),
+                    self)
             else:
                 return ParametrizingCap(self._resolve_capability(attr))
 
     def _resolve_capability(self, atom):
         """Return a terminal code for a capname or a sugary name, or ''."""
-        return tigetstr(self._sugar.get(atom, atom)) or ''
+        return tigetstr(self._sugar.get(atom, atom)) or Capability()
 
     def _resolve_color(self, color):
         """Resolve a color like red or on_bright_green into a callable capability."""
@@ -327,12 +327,12 @@ class NullCap(Capability):
     """A dummy class to stand in for ``FormattingCap`` and ``ParametrizingCap``
 
     A callable bytestring that returns ``''`` when called with an int and the
-    arg otherwise. We use this when tehre is no tty and so all capabilities are
+    arg otherwise. We use this when there is no tty and so all capabilities are
     blank.
 
     """
-    def __new__(cls, cap, encoding):
-        new = Capability.__new__(cls, cap)
+    def __new__(cls, encoding):
+        new = Capability.__new__(cls, Capability())
         new._encoding = encoding
         return new
 
