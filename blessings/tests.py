@@ -123,7 +123,7 @@ def test_formatting_functions():
     eq_(t.bold('hi'), t.bold + 'hi'.encode('utf-8') + t.normal)
     eq_(t.green('hi'), t.green + 'hi'.encode('utf-8') + t.normal)
     # Test encoding of unicodes:
-    eq_(t.bold_green('boö'), t.bold + t.green + 'boö'.encode('utf-8') + t.normal)
+    eq_(t.bold_green(u'boö'), t.bold + t.green + u'boö'.encode('utf-8') + t.normal)
     eq_(t.bold_underline_green_on_red('boo'),
         t.bold + t.underline + t.green + t.on_red + 'boo'.encode('utf-8') + t.normal)
     # Don't spell things like this:
@@ -137,7 +137,7 @@ def test_formatting_functions_without_tty():
     eq_(t.bold('hi'), 'hi'.encode('utf-8'))
     eq_(t.green('hi'), 'hi'.encode('utf-8'))
     # Test encoding of unicodes:
-    eq_(t.bold_green('boö'), 'boö'.encode('utf-8'))  # unicode
+    eq_(t.bold_green(u'boö'), u'boö'.encode('utf-8'))  # unicode
     eq_(t.bold_underline_green_on_red('boo'), 'boo'.encode('utf-8'))
     eq_(t.on_bright_red_bold_bright_green_underline('meh'), 'meh'.encode('utf-8'))
 
