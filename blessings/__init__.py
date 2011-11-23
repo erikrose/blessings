@@ -95,7 +95,7 @@ class Terminal(object):
             # that.] At any rate, save redoing the work of _resolve_formatter().
             self._codes = {}
         else:
-            self._codes = NullDict(lambda: NullCap())
+            self._codes = NullDict(lambda: NullCallableString())
 
         self.stream = stream
 
@@ -198,18 +198,18 @@ class Terminal(object):
             return self._resolve_color(attr)
         elif attr in COMPOUNDABLES:
             # Bold, underline, or something that takes no parameters
-            return FormattingCap(self._resolve_capability(attr), self)
+            return FormattingString(self._resolve_capability(attr), self)
         else:
             formatters = split_into_formatters(attr)
             if all(f in COMPOUNDABLES for f in formatters):
                 # It's a compound formatter, like "bold_green_on_red". Future
                 # optimization: combine all formatting into a single escape
                 # sequence.
-                return FormattingCap(
+                return FormattingString(
                     u''.join(self._resolve_formatter(s) for s in formatters),
                     self)
             else:
-                return ParametrizingCap(self._resolve_capability(attr))
+                return ParametrizingString(self._resolve_capability(attr))
 
     def _resolve_capability(self, atom):
         """Return a terminal code for a capname or a sugary name, or u''.
@@ -238,7 +238,7 @@ class Terminal(object):
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
-        return FormattingCap(
+        return FormattingString(
             color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset),
             self)
 
@@ -257,7 +257,7 @@ COMPOUNDABLES = (COLORS |
                       'shadow', 'standout', 'subscript', 'superscript']))
 
 
-class ParametrizingCap(unicode):
+class ParametrizingString(unicode):
     """A Unicode string which can be called to parametrize it as a terminal capability"""
     def __call__(self, *args):
         try:
@@ -285,7 +285,7 @@ class ParametrizingCap(unicode):
                 raise
 
 
-class FormattingCap(unicode):
+class FormattingString(unicode):
     """A Unicode string which can be called upon a piece of text to wrap it in formatting"""
     def __new__(cls, formatting, term):
         new = unicode.__new__(cls, formatting)
@@ -297,14 +297,14 @@ class FormattingCap(unicode):
 
         At the beginning of the string, I prepend the formatting that is my
         contents. At the end, I append the "normal" sequence to set everything
-        back to defaults.
+        back to defaults. The return value is always a Unicode.
 
         """
         return self + text + self._term.normal
 
 
-class NullCap(unicode):
-    """A dummy class to stand in for ``FormattingCap`` and ``ParametrizingCap``
+class NullCallableString(unicode):
+    """A dummy class to stand in for ``FormattingString`` and ``ParametrizingString``
 
     A callable bytestring that returns an empty Unicode when called with an int
     and the arg otherwise. We use this when there is no tty and so all
@@ -318,7 +318,7 @@ class NullCap(unicode):
     def __call__(self, arg):
         if isinstance(arg, int):
             return u''
-        return arg  # TODO: Force even strs in Python 2.x to be unicodes?
+        return arg  # TODO: Force even strs in Python 2.x to be unicodes? Nah. How would I know what encoding to use to convert it?
 
 
 class NullDict(defaultdict):
