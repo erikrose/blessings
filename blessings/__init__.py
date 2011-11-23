@@ -16,12 +16,6 @@ import sys
 from termios import TIOCGWINSZ
 
 
-try:
-    Capability = bytes
-except NameError:
-    Capability = str  # Python 2.5
-
-
 __all__ = ['Terminal']
 __version__ = (1, 1)
 
@@ -46,23 +40,19 @@ class Terminal(object):
         to decide whether to draw progress bars or other frippery.
 
     """
-    def __init__(self, kind=None, stream=None, encoding=None, force_styling=False):
+    def __init__(self, kind=None, stream=None, force_styling=False):
         """Initialize the terminal.
 
-        If ``stream`` is not a tty, I will default to returning '' for all
+        If ``stream`` is not a tty, I will default to returning ``u''`` for all
         capability values, so things like piping your output to a file won't
         strew escape sequences all over the place. The ``ls`` command sets a
         precedent for this: it defaults to columnar output when being sent to a
         tty and one-item-per-line when not.
 
         :arg kind: A terminal string as taken by ``setupterm()``. Defaults to
-            the value of the TERM environment variable.
+            the value of the ``TERM`` environment variable.
         :arg stream: A file-like object representing the terminal. Defaults to
             the original value of stdout, like ``curses.initscr()`` does.
-        :arg encoding: The encoding to run any Unicode strings through before
-            they're output to the terminal. Terminals take bitstrings, so we've
-            got to pick something. We'll try a pretty fancy cascade of defaults
-            stolen from the standard ``io`` lib if you don't specify.
         :arg force_styling: Whether to force the emission of capabilities, even
             if we don't seem to be in a terminal. This comes in handy if users
             are trying to pipe your output through something like ``less -r``,
@@ -83,9 +73,6 @@ class Terminal(object):
                                  else None)
         except IOUnsupportedOperation:
             stream_descriptor = None
-
-        self.encoding = (self._guess_encoding(stream_descriptor)
-                         if encoding is None else encoding)
 
         self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
         if self.is_a_tty or force_styling:
@@ -108,28 +95,9 @@ class Terminal(object):
             # that.] At any rate, save redoing the work of _resolve_formatter().
             self._codes = {}
         else:
-            self._codes = NullDict(lambda: NullCap(self.encoding))
+            self._codes = NullDict(lambda: NullCap())
 
         self.stream = stream
-
-    def _guess_encoding(self, stream_descriptor):
-        """Return the guessed encoding of the terminal.
-
-        We adapt the algorithm from io.TextIOWrapper, which is what ``print``
-        natively calls in Python 3.
-
-        """
-        encoding = None
-        try:
-            if stream_descriptor is not None:
-                encoding = os.device_encoding(stream_descriptor)
-        except (AttributeError, IOUnsupportedOperation):
-            pass
-        if encoding is None:
-            # getpreferredencoding returns '' in OS X's "Western (NextStep)"
-            # terminal type.
-            encoding = locale.getpreferredencoding() or 'ascii'
-        return encoding
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
@@ -187,6 +155,8 @@ class Terminal(object):
 
         ``man terminfo`` for a complete list of capabilities.
 
+        Return values are always Unicode.
+
         """
         if attr not in self._codes:
             # Store sugary names under the sugary keys to save a hash lookup.
@@ -236,14 +206,25 @@ class Terminal(object):
                 # optimization: combine all formatting into a single escape
                 # sequence.
                 return FormattingCap(
-                    Capability().join(self._resolve_formatter(s) for s in formatters),
+                    u''.join(self._resolve_formatter(s) for s in formatters),
                     self)
             else:
                 return ParametrizingCap(self._resolve_capability(attr))
 
     def _resolve_capability(self, atom):
-        """Return a terminal code for a capname or a sugary name, or ''."""
-        return tigetstr(self._sugar.get(atom, atom)) or Capability()
+        """Return a terminal code for a capname or a sugary name, or u''.
+
+        The return value is always Unicode, because otherwise it is clumsy
+        (especially in Python 3) to concatenate with real (Unicode) strings.
+
+        """
+        code = tigetstr(self._sugar.get(atom, atom))
+        if code:
+            # We can encode escape sequences as UTF-8 because they never
+            # contain chars > 127, and UTF-8 never changes anything within that
+            # range..
+            return code.decode('utf-8')
+        return u''
 
     def _resolve_color(self, color):
         """Resolve a color like red or on_bright_green into a callable capability."""
@@ -276,17 +257,20 @@ COMPOUNDABLES = (COLORS |
                       'shadow', 'standout', 'subscript', 'superscript']))
 
 
-class ParametrizingCap(Capability):
-    """A bytestring which can be called to parametrize it as a terminal capability"""
+class ParametrizingCap(unicode):
+    """A Unicode string which can be called to parametrize it as a terminal capability"""
     def __call__(self, *args):
         try:
-            return tparm(self, *args)
+            # Re-encode the cap, because tparm() takes a bytestring in Python
+            # 3. However, appear to be a plain Unicode string otherwise so
+            # concats work.
+            return tparm(self.encode('utf-8'), *args).decode('utf-8')
         except curses.error:
             # Catch "must call (at least) setupterm() first" errors, as when
             # running simply `nosetests` (without progressive) on nose-
             # progressive. Perhaps the terminal has gone away between calling
             # tigetstr and calling tparm.
-            return Capability()
+            return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -301,10 +285,10 @@ class ParametrizingCap(Capability):
                 raise
 
 
-class FormattingCap(Capability):
-    """A bytestring which can be called upon a piece of text to wrap it in formatting"""
+class FormattingCap(unicode):
+    """A Unicode string which can be called upon a piece of text to wrap it in formatting"""
     def __new__(cls, formatting, term):
-        new = Capability.__new__(cls, formatting)
+        new = unicode.__new__(cls, formatting)
         new._term = term  # TODO: Kill cycle.
         return new
 
@@ -315,34 +299,26 @@ class FormattingCap(Capability):
         contents. At the end, I append the "normal" sequence to set everything
         back to defaults.
 
-        This should work regardless of whether ``text`` is unicode.
-
         """
-        if isinstance(text, unicode):
-            text = text.encode(self._term.encoding)
         return self + text + self._term.normal
 
 
-class NullCap(Capability):
+class NullCap(unicode):
     """A dummy class to stand in for ``FormattingCap`` and ``ParametrizingCap``
 
-    A callable bytestring that returns ``''`` when called with an int and the
-    arg otherwise. We use this when there is no tty and so all capabilities are
-    blank.
+    A callable bytestring that returns an empty Unicode when called with an int
+    and the arg otherwise. We use this when there is no tty and so all
+    capabilities are blank.
 
     """
-    def __new__(cls, encoding):
-        new = Capability.__new__(cls, Capability())
-        new._encoding = encoding
+    def __new__(cls, dummy):
+        new = unicode.__new__(cls, u'')
         return new
 
     def __call__(self, arg):
         if isinstance(arg, int):
-            return Capability()
-        elif isinstance(arg, unicode):
-            return arg.encode(self._encoding)
-        else:
-            return arg
+            return u''
+        return arg  # TODO: Force even strs in Python 2.x to be unicodes?
 
 
 class NullDict(defaultdict):
