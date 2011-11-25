@@ -50,7 +50,7 @@ copyright = u'2011, The Mozilla Foundation'
 # built documents.
 #
 # The short X.Y version.
-version = '.'.join(str(i) for i in blessings.__version__)
+version = '1.2'
 # The full version, including alpha/beta/rc tags.
 release = version
 

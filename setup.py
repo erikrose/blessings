@@ -2,8 +2,6 @@ import sys
 
 from setuptools import setup, find_packages
 
-from blessings import __version__
-
 
 extra_setup = {}
 if sys.version_info >= (3,):
@@ -11,7 +9,7 @@ if sys.version_info >= (3,):
 
 setup(
     name='blessings',
-    version='.'.join(str(i) for i in __version__),
+    version='1.2',
     description='A thin, practical wrapper around terminal formatting, positioning, and more',
     long_description=open('README.rst').read(),
     author='Erik Rose',
@@ -37,6 +35,6 @@ setup(
         'Topic :: Software Development :: User Interfaces',
         'Topic :: Terminals'
         ],
-    keywords=['terminal', 'tty', 'curses', 'formatting', 'color', 'console'],
+    keywords=['terminal', 'tty', 'curses', 'ncurses', 'formatting', 'color', 'console'],
     **extra_setup
 )

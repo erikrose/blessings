@@ -6,9 +6,8 @@ try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
     class IOUnsupportedOperation(Exception):
-        """A dummy exception to take the place of Python 3's io.UnsupportedOperation one in Python 2"""
+        """A dummy exception to take the place of Python 3's ``io.UnsupportedOperation`` in Python 2"""
         pass
-import locale
 import os
 from os import isatty, environ
 import struct
@@ -17,7 +16,6 @@ from termios import TIOCGWINSZ
 
 
 __all__ = ['Terminal']
-__version__ = (1, 1)
 
 
 class Terminal(object):
