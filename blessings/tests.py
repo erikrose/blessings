@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
+"""Automated tests (as opposed to human-verified test patterns)
 
+It was tempting to mock out curses to get predictable output from ``tigetstr``,
+but there are concrete integration-testing benefits in not doing so. For
+instance, ``tigetstr`` changed its return type in Python 3.2.3. So instead, we
+simply create all our test ``Terminal`` instances with a known terminal type.
+All we require from the host machine is that a standard terminfo definition of
+xterm-256color exists.
+
+"""
 from __future__ import with_statement  # Make 2.5-compatible
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
 from curses import tigetstr, tparm
+from functools import partial
+from StringIO import StringIO
 import sys
 
 from nose.tools import eq_
@@ -13,12 +20,19 @@ from nose.tools import eq_
 # This tests that __all__ is correct, since we use below everything that should
 # be imported:
 from blessings import *
-from blessings import Capability
 
 
-def bytes_eq(bytes1, bytes2):
-    """Make sure ``bytes1`` equals ``bytes2``, the latter of which gets cast to something bytes-like, depending on Python version."""
-    eq_(bytes1, Capability(bytes2))
+TestTerminal = partial(Terminal, kind='xterm-256color')
+
+
+def unicode_cap(cap):
+    """Return the result of ``tigetstr`` except as Unicode."""
+    return tigetstr(cap).decode('utf-8')
+
+
+def unicode_parm(cap, *parms):
+    """Return the result of ``tparm(tigetstr())`` except as Unicode."""
+    return tparm(tigetstr(cap), *parms).decode('utf-8')
 
 
 def test_capability():
@@ -28,33 +42,33 @@ def test_capability():
     assumes it will be run from a tty.
 
     """
-    t = Terminal()
-    sc = tigetstr('sc')
+    t = TestTerminal()
+    sc = unicode_cap('sc')
     eq_(t.save, sc)
     eq_(t.save, sc)  # Make sure caching doesn't screw it up.
 
 
 def test_capability_without_tty():
     """Assert capability templates are '' when stream is not a tty."""
-    t = Terminal(stream=BytesIO())
-    eq_(t.save, Capability(''.encode('utf-8')))
-    eq_(t.red, Capability(''.encode('utf-8')))
+    t = TestTerminal(stream=StringIO())
+    eq_(t.save, u'')
+    eq_(t.red, u'')
 
 
 def test_capability_with_forced_tty():
     """If we force styling, capabilities had better not (generally) be empty."""
-    t = Terminal(stream=BytesIO(), force_styling=True)
-    assert len(t.save) > 0
+    t = TestTerminal(stream=StringIO(), force_styling=True)
+    eq_(t.save, unicode_cap('sc'))
 
 
 def test_parametrization():
     """Test parametrizing a capability."""
-    eq_(Terminal().cup(3, 4), tparm(tigetstr('cup'), 3, 4))
+    eq_(TestTerminal().cup(3, 4), unicode_parm('cup', 3, 4))
 
 
 def height_and_width():
     """Assert that ``height_and_width()`` returns ints."""
-    t = Terminal()
+    t = TestTerminal()  # kind shouldn't matter.
     assert isinstance(int, t.height)
     assert isinstance(int, t.width)
 
@@ -66,22 +80,25 @@ def test_stream_attr():
 
 def test_location():
     """Make sure ``location()`` does what it claims."""
-    t = Terminal(stream=BytesIO(), force_styling=True)
+    t = TestTerminal(stream=StringIO(), force_styling=True)
 
     with t.location(3, 4):
-        t.stream.write('hi'.encode(t.encoding))
+        t.stream.write(u'hi')
 
-    eq_(t.stream.getvalue(), tigetstr('sc') +
-                             tparm(tigetstr('cup'), 4, 3) +
-                             'hi'.encode(t.encoding) +
-                             tigetstr('rc'))
+    eq_(t.stream.getvalue(), unicode_cap('sc') +
+                             unicode_parm('cup', 4, 3) +
+                             u'hi' +
+                             unicode_cap('rc'))
+
 
 def test_horizontal_location():
     """Make sure we can move the cursor horizontally without changing rows."""
-    t = Terminal(stream=BytesIO(), force_styling=True)
+    t = TestTerminal(stream=StringIO(), force_styling=True)
     with t.location(x=5):
         pass
-    eq_(t.stream.getvalue(), t.save + tparm(tigetstr('hpa'), 5) + t.restore)
+    eq_(t.stream.getvalue(), unicode_cap('sc') +
+                             unicode_parm('hpa', 5) +
+                             unicode_cap('rc'))
 
 
 def test_null_fileno():
@@ -90,63 +107,69 @@ def test_null_fileno():
     This simulates piping output to another program.
 
     """
-    out = stream=BytesIO()
+    out = StringIO()
     out.fileno = None
-    t = Terminal(stream=out)
-    eq_(t.save, ''.encode('utf-8'))
+    t = TestTerminal(stream=out)
+    eq_(t.save, u'')
 
 
 def test_mnemonic_colors():
     """Make sure color shortcuts work."""
     def color(num):
-        return tparm(tigetstr('setaf'), num)
+        return unicode_parm('setaf', num)
 
     def on_color(num):
-        return tparm(tigetstr('setab'), num)
+        return unicode_parm('setab', num)
 
     # Avoid testing red, blue, yellow, and cyan, since they might someday
-    # chance depending on terminal type.
-    t = Terminal()
+    # change depending on terminal type.
+    t = TestTerminal()
     eq_(t.white, color(7))
-    bytes_eq(t.green, color(2))  # Make sure it's different than white.
-    bytes_eq(t.on_black, on_color(0))
-    bytes_eq(t.on_green, on_color(2))
-    bytes_eq(t.bright_black, color(8))
-    bytes_eq(t.bright_green, color(10))
-    bytes_eq(t.on_bright_black, on_color(8))
-    bytes_eq(t.on_bright_green, on_color(10))
+    eq_(t.green, color(2))  # Make sure it's different than white.
+    eq_(t.on_black, on_color(0))
+    eq_(t.on_green, on_color(2))
+    eq_(t.bright_black, color(8))
+    eq_(t.bright_green, color(10))
+    eq_(t.on_bright_black, on_color(8))
+    eq_(t.on_bright_green, on_color(10))
 
 
 def test_formatting_functions():
     """Test crazy-ass formatting wrappers, both simple and compound."""
-    t = Terminal(encoding='utf-8')
-    eq_(t.bold('hi'), t.bold + 'hi'.encode('utf-8') + t.normal)
-    eq_(t.green('hi'), t.green + 'hi'.encode('utf-8') + t.normal)
-    # Test encoding of unicodes:
-    eq_(t.bold_green(u'boö'), t.bold + t.green + u'boö'.encode('utf-8') + t.normal)
+    t = TestTerminal()
+    # By now, it should be safe to use sugared attributes. Other tests test those.
+    eq_(t.bold(u'hi'), t.bold + u'hi' + t.normal)
+    eq_(t.green('hi'), t.green + u'hi' + t.normal)  # Plain strs for Python 2.x
+    # Test some non-ASCII chars, probably not necessary:
+    eq_(t.bold_green(u'boö'), t.bold + t.green + u'boö' + t.normal)
     eq_(t.bold_underline_green_on_red('boo'),
-        t.bold + t.underline + t.green + t.on_red + 'boo'.encode('utf-8') + t.normal)
+        t.bold + t.underline + t.green + t.on_red + u'boo' + t.normal)
     # Don't spell things like this:
     eq_(t.on_bright_red_bold_bright_green_underline('meh'),
-        t.on_bright_red + t.bold + t.bright_green + t.underline + 'meh'.encode('utf-8') + t.normal)
+        t.on_bright_red + t.bold + t.bright_green + t.underline + u'meh' + t.normal)
 
 
 def test_formatting_functions_without_tty():
     """Test crazy-ass formatting wrappers when there's no tty."""
-    t = Terminal(stream=BytesIO())
-    eq_(t.bold('hi'), 'hi'.encode('utf-8'))
-    eq_(t.green('hi'), 'hi'.encode('utf-8'))
-    # Test encoding of unicodes:
-    eq_(t.bold_green(u'boö'), u'boö'.encode('utf-8'))  # unicode
-    eq_(t.bold_underline_green_on_red('boo'), 'boo'.encode('utf-8'))
-    eq_(t.on_bright_red_bold_bright_green_underline('meh'), 'meh'.encode('utf-8'))
+    t = TestTerminal(stream=StringIO())
+    eq_(t.bold(u'hi'), u'hi')
+    eq_(t.green('hi'), u'hi')
+    # Test non-ASCII chars, no longer really necessary:
+    eq_(t.bold_green(u'boö'), u'boö')
+    eq_(t.bold_underline_green_on_red('loo'), u'loo')
+    eq_(t.on_bright_red_bold_bright_green_underline('meh'), u'meh')
 
 
 def test_nice_formatting_errors():
     """Make sure you get nice hints if you misspell a formatting wrapper."""
-    t = Terminal()
+    t = TestTerminal()
     try:
         t.bold_misspelled('hey')
+    except TypeError, e:
+        assert 'probably misspelled' in e.args[0]
+
+    try:
+        t.bold_misspelled(u'hey')  # unicode
     except TypeError, e:
         assert 'probably misspelled' in e.args[0]
 

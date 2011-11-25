@@ -311,7 +311,7 @@ class NullCallableString(unicode):
     capabilities are blank.
 
     """
-    def __new__(cls, dummy):
+    def __new__(cls):
         new = unicode.__new__(cls, u'')
         return new
 
