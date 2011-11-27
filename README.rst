@@ -325,6 +325,11 @@ Bugs or suggestions? Visit the `issue tracker`_.
 Version History
 ===============
 
+1.2
+  * Support for Python 3! We need 3.2.3 or greater, because the curses library
+    couldn't decide whether to accept strs or bytes before that
+    (http://bugs.python.org/issue10570).
+
 1.1
   * Added nicely named attributes for colors.
   * Introduced compound formatting.

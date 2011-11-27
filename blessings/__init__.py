@@ -2,14 +2,26 @@ from collections import defaultdict
 import curses
 from curses import tigetstr, setupterm, tparm
 from fcntl import ioctl
+try:
+    from io import UnsupportedOperation as IOUnsupportedOperation
+except ImportError:
+    class IOUnsupportedOperation(Exception):
+        """A dummy exception to take the place of Python 3's ``io.UnsupportedOperation`` in Python 2"""
+        pass
+import os
 from os import isatty, environ
+from platform import python_version_tuple
 import struct
 import sys
 from termios import TIOCGWINSZ
 
 
+if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till 3.2.10
+    # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
+    raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 support due to http://bugs.python.org/issue10570.')
+
+
 __all__ = ['Terminal']
-__version__ = (1, 1)
 
 
 class Terminal(object):
@@ -35,14 +47,14 @@ class Terminal(object):
     def __init__(self, kind=None, stream=None, force_styling=False):
         """Initialize the terminal.
 
-        If ``stream`` is not a tty, I will default to returning '' for all
+        If ``stream`` is not a tty, I will default to returning ``u''`` for all
         capability values, so things like piping your output to a file won't
         strew escape sequences all over the place. The ``ls`` command sets a
         precedent for this: it defaults to columnar output when being sent to a
         tty and one-item-per-line when not.
 
         :arg kind: A terminal string as taken by ``setupterm()``. Defaults to
-            the value of the TERM environment variable.
+            the value of the ``TERM`` environment variable.
         :arg stream: A file-like object representing the terminal. Defaults to
             the original value of stdout, like ``curses.initscr()`` does.
         :arg force_styling: Whether to force the emission of capabilities, even
@@ -59,9 +71,13 @@ class Terminal(object):
         """
         if stream is None:
             stream = sys.__stdout__
-        stream_descriptor = (stream.fileno() if hasattr(stream, 'fileno')
-                                             and callable(stream.fileno)
-                             else None)
+        try:
+            stream_descriptor = (stream.fileno() if hasattr(stream, 'fileno')
+                                                 and callable(stream.fileno)
+                                 else None)
+        except IOUnsupportedOperation:
+            stream_descriptor = None
+
         self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
         if self.is_a_tty or force_styling:
             # The desciptor to direct terminal initialization sequences to.
@@ -80,10 +96,10 @@ class Terminal(object):
 
             # Cache capability codes, because IIRC tigetstr requires a
             # conversation with the terminal. [Now I can't find any evidence of
-            # that.]
+            # that.] At any rate, save redoing the work of _resolve_formatter().
             self._codes = {}
         else:
-            self._codes = NullDict(lambda: NullCallableString(''))
+            self._codes = NullDict(lambda: NullCallableString())
 
         self.stream = stream
 
@@ -143,6 +159,8 @@ class Terminal(object):
 
         ``man terminfo`` for a complete list of capabilities.
 
+        Return values are always Unicode.
+
         """
         if attr not in self._codes:
             # Store sugary names under the sugary keys to save a hash lookup.
@@ -179,7 +197,7 @@ class Terminal(object):
         return Location(self, x, y)
 
     def _resolve_formatter(self, attr):
-        """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable string."""
+        """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable capability."""
         if attr in COLORS:
             return self._resolve_color(attr)
         elif attr in COMPOUNDABLES:
@@ -190,19 +208,30 @@ class Terminal(object):
             if all(f in COMPOUNDABLES for f in formatters):
                 # It's a compound formatter, like "bold_green_on_red". Future
                 # optimization: combine all formatting into a single escape
-                # sequence
-                return FormattingString(''.join(self._resolve_formatter(s)
-                                                for s in formatters),
-                                        self)
+                # sequence.
+                return FormattingString(
+                    u''.join(self._resolve_formatter(s) for s in formatters),
+                    self)
             else:
                 return ParametrizingString(self._resolve_capability(attr))
 
     def _resolve_capability(self, atom):
-        """Return a terminal code for a capname or a sugary name, or ''."""
-        return tigetstr(self._sugar.get(atom, atom)) or ''
+        """Return a terminal code for a capname or a sugary name, or u''.
+
+        The return value is always Unicode, because otherwise it is clumsy
+        (especially in Python 3) to concatenate with real (Unicode) strings.
+
+        """
+        code = tigetstr(self._sugar.get(atom, atom))
+        if code:
+            # We can encode escape sequences as UTF-8 because they never
+            # contain chars > 127, and UTF-8 never changes anything within that
+            # range..
+            return code.decode('utf-8')
+        return u''
 
     def _resolve_color(self, color):
-        """Resolve a color like red or on_bright_green into a callable string."""
+        """Resolve a color like red or on_bright_green into a callable capability."""
         # TODO: Does curses automatically exchange red and blue and cyan and
         # yellow when a terminal supports setf/setb rather than setaf/setab?
         # I'll be blasted if I can find any documentation. The following
@@ -218,27 +247,34 @@ class Terminal(object):
             self)
 
 
+def derivative_colors(colors):
+    """Return the names of valid color variants, given the base colors."""
+    return set([('on_' + c) for c in colors] +
+               [('bright_' + c) for c in colors] +
+               [('on_bright_' + c) for c in colors])
+
+
 COLORS = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'])
-COLORS.update(set([('on_' + c) for c in COLORS] +
-                  [('bright_' + c) for c in COLORS] +
-                  [('on_bright_' + c) for c in COLORS]))
-del c
+COLORS.update(derivative_colors(COLORS))
 COMPOUNDABLES = (COLORS |
                  set(['bold', 'underline', 'reverse', 'blink', 'dim', 'italic',
                       'shadow', 'standout', 'subscript', 'superscript']))
 
 
-class ParametrizingString(str):
-    """A string which can be called to parametrize it as a terminal capability"""
+class ParametrizingString(unicode):
+    """A Unicode string which can be called to parametrize it as a terminal capability"""
     def __call__(self, *args):
         try:
-            return tparm(self, *args)
+            # Re-encode the cap, because tparm() takes a bytestring in Python
+            # 3. However, appear to be a plain Unicode string otherwise so
+            # concats work.
+            return tparm(self.encode('utf-8'), *args).decode('utf-8')
         except curses.error:
             # Catch "must call (at least) setupterm() first" errors, as when
             # running simply `nosetests` (without progressive) on nose-
             # progressive. Perhaps the terminal has gone away between calling
             # tigetstr and calling tparm.
-            return ''
+            return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -253,11 +289,11 @@ class ParametrizingString(str):
                 raise
 
 
-class FormattingString(str):
-    """A string which can be called upon a piece of text to wrap it in formatting"""
+class FormattingString(unicode):
+    """A Unicode string which can be called upon a piece of text to wrap it in formatting"""
     def __new__(cls, formatting, term):
-        new = str.__new__(cls, formatting)
-        new._term = term
+        new = unicode.__new__(cls, formatting)
+        new._term = term  # TODO: Kill cycle.
         return new
 
     def __call__(self, text):
@@ -265,20 +301,28 @@ class FormattingString(str):
 
         At the beginning of the string, I prepend the formatting that is my
         contents. At the end, I append the "normal" sequence to set everything
-        back to defaults.
-
-        This should work regardless of whether ``text`` is unicode.
+        back to defaults. The return value is always a Unicode.
 
         """
         return self + text + self._term.normal
 
 
-class NullCallableString(str):
-    """A callable string that returns '' when called with an int and the arg otherwise."""
+class NullCallableString(unicode):
+    """A dummy class to stand in for ``FormattingString`` and ``ParametrizingString``
+
+    A callable bytestring that returns an empty Unicode when called with an int
+    and the arg otherwise. We use this when there is no tty and so all
+    capabilities are blank.
+
+    """
+    def __new__(cls):
+        new = unicode.__new__(cls, u'')
+        return new
+
     def __call__(self, arg):
         if isinstance(arg, int):
-            return ''
-        return arg
+            return u''
+        return arg  # TODO: Force even strs in Python 2.x to be unicodes? Nah. How would I know what encoding to use to convert it?
 
 
 class NullDict(defaultdict):
