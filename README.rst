@@ -322,13 +322,20 @@ Bugs or suggestions? Visit the `issue tracker`_.
 
 .. _`issue tracker`: https://github.com/erikrose/blessings/issues/new
 
+License
+=======
+
+Blessings is under the MIT License. See the LICENSE file.
+
 Version History
 ===============
 
 1.2
-  * Support for Python 3! We need 3.2.3 or greater, because the curses library
-    couldn't decide whether to accept strs or bytes before that
+  * Added support for Python 3! We need 3.2.3 or greater, because the curses
+    library couldn't decide whether to accept strs or bytes before that
     (http://bugs.python.org/issue10570).
+  * Relicensed under the MIT License.
+  * Added Sphinx docs.
 
 1.1
   * Added nicely named attributes for colors.
