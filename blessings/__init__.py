@@ -47,11 +47,11 @@ class Terminal(object):
     def __init__(self, kind=None, stream=None, force_styling=False):
         """Initialize the terminal.
 
-        If ``stream`` is not a tty, I will default to returning ``u''`` for all
-        capability values, so things like piping your output to a file won't
-        strew escape sequences all over the place. The ``ls`` command sets a
-        precedent for this: it defaults to columnar output when being sent to a
-        tty and one-item-per-line when not.
+        If ``stream`` is not a tty, I will default to returning an empty
+        Unicode string for all capability values, so things like piping your
+        output to a file won't strew escape sequences all over the place. The
+        ``ls`` command sets a precedent for this: it defaults to columnar
+        output when being sent to a tty and one-item-per-line when not.
 
         :arg kind: A terminal string as taken by ``setupterm()``. Defaults to
             the value of the ``TERM`` environment variable.
@@ -216,7 +216,7 @@ class Terminal(object):
                 return ParametrizingString(self._resolve_capability(attr))
 
     def _resolve_capability(self, atom):
-        """Return a terminal code for a capname or a sugary name, or u''.
+        """Return a terminal code for a capname or a sugary name, or an empty Unicode.
 
         The return value is always Unicode, because otherwise it is clumsy
         (especially in Python 3) to concatenate with real (Unicode) strings.
@@ -238,7 +238,7 @@ class Terminal(object):
         # assumes it does.
         color_cap = ((self.setab or self.setb) if 'on_' in color else
                      (self.setaf or self.setf))
-        # curses constants go up to only 7, so pass in an offset to get at the
+        # curses constants go up to only 7, so add an offset to get at the
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
