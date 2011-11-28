@@ -334,7 +334,11 @@ Version History
   * Added support for Python 3! We need 3.2.3 or greater, because the curses
     library couldn't decide whether to accept strs or bytes before that
     (http://bugs.python.org/issue10570).
-  * Relicensed under the MIT License.
+  * Everything that comes out of the library is now unicode. This lets us
+    support Python 3 without making a mess of the code, and Python 2 should
+    continue to work unless you were testing types (and badly). Please file a
+    bug if this causes trouble for you.
+  * Changed to the MIT License for better world domination.
   * Added Sphinx docs.
 
 1.1
