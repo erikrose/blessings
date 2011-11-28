@@ -62,7 +62,7 @@ this time with Blessings::
 
     term = Terminal()
     with term.location(0, term.height):
-        print 'This is', t.underline('pretty!')
+        print 'This is', term.underline('pretty!')
 
 It's short, it's obvious, and it keeps all those nasty ``tigetstr()`` and
 ``tparm()`` calls out of your code. It also acts intelligently when somebody
