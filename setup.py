@@ -22,6 +22,7 @@ setup(
     classifiers=[
         'Intended Audience :: Developers',
         'Natural Language :: English',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Environment :: Console :: Curses',
         'License :: OSI Approved :: MIT License',
