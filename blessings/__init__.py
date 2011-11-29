@@ -93,13 +93,9 @@ class Terminal(object):
             # somewhere.
             setupterm(kind or environ.get('TERM', 'unknown'),
                       init_descriptor)
-
-            # Cache capability codes, because IIRC tigetstr requires a
-            # conversation with the terminal. [Now I can't find any evidence of
-            # that.] At any rate, save redoing the work of _resolve_formatter().
-            self._codes = {}
+            self._is_null = False
         else:
-            self._codes = NullDict(lambda: NullCallableString())
+            self._is_null = True
 
         self.stream = stream
 
@@ -162,11 +158,9 @@ class Terminal(object):
         Return values are always Unicode.
 
         """
-        if attr not in self._codes:
-            # Store sugary names under the sugary keys to save a hash lookup.
-            # Fall back to '' for codes not supported by this terminal.
-            self._codes[attr] = self._resolve_formatter(attr)
-        return self._codes[attr]
+        resolution = NullCallableString() if self._is_null else self._resolve_formatter(attr)
+        setattr(self, attr, resolution)  # Cache capability codes.
+        return resolution
 
     @property
     def height(self):
@@ -323,12 +317,6 @@ class NullCallableString(unicode):
         if isinstance(arg, int):
             return u''
         return arg  # TODO: Force even strs in Python 2.x to be unicodes? Nah. How would I know what encoding to use to convert it?
-
-
-class NullDict(defaultdict):
-    """A ``defaultdict`` that pretends to contain all keys"""
-    def __contains__(self, key):
-        return True
 
 
 def height_and_width():
