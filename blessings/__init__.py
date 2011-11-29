@@ -116,10 +116,6 @@ class Terminal(object):
         move_x='hpa',
         move_y='vpa',
 
-        # You can use these if you want, but the named equivalents
-        # like "red" and "on_green" are probably easier.
-        color='setaf',
-        on_color='setab',
         reset_colors='op',  # oc doesn't work on my OS X terminal.
 
         normal='sgr0',
@@ -190,6 +186,28 @@ class Terminal(object):
         """
         return Location(self, x, y)
 
+    def color(self, num):
+        """Return a capability that sets the foreground color.
+
+        :arg num: The number, 0-15, of the color
+
+        The returned string can also be called on another string to wrap it in
+        the color and set the formatting to normal afterward.
+
+        """
+        return self._resolve_numeric_color(num, self._foreground_color)
+
+    def on_color(self, num):
+        """Return a capability that sets the background color.
+
+        :arg num: The number, 0-15, of the color
+
+        The returned string can also be called on another string to wrap it in
+        the color and set the formatting to normal afterward.
+
+        """
+        return self._resolve_numeric_color(num, self._background_color8)
+
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable capability."""
         if attr in COLORS:
@@ -230,15 +248,27 @@ class Terminal(object):
         # yellow when a terminal supports setf/setb rather than setaf/setab?
         # I'll be blasted if I can find any documentation. The following
         # assumes it does.
-        color_cap = ((self.setab or self.setb) if 'on_' in color else
-                     (self.setaf or self.setf))
+        color_cap = (self._background_color if 'on_' in color else
+                     self._foreground_color)
         # curses constants go up to only 7, so add an offset to get at the
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
-        return FormattingString(
-            color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset),
-            self)
+        return self._resolve_numeric_color(
+            getattr(curses, 'COLOR_' + base_color.upper()) + offset,
+            color_cap)
+
+    def _resolve_numeric_color(self, num, cap):
+        """Resolve a numeric base color to a ``FormattingString``."""
+        return FormattingString(cap(num), self)
+
+    @property
+    def _foreground_color(self):
+        return self.setaf or self.setf
+
+    @property
+    def _background_color(self):
+        return self.setab or self.setb
 
 
 def derivative_colors(colors):

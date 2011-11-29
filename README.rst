@@ -174,6 +174,9 @@ There is also a numerical interface to colors, which takes integers from 0-15::
     term.color(5) + 'Hello' + term.normal
     term.on_color(3) + 'Hello' + term.normal
 
+    term.color(5)('Hello')
+    term.on_color(3)('Hello')
+
 Compound Formatting
 -------------------
 
@@ -329,6 +332,11 @@ Blessings is under the MIT License. See the LICENSE file.
 
 Version History
 ===============
+
+1.3
+  * Made ``color(n)`` and ``on_color(n)`` callable to wrap a string, like the
+    named colors can. Also, make them both fall back to the ``setf`` and ``setb``
+    capabilities if the ANSI ``setaf`` and ``setab`` aren't available.
 
 1.2
   * Added support for Python 3! We need 3.2.3 or greater, because the curses

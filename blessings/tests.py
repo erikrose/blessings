@@ -134,6 +134,20 @@ def test_mnemonic_colors():
     eq_(t.on_bright_green, on_color(10))
 
 
+def test_callable_numeric_colors():
+    """``color(n)`` should return a formatting wrapper."""
+    t = TestTerminal()
+    eq_(t.color(5)('smoo'), t.color(5) + 'smoo' + t.normal)
+    eq_(t.on_color(6)('smoo'), t.on_color(6) + 'smoo' + t.normal)
+
+
+def test_null_callable_numeric_colors():
+    """``color(n)`` should be a no-op on null terminals."""
+    t = TestTerminal(stream=StringIO())
+    eq_(t.color(5)('smoo'), 'smoo')
+    eq_(t.on_color(6)('smoo'), 'smoo')
+
+
 def test_formatting_functions():
     """Test crazy-ass formatting wrappers, both simple and compound."""
     t = TestTerminal()
