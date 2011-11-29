@@ -205,7 +205,7 @@ class Terminal(object):
         the color and set the formatting to normal afterward.
 
         """
-        return self._resolve_numeric_color(num, self._background_color8)
+        return self._resolve_numeric_color(num, self._background_color)
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable capability."""
