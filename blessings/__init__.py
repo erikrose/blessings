@@ -18,7 +18,8 @@ from termios import TIOCGWINSZ
 
 if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till 3.2.10
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
-    raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 support due to http://bugs.python.org/issue10570.')
+    raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
+                      'support due to http://bugs.python.org/issue10570.')
 
 
 __all__ = ['Terminal']
@@ -79,7 +80,8 @@ class Terminal(object):
             stream_descriptor = None
 
         self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
-        if self.is_a_tty or force_styling:
+        self._does_styling = self.is_a_tty or force_styling
+        if self._does_styling:
             # The desciptor to direct terminal initialization sequences to.
             # sys.__stdout__ seems to always have a descriptor of 1, even if
             # output is redirected.
@@ -93,9 +95,6 @@ class Terminal(object):
             # somewhere.
             setupterm(kind or environ.get('TERM', 'unknown'),
                       init_descriptor)
-            self._is_null = False
-        else:
-            self._is_null = True
 
         self.stream = stream
 
@@ -154,7 +153,7 @@ class Terminal(object):
         Return values are always Unicode.
 
         """
-        resolution = NullCallableString() if self._is_null else self._resolve_formatter(attr)
+        resolution = self._resolve_formatter(attr) if self._does_styling else NullCallableString()
         setattr(self, attr, resolution)  # Cache capability codes.
         return resolution
 
