@@ -316,7 +316,7 @@ class FormattingString(unicode):
     """A Unicode string which can be called upon a piece of text to wrap it in formatting"""
     def __new__(cls, formatting, term):
         new = unicode.__new__(cls, formatting)
-        new._term = term  # TODO: Kill cycle.
+        new._normal = term.normal
         return new
 
     def __call__(self, text):
@@ -327,7 +327,7 @@ class FormattingString(unicode):
         back to defaults. The return value is always a Unicode.
 
         """
-        return self + text + self._term.normal
+        return self + text + self._normal
 
 
 class NullCallableString(unicode):
@@ -390,4 +390,5 @@ class Location(object):
             self.term.stream.write(self.term.move_y(self.y))
 
     def __exit__(self, type, value, tb):
-        self.term.stream.write(self.term.restore)  # restore position
+        """Restore original cursor position."""
+        self.term.stream.write(self.term.restore)
