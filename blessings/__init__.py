@@ -305,7 +305,7 @@ class ParametrizingString(unicode):
                 raise TypeError(
                     'A native or nonexistent capability template received '
                     '%r when it was expecting ints. You probably misspelled a '
-                    'formatting call like bold_red_on_white(...).' % args)
+                    'formatting call like bright_red_on_white(...).' % args)
             else:
                 # Somebody passed a non-string; I don't feel confident
                 # guessing what they were trying to do.
