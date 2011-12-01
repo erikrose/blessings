@@ -150,6 +150,12 @@ def test_null_callable_numeric_colors():
     eq_(t.on_color(6)('smoo'), 'smoo')
 
 
+def test_naked_color_cap():
+    """``term.color`` should return a stringlike capability."""
+    t = TestTerminal()
+    eq_(t.color + '', t.setaf + '')
+
+
 def test_formatting_functions():
     """Test crazy-ass formatting wrappers, both simple and compound."""
     t = TestTerminal()

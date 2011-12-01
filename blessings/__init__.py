@@ -185,27 +185,28 @@ class Terminal(object):
         """
         return Location(self, x, y)
 
-    def color(self, num):
+    @property
+    def color(self):
         """Return a capability that sets the foreground color.
 
+        The capability is unparametrized until called and passed a number
+        (0-15), at which point it returns another string which represents a
+        specific color change. This second string can further be called to
+        color a piece of text and set everything back to normal afterward.
+
         :arg num: The number, 0-15, of the color
 
-        The returned string can also be called on another string to wrap it in
-        the color and set the formatting to normal afterward.
-
         """
-        return self._resolve_numeric_color(num, self._foreground_color)
+        return ParametrizingString(self._foreground_color, self.normal)
 
-    def on_color(self, num):
+    @property
+    def on_color(self):
         """Return a capability that sets the background color.
 
-        :arg num: The number, 0-15, of the color
-
-        The returned string can also be called on another string to wrap it in
-        the color and set the formatting to normal afterward.
+        See ``color()``.
 
         """
-        return self._resolve_numeric_color(num, self._background_color)
+        return ParametrizingString(self._background_color, self.normal)
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable capability."""
@@ -213,16 +214,15 @@ class Terminal(object):
             return self._resolve_color(attr)
         elif attr in COMPOUNDABLES:
             # Bold, underline, or something that takes no parameters
-            return FormattingString(self._resolve_capability(attr), self)
+            return self._formatting_string(self._resolve_capability(attr))
         else:
             formatters = split_into_formatters(attr)
             if all(f in COMPOUNDABLES for f in formatters):
                 # It's a compound formatter, like "bold_green_on_red". Future
                 # optimization: combine all formatting into a single escape
                 # sequence.
-                return FormattingString(
-                    u''.join(self._resolve_formatter(s) for s in formatters),
-                    self)
+                return self._formatting_string(
+                    u''.join(self._resolve_formatter(s) for s in formatters))
             else:
                 return ParametrizingString(self._resolve_capability(attr))
 
@@ -253,13 +253,8 @@ class Terminal(object):
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
-        return self._resolve_numeric_color(
-            getattr(curses, 'COLOR_' + base_color.upper()) + offset,
-            color_cap)
-
-    def _resolve_numeric_color(self, num, cap):
-        """Resolve a numeric base color to a ``FormattingString``."""
-        return FormattingString(cap(num), self)
+        return self._formatting_string(
+            color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset))
 
     @property
     def _foreground_color(self):
@@ -268,6 +263,10 @@ class Terminal(object):
     @property
     def _background_color(self):
         return self.setab or self.setb
+
+    def _formatting_string(self, formatting):
+        """Return a new ``FormattingString`` which implicitly receives my notion of "normal"."""
+        return FormattingString(formatting, self.normal)
 
 
 def derivative_colors(colors):
@@ -286,12 +285,26 @@ COMPOUNDABLES = (COLORS |
 
 class ParametrizingString(unicode):
     """A Unicode string which can be called to parametrize it as a terminal capability"""
+    def __new__(cls, formatting, normal=None):
+        """Instantiate.
+
+        :arg normal: If non-None, indicates that, once parametrized, this can
+            be used as a ``FormattingString``. The value is used as the
+            "normal" capability.
+
+        """
+        new = unicode.__new__(cls, formatting)
+        new._normal = normal
+        return new
+
     def __call__(self, *args):
         try:
             # Re-encode the cap, because tparm() takes a bytestring in Python
             # 3. However, appear to be a plain Unicode string otherwise so
             # concats work.
-            return tparm(self.encode('utf-8'), *args).decode('utf-8')
+            parametrized = tparm(self.encode('utf-8'), *args).decode('utf-8')
+            return (parametrized if self._normal is None else
+                    FormattingString(parametrized, self._normal))
         except curses.error:
             # Catch "must call (at least) setupterm() first" errors, as when
             # running simply `nosetests` (without progressive) on nose-
@@ -314,9 +327,9 @@ class ParametrizingString(unicode):
 
 class FormattingString(unicode):
     """A Unicode string which can be called upon a piece of text to wrap it in formatting"""
-    def __new__(cls, formatting, term):
+    def __new__(cls, formatting, normal):
         new = unicode.__new__(cls, formatting)
-        new._normal = term.normal
+        new._normal = normal
         return new
 
     def __call__(self, text):
