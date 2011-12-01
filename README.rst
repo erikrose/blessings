@@ -50,7 +50,7 @@ of the screen::
     if cup:
         # tigetnum('lines') doesn't always update promptly, hence this:
         height = struct.unpack('hhhh', ioctl(0, TIOCGWINSZ, '\000' * 8))[0]
-        print tparm(cup, height, 0)  # Move cursor to bottom.
+        print tparm(cup, height - 1, 0)  # Move cursor to bottom.
     print 'This is {under}underlined{normal}!'.format(under=underline,
                                                       normal=normal)
     print rc  # Restore cursor position.
@@ -61,7 +61,7 @@ this time with Blessings::
     from blessings import Terminal
 
     term = Terminal()
-    with term.location(0, term.height):
+    with term.location(0, term.height - 1):
         print 'This is', term.underline('pretty!')
 
 It's short, it's obvious, and it keeps all those nasty ``tigetstr()`` and
@@ -254,7 +254,7 @@ return: for example, when updating a progress bar at the bottom of the screen.
     from blessings import Terminal
 
     term = Terminal()
-    with term.location(0, term.height):
+    with term.location(0, term.height - 1):
         print 'Here is the bottom.'
     print 'This is back where I came from.'
 
@@ -287,7 +287,7 @@ apparently headed into a pipe::
 
     term = Terminal()
     if term.is_a_tty:
-        with term.location(0, term.height):
+        with term.location(0, term.height - 1):
             print 'Progress: [=======>   ]'
     print term.bold('Important stuff')
 
