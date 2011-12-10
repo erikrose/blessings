@@ -344,6 +344,9 @@ Version History
     ``setb`` capabilities if the ANSI ``setaf`` and ``setab`` aren't available.
   * Allow ``color`` attr to act as an unparametrized string, not just a
     callable.
+  * Make ``height`` and ``width`` examine any passed-in stream before falling
+    back to stdout. (This rarely if ever affects its actual behavior; it's mostly
+    philosophical.)
   * Make caching more efficient.
   * Get rid of a reference cycle between Terminals and FormattingStrings.
   * Update docs to reflect that terminal addressing (as in ``location()``) is

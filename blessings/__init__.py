@@ -81,20 +81,21 @@ class Terminal(object):
 
         self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
         self._does_styling = self.is_a_tty or force_styling
-        if self._does_styling:
-            # The desciptor to direct terminal initialization sequences to.
-            # sys.__stdout__ seems to always have a descriptor of 1, even if
-            # output is redirected.
-            init_descriptor = (sys.__stdout__.fileno() if stream_descriptor is None
-                               else stream_descriptor)
 
+        # The desciptor to direct terminal initialization sequences to.
+        # sys.__stdout__ seems to always have a descriptor of 1, even if output
+        # is redirected.
+        self._init_descriptor = (sys.__stdout__.fileno()
+                                 if stream_descriptor is None
+                                 else stream_descriptor)
+        if self._does_styling:
             # Make things like tigetstr() work. Explicit args make setupterm()
             # work even when -s is passed to nosetests. Lean toward sending
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
             setupterm(kind or environ.get('TERM', 'unknown'),
-                      init_descriptor)
+                      self._init_descriptor)
 
         self.stream = stream
 
@@ -159,13 +160,38 @@ class Terminal(object):
 
     @property
     def height(self):
-        """The height of the terminal in characters"""
-        return height_and_width()[0]
+        """The height of the terminal in characters
+
+        If no stream or a stream not representing a terminal was passed in at
+        construction, return the dimension of the controlling terminal so
+        piping to things that eventually display on the terminal (like ``less
+        -R``) work. If a stream representing a terminal was passed in, return
+        the dimensions of that terminal. If there somehow is no controlling
+        terminal, return ``None``. (Thus, you should check that ``is_a_tty`` is
+        true before doing any math on the result.)
+
+        """
+        return self._height_and_width()[0]
 
     @property
     def width(self):
-        """The width of the terminal in characters"""
-        return height_and_width()[1]
+        """The width of the terminal in characters
+
+        See ``height()`` for some corner cases.
+
+        """
+        return self._height_and_width()[1]
+
+    def _height_and_width(self):
+        """Return a tuple of (terminal height, terminal width)."""
+        # tigetnum('lines') and tigetnum('cols') update only if we call
+        # setupterm() again.
+        for descriptor in self._init_descriptor, sys.__stdout__:
+            try:
+                return struct.unpack('hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+            except IOError:
+                pass
+        return None, None  # Should never get here
 
     def location(self, x=None, y=None):
         """Return a context manager for temporarily moving the cursor.
@@ -383,13 +409,6 @@ class NullCallableString(unicode):
         if isinstance(arg, int):
             return u''
         return arg  # TODO: Force even strs in Python 2.x to be unicodes? Nah. How would I know what encoding to use to convert it?
-
-
-def height_and_width():
-    """Return a tuple of (terminal height, terminal width)."""
-    # tigetnum('lines') and tigetnum('cols') apparently don't update while
-    # nose-progressive's progress bar is running.
-    return struct.unpack('hhhh', ioctl(0, TIOCGWINSZ, '\000' * 8))[0:2]
 
 
 def split_into_formatters(compound):

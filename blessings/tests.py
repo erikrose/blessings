@@ -223,3 +223,9 @@ def test_nice_formatting_errors():
         t.bold_misspelled('a', 'b')  # >1 string arg
     except TypeError, e:
         assert 'probably misspelled' not in e.args[0]
+
+
+def test_init_descriptor_always_initted():
+    """We should be able to get a height and width even on no-tty Terminals."""
+    t = Terminal(stream=StringIO())
+    eq_(type(t.height), int)
