@@ -1,6 +1,6 @@
 from collections import defaultdict
 import curses
-from curses import tigetstr, setupterm, tparm
+from curses import tigetstr, tigetnum, setupterm, tparm
 from fcntl import ioctl
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
@@ -207,6 +207,30 @@ class Terminal(object):
 
         """
         return ParametrizingString(self._background_color, self.normal)
+
+    @property
+    def number_of_colors(self):
+        """Return the number of colors the terminal supports.
+
+        Common values are 0, 8, 16, 88, and 256.
+
+        Though the underlying capability returns -1 when there is no color
+        support, we return 0. This lets you test more Pythonically::
+
+            if term.number_of_colors:
+                ...
+
+        We also return 0 if the terminal won't tell us how many colors it
+        supports, which I think is rare.
+
+        """
+        # This is actually the only remotely useful numeric capability. We
+        # don't name it after the underlying capability, because we deviate
+        # slightly from its behavior, and we might someday wish to give direct
+        # access to it.
+        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no such cap.
+        #self.__dict__['colors'] = ret  # Cache it. It's not changing. (Doesn't work.)
+        return colors if colors >= 0 else 0
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable capability."""

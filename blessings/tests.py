@@ -15,6 +15,7 @@ from functools import partial
 from StringIO import StringIO
 import sys
 
+from nose import SkipTest
 from nose.tools import eq_
 
 # This tests that __all__ is correct, since we use below everything that should
@@ -154,6 +155,24 @@ def test_naked_color_cap():
     """``term.color`` should return a stringlike capability."""
     t = TestTerminal()
     eq_(t.color + '', t.setaf + '')
+
+
+def test_number_of_colors_without_tty():
+    """``number_of_colors`` should return 0 when there's no tty."""
+    # Hypothesis: once setupterm() has run and decided the tty supports 256
+    # colors, it never changes its mind.
+    raise SkipTest
+
+    t = TestTerminal(stream=StringIO())
+    eq_(t.number_of_colors, 0)
+    t = TestTerminal(stream=StringIO(), force_styling=True)
+    eq_(t.number_of_colors, 0)
+
+
+def test_number_of_colors_with_tty():
+    """``number_of_colors`` should work."""
+    t = TestTerminal()
+    eq_(t.number_of_colors, 256)
 
 
 def test_formatting_functions():

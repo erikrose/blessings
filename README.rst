@@ -337,9 +337,17 @@ Version History
 ===============
 
 1.3
+  * Add ``number_of_colors``, which tells you how many colors the terminal
+    supports.
   * Made ``color(n)`` and ``on_color(n)`` callable to wrap a string, like the
-    named colors can. Also, make them both fall back to the ``setf`` and ``setb``
-    capabilities if the ANSI ``setaf`` and ``setab`` aren't available.
+    named colors can. Also, make them both fall back to the ``setf`` and
+    ``setb`` capabilities if the ANSI ``setaf`` and ``setab`` aren't available.
+  * Allow ``color`` attr to act as an unparametrized string, not just a
+    callable.
+  * Make caching more efficient.
+  * Get rid of a reference cycle between Terminals and FormattingStrings.
+  * Update docs to reflect that terminal addressing (as in ``location()``) is
+    0-based.
 
 1.2
   * Added support for Python 3! We need 3.2.3 or greater, because the curses
