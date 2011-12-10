@@ -163,19 +163,22 @@ The available colors are...
 * ``cyan``
 * ``white``
 
-As hinted above, there is also a ``bright`` version of each. If your terminal
-does not support the bright palette, it will usually render them as black.
-
 You can set the background color instead of the foreground by prepending
-``on_``, as in ``on_blue`` or ``on_bright_white``.
+``on_``, as in ``on_blue``. There is also a ``bright`` version of each color:
+for example, ``on_bright_blue``.
 
-There is also a numerical interface to colors, which takes integers from 0-15::
+There is also a numerical interface to colors, which takes an integer from
+0-15::
 
     term.color(5) + 'Hello' + term.normal
     term.on_color(3) + 'Hello' + term.normal
 
     term.color(5)('Hello')
     term.on_color(3)('Hello')
+
+If some color is unsupported (for instance, if only the normal colors are
+available, not the bright ones), trying to use it will, on most terminals, have
+no effect: the foreground and background colors will stay as they were.
 
 Compound Formatting
 -------------------
