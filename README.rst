@@ -178,7 +178,11 @@ There is also a numerical interface to colors, which takes an integer from
 
 If some color is unsupported (for instance, if only the normal colors are
 available, not the bright ones), trying to use it will, on most terminals, have
-no effect: the foreground and background colors will stay as they were.
+no effect: the foreground and background colors will stay as they were. You can
+get fancy and do different things depending on the supported colors by checking
+`number_of_colors`_.
+
+.. _`number_of_colors`: http://packages.python.org/blessings/#blessings.Terminal.number_of_colors
 
 Compound Formatting
 -------------------
@@ -341,13 +345,14 @@ Version History
     supports.
   * Made ``color(n)`` and ``on_color(n)`` callable to wrap a string, like the
     named colors can. Also, make them both fall back to the ``setf`` and
-    ``setb`` capabilities if the ANSI ``setaf`` and ``setab`` aren't available.
+    ``setb`` capabilities (like the named colors do) if the ANSI ``setaf`` and
+    ``setab`` aren't available.
   * Allow ``color`` attr to act as an unparametrized string, not just a
     callable.
   * Make ``height`` and ``width`` examine any passed-in stream before falling
-    back to stdout. (This rarely if ever affects its actual behavior; it's mostly
+    back to stdout. (This rarely if ever affects actual behavior; it's mostly
     philosophical.)
-  * Make caching more efficient.
+  * Make caching simpler and slightly more efficient.
   * Get rid of a reference cycle between Terminals and FormattingStrings.
   * Update docs to reflect that terminal addressing (as in ``location()``) is
     0-based.
