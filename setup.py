@@ -37,6 +37,6 @@ setup(
         'Topic :: Software Development :: User Interfaces',
         'Topic :: Terminals'
         ],
-    keywords=['terminal', 'tty', 'curses', 'ncurses', 'formatting', 'color', 'console'],
+    keywords=['terminal', 'tty', 'curses', 'ncurses', 'formatting', 'style', 'color', 'console'],
     **extra_setup
 )

@@ -1,26 +1,41 @@
-==========
+=========
 Blessings
-==========
+=========
 
-by Erik Rose
+Coding with Blessings looks like this... ::
+
+    from blessings import Terminal
+
+    t = Terminal()
+
+    print t.bold('Hi there!')
+    print t.bold_red_on_bright_green('It hurts my eyes!')
+
+    with t.location(0, t.height - 1):
+        print 'This is at the bottom.'
+
+Or, for byte-level control, you can drop down and play with raw terminal
+capabilities::
+
+    print '{t.bold}All your {t.red}bold and red base{t.normal}'.format(t=t)
+    print t.wingo(2)
 
 The Pitch
 =========
 
-curses is a fine library, but there are a couple situations where it doesn't
-fit:
+Blessings lifts several of curses_' limiting assumptions, and it makes your
+code pretty, too:
 
-* You want to use bold, color, and maybe a little positioning without clearing
-  the whole screen first.
-* You want to leave more than one screenful of scrollback in the buffer after
-  your program exits.
+* Use styles, color, and maybe a little positioning without clearing the whole
+  screen first.
+* Leave more than one screenful of scrollback in the buffer after your program
+  exits, like a well-behaved command-line app should.
+* Get rid of all those noisy, C-like calls to ``tigetstr`` and ``tparm``, so
+  your code doesn't get crowded out by terminal bookkeeping.
+* Act intelligently when somebody redirects your output to a file, omitting the
+  terminal control codes the user doesn't want to see (optional).
 
-In essence, you want to act like a well-behaved command-line app, not a
-full-screen pseudo-GUI one. Or...
-
-* You just want to get the noise out of your code.
-
-If these sound good, Blessings is for you.
+.. _curses: http://docs.python.org/library/curses.html
 
 Before And After
 ----------------
@@ -64,10 +79,7 @@ this time with Blessings::
     with term.location(0, term.height - 1):
         print 'This is', term.underline('pretty!')
 
-It's short, it's obvious, and it keeps all those nasty ``tigetstr()`` and
-``tparm()`` calls out of your code. It also acts intelligently when somebody
-redirects your output to a file, omitting the terminal control codes you don't
-want to see.
+Much better.
 
 What It Provides
 ================
