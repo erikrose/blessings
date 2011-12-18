@@ -353,20 +353,20 @@ Version History
 ===============
 
 1.3
-  * Add ``number_of_colors``, which tells you how many colors the terminal
+  * Added ``number_of_colors``, which tells you how many colors the terminal
     supports.
   * Made ``color(n)`` and ``on_color(n)`` callable to wrap a string, like the
     named colors can. Also, make them both fall back to the ``setf`` and
     ``setb`` capabilities (like the named colors do) if the ANSI ``setaf`` and
     ``setab`` aren't available.
-  * Allow ``color`` attr to act as an unparametrized string, not just a
+  * Allowed ``color`` attr to act as an unparametrized string, not just a
     callable.
-  * Make ``height`` and ``width`` examine any passed-in stream before falling
+  * Made ``height`` and ``width`` examine any passed-in stream before falling
     back to stdout. (This rarely if ever affects actual behavior; it's mostly
     philosophical.)
-  * Make caching simpler and slightly more efficient.
-  * Get rid of a reference cycle between Terminals and FormattingStrings.
-  * Update docs to reflect that terminal addressing (as in ``location()``) is
+  * Made caching simpler and slightly more efficient.
+  * Got rid of a reference cycle between Terminals and FormattingStrings.
+  * Updated docs to reflect that terminal addressing (as in ``location()``) is
     0-based.
 
 1.2
