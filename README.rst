@@ -100,8 +100,8 @@ available as attributes on a ``Terminal``. For example::
     term = Terminal()
     print 'I am ' + term.bold + 'bold' + term.normal + '!'
 
-You can also use them as wrappers so you don't have to say ``normal``
-afterward::
+Though they are strings at heart, you can also use them as callable wrappers so
+you don't have to say ``normal`` afterward::
 
     print 'I am', term.bold('bold') + '!'
 
