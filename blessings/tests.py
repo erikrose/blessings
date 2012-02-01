@@ -102,6 +102,15 @@ def test_horizontal_location():
                              unicode_cap('rc'))
 
 
+def test_null_location():
+    """Make sure ``location()`` with no args just does position restoration."""
+    t = TestTerminal(stream=StringIO(), force_styling=True)
+    with t.location():
+        pass
+    eq_(t.stream.getvalue(), unicode_cap('sc') +
+                             unicode_cap('rc'))
+
+
 def test_null_fileno():
     """Make sure ``Terminal`` works when ``fileno`` is ``None``.
 

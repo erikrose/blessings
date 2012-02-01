@@ -213,7 +213,10 @@ class Terminal(object):
                     print 'I can do it %i times!' % x
 
         Specify ``x`` to move to a certain column, ``y`` to move to a certain
-        row, or both.
+        row, both, or neither. If you specify neither, only the saving and
+        restoration of cursor position will happen. This can be useful if you
+        simply want to restore your place after doing some manual cursor
+        movement.
 
         """
         return Location(self, x, y)

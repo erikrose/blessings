@@ -70,8 +70,8 @@ of the screen::
                                                       normal=normal)
     print rc  # Restore cursor position.
 
-Phew! That was long and full of incomprehensible trash! Let's try it again,
-this time with Blessings::
+That was long and full of incomprehensible trash! Let's try it again, this time
+with Blessings::
 
     from blessings import Terminal
 
@@ -238,7 +238,9 @@ Here are some of interest:
 
 ``move``
   Position the cursor elsewhere. Parameters are y coordinate, then x
-  coordinate.
+  coordinate::
+
+      print term.move(10, 1) + 'Hi, mom!'
 ``move_x``
   Move the cursor to the given column.
 ``move_y``
@@ -283,7 +285,14 @@ just one of them, leaving the other alone. For example... ::
     with term.location(y=10):
         print 'We changed just the row.'
 
-If you want to reposition permanently, see ``move``, in an example above.
+If you want to reposition permanently, see ``move``, in an example above. If
+you're doing a series of ``move`` calls and want to return the cursor to its
+original position afterward, call ``location()`` with no arguments, and it will
+do only the position restoring::
+
+    with term.location():
+        print term.move(1, 1) + 'Hi'
+        print term.move(9, 9) + 'Mom'
 
 Pipe Savvy
 ----------
