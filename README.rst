@@ -361,6 +361,13 @@ Blessings is under the MIT License. See the LICENSE file.
 Version History
 ===============
 
+1.4
+  * Add syntactic sugar for cursor visibility control and single-space-movement
+    capabilities.
+  * Endorse the ``location()`` idiom for restoring cursor position after a
+    series of manual movements.
+  * Fix a bug in which ``location()`` wouldn't do anything when passed zeroes.
+
 1.3
   * Added ``number_of_colors``, which tells you how many colors the terminal
     supports.

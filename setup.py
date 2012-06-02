@@ -9,8 +9,8 @@ if sys.version_info >= (3,):
 
 setup(
     name='blessings',
-    version='1.3',
-    description='A thin, practical wrapper around terminal formatting, positioning, and more',
+    version='1.4',
+    description='A thin, practical wrapper around terminal coloring, styling, and positioning',
     long_description=open('README.rst').read(),
     author='Erik Rose',
     author_email='erikrose@grinchcentral.com',
