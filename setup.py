@@ -17,6 +17,7 @@ setup(
     license='MIT',
     packages=find_packages(exclude=['ez_setup']),
     tests_require=['nose'],
+    test_suite='nose.collector',
     url='https://github.com/erikrose/blessings',
     include_package_data=True,
     classifiers=[
