@@ -367,6 +367,7 @@ Version History
   * Endorse the ``location()`` idiom for restoring cursor position after a
     series of manual movements.
   * Fix a bug in which ``location()`` wouldn't do anything when passed zeroes.
+  * Allow tests to be run with ``python setup.py test``.
 
 1.3
   * Added ``number_of_colors``, which tells you how many colors the terminal
