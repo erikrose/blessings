@@ -448,11 +448,11 @@ class Location(object):
     def __enter__(self):
         """Save position and move to the requested column, row, or both."""
         self.term.stream.write(self.term.save)  # save position
-        if self.x and self.y:
+        if self.x is not None and self.y is not None:
             self.term.stream.write(self.term.move(self.y, self.x))
-        elif self.x:
+        elif self.x is not None:
             self.term.stream.write(self.term.move_x(self.x))
-        elif self.y:
+        elif self.y is not None:
             self.term.stream.write(self.term.move_y(self.y))
 
     def __exit__(self, type, value, tb):
