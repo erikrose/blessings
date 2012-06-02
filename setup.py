@@ -16,7 +16,7 @@ setup(
     author_email='erikrose@grinchcentral.com',
     license='MIT',
     packages=find_packages(exclude=['ez_setup']),
-    tests_require=['Nose'],
+    tests_require=['nose'],
     url='https://github.com/erikrose/blessings',
     include_package_data=True,
     classifiers=[
