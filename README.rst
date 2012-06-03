@@ -26,7 +26,8 @@ The Pitch
 Blessings lifts several of curses_' limiting assumptions, and it makes your
 code pretty, too:
 
-* Use styles, color, and maybe a little positioning without clearing the whole
+* Use styles, color, and maybe a little positioning without necessarily
+  clearing the whole
   screen first.
 * Leave more than one screenful of scrollback in the buffer after your program
   exits, like a well-behaved command-line app should.
@@ -119,9 +120,6 @@ Simple capabilities of interest include...
 * ``no_underline`` (which turns off underlining)
 * ``blink``
 * ``normal`` (which turns off everything, even colors)
-* ``clear_eol`` (clear to the end of the line)
-* ``clear_bol`` (clear to beginning of line)
-* ``clear_eos`` (clear to end of screen)
 
 Here are a few more which are less likely to work on all terminals:
 
@@ -138,8 +136,8 @@ to turn off ``bold`` or ``reverse`` is ``normal``, which also cancels any
 custom colors. This is because there's no way to tell the terminal to undo
 certain pieces of formatting, even at the lowest level.
 
-You might notice that the above aren't the typical incomprehensible terminfo
-capability names; we alias a few of the harder-to-remember ones for
+You might also notice that the above aren't the typical incomprehensible
+terminfo capability names; we alias a few of the harder-to-remember ones for
 readability. However, you aren't limited to these: you can reference any
 string-returning capability listed on the `terminfo man page`_ by the name
 under the "Cap-name" column: for example, ``term.rum``.
@@ -222,55 +220,18 @@ all this mashing.
 
 .. _couleur: http://pypi.python.org/pypi/couleur
 
-Parametrized Capabilities
--------------------------
+Moving The Cursor
+-----------------
 
-Some capabilities take parameters. Rather than making you dig up ``tparm()``
-all the time, we simply make such capabilities into callable strings. You can
-pass the parameters right in::
+When you want to move the cursor to output text at a specific spot, you have
+a few choices.
 
-    from blessings import Terminal
+Moving Temporarily
+~~~~~~~~~~~~~~~~~~
 
-    term = Terminal()
-    print term.move(10, 1)
-
-Here are some of interest:
-
-``move``
-  Position the cursor elsewhere. Parameters are y coordinate, then x
-  coordinate::
-
-      print term.move(10, 1) + 'Hi, mom!'
-``move_x``
-  Move the cursor to the given column.
-``move_y``
-  Move the cursor to the given row.
-
-You can also reference any other string-returning capability listed on the
-`terminfo man page`_ by its name under the "Cap-name" column.
-
-.. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
-
-Height and Width
-----------------
-
-It's simple to get the height and width of the terminal, in characters::
-
-    from blessings import Terminal
-
-    term = Terminal()
-    height = term.height
-    width = term.width
-
-These are newly updated each time you ask for them, so they're safe to use from
-SIGWINCH handlers.
-
-Temporary Repositioning
------------------------
-
-Sometimes you need to flit to a certain location, print something, and then
-return: for example, when updating a progress bar at the bottom of the screen.
-``Terminal`` provides a context manager for doing this concisely::
+Most often, you'll need to flit to a certain location, print something, and
+then return: for example, when updating a progress bar at the bottom of the
+screen. ``Terminal`` provides a context manager for doing this concisely::
 
     from blessings import Terminal
 
@@ -285,14 +246,92 @@ just one of them, leaving the other alone. For example... ::
     with term.location(y=10):
         print 'We changed just the row.'
 
-If you want to reposition permanently, see ``move``, in an example above. If
-you're doing a series of ``move`` calls and want to return the cursor to its
-original position afterward, call ``location()`` with no arguments, and it will
-do only the position restoring::
+If you're doing a series of ``move`` calls (see below) and want to return the
+cursor to its original position afterward, call ``location()`` with no
+arguments, and it will do only the position restoring::
 
     with term.location():
         print term.move(1, 1) + 'Hi'
         print term.move(9, 9) + 'Mom'
+
+Note that, since ``location()`` uses the terminal's built-in
+position-remembering machinery, you can't usefully nest multiple calls. Use
+``location()`` at the outermost spot, and use simpler things like ``move``
+inside.
+
+Moving Permanently
+~~~~~~~~~~~~~~~~~~
+
+If you just want to move and aren't worried about returning, do something like
+this::
+
+    from blessings import Terminal
+
+    term = Terminal()
+    print term.move(10, 1) + 'Hi, mom!'
+
+``move``
+  Position the cursor elsewhere. Parameters are y coordinate, then x
+  coordinate.
+``move_x``
+  Move the cursor to the given column.
+``move_y``
+  Move the cursor to the given row.
+
+How does all this work? These are simply more terminal capabilities, wrapped to
+give them nicer names. The added wrinkle--that they take parameters--is also
+given a pleasant treatment: rather than making you dig up ``tparm()`` all the
+time, we simply make these capabilities into callable strings. You'd get the
+raw capability strings if you were to just print them, but they're fully
+parametrized if you pass params to them as if they were functions.
+
+Consequently, you can also reference any other string-returning capability
+listed on the `terminfo man page`_ by its name under the "Cap-name" column.
+
+.. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
+
+One-Notch Movement
+~~~~~~~~~~~~~~~~~~
+
+Finally, there are some parameterless movement capabilities that move the
+cursor one character in various directions:
+
+* ``move_left``
+* ``move_right``
+* ``move_up``
+* ``move_down``
+
+For example... ::
+
+    print term.move_up + 'Howdy!'
+
+Height And Width
+----------------
+
+It's simple to get the height and width of the terminal, in characters::
+
+    from blessings import Terminal
+
+    term = Terminal()
+    height = term.height
+    width = term.width
+
+These are newly updated each time you ask for them, so they're safe to use from
+SIGWINCH handlers.
+
+Clearing The Screen
+-------------------
+
+Blessings provides syntactic sugar over some screen-clearing capabilities:
+
+``clear``
+  Clear the whole screen.
+``clear_eol``
+  Clear to the end of the line.
+``clear_bol``
+  Clear backward to the beginning of the line.
+``clear_eos``
+  Clear to the end of screen.
 
 Pipe Savvy
 ----------
