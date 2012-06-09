@@ -1,4 +1,5 @@
 from collections import defaultdict
+from contextlib import contextmanager
 import curses
 from curses import tigetstr, tigetnum, setupterm, tparm
 from fcntl import ioctl
@@ -112,6 +113,8 @@ class Terminal(object):
         clear_eos='ed',
         # 'clear' clears the whole screen.
         position='cup',  # deprecated
+        enter_fullscreen='smcup',
+        exit_fullscreen='rmcup',
         move='cup',
         move_x='hpa',
         move_y='vpa',
@@ -200,6 +203,7 @@ class Terminal(object):
                 pass
         return None, None  # Should never get here
 
+    @contextmanager
     def location(self, x=None, y=None):
         """Return a context manager for temporarily moving the cursor.
 
@@ -219,7 +223,32 @@ class Terminal(object):
         movement.
 
         """
-        return Location(self, x, y)
+        # Save position and move to the requested column, row, or both:
+        self.stream.write(self.save)
+        if x is not None and y is not None:
+            self.stream.write(self.move(y, x))
+        elif x is not None:
+            self.stream.write(self.move_x(x))
+        elif y is not None:
+            self.stream.write(self.move_y(y))
+        yield
+
+        # Restore original cursor position:
+        self.stream.write(self.restore)
+
+    @contextmanager
+    def fullscreen(self):
+        """Return a context manager that enters fullscreen mode while inside it and restores normal mode on leaving."""
+        self.stream.write(self.enter_fullscreen)
+        yield
+        self.stream.write(self.exit_fullscreen)
+
+    @contextmanager
+    def hidden_cursor(self):
+        """Return a context manager that hides the cursor while inside it and makes it visible on leaving."""
+        self.stream.write(self.hide_cursor)
+        yield
+        self.stream.write(self.normal_cursor)
 
     @property
     def color(self):
@@ -437,24 +466,3 @@ def split_into_formatters(compound):
         else:
             merged_segs.append(s)
     return merged_segs
-
-
-class Location(object):
-    """Context manager for temporarily moving the cursor"""
-    def __init__(self, term, x=None, y=None):
-        self.x, self.y = x, y
-        self.term = term
-
-    def __enter__(self):
-        """Save position and move to the requested column, row, or both."""
-        self.term.stream.write(self.term.save)  # save position
-        if self.x is not None and self.y is not None:
-            self.term.stream.write(self.term.move(self.y, self.x))
-        elif self.x is not None:
-            self.term.stream.write(self.term.move_x(self.x))
-        elif self.y is not None:
-            self.term.stream.write(self.term.move_y(self.y))
-
-    def __exit__(self, type, value, tb):
-        """Restore original cursor position."""
-        self.term.stream.write(self.term.restore)

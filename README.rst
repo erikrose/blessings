@@ -333,6 +333,36 @@ Blessings provides syntactic sugar over some screen-clearing capabilities:
 ``clear_eos``
   Clear to the end of screen.
 
+Full-Screen Mode
+----------------
+
+Perhaps you have seen a full-screen program, such as an editor, restore the
+exact previous state of the terminal upon exiting, including, for example, the
+command-line prompt from which it was launched. Curses pretty much forces you
+into this behavior, but Blessings makes it optional. If you want to do the
+state-restoration thing, use these capabilities:
+
+``enter_fullscreen``
+    Switch to the terminal mode where full-screen output is sanctioned. Call
+    this before you do any output.
+``exit_fullscreen``
+    Switch back to normal mode, restoring the exact state from before
+    ``enter_fullscreen`` was used.
+
+Using ``exit_fullscreen`` will wipe away any trace of your program's output, so
+reserve it for when you don't want to leave anything behind in the scrollback.
+
+There's also a context manager you can use as a shortcut::
+
+    from blessings import Terminal
+
+    term = Terminal()
+    with term.fullscreen():
+        # Print some stuff.
+
+Besides brevity, another advantage is that it switches back to normal mode even
+if an exception is raised in the with block.
+
 Pipe Savvy
 ----------
 
@@ -399,6 +429,11 @@ Blessings is under the MIT License. See the LICENSE file.
 
 Version History
 ===============
+
+1.5
+  * Add syntactic sugar and documentation for ``enter_fullscreen`` and
+    ``exit_fullscreen``.
+  * Add context managers ``fullscreen()`` and ``hidden_cursor()``.
 
 1.4
   * Add syntactic sugar for cursor visibility control and single-space-movement
