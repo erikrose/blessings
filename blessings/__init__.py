@@ -69,6 +69,9 @@ class Terminal(object):
             somewhere, and stdout is probably where the output is ultimately
             headed. If not, stderr is probably bound to the same terminal.)
 
+            If you want to force styling to not happen, pass
+            ``force_styling=None``.
+
         """
         if stream is None:
             stream = sys.__stdout__
@@ -80,7 +83,8 @@ class Terminal(object):
             stream_descriptor = None
 
         self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
-        self._does_styling = self.is_a_tty or force_styling
+        self._does_styling = ((self.is_a_tty or force_styling) and
+                              force_styling is not None)
 
         # The desciptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output

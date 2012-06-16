@@ -343,7 +343,7 @@ into this behavior, but Blessings makes it optional. If you want to do the
 state-restoration thing, use these capabilities:
 
 ``enter_fullscreen``
-    Switch to the terminal mode where full-screen output is sanctioned. Call
+    Switch to the terminal mode where full-screen output is sanctioned. Print
     this before you do any output.
 ``exit_fullscreen``
     Switch back to normal mode, restoring the exact state from before
@@ -361,7 +361,7 @@ There's also a context manager you can use as a shortcut::
         # Print some stuff.
 
 Besides brevity, another advantage is that it switches back to normal mode even
-if an exception is raised in the with block.
+if an exception is raised in the ``with`` block.
 
 Pipe Savvy
 ----------
@@ -434,6 +434,8 @@ Version History
   * Add syntactic sugar and documentation for ``enter_fullscreen`` and
     ``exit_fullscreen``.
   * Add context managers ``fullscreen()`` and ``hidden_cursor()``.
+  * Now you can force a ``Terminal`` never to emit styles by passing
+    ``force_styling=None``.
 
 1.4
   * Add syntactic sugar for cursor visibility control and single-space-movement

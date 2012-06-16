@@ -248,3 +248,9 @@ def test_init_descriptor_always_initted():
     """We should be able to get a height and width even on no-tty Terminals."""
     t = Terminal(stream=StringIO())
     eq_(type(t.height), int)
+
+
+def test_force_styling_none():
+    """If ``force_styling=None`` is passed to the constructor, don't ever do styling."""
+    t = TestTerminal(force_styling=None)
+    eq_(t.save, '')
