@@ -133,8 +133,8 @@ Here are a few more which are less likely to work on all terminals:
 
 Note that, while the inverse of ``underline`` is ``no_underline``, the only way
 to turn off ``bold`` or ``reverse`` is ``normal``, which also cancels any
-custom colors. This is because there's no way to tell the terminal to undo
-certain pieces of formatting, even at the lowest level.
+custom colors. This is because there's no portable way to tell the terminal to
+undo certain pieces of formatting, even at the lowest level.
 
 You might also notice that the above aren't the typical incomprehensible
 terminfo capability names; we alias a few of the harder-to-remember ones for
