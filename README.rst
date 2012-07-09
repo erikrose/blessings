@@ -420,7 +420,10 @@ Bugs
 
 Bugs or suggestions? Visit the `issue tracker`_.
 
-.. _`issue tracker`: https://github.com/erikrose/blessings/issues/new
+.. _`issue tracker`: https://github.com/erikrose/blessings/issues/
+
+.. image:: https://secure.travis-ci.org/erikrose/blessings.png
+
 
 License
 =======

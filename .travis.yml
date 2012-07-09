@@ -9,8 +9,8 @@ python:
 
 matrix:
   allow_failures:
-    - python: 3.2
-    - python: pypy
+    - python: 3.2  # Not a new enough 3.2 for blessings
+    - python: pypy  # PyPy doesn't have _curses.
 
 script:
   - pip install -q --use-mirrors nose
