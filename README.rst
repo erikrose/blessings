@@ -20,6 +20,8 @@ capabilities::
     print '{t.bold}All your {t.red}bold and red base{t.normal}'.format(t=t)
     print t.wingo(2)
 
+Add links to example apps somewhere, like mkelly's mp3 player or conway or (eek) nose-progressive.
+
 The Pitch
 =========
 
@@ -107,7 +109,7 @@ you don't have to say ``normal`` afterward::
     print 'I am', term.bold('bold') + '!'
 
 Or, if you want fine-grained control while maintaining some semblance of
-brevity, you can combine it with Python's string formatting, which makes
+brevity, you can combine them with Python's string formatting, which makes
 attributes easy to access::
 
     print 'All your {t.red}base {t.underline}are belong to us{t.normal}'.format(t=term)
@@ -283,7 +285,7 @@ give them nicer names. The added wrinkle--that they take parameters--is also
 given a pleasant treatment: rather than making you dig up ``tparm()`` all the
 time, we simply make these capabilities into callable strings. You'd get the
 raw capability strings if you were to just print them, but they're fully
-parametrized if you pass params to them as if they were functions.
+parametrized if you pass arguments to them as if they were functions.
 
 Consequently, you can also reference any other string-returning capability
 listed on the `terminfo man page`_ by its name under the "Cap-name" column.
@@ -404,9 +406,9 @@ Blessings has your back:
 * Works great with standard Python string templating
 * Provides convenient access to all terminal capabilities, not just a sugared
   few
-* Outputs to any file-like object, not just stdout
-* Keeps a minimum of internal state, so you can feel free to mix and match with
-  calls to curses or whatever other terminal libraries you like
+* Lets you put the output anywhere, not just on stdout
+* Keeps a minimum of internal state, so you can mix and match with calls to
+  curses or whatever other terminal libraries you like
 
 Blessings does not provide...
 
@@ -432,6 +434,9 @@ Blessings is under the MIT License. See the LICENSE file.
 
 Version History
 ===============
+
+1.6
+  * Add the ability to set the window title on most terminal emulators.
 
 1.5
   * Add syntactic sugar and documentation for ``enter_fullscreen`` and

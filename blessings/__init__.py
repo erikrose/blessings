@@ -92,14 +92,14 @@ class Terminal(object):
         self._init_descriptor = (sys.__stdout__.fileno()
                                  if stream_descriptor is None
                                  else stream_descriptor)
+        self._kind = kind or environ.get('TERM', 'unknown')
         if self._does_styling:
             # Make things like tigetstr() work. Explicit args make setupterm()
             # work even when -s is passed to nosetests. Lean toward sending
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
-                      self._init_descriptor)
+            setupterm(self._kind, self._init_descriptor)
 
         self.stream = stream
 
@@ -202,7 +202,8 @@ class Terminal(object):
         # setupterm() again.
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                return struct.unpack('hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                return struct.unpack(
+                    'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
                 pass
         return None, None  # Should never get here
@@ -301,6 +302,41 @@ class Terminal(object):
         #self.__dict__['colors'] = ret  # Cache it. It's not changing. (Doesn't work.)
         return colors if colors >= 0 else 0
 
+    def set_title(self, title):
+        """Set the title of the terminal window, and return whether it worked.
+
+        "It worked" includes the case where this Terminal doesn't do any
+        styling at all. If you want to distinguish that case, check the
+        ``is_a_tty`` attribute, and take into account the value you passed to
+        ``force_styling``.
+
+        Supports xterm- and rxvt-like terminals, OS X, and everything else
+        listed in http://www.ibiblio.org/pub/Linux/docs/HOWTO/Xterm-Title.
+
+        """
+        # TODO: I don't know if I like this as a special-purpose method. Why shouldn't we have to print() it like everything else? True, the special method makes it easy to support Windows, but whatever we would do to make "bold" work would also apply to this. OTOH, it's a pretty safe bet that you would never want to actually output something that you meant to go in the title bar, unlike bold. OTOOH, some status lines (different from title bars but often coincident) sometimes support doing bold and such within them. Doing this as a special method rules doing that nicely out. So what if we exposed the titlebar entry and exit codes as pseudo-caps, used them here, but still made them available for those who want to do crazy things within the titlebar? We kinda leapfrog ncurses' current support, codifying years of case statements in people's prompt-setting scripts.
+        # I kinda like shippng this first as a special-purpose method, and then we can add pseudo-caps later if somebody wants them.
+        # TODO: Shouldn't the tsl and fsl caps work for this, after checking that the hs cap is true? http://blog.hashpling.org/every-tried-too-hard-to-solve-something/ But they're blank on OS X. And https://developer.apple.com/library/mac/#documentation/Darwin/Reference/ManPages/man5/terminfo.5.html says ncurses doesn't "use any of these caps", whatever that means. Okay, I guess some terminal emulators map tsl and fsl to window title, but it's not a standard thing: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=634956.
+        # TODO: On Windows, os.system('title Whatever') works.
+        if self._does_styling:
+            if (self._kind.startswith('xterm') or
+                    self._kind.startswith('rxvt') or
+                    self._kind.startswith('aixterm') or
+                    self._kind.startswith('dtterm')):
+                out = '\x1b]2;' + title + '\x07'
+            elif self._kind.startswith('screen'):
+                out = '\x1bk' + title + '\x1b\\'  # Does this work?
+            elif self._kind.startswith('iris.ansi'):
+                out = '\x1bP1.y' + title + '\x1b\\'
+            elif self._kind.startswith('sun-cmd'):
+                out = '\x1b]l' + title + '\x1b\\'
+            elif self._kind.startswith('hpterm'):
+                out = '\x1b&f0k' + len(title) + 'D' + title
+            else:
+                return False
+            self.stream.write(out)
+        return True
+
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable capability."""
         if attr in COLORS:
@@ -330,7 +366,7 @@ class Terminal(object):
         if code:
             # We can encode escape sequences as UTF-8 because they never
             # contain chars > 127, and UTF-8 never changes anything within that
-            # range..
+            # range.
             return code.decode('utf-8')
         return u''
 
@@ -445,8 +481,7 @@ class NullCallableString(unicode):
 
     """
     def __new__(cls):
-        new = unicode.__new__(cls, u'')
-        return new
+        return unicode.__new__(cls, u'')
 
     def __call__(self, arg):
         if isinstance(arg, int):
