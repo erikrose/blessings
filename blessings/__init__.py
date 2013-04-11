@@ -2,6 +2,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 import curses
 from curses import tigetstr, tigetnum, setupterm, tparm
+import curses.has_key
 from fcntl import ioctl
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
@@ -11,6 +12,7 @@ except ImportError:
 import os
 from os import isatty, environ
 from platform import python_version_tuple
+import codecs
 import struct
 import sys
 from termios import TIOCGWINSZ
@@ -102,6 +104,90 @@ class Terminal(object):
                       self._init_descriptor)
 
         self.stream = stream
+
+        # as we receive input as a bytestring, and incrementally decode it
+        # using the input decoding.
+        import locale
+        locale.setlocale(locale.LC_ALL, '')
+        self.encoding = locale.getpreferredencoding()
+        self.inpdecoder = codecs.getincrementaldecoder(self.encoding)()
+
+        # Inherit curses keycap capability names, such as KEY_DOWN, to be
+        # used with Keystroke code values for comparison to the terminal
+        # instance.  The values are integer enumerations outside of 8-bit
+        # or iso8859-1 range, so that they can be mixed by value, and not
+        # confused with the value of control characters, alphanumerics,
+        # and high-bits such as <alt>+a (integer 225).
+        self._keycodes = [key for key in dir(curses) if key.startswith('KEY_')]
+        for keycode in self._keycodes:
+            # self.KEY_<keycode> = (int)
+            setattr(self, keycode, getattr(curses, keycode))
+
+        # This strange gem in standard python distrubtion appears to exist
+        # even in the win32 distribution; a mapping of terminal capabilities
+        # to the KEY_ attributes we've just previously copied. We construct a
+        # dictionary of multibyte characters to expect, with an Integer value
+        # suitable for pairing with KEY_ attribute values.
+        self._keymap = dict()
+        for keycode, cap in curses.has_key._capability_names.iteritems():
+            value = curses.tigetstr(cap)
+            if value is not None:
+                self._keymap[value.decode('iso8859-1')] = keycode
+
+        # Because our matching is paired by multibyte unicode strings, there
+        # is not harm in going the extra mile to ensure our key mapping is
+        # as closely paired as possible by including our own hand-paired
+        # mapping, what doesn't match doesn't really hurt.
+        self._keymap.update([(_seq.decode('iso8859-1'), _keyname)
+            for (_seq, _keyname) in (
+                (curses.tigetstr('khome'), self.KEY_HOME),
+                (curses.tigetstr('kend'), self.KEY_END),
+                (curses.tigetstr('kcuu1'), self.KEY_UP),
+                (curses.tigetstr('kcud1'), self.KEY_DOWN),
+                (curses.tigetstr('cuf1'), self.KEY_RIGHT),
+                (curses.tigetstr('kcub1'), self.KEY_LEFT),
+                (curses.tigetstr('knp'), self.KEY_NPAGE),
+                (curses.tigetstr('kind'), self.KEY_NPAGE),
+                (curses.tigetstr('kpp'), self.KEY_PPAGE),
+                (curses.tigetstr('kri'), self.KEY_PPAGE),
+                (curses.tigetstr('kent'), self.KEY_ENTER),
+                (curses.tigetstr('kbs'), self.KEY_BACKSPACE),
+                (curses.tigetstr('kdch1'), self.KEY_BACKSPACE),
+                (curses.tigetstr('kich1'), self.KEY_INSERT),
+                ) if _seq is not None and 0 != len(_seq)])
+
+        # ... as well as a list of general NVT sequences you would
+        # expect to receive from remote terminals, such as putty, rxvt,
+        # SyncTerm, windows telnet, HyperTerminal, netrunner ..
+        self._keymap.update([
+            (unichr(10), self.KEY_ENTER),
+            (unichr(13), self.KEY_ENTER),
+            (unichr(8), self.KEY_BACKSPACE),
+            (unichr(127), self.KEY_BACKSPACE),
+            (unichr(27) + u"OA", self.KEY_UP),
+            (unichr(27) + u"OB", self.KEY_DOWN),
+            (unichr(27) + u"OC", self.KEY_RIGHT),
+            (unichr(27) + u"OD", self.KEY_LEFT),
+            (unichr(27) + u"OH", self.KEY_LEFT),
+            (unichr(27) + u"OF", self.KEY_END),
+            (unichr(27) + u"[A", self.KEY_UP),
+            (unichr(27) + u"[B", self.KEY_DOWN),
+            (unichr(27) + u"[C", self.KEY_RIGHT),
+            (unichr(27) + u"[D", self.KEY_LEFT),
+            (unichr(27) + u"[H", self.KEY_HOME),
+            (unichr(27) + u"[F", self.KEY_END),
+            (unichr(27) + u"[K", self.KEY_END),
+            (unichr(27) + u"[U", self.KEY_NPAGE),
+            (unichr(27) + u"[V", self.KEY_PPAGE),
+            (unichr(27) + u"[@", self.KEY_INSERT),
+            (unichr(27) + u"A", self.KEY_UP),
+            (unichr(27) + u"B", self.KEY_DOWN),
+            (unichr(27) + u"C", self.KEY_RIGHT),
+            (unichr(27) + u"D", self.KEY_LEFT),
+            (unichr(27) + u"?x", self.KEY_UP),
+            (unichr(27) + u"?r", self.KEY_DOWN),
+            (unichr(27) + u"?v", self.KEY_RIGHT),
+            (unichr(27) + u"?t", self.KEY_LEFT), ])
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
@@ -334,6 +420,63 @@ class Terminal(object):
             return code.decode('utf-8')
         return u''
 
+    def _resolve_keycode(self, integer):
+        """
+        Returns printable string to represent matched multibyte sequence,
+        such as 'KEY_LEFT'. For purposes of __repr__ or __str__ ?
+        """
+        assert type(integer) is int
+        for keycode in self._keycodes:
+            if getattr(self, keycode) == integer:
+                return keycode
+
+    def _resolve_multibyte(self, text, end=False):
+        """
+        Yield a unicode with additional ``.is_sequence``, ``.name``,
+        and ``.code`` properties that describle matching multibyte input
+        sequences to keycode (if any). Set end=True if the last byte is
+        known to be the final byte in the sequence. Throws UnicodeDecodeError.
+        """
+        CR_NVT = u'\r\x00' # NVT return (telnet, etc.)
+        CR_DOS = u'\r\n'   # carriage return + newline
+        decoded = list()
+        for num, byte in enumerate(text):
+            ucs = self.inpdecoder.decode(byte,
+                    final=(end or num == (len(text)- 1)))
+            if ucs is not None:
+                decoded.append(ucs)
+        data = u''.join(decoded)
+
+        def scan_keymap(text):
+            """
+            Return sequence and keycode if text begins with any known sequence.
+            """
+            for (keyseq, keycode) in self._keymap.iteritems():
+                if text.startswith(keyseq):
+                    return (keyseq, self._resolve_keycode(keycode), keycode)
+            return (None, None, None)  # no match
+
+        # special care is taken to pass over the ineveitably troublesome
+        # carriage return, which is a multibyte sequence issue of its own;
+        # expect to receieve '\r\00', '\r\n', '\r', or '\n'.
+        while len(data):
+            if data[:2] in (CR_NVT, CR_DOS):
+                yield Keystroke(data[2:], ('KEY_ENTER', self.KEY_ENTER))
+                data = data[2:]
+                continue
+            elif data[:1] in (u'\r', u'\n'):
+                yield Keystroke(data[1:], ('KEY_ENTER', self.KEY_ENTER))
+                data = data[1:]
+                continue
+            keyseq, keyname, keycode = scan_keymap(data)
+            if (keyseq, keyname, keycode) == (None, None, None):
+                yield Keystroke(data[0], None)
+                data = data[1:]
+            else:
+                yield Keystroke(keyseq, (keyname, keycode))
+                data = data[len(keyseq):]
+
+
     def _resolve_color(self, color):
         """Resolve a color like red or on_bright_green into a callable capability."""
         # TODO: Does curses automatically exchange red and blue and cyan and
@@ -452,6 +595,44 @@ class NullCallableString(unicode):
         if isinstance(arg, int):
             return u''
         return arg  # TODO: Force even strs in Python 2.x to be unicodes? Nah. How would I know what encoding to use to convert it?
+
+
+class Keystroke(unicode):
+    """ A unicode-derived class for matched multibyte input sequences.  If the
+    unicode string is a multibyte input sequence, then the ``is_sequence``
+    property is True, and the ``name`` and ``value`` properties return a
+    string and integer value.
+    """
+    def __new__(cls, ucs, keystroke=None):
+        new = unicode.__new__(cls, ucs)
+        new._keystroke = keystroke
+        return new
+
+    def __repr__(self):
+        if self.is_sequence:
+            return u'<%s>' % (self.name,)
+        return unicode.__repr__(self)
+
+    @property
+    def is_sequence(self):
+        """ Returns True if value represents a multibyte sequence. """
+        return self._keystroke is not None
+
+    @property
+    def name(self):
+        """ Returns string name of multibyte sequence, such as 'KEY_HOME'."""
+        if self._keystroke is None:
+            return str(None)
+        return self._keystroke[0]
+
+    @property
+    def code(self):
+        """ Returns curses integer value of multibyte sequence, such as 323."""
+        if self._keystroke is not None:
+            return self._keystroke[1]
+        assert 1 == len(self), (
+                'No integer value available for multibyte sequence')
+        return ord(self)
 
 
 def split_into_formatters(compound):
