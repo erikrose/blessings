@@ -3,7 +3,6 @@ from contextlib import contextmanager
 import curses
 from curses import tigetstr, tigetnum, setupterm, tparm
 import curses.has_key
-from fcntl import ioctl
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
@@ -15,6 +14,7 @@ import textwrap
 import termios
 import codecs
 import struct
+import fcntl
 import select
 import math
 import tty
@@ -291,9 +291,10 @@ class Terminal(object):
         """Return a tuple of (terminal height, terminal width)."""
         # tigetnum('lines') and tigetnum('cols') update only if we call
         # setupterm() again.
+        padd = struct.pack('HHHH', 0, 0, 0, 0)
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                value = ioctl(descriptor, termios.TIOCGWINSZ, '\000' * 8)
+                value = fcntl.ioctl(descriptor, termios.TIOCGWINSZ, padd)
                 return struct.unpack('hhhh', value)[0:2]
             except IOError:
                 pass
