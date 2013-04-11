@@ -1,8 +1,9 @@
 from collections import defaultdict
 from contextlib import contextmanager
 import curses
-from curses import tigetstr, tigetnum, setupterm, tparm
 import curses.has_key
+import curses.ascii
+from curses import tigetstr, tigetnum, setupterm, tparm
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
@@ -11,6 +12,7 @@ except ImportError:
 import os
 from platform import python_version_tuple
 import textwrap
+import warnings
 import termios
 import codecs
 import struct
@@ -164,35 +166,37 @@ class Terminal(object):
         # ... as well as a list of general NVT sequences you would
         # expect to receive from remote terminals, such as putty, rxvt,
         # SyncTerm, windows telnet, HyperTerminal, netrunner ..
+
+        esc = curses.ascii.ESC
         self._keymap.update([
             (unichr(10), self.KEY_ENTER),
             (unichr(13), self.KEY_ENTER),
             (unichr(8), self.KEY_BACKSPACE),
             (unichr(127), self.KEY_BACKSPACE),
-            (unichr(27) + u"OA", self.KEY_UP),
-            (unichr(27) + u"OB", self.KEY_DOWN),
-            (unichr(27) + u"OC", self.KEY_RIGHT),
-            (unichr(27) + u"OD", self.KEY_LEFT),
-            (unichr(27) + u"OH", self.KEY_LEFT),
-            (unichr(27) + u"OF", self.KEY_END),
-            (unichr(27) + u"[A", self.KEY_UP),
-            (unichr(27) + u"[B", self.KEY_DOWN),
-            (unichr(27) + u"[C", self.KEY_RIGHT),
-            (unichr(27) + u"[D", self.KEY_LEFT),
-            (unichr(27) + u"[H", self.KEY_HOME),
-            (unichr(27) + u"[F", self.KEY_END),
-            (unichr(27) + u"[K", self.KEY_END),
-            (unichr(27) + u"[U", self.KEY_NPAGE),
-            (unichr(27) + u"[V", self.KEY_PPAGE),
-            (unichr(27) + u"[@", self.KEY_INSERT),
-            (unichr(27) + u"A", self.KEY_UP),
-            (unichr(27) + u"B", self.KEY_DOWN),
-            (unichr(27) + u"C", self.KEY_RIGHT),
-            (unichr(27) + u"D", self.KEY_LEFT),
-            (unichr(27) + u"?x", self.KEY_UP),
-            (unichr(27) + u"?r", self.KEY_DOWN),
-            (unichr(27) + u"?v", self.KEY_RIGHT),
-            (unichr(27) + u"?t", self.KEY_LEFT), ])
+            (unichr(esc) + u"OA", self.KEY_UP),
+            (unichr(esc) + u"OB", self.KEY_DOWN),
+            (unichr(esc) + u"OC", self.KEY_RIGHT),
+            (unichr(esc) + u"OD", self.KEY_LEFT),
+            (unichr(esc) + u"OH", self.KEY_LEFT),
+            (unichr(esc) + u"OF", self.KEY_END),
+            (unichr(esc) + u"[A", self.KEY_UP),
+            (unichr(esc) + u"[B", self.KEY_DOWN),
+            (unichr(esc) + u"[C", self.KEY_RIGHT),
+            (unichr(esc) + u"[D", self.KEY_LEFT),
+            (unichr(esc) + u"[H", self.KEY_HOME),
+            (unichr(esc) + u"[F", self.KEY_END),
+            (unichr(esc) + u"[K", self.KEY_END),
+            (unichr(esc) + u"[U", self.KEY_NPAGE),
+            (unichr(esc) + u"[V", self.KEY_PPAGE),
+            (unichr(esc) + u"[@", self.KEY_INSERT),
+            (unichr(esc) + u"A", self.KEY_UP),
+            (unichr(esc) + u"B", self.KEY_DOWN),
+            (unichr(esc) + u"C", self.KEY_RIGHT),
+            (unichr(esc) + u"D", self.KEY_LEFT),
+            (unichr(esc) + u"?x", self.KEY_UP),
+            (unichr(esc) + u"?r", self.KEY_DOWN),
+            (unichr(esc) + u"?v", self.KEY_RIGHT),
+            (unichr(esc) + u"?t", self.KEY_LEFT), ])
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
@@ -299,6 +303,100 @@ class Terminal(object):
             except IOError:
                 pass
         return None, None  # Should never get here
+
+    def getch(self, timeout=None, keycodes=True):
+        """Read a single keystroke from input.
+
+        When ``timeout`` is None (default), block until input is available.
+
+        If ``timeout`` is 0, this function is non-blocking and None is
+        returned if no input is available.
+        If ``timeout`` is non-zero, None is returned if time elapsed without
+        input after ``timeout`` seconds.
+
+        When keycodes is True (default), multibyte sequences are translated
+        to key code values, and string sequence of length greater than 1 may
+        be returned. The result is a unicode-typed instance of the Keystroke
+        class, with additional properties ``is_sequence`` (bool), ``name``
+        (str), and ``value`` (int).
+
+        When keycodes is False, a single unicode point is always returned.
+
+        Ensure you use 'cbreak mode', by using the 'inkey_enabled' context
+        manager to handle multibyte input sequences.
+
+        with term.inkey_enabled():
+            inp = None
+            while inp not in (u'q', u'Q'):
+                inp = term.getch(3)
+                if inp is None:
+                    print 'timeout after 3 seconds'
+                elif inp.is_sequence:
+                    if inp.code == term.KEY_UP:
+                        print 'moving on up!'
+                    else:
+                        print 'application key:', inp.name
+                else:
+                    print 'pressed ascii key:', inp, inp.code
+        """
+        pass
+
+    @contextmanager
+    def inkey_enabled(self):
+        """Return a context manager for entering 'cbreak' mode with echo off.
+
+        In cbreak mode (sometimes called “rare” mode) normal tty line
+        buffering is turned off and characters are available to be read one
+        by one by ``getch()``. echo is also disabled.
+
+        It is assumed the terminal is in a 'cooked' mode with line-at-a-time
+        processing with echo on before entering, the terminal is returned to
+        this state upon exiting.
+
+        More information can be found in the manual page for curses.h,
+           http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak
+        Or the python manual for curses,
+           http://docs.python.org/2/library/curses.html
+
+        The terminal is returned to 'cooked' mode and echo on upon exiting.
+
+        This is anagolous to the curses.wrapper() helper function.
+        """
+        self._canonical(False)
+        self._echo(False)
+        yield
+        self._canonical(True)
+        self._echo(True)
+
+    def _canonical(self, state=True):
+        """ Set terminal canonical mode on or off.
+        In canonical mode (line-at-a-time processing):
+            * Input is made available line by line. An input line is available
+            when one of the line delimiters is typed (NL, EOL, EOL2; or EOF at
+            the start of line). Except in the case of EOF, the line delimiter
+            is included in the buffer returned by read(2).
+       In noncanonical mode (character-at-a-time processing):
+            * Input is available immediately (without the user having to type
+            a line-delimiter character), and line editing is disabled. """
+        attr = self._get_term_attrs()
+        attr[3] = (attr[3] | termios.ICANON if state
+                else attr[3] & ~termios.ICANON)
+        self._set_term_attrs(attr)
+
+    def _echo(self, state=True):
+        """ Set terminal echo mode on or off. """
+        attr = self._get_term_attrs()
+        attr[3] = (attr[3] | termios.ECHO if state
+                else attr[3] & ~termios.ECHO)
+        self._set_term_attrs(attr)
+
+    def _get_term_attrs(self):
+        """ Get terminal attributes using termios.tcgetattr. """
+        return termios.tcgetattr(self._init_descriptor)
+
+    def _set_term_attrs(self, attr):
+        """ Set terminal attributes using tcsetattr with flag TCSANOW.  """
+        return termios.tcsetattr(self.init_desciptor, termios.TCSANOW, attr)
 
     @contextmanager
     def location(self, x=None, y=None):
@@ -465,16 +563,6 @@ class Terminal(object):
             return code.decode('utf-8')
         return u''
 
-    def _resolve_keycode(self, integer):
-        """
-        Returns printable string to represent matched multibyte sequence,
-        such as 'KEY_LEFT'. For purposes of __repr__ or __str__ ?
-        """
-        assert type(integer) is int
-        for keycode in self._keycodes:
-            if getattr(self, keycode) == integer:
-                return keycode
-
     def _resolve_multibyte(self, text, end=False):
         """
         Yield a unicode with additional ``.is_sequence``, ``.name``,
@@ -484,13 +572,25 @@ class Terminal(object):
         """
         CR_NVT = u'\r\x00' # NVT return (telnet, etc.)
         CR_DOS = u'\r\n'   # carriage return + newline
+        esc = curses.ascii.ESC
+        decoder_errmsg = 'multibyte decoding failed in _resolve_multibyte: %r'
         decoded = list()
         for num, byte in enumerate(text):
-            ucs = self.inpdecoder.decode(byte,
-                    final=(end or num == (len(text)- 1)))
+            is_final = end and num == (len(text) - 1)
+            ucs = self.inpdecoder.decode(byte, final=is_final)
             if ucs is not None:
                 decoded.append(ucs)
         data = u''.join(decoded)
+
+        def resolve_keycode(self, integer):
+            """
+            Returns printable string to represent matched multibyte sequence,
+            such as 'KEY_LEFT'. For purposes of __repr__ or __str__ ?
+            """
+            assert type(integer) is int
+            for keycode in self._keycodes:
+                if getattr(self, keycode) == integer:
+                    return keycode
 
         def scan_keymap(text):
             """
@@ -498,7 +598,7 @@ class Terminal(object):
             """
             for (keyseq, keycode) in self._keymap.iteritems():
                 if text.startswith(keyseq):
-                    return (keyseq, self._resolve_keycode(keycode), keycode)
+                    return (keyseq, resolve_keycode(keycode), keycode)
             return (None, None, None)  # no match
 
         # special care is taken to pass over the ineveitably troublesome
@@ -513,8 +613,16 @@ class Terminal(object):
                 yield Keystroke(data[1:], ('KEY_ENTER', self.KEY_ENTER))
                 data = data[1:]
                 continue
+            elif 1 == len(data) and data.startswith(unichr(esc)):
+                # an escape key without a trailing multibyte sequence
+                yield Keystroke(data[0], ('KEY_ESCAPE', self.KEY_ESCAPE))
+                break
             keyseq, keyname, keycode = scan_keymap(data)
             if (keyseq, keyname, keycode) == (None, None, None):
+                if data.startswith(unichr(esc)):
+                    # a multibyte sequence beginning with escape (27) was
+                    # not decoded -- please report !
+                    warnings.warn(decoder_errmsg % (data,))
                 yield Keystroke(data[0], None)
                 data = data[1:]
             else:
@@ -836,7 +944,7 @@ def _is_movement(ucs):
     slen = unicode.__len__(ucs)
     if 0 == slen:
         return False
-    elif ucs[0] != unichr(27):
+    elif ucs[0] != unichr(ESC):
         return False
     elif ucs[1] == u'c':
         # reset
@@ -927,9 +1035,10 @@ def _seqlen(ucs):
     # they do serve different means .. again, more REGEX would help
     # readability.
     slen = unicode.__len__(ucs)
+    esc = curses.ascii.ESC
     if 0 == slen:
         return 0  # empty string
-    elif ucs[0] != unichr(27):
+    elif ucs[0] != unichr(esc):
         return 0  # not a sequence
     elif 1 == slen:
         return 0  # just esc,
