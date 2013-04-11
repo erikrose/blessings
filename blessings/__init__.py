@@ -377,20 +377,17 @@ class Terminal(object):
                 lines.append(u'')
         return lines
 
-
     def ljust(self, ucs, width=None):
         if width is None:
             width = self.width
         return AnsiString(ucs).ljust(width)
     ljust.__doc__ = unicode.ljust.__doc__
 
-
     def rjust(self, ucs, width=None):
         if width is None:
             width = self.width
         return AnsiString(ucs).rjust(width)
     rjust.__doc__ = unicode.rjust.__doc__
-
 
     def center(self, ucs, width=None):
         if width is None:
@@ -519,7 +516,6 @@ class Terminal(object):
             else:
                 yield Keystroke(keyseq, (keyname, keycode))
                 data = data[len(keyseq):]
-
 
     def _resolve_color(self, color):
         """Resolve a color like red or on_bright_green into a callable capability."""
