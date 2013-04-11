@@ -349,10 +349,11 @@ class Terminal(object):
 
         In cbreak mode (sometimes called “rare” mode) normal tty line
         buffering is turned off and characters are available to be read one
-        by one by ``getch()``. echo is also disabled.
+        by one by ``getch()``. echo of input is also disabled, the application
+        must explicitly copy-out any input received.
 
-        It is assumed the terminal is in a 'cooked' mode with line-at-a-time
-        processing with echo on before entering, the terminal is returned to
+        It is assumed the terminal is in a 'cooked' or 'conanical' mode with
+        line-at-a-time processing and echo on. The terminal is returned to
         this state upon exiting.
 
         More information can be found in the manual page for curses.h,
@@ -360,9 +361,8 @@ class Terminal(object):
         Or the python manual for curses,
            http://docs.python.org/2/library/curses.html
 
-        The terminal is returned to 'cooked' mode and echo on upon exiting.
-
-        This is anagolous to the curses.wrapper() helper function.
+        This is anagolous to the curses.wrapper() helper function, and the
+        python standard module tty.setcbreak().
         """
         self._canonical(False)
         self._echo(False)
