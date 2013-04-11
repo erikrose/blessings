@@ -14,7 +14,10 @@ from os import isatty, environ
 from platform import python_version_tuple
 import codecs
 import struct
+import math
 import sys
+import re
+import textwrap
 from termios import TIOCGWINSZ
 
 
@@ -354,6 +357,27 @@ class Terminal(object):
         """
         return ParametrizingString(self._foreground_color, self.normal)
 
+    def wrap(self, ucs, width=None, **kwargs):
+        """
+        A.wrap(S, [width=None, indent=u'']) -> unicode
+
+        Like textwrap.wrap, but honor existing linebreaks and understand
+        printable length of a unicode string that contains ANSI sequences,
+        such as colors, bold, etc. if width is not specified, the terminal
+        width is used.
+        """
+        if width is None:
+            width = self.width
+        lines = []
+        for line in ucs.splitlines():
+            if line.strip():
+                for wrapped in ansiwrap(line, width, **kwargs):
+                    lines.append(wrapped)
+            else:
+                lines.append(u'')
+        return lines
+
+
     @property
     def on_color(self):
         """Return a capability that sets the background color.
@@ -651,3 +675,302 @@ def split_into_formatters(compound):
         else:
             merged_segs.append(s)
     return merged_segs
+
+
+class AnsiWrapper(textwrap.TextWrapper):
+    # pylint: disable=C0111
+    #         Missing docstring
+    def _wrap_chunks(self, chunks):
+        """
+        ANSI-safe varient of wrap_chunks, with exception of movement seqs!
+        """
+        lines = []
+        if self.width <= 0:
+            raise ValueError("invalid width %r (must be > 0)" % self.width)
+        chunks.reverse()
+        while chunks:
+            cur_line = []
+            cur_len = 0
+            if lines:
+                indent = self.subsequent_indent
+            else:
+                indent = self.initial_indent
+            width = self.width - len(indent)
+            if self.drop_whitespace and chunks[-1].strip() == '' and lines:
+                del chunks[-1]
+            while chunks:
+                chunk_len = len(AnsiString(chunks[-1]))
+                if cur_len + chunk_len <= width:
+                    cur_line.append(chunks.pop())
+                    cur_len += chunk_len
+                else:
+                    break
+            if chunks and len(AnsiString(chunks[-1])) > width:
+                self._handle_long_word(chunks, cur_line, cur_len, width)
+            if (self.drop_whitespace
+                    and cur_line
+                    and cur_line[-1].strip() == ''):
+                del cur_line[-1]
+            if cur_line:
+                lines.append(indent + u''.join(cur_line))
+        return lines
+AnsiWrapper.__doc__ = textwrap.TextWrapper.__doc__
+
+
+def ansiwrap(ucs, width=70, **kwargs):
+    """ Wrap a single paragraph of Unicode terminal sequences,
+    returning a list of wrapped lines. ucs is ANSI-color safe.
+    """
+    assert ('break_long_words' not in kwargs
+            or not kwargs['break_long_words']), (
+                    'break_long_words is not sequence-safe')
+    kwargs['break_long_words'] = False
+    return AnsiWrapper(width=width, **kwargs).wrap(ucs)
+
+_ANSI_COLOR = re.compile(r'\033\[(\d{2,3})m')
+_ANSI_RIGHT = re.compile(r'\033\[(\d{1,4})C')
+_ANSI_CODEPAGE = re.compile(r'\033[\(\)][AB012]')
+_ANSI_WILLMOVE = re.compile(r'\033\[[HJuABCDEF]')
+_ANSI_WONTMOVE = re.compile(r'\033\[[sm]')
+
+
+class AnsiString(unicode):
+    """
+    This unicode variation understands the effect of ANSI sequences of
+    printable length, as well as double-wide east asian characters on
+    terminals, properly implementing .rjust, .ljust, .center, and .len.
+
+    Other ANSI helper functions also provided as methods.
+    """
+    # this is really bad; kludge dating as far back as 2002
+    def __new__(cls, ucs):
+        new = unicode.__new__(cls, ucs)
+        return new
+
+    def __len__(self):
+        """
+        Return the printed length of a string that contains (some types) of
+        ANSI sequences. Although accounted for, strings containing sequences
+        such as cls() will not give accurate returns (0). backspace, delete,
+        and double-wide east-asian characters are accounted for.
+        """
+        # 'nxt' points to first *ch beyond current ansi sequence, if any.
+        # 'width' is currently estimated display length.
+        nxt, width = 0, 0
+        def get_padding(ucs):
+            """
+             get_padding(S) -> integer
+
+            Returns int('nn') in CSI sequence \\033[nnC for use with replacing
+            ansi.right(nn) with printable characters. prevents bleeding when
+            used with scrollable art. Otherwise 0 if not \033[nnC sequence.
+            Needed to determine the 'width' of art that contains this padding.
+            """
+            right = _ANSI_RIGHT.match(ucs)
+            if right is not None:
+                return int(right.group(1))
+            return 0
+        # i regret the heavy re-instantiation of Ansi(), but getslice
+        # needs working with .. ?
+        for idx in range(0, unicode.__len__(self)):
+            width += get_padding(self[idx:])
+            if idx == nxt:
+                nxt = idx + _seqlen(self[idx:])
+            if nxt <= idx:
+                # 'East Asian Fullwidth' and 'East Asian Wide' characters
+                # can take 2 cells, see
+                #   http://www.unicode.org/reports/tr11/
+                #   http://www.gossamer-threads.com/lists/python/bugs/972834
+                # we could use wcswidth, but i've ommitted it for now -jq
+                width += 1
+                nxt = idx + _seqlen(self[idx:]) + 1
+        return width
+
+    def ljust(self, width):
+        return self + u' ' * (max(0, width - self.__len__()))
+    ljust.__doc__ = unicode.ljust.__doc__
+
+    def rjust(self, width):
+        return u' ' * (max(0, width - self.__len__())) + self
+    rjust.__doc__ = unicode.rjust.__doc__
+
+    def center(self, width):
+        split = max(0.0, float(width) - self.__len__()) / 2
+        return (u' ' * (max(0, int(math.floor(split)))) + self
+                + u' ' * (max(0, int(math.ceil(split)))))
+    center.__doc__ = unicode.center.__doc__
+
+def _is_movement(ucs):
+    """
+    is_movement(S) -> bool
+
+    Returns True if string S begins with a known terminal escape
+    sequence that is "unhealthy for padding", that is, it has effects
+    on the cursor position that are indeterminate.
+    """
+    # pylint: disable=R0911,R09120
+    #        Too many return statements (20/6)
+    #        Too many branches (23/12)
+    # this isn't the best, perhaps for readability a giant REGEX can and
+    # probably and already has been made.
+    slen = unicode.__len__(ucs)
+    if 0 == slen:
+        return False
+    elif ucs[0] != unichr(27):
+        return False
+    elif ucs[1] == u'c':
+        # reset
+        return True
+    elif slen < 3:
+        # unknown
+        return False
+    elif _ANSI_CODEPAGE.match(ucs):
+        return False
+    elif (ucs[0], ucs[1], ucs[2]) == (u'#', u'8'):
+        # 'fill the screen'
+        return True
+    elif _ANSI_WILLMOVE.match(ucs):
+        return True
+    elif _ANSI_WONTMOVE.match(ucs):
+        return False
+    elif slen < 4:
+        # unknown
+        return False
+    elif ucs[2] == '?':
+        # CSI + '?25(h|l)' # show|hide
+        ptr2 = 3
+        while (ucs[ptr2].isdigit()):
+            ptr2 += 1
+        if not ucs[ptr2] in u'hl':
+            # ? followed illegaly, UNKNOWN
+            return False
+        return False
+    elif ucs[2] in ('(', ')'):
+        # CSI + '\([AB012]' # set G0/G1
+        assert ucs[3] in (u'A', 'B', '0', '1', '2',)
+        return False
+    elif not ucs[2].isdigit():
+        # illegal nondigit in seq
+        return False
+    ptr2 = 2
+    while (ucs[ptr2].isdigit()):
+        ptr2 += 1
+    # multi-attribute SGR '[01;02(..)'(m|H)
+    n_tries = 0
+    while ptr2 < slen and ucs[ptr2] == ';' and n_tries < 64:
+        n_tries += 1
+        ptr2 += 1
+        try:
+            while (ucs[ptr2].isdigit()):
+                ptr2 += 1
+            if ucs[ptr2] == 'H':
+                # 'H' pos,
+                return True
+            elif ucs[ptr2] == 'm':
+                # 'm' color;attr
+                return False
+            elif ucs[ptr2] == ';':
+                # multi-attribute SGR
+                continue
+        except IndexError:
+            # out-of-range in multi-attribute SGR
+            return False
+        # illegal multi-attribtue SGR
+        return False
+    if ptr2 >= slen:
+        # unfinished sequence, hrm ..
+        return False
+    elif ucs[ptr2] in u'ABCDEFGJKSTH':
+        # single attribute,
+        # up, down, right, left, bnl, bpl,
+        # pos, cls, cl, pgup, pgdown
+        return True
+    elif ucs[ptr2] == 'm':
+        # normal
+        return False
+    # illegal single value, UNKNOWN
+    return False
+
+
+def _seqlen(ucs):
+    """
+    _seqlen(S) -> integer
+
+    Returns non-zero for string S that begins with an ansi sequence, with
+    value of bytes until sequence is complete. Use as a 'next' pointer to
+    skip past sequences.
+    """
+    # pylint: disable=R0911,R0912
+    #        Too many return statements (19/6)
+    #        Too many branches (22/12)
+    # it is regretable that this duplicates much of is_movement, but
+    # they do serve different means .. again, more REGEX would help
+    # readability.
+    slen = unicode.__len__(ucs)
+    if 0 == slen:
+        return 0  # empty string
+    elif ucs[0] != unichr(27):
+        return 0  # not a sequence
+    elif 1 == slen:
+        return 0  # just esc,
+    elif ucs[1] == u'c':
+        return 2  # reset
+    elif 2 == slen:
+        return 0  # not a sequence
+    elif (ucs[1], ucs[2]) == (u'#', u'8'):
+        return 3  # fill screen (DEC)
+    elif _ANSI_CODEPAGE.match(ucs) or _ANSI_WONTMOVE.match(ucs):
+        return 3
+    elif _ANSI_WILLMOVE.match(ucs):
+        return 4
+    elif ucs[1] == '[':
+        # all sequences are at least 4 (\033,[,0,m)
+        if slen < 4:
+            # not a sequence !?
+            return 0
+        elif ucs[2] == '?':
+            # CSI + '?25(h|l)' # show|hide
+            ptr2 = 3
+            while (ucs[ptr2].isdigit()):
+                ptr2 += 1
+            if not ucs[ptr2] in u'hl':
+                # ? followed illegaly, UNKNOWN
+                return 0
+            return ptr2 + 1
+        # SGR
+        elif ucs[2].isdigit():
+            ptr2 = 2
+            while (ucs[ptr2].isdigit()):
+                ptr2 += 1
+                if ptr2 == unicode.__len__(ucs):
+                    return 0
+
+            # multi-attribute SGR '[01;02(..)'(m|H)
+            while ucs[ptr2] == ';':
+                ptr2 += 1
+                if ptr2 == unicode.__len__(ucs):
+                    return 0
+                try:
+                    while (ucs[ptr2].isdigit()):
+                        ptr2 += 1
+                except IndexError:
+                    return 0
+                if ucs[ptr2] in u'Hm':
+                    return ptr2 + 1
+                elif ucs[ptr2] == ';':
+                    # multi-attribute SGR
+                    continue
+                # 'illegal multi-attribute sgr'
+                return 0
+            # single attribute SGT '[01(A|B|etc)'
+            if ucs[ptr2] in u'ABCDEFGJKSTHm':
+                # single attribute,
+                # up/down/right/left/bnl/bpl,pos,cls,cl,
+                # pgup,pgdown,color,attribute.
+                return ptr2 + 1
+            # illegal single value
+            return 0
+        # illegal nondigit
+        return 0
+    # unknown...
+    return 0
