@@ -381,23 +381,21 @@ class Terminal(object):
     def ljust(self, ucs, width=None):
         if width is None:
             width = self.width
-        return self + u' ' * (max(0, width - AnsiString(ucs).__len__()))
+        return AnsiString(ucs).ljust(width)
     ljust.__doc__ = unicode.ljust.__doc__
 
 
     def rjust(self, ucs, width=None):
         if width is None:
             width = self.width
-        return u' ' * (max(0, width - AnsiString(ucs).__len__())) + ucs
+        return AnsiString(ucs).rjust(width)
     rjust.__doc__ = unicode.rjust.__doc__
 
 
     def center(self, ucs, width=None):
         if width is None:
             width = self.width
-        split = max(0.0, float(width) - AnsiString(ucs).__len__()) / 2
-        return (u' ' * (max(0, int(math.floor(split)))) + ucs
-                + u' ' * (max(0, int(math.ceil(split)))))
+        return AnsiString(ucs).center(width)
     center.__doc__ = unicode.center.__doc__
 
     @property
@@ -759,8 +757,8 @@ _ANSI_WONTMOVE = re.compile(r'\033\[[sm]')
 class AnsiString(unicode):
     """
     This unicode variation understands the effect of ANSI sequences of
-    printable length, as well as double-wide east asian characters on
-    terminals, properly implementing .rjust, .ljust, .center, and .len.
+    printable length, allowing a properly implemented .rjust(), .ljust(),
+    .center(), and .len() with bytes using terminal sequences
 
     Other ANSI helper functions also provided as methods.
     """
@@ -768,6 +766,23 @@ class AnsiString(unicode):
     def __new__(cls, ucs):
         new = unicode.__new__(cls, ucs)
         return new
+
+    def ljust(self, width):
+        return self + u' ' * (max(0, width - self.__len__()))
+    ljust.__doc__ = unicode.ljust.__doc__
+
+
+    def rjust(self, width):
+        return u' ' * (max(0, width - self.__len__())) + self
+    rjust.__doc__ = unicode.rjust.__doc__
+
+
+    def center(self, width):
+        split = max(0.0, float(width) - self.__len__()) / 2
+        return (u' ' * (max(0, int(math.floor(split)))) + self
+                + u' ' * (max(0, int(math.ceil(split)))))
+    center.__doc__ = unicode.center.__doc__
+
 
     def __len__(self):
         """
@@ -792,18 +807,15 @@ class AnsiString(unicode):
             if right is not None:
                 return int(right.group(1))
             return 0
-        # i regret the heavy re-instantiation of Ansi(), but getslice
-        # needs working with .. ?
         for idx in range(0, unicode.__len__(self)):
             width += get_padding(self[idx:])
             if idx == nxt:
                 nxt = idx + _seqlen(self[idx:])
             if nxt <= idx:
                 # 'East Asian Fullwidth' and 'East Asian Wide' characters
-                # can take 2 cells, see
-                #   http://www.unicode.org/reports/tr11/
-                #   http://www.gossamer-threads.com/lists/python/bugs/972834
-                # we could use wcswidth, but i've ommitted it for now -jq
+                # can take 2 cells, see http://www.unicode.org/reports/tr11/
+                # and http://www.gossamer-threads.com/lists/python/bugs/972834
+                # TODO: could use wcswidth, but i've ommitted it -jq
                 width += 1
                 nxt = idx + _seqlen(self[idx:]) + 1
         return width
