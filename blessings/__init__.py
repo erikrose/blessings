@@ -10,15 +10,16 @@ except ImportError:
     class IOUnsupportedOperation(Exception):
         """A dummy exception to take the place of Python 3's ``io.UnsupportedOperation`` in Python 2"""
 import os
-from os import isatty, environ
 from platform import python_version_tuple
+import textwrap
+import termios
 import codecs
 import struct
+import select
 import math
+import tty
 import sys
 import re
-import textwrap
-from termios import TIOCGWINSZ
 
 
 __all__ = ['Terminal']
@@ -87,7 +88,8 @@ class Terminal(object):
         except IOUnsupportedOperation:
             stream_descriptor = None
 
-        self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
+        self.is_a_tty = (stream_descriptor is not None
+                         and os.isatty(stream_descriptor))
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
@@ -103,7 +105,7 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
+            setupterm(kind or os.environ.get('TERM', 'unknown'),
                       self._init_descriptor)
 
         self.stream = stream
@@ -291,7 +293,8 @@ class Terminal(object):
         # setupterm() again.
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                return struct.unpack('hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                value = ioctl(descriptor, termios.TIOCGWINSZ, '\000' * 8)
+                return struct.unpack('hhhh', value)[0:2]
             except IOError:
                 pass
         return None, None  # Should never get here
