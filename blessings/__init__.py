@@ -342,8 +342,10 @@ class Terminal(object):
         pass
 
     @contextmanager
-    def inkey_enabled(self):
-        """Return a context manager for entering 'cbreak' mode with echo off.
+    def cbreak(self):
+        """Return a context manager for entering 'cbreak' mode.
+
+        This is anagolous to calling python's tty.setcbreak().
 
         In cbreak mode (sometimes called “rare” mode) normal tty line
         buffering is turned off and characters are available to be read one
@@ -378,25 +380,29 @@ class Terminal(object):
        In noncanonical mode (character-at-a-time processing):
             * Input is available immediately (without the user having to type
             a line-delimiter character), and line editing is disabled. """
-        attr = self._get_term_attrs()
-        attr[3] = (attr[3] | termios.ICANON if state
-                else attr[3] & ~termios.ICANON)
-        self._set_term_attrs(attr)
+        # see tty.setcbreak;
+        mode = self._get_term_attrs()
+        mode[tty.LFLAG] = (
+                mode[tty.LFLAG] | termios.ICANON if state else
+                mode[tty.LFLAG] & ~termios.ICANON)
+        self._set_term_mode(mode)
 
     def _echo(self, state=True):
         """ Set terminal echo mode on or off. """
-        attr = self._get_term_attrs()
-        attr[3] = (attr[3] | termios.ECHO if state
-                else attr[3] & ~termios.ECHO)
-        self._set_term_attrs(attr)
+        # see tty.setcbreak;
+        mode = self._get_term_attrs()
+        mode[tty.LFLAG] = (
+                mode[tty.LFLAG] | termios.ECHO if state else
+                mode[tty.LFLAG] & ~termios.ECHO)
+        self._set_term_mode(mode)
 
-    def _get_term_attrs(self):
+    def _get_term_mode(self):
         """ Get terminal attributes using termios.tcgetattr. """
         return termios.tcgetattr(self._init_descriptor)
 
-    def _set_term_attrs(self, attr):
+    def _set_term_mode(self, mode):
         """ Set terminal attributes using tcsetattr with flag TCSANOW.  """
-        return termios.tcsetattr(self.init_desciptor, termios.TCSANOW, attr)
+        return termios.tcsetattr(self.init_desciptor, termios.TCSANOW, mode)
 
     @contextmanager
     def location(self, x=None, y=None):
@@ -571,7 +577,8 @@ class Terminal(object):
         known to be the final byte in the sequence. Throws UnicodeDecodeError.
         """
         CR_NVT = u'\r\x00' # NVT return (telnet, etc.)
-        CR_DOS = u'\r\n'   # carriage return + newline
+        CR_LF = u'\r\n'   # carriage return + newline
+        CR_CHAR = u'\n'    # returns only '\n' when return is detected.
         esc = curses.ascii.ESC
         decoder_errmsg = 'multibyte decoding failed in _resolve_multibyte: %r'
         decoded = list()
@@ -603,25 +610,25 @@ class Terminal(object):
 
         # special care is taken to pass over the ineveitably troublesome
         # carriage return, which is a multibyte sequence issue of its own;
-        # expect to receieve '\r\00', '\r\n', '\r', or '\n'.
+        # expect to receieve any of '\r\00', '\r\n', '\r', or '\n', but
+        # yield only a single byte, u'\n'.
         while len(data):
-            if data[:2] in (CR_NVT, CR_DOS):
-                yield Keystroke(data[2:], ('KEY_ENTER', self.KEY_ENTER))
+            if data[:2] in (CR_NVT, CR_LF): # telnet return or dos CR+LF
+                yield Keystroke(CR_CHAR, ('KEY_ENTER', self.KEY_ENTER))
                 data = data[2:]
                 continue
-            elif data[:1] in (u'\r', u'\n'):
-                yield Keystroke(data[1:], ('KEY_ENTER', self.KEY_ENTER))
+            elif data[:1] in (u'\r', u'\n'): # single-byte CR
+                yield Keystroke(CR_CHAR, ('KEY_ENTER', self.KEY_ENTER))
                 data = data[1:]
                 continue
-            elif 1 == len(data) and data.startswith(unichr(esc)):
-                # an escape key without a trailing multibyte sequence
+            elif 1 == len(data) and data == unichr(esc):
                 yield Keystroke(data[0], ('KEY_ESCAPE', self.KEY_ESCAPE))
                 break
             keyseq, keyname, keycode = scan_keymap(data)
             if (keyseq, keyname, keycode) == (None, None, None):
                 if data.startswith(unichr(esc)):
-                    # a multibyte sequence beginning with escape (27) was
-                    # not decoded -- please report !
+                    # a multibyte sequence beginning with escape (27)
+                    # was not decoded -- please report !
                     warnings.warn(decoder_errmsg % (data,))
                 yield Keystroke(data[0], None)
                 data = data[1:]
