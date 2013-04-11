@@ -378,6 +378,28 @@ class Terminal(object):
         return lines
 
 
+    def ljust(self, ucs, width=None):
+        if width is None:
+            width = self.width
+        return self + u' ' * (max(0, width - AnsiString(ucs).__len__()))
+    ljust.__doc__ = unicode.ljust.__doc__
+
+
+    def rjust(self, ucs, width=None):
+        if width is None:
+            width = self.width
+        return u' ' * (max(0, width - AnsiString(ucs).__len__())) + ucs
+    rjust.__doc__ = unicode.rjust.__doc__
+
+
+    def center(self, ucs, width=None):
+        if width is None:
+            width = self.width
+        split = max(0.0, float(width) - AnsiString(ucs).__len__()) / 2
+        return (u' ' * (max(0, int(math.floor(split)))) + ucs
+                + u' ' * (max(0, int(math.ceil(split)))))
+    center.__doc__ = unicode.center.__doc__
+
     @property
     def on_color(self):
         """Return a capability that sets the background color.
@@ -785,20 +807,6 @@ class AnsiString(unicode):
                 width += 1
                 nxt = idx + _seqlen(self[idx:]) + 1
         return width
-
-    def ljust(self, width):
-        return self + u' ' * (max(0, width - self.__len__()))
-    ljust.__doc__ = unicode.ljust.__doc__
-
-    def rjust(self, width):
-        return u' ' * (max(0, width - self.__len__())) + self
-    rjust.__doc__ = unicode.rjust.__doc__
-
-    def center(self, width):
-        split = max(0.0, float(width) - self.__len__()) / 2
-        return (u' ' * (max(0, int(math.floor(split)))) + self
-                + u' ' * (max(0, int(math.ceil(split)))))
-    center.__doc__ = unicode.center.__doc__
 
 def _is_movement(ucs):
     """
