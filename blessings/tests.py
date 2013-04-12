@@ -288,3 +288,35 @@ def test_seqlen():
         for n in range(255):
             seq_junk = seq + chr(n).decode('iso8859-1')*10
             eq_(seqlen, _seqlen(seq_junk))
+
+def test_is_movement():
+    """Test the _is_movement function"""
+    t = TestTerminal()
+    seqs = [(u'', False),
+            (u'xyzzy', False),
+            (u'\x1b', False),  # a single escape NOT an 'escape sequence'
+            (u'\x1bc', True),  # reset
+            (u'\x1b#8', True), # dec alignment tube test
+            (u'\x1b[m', False), # sgr stuff
+            (u'\x1b[s', False),
+            (u'\x1b[?25h', False), # show|hide cursor
+            (u'\x1b[01;02m', False), # fake sgr
+            (u'\x1b(0', False), # shift code page
+            (u'\x1b)A', False),
+            (u'\x1b[H', True), # various movements, home, up
+            (u'\x1b[A', True),
+            (t.home, True),
+            (t.bold, False),
+            (t.red, False),
+            (t.underline, False),
+            (t.reverse, False),
+            ]
+    from blessings import _is_movement
+    for seq, willmove in seqs:
+        eq_(willmove, _is_movement(seq))
+        # skip testing single \x1b + padding (\x1bc is a valid sequence)
+        if seq == '\x1b':
+            continue
+        for n in range(255):
+            seq_junk = seq + chr(n).decode('iso8859-1')*10
+            eq_(willmove, _is_movement(seq_junk))
