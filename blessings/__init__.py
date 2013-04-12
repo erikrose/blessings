@@ -51,10 +51,6 @@ class Terminal(object):
         around with the terminal; it's almost always needed when the terminal
         is and saves sticking lots of extra args on client functions in
         practice.
-      ``is_a_tty``
-        Whether ``stream`` appears to be a terminal. You can examine this value
-        to decide whether to draw progress bars or other frippery.
-
     """
     def __init__(self, kind=None, stream=None, force_styling=False):
         """Initialize the terminal.
@@ -84,33 +80,39 @@ class Terminal(object):
             ``force_styling=None``.
 
         """
+        # any desire for passing in a 'virtual keyboard' input stream??
+        i_stream = sys.__stdin__
         if stream is None:
             o_stream = sys.__stdout__
-            i_stream = sys.__stdin__
         else:
             o_stream = stream
-            i_stream = None
+        # for StringIO's and such, a file descriptor is not necessarily
+        # always available for the output stream; that is ok, though, as
+        # long as the stream offers a .write method.
         try:
             o_fd = (o_stream.fileno() if hasattr(o_stream, 'fileno')
                              and callable(o_stream.fileno) else None)
-
         except IOUnsupportedOperation:
             o_fd = None
 
-        # os.isatty returns True if output stream is an open file descriptor
-        # connected to the slave end of a terminal.
-        self.is_a_tty = o_fd is not None and os.isatty(o_fd)
-        self.o_fd = sys.__stdout__.fileno() if o_fd is None else o_fd
+        # os.isatty returns True if output stream is an open file
+        # descriptor connected to the slave end of a terminal.
+        self._is_a_tty = o_fd is not None and os.isatty(o_fd)
         self._do_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
+        # an open file descriptor of some sort is necessary for setupterm(),
+        # even though it goes unused when an alternative stream is specified.
+        self.o_fd = sys.__stdout__.fileno() if o_fd is None else o_fd
 
-        if self._do_styling:
-            # Make things like tigetstr() work. Explicit args make setupterm()
-            # work even when -s is passed to nosetests. Lean toward sending
-            # init sequences to the stream if it has a file descriptor, and
-            # send them to stdout as a fallback, since they have to go
-            # somewhere.
+        if self.do_styling:
+            # curses.setupterm is the foot in the water, providing access to
+            # the extensive terminal capabilities database so necessary for
+            # blessings.
+            # Note: we go through great lengths to prevent diving into curses
+            # fully by avoiding a call to curses.initscr().
+            # Prefer the stream file descriptor if available, using stdout as a
+            # a fallback. Even though it is unused, it is required by setuperm.
             setupterm(kind or os.environ.get('TERM', 'unknown'), self.o_fd)
 
         self.stream = o_stream
@@ -120,15 +122,19 @@ class Terminal(object):
         self._state_echo = True
         self._state_canonical = True
 
+        # dictionary of multibyte sequences to be paired with key codes
+        self._keymap = dict()
+        # list of key code names
+        self._keycodes = list()
+
         # Inherit curses keycap capability names, such as KEY_DOWN, to be
         # used with Keystroke ``code`` property values for comparison to the
         # Terminal class instance it was received on.
-        self._keycodes = [key for key in dir(curses) if key.startswith('KEY_')]
-        for keycode in self._keycodes:
-            # self.KEY_<keycode> = (int)
+        for keycode in [kc for kc in dir(curses) if kc.startswith('KEY_')]:
+            self._keycodes.append (keycode)
             setattr(self, keycode, getattr(curses, keycode))
 
-        if self.i_stream is not None:
+        if self.is_a_tty:
             # determine encoding of input stream. Only used for keyboard
             # input on posix systems. win32 systems use getwche which returns
             # unicode, and does not require decoding.
@@ -138,9 +144,9 @@ class Terminal(object):
                 self._idecoder = codecs.getincrementaldecoder(self.encoding)()
             self.i_buf = list()
 
-        if self.is_a_tty and self.i_stream:
             # create lookup dictionary for multibyte keyboard input sequences
             self._init_keystrokes()
+
         # Friendly mnemonics for 'KEY_DELETE' and 'KEY_INSERT'.
         self.KEY_DELETE = self.KEY_DC
         self.KEY_INSERT = self.KEY_IC
@@ -195,11 +201,6 @@ class Terminal(object):
         no_underline='rmul')
 
     def _init_keystrokes(self):
-        # dictionary of multibyte sequences to be paired with key codes
-        self._keymap = dict()
-        # list of key code names
-        self._keycodes = list()
-
         # curses.has_key._capability_names is a dictionary keyed by termcap
         # capabilities, with integer values to be paired with KEY_ names;
         # using this dictionary, we query for the terminal sequence of the
@@ -284,8 +285,19 @@ class Terminal(object):
 
     @property
     def do_styling(self):
-        """Wether the terminal will attempt to output sequences."""
+        """Wether the terminal will attempt to output sequences for
+        all styling attributes, such as term.bold(). When False, a
+        null string ('') is used for all styling attributes, this behavior
+        is forced when force_styling=None, or when the output is not a tty.
+           """
         return self._do_styling
+
+    @property
+    def is_a_tty(self):
+        """Wether the stream is connected to the slave end of a Terminal.
+        This property is used to identify if the terminal can be interacted
+        with, for instance, with the ``inkey()`` method.  """
+        return self._is_a_tty
 
     @property
     def height(self):
@@ -310,72 +322,60 @@ class Terminal(object):
 
         """
         return self._height_and_width()[1]
+    def _height_and_width_win32(self):
+        # based on anatoly techtonik's work from pager.py, MIT/Pub Domain.
+        # completely untested ... please report !!
+        #WIN32_I_FD = -10
+        WIN32_O_FD = -11
+        from ctypes import windll, Structure, byref
+        from ctypes.wintypes import SHORT, WORD, DWORD
+        console_handle = windll.kernel32.GetStdHandle(WIN32_O_FD)
+            # CONSOLE_SCREEN_BUFFER_INFO Structure
+        class COORD(Structure):
+            _fields_ = [("X", SHORT), ("Y", SHORT)]
+
+        class SMALL_RECT(Structure):
+            _fields_ = [("Left", SHORT), ("Top", SHORT),
+                        ("Right", SHORT), ("Bottom", SHORT)]
+
+        class CONSOLE_SCREEN_BUFFER_INFO(Structure):
+            _fields_ = [("dwSize", COORD),
+                        ("dwCursorPosition", COORD),
+                        ("wAttributes", WORD),
+                        ("srWindow", SMALL_RECT),
+                        ("dwMaximumWindowSize", DWORD)]
+        sbi = CONSOLE_SCREEN_BUFFER_INFO()
+        ret = windll.kernel32.GetConsoleScreenBufferInfo(
+                console_handle, byref(sbi))
+        if ret != 0:
+            return (sbi.srWindow.Right - sbi.srWindow.Left + 1,
+                    sbi.srWindow.Bottom - sbi.srWindow.Top + 1)
+        return None, None
 
     def _height_and_width(self):
         """Return a tuple of (terminal height, terminal width).
            Returns (None, None) if terminal window size is indeterminate.
        """
-        if sys.platform == 'win32':
-            # based on anatoly techtonik's work from pager.py, MIT/Pub Domain.
-            # completely untested ... please report !!
-            #WIN32_I_FD = -10
-            WIN32_O_FD = -11
-            from ctypes import windll, Structure, byref
-            from ctypes.wintypes import SHORT, WORD, DWORD
-            console_handle = windll.kernel32.GetStdHandle(WIN32_O_FD)
-                # CONSOLE_SCREEN_BUFFER_INFO Structure
-            class COORD(Structure):
-                _fields_ = [("X", SHORT), ("Y", SHORT)]
-
-            class SMALL_RECT(Structure):
-                _fields_ = [("Left", SHORT), ("Top", SHORT),
-                            ("Right", SHORT), ("Bottom", SHORT)]
-
-            class CONSOLE_SCREEN_BUFFER_INFO(Structure):
-                _fields_ = [("dwSize", COORD),
-                            ("dwCursorPosition", COORD),
-                            ("wAttributes", WORD),
-                            ("srWindow", SMALL_RECT),
-                            ("dwMaximumWindowSize", DWORD)]
-            sbi = CONSOLE_SCREEN_BUFFER_INFO()
-            ret = windll.kernel32.GetConsoleScreenBufferInfo(
-                    console_handle, byref(sbi))
-            if ret != 0:
-                return (sbi.srWindow.Right - sbi.srWindow.Left + 1,
-                        sbi.srWindow.Bottom - sbi.srWindow.Top + 1)
         # tigetnum('lines') and tigetnum('cols') update only if we call
         # setupterm() again.
         buf = struct.pack('HHHH', 0, 0, 0, 0)
+        if sys.platform == 'win32':
+            value = self._height_and_width_win32()
+            if value is not None:
+                return value
         for fd in self.o_fd, sys.__stdout__.fileno():
             try:
                 value = fcntl.ioctl(fd, termios.TIOCGWINSZ, buf)
                 return struct.unpack('hhhh', value)[0:2]
             except IOError:
                 pass
-        # should never be reached, if it is, make a hail mary at envion vars.
-        return os.environ.get('LINES', None), os.environ.get('COLUMNS', None)
-
-    def _kbhit_win32(self, timeout=0):
-        hit = self._kbhit_win32()
-        if timeout == 0 or hit:
-            return hit
-        # without polling for file descriptors on windows, there really isn't
-        # a high-level select interface, as is evident in the documentation
-        # for select. So, we have a small performance impact and precision
-        # loss by sleeping for brief moments before polling again.
-        stime = time.time()
-        while not hit and timeout:
-            time.sleep(0.05)
-            hit = self._kbhit_win32()
-            if time.time() - stime >= timeout:
-                break
-        return hit
-
-    def _kbhit_posix(self, timeout=0):
-        # there is no such 'kbhit' routine for posix ..
-        self.stream.flush()
-        fds = select.select([self.i_stream.fileno()], [], [], timeout)[0]
-        return self.i_stream.fileno() in fds
+        # throw a hail mairy for environment values
+        lines, cols = (os.environ.get('LINES', None),
+                os.environ.get('COLUMNS', None))
+        if None not in (lines, cols):
+            return lines, cols
+        # ! should never be reached
+        return None, None
 
     def kbhit(self, timeout=0):
         """ Returns True if a keypress has been detected on input.
@@ -383,32 +383,12 @@ class Terminal(object):
         A timeout of 0 returns immediately (default), A timeout of
         ``None`` blocks indefinitely. A timeout of non-zero blocks
         until timeout seconds elapsed. """
-        val = (self._kbhit_win32(timeout) if sys.platform == 'win32' else
-                self._kbhit_posix(timeout))
-        return val
+        fds = select.select([self.i_stream.fileno()], [], [], timeout)[0]
+        return self.i_stream.fileno() in fds
 
     def getch(self):
         """ Read a single byte from input stream. """
-        if sys.platform == 'win32':
-            return self._getch_win32()
-        else:
-            return self._getch_posix()
-
-    def _getch_win32(self):
-        """ Read 1 byte on win32 platform. Will block utill keypress
-        unless kbhit() has first been called and returned True.
-        No decoding of multibyte input is performed.  """
-        if self._state_echo:
-            return msvcrt.getwche()
-        else:
-            return msvcrt.getwch()
-
-    def _getch_posix(self):
-        """ Read 1 byte on posix systems. Will block until keypress
-        unless kbhit() has first been called and returned True.
-        No decoding of multibyte input is performed.  """
-        return self.i_stream.read(1)
-
+        return os.read(self.i_stream.fileno(), 1)
 
     def inkey(self, timeout=None, esc_delay=0.35):
         """ Read a single keystroke from input up to timeout in seconds,
@@ -444,7 +424,6 @@ class Terminal(object):
                     print 'key:', inp, inp.code
         """
         assert self.is_a_tty, u'stream is not a a tty.'
-        assert self.i_stream is not None, 'no terminal on input.'
         esc = curses.ascii.ESC  # posix multibyte sequence (MBS) start mark
         wsb = ord('\xe0')       # win32 MBS start mark
         poll_mbs       = 3.35   # when receiving MBS, delay for (any) next byte
@@ -469,27 +448,18 @@ class Terminal(object):
             return None
         byte = self.getch()
         buf = [byte,]
-        print '1. buf:', buf
         # check for MSB; or just buffer for a rapidly firing input stream
         # not sure why the 2nd byte fails the kbhit / select check ..
         while True:
-            print '| 1'
             if chk_start(buf[0]):
-                print '1a; MSB check'
-                if self.kbhit(poll_mbs):
+                if self.kbhit(3):
                     byte = self.getch()
-                    print '1b; ok! +', repr(byte)
                     buf.append (byte)
                     detect = self.resolve_mbs(buf).next()
-                    print '1c; MSB end check'
                     if (detect.is_sequence and detect.code != self.KEY_ESCAPE):
                         # end of MBS,
-                        print '1c; OK!'
                         break
-                    else:
-                        print '1c; fail.'
                 else:
-                    print '1b; fail.'
                     # a poll for a 2nd+ byte failed; simple old ASCII escape.
                     break
             elif self.kbhit():
@@ -497,93 +467,44 @@ class Terminal(object):
                 # utf-8, I would suppose, as its not caught by chk_start().
                 byte = self.getch()
                 buf.append (byte)
-                print '2; ok! +', repr(byte)
             else:
                 # no more bytes available in 'check for multibyte seq' loop
-                print '3; no remaining bytes, break.'
                 break
-        print '< buf:', repr(buf)
         for keystroke in self.resolve_mbs(buf):
             self.i_buf.insert(0, keystroke)
-        print '> buf:', repr(self.i_buf)
-        return self.i_buf.pop()
+        item = self.i_buf.pop()
+        return item
 
     @contextmanager
     def cbreak(self):
         """Return a context manager for entering 'cbreak' mode.
 
-        This is anagolous to calling python's tty.setcbreak().
+        This is anagolous to calling python's tty.setcbreak(), except
+        that a finally clause restores the terminal state.
 
         In cbreak mode (sometimes called "rare" mode) normal tty line
         buffering is turned off and characters are available to be read one
         by one by ``getch()``. echo of input is also disabled, the application
         must explicitly copy-out any input received.
 
-        It is assumed the terminal is in a 'cooked' or 'conanical' mode with
-        line-at-a-time processing and echo on. The terminal is returned to
-        this state upon exiting.
-
         More information can be found in the manual page for curses.h,
            http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak
         Or the python manual for curses,
            http://docs.python.org/2/library/curses.html
+        Note also that setcbreak sets VMIN = 1 and VTIME = 0,
+           http://www.unixwiz.net/techtips/termios-vmin-vtime.html
 
         This is anagolous to the curses.wrapper() helper function, and the
-        python standard module tty.setcbreak().
+        python standard module tty.setcbreak(), with the exception that
+        the original terminal mode is restored when leaving context.
         """
-        # the full terminal state could be stored (even "packed" and made
-        # serializable, as a github issue suggests; though seemingly without
-        # any real useful purpose). Then, later restored. Instead, we just
-        # selectively set and unset ICANON and ECHO, as we don't expect to
-        # manipulate any other variables ..
-        self._canonical(False)
-        self._echo(False)
+        assert self.is_a_tty, u'stream is not a a tty.'
+        mode = termios.tcgetattr(self.i_stream.fileno())
+        tty.setcbreak(self.i_stream.fileno(), termios.TCSANOW)
         try:
             yield
         finally:
-            self._canonical(True)
-            self._echo(True)
-
-    @contextmanager
-    def echo_off(self):
-        """Return a context manager suitable for echo of input."""
-        self._echo(False)
-        yield
-        self._echo(True)
-
-    def _canonical(self, state=True):
-        """ Set terminal canonical mode on or off.
-        In canonical mode (line-at-a-time processing):
-            * Input is made available line by line. An input line is available
-            when one of the line delimiters is typed (NL, EOL, EOL2; or EOF at
-            the start of line). Except in the case of EOF, the line delimiter
-            is included in the buffer returned by read(2).
-       In noncanonical mode (character-at-a-time processing):
-            * Input is available immediately (without the user having to type
-            a line-delimiter character), and line editing is disabled. """
-        self._state_canonical = state
-        if sys.platform == 'win32':
-            return
-        else:
-            # see python tty.setcbreak
-            mode = self._get_term_mode_posix()
-            mode[tty.LFLAG] = (
-                    mode[tty.LFLAG] | termios.ICANON if state else
-                    mode[tty.LFLAG] & ~termios.ICANON)
-            self._set_term_mode_posix(mode)
-
-    def _echo(self, state=True):
-        """ Set terminal echo mode on or off. """
-        self._state_echo = state
-        if sys.platform == 'win32':
-            return
-        else:
-            # see python tty.setcbreak
-            mode = self._get_term_mode_posix()
-            mode[tty.LFLAG] = (
-                    mode[tty.LFLAG] | termios.ECHO if state else
-                    mode[tty.LFLAG] & ~termios.ECHO)
-            self._set_term_mode_posix(mode)
+            termios.tcsetattr(self.i_stream.fileno(), termios.TCSAFLUSH, mode)
 
     @contextmanager
     def location(self, x=None, y=None):
@@ -837,20 +758,6 @@ class Terminal(object):
         """Return a new ``FormattingString`` which implicitly receives my notion of "normal"."""
         return FormattingString(formatting, self.normal)
 
-    def _get_term_mode_posix(self):
-        """ Get terminal attributes using termios.tcgetattr. """
-        assert self.is_a_tty, 'stream is not a a tty.'
-        assert self.i_stream is not None, 'no terminal on input.'
-        assert sys.platform != 'win32', 'Windows is without termios'
-        return termios.tcgetattr(self.i_stream)
-
-    def _set_term_mode_posix(self, mode):
-        """ Set terminal attributes using tcsetattr with flag TCSANOW.  """
-        assert self.is_a_tty, 'stream is not a a tty.'
-        assert self.i_stream is not None, 'no terminal on input.'
-        assert sys.platform != 'win32', 'Windows is without termios'
-        return termios.tcsetattr(self.i_stream, termios.TCSANOW, mode)
-
     def ljust(self, ucs, width=None):
         if width is None:
             width = self.width
@@ -972,11 +879,6 @@ class Keystroke(unicode):
         new = unicode.__new__(cls, ucs)
         new._keystroke = keystroke
         return new
-
-    def __repr__(self):
-        if self.is_sequence:
-            return u'<%s>' % (self.name,)
-        return unicode.__repr__(self)
 
     @property
     def is_sequence(self):
