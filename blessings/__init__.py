@@ -148,11 +148,13 @@ class Terminal(object):
             self._init_keystrokes()
 
         # Friendly mnemonics for 'KEY_DELETE', 'KEY_INSERT', 'KEY_PGUP',
-        # and 'KEY_PGDOWN'.
+        # and 'KEY_PGDOWN', 'KEY_SPGUP', 'KEY_SPGDOWN'.
         self.KEY_DELETE = self.KEY_DC
         self.KEY_INSERT = self.KEY_IC
         self.KEY_PGUP = self.KEY_PPAGE
         self.KEY_PGDOWN = self.KEY_NPAGE
+        self.KEY_SPGUP = self.SR # scroll reverse (shift+pgup)
+        self.KEY_SPGDOWN = self.SF # scroll forward (shift+pgdown)
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
