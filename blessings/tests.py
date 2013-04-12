@@ -320,3 +320,38 @@ def test_is_movement():
         for n in range(255):
             seq_junk = seq + chr(n).decode('iso8859-1')*10
             eq_(willmove, _is_movement(seq_junk))
+
+def test_ansiwrap():
+    t = TestTerminal()
+    pgraph = 'pony express, all aboard, choo, choo! ' * 300
+    pgraph_colored = u''.join([t.color(n % 7) + t.bold + ch
+        for n, ch in enumerate(pgraph)])
+    import textwrap
+    internal_wrapped = textwrap.wrap(pgraph, t.width, break_long_words=False)
+    my_wrapped = t.wrap(pgraph)
+    my_wrapped_colored = t.wrap(pgraph_colored)
+    # ensure we textwrap ascii the same as python
+    eq_(internal_wrapped, my_wrapped)
+    # ensure our colored textwrap is the same line length
+    eq_(len(internal_wrapped), len(t.wrap(pgraph_colored)))
+    # ensure our last line ends at the same column
+    from blessings import AnsiString
+    eq_(len(internal_wrapped[-1]), AnsiString(my_wrapped_colored[-1]).__len__())
+
+def test_ansistring():
+    """Tests functions related to AnsiString class"""
+    t = TestTerminal()
+    from blessings import AnsiString
+    pony_msg = 'pony express, all aboard, choo, choo!'
+    pony_len = len(pony_msg)
+    pony_colored = u''.join([t.color(n % 7) + ch for n, ch in enumerate(pony_msg)])
+    ladjusted = AnsiString(t.ljust(pony_colored))
+    radjusted = AnsiString(t.rjust(pony_colored))
+    centered = AnsiString(t.center(pony_colored))
+    eq_(AnsiString(pony_colored).__len__(), pony_len)
+    eq_(AnsiString(centered.strip()).__len__(), pony_len)
+    eq_(AnsiString(centered).__len__(), len(pony_msg.center(t.width)))
+    eq_(AnsiString(ladjusted.rstrip()).__len__(), pony_len)
+    eq_(AnsiString(ladjusted).__len__(), len(pony_msg.ljust(t.width)))
+    eq_(AnsiString(radjusted.lstrip()).__len__(), pony_len)
+    eq_(AnsiString(radjusted).__len__(), len(pony_msg.rjust(t.width)))
