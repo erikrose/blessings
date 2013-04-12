@@ -376,8 +376,9 @@ class Terminal(object):
 
     def _kbhit_posix(self, timeout=0):
         # there is no such 'kbhit' routine for posix ..
-        r_fds, w_fds, x_fds = select.select([self.i_stream.fileno()], [], [], timeout)
-        return self.i_stream.fileno() in r_fds
+        self.o_stream.flush()
+        fds = select.select([self.i_stream.fileno()], [], [], timeout)[0]
+        return self.i_stream.fileno() in fds
 
     def kbhit(self, timeout=0):
         """ Returns True if a keypress has been detected on input.
@@ -388,7 +389,7 @@ class Terminal(object):
         print 'kbhit', timeout,
         val = (self._kbhit_win32(timeout) if sys.platform == 'win32' else
                 self._kbhit_posix(timeout))
-        print val
+        print repr(val)
         return val
 
     def getch(self):
@@ -451,7 +452,7 @@ class Terminal(object):
         assert self.i_stream is not None, 'no terminal on input.'
         esc = curses.ascii.ESC  # posix multibyte sequence (MBS) start mark
         wsb = ord('\xe0')       # win32 MBS start mark
-        poll_mbs       = 0.15   # when receiving MBS, delay for (any) next byte
+        poll_mbs       = 3.35   # when receiving MBS, delay for (any) next byte
 
         # return keystrokes buffered by previous calls immediately,
         # regardless of timeout
@@ -473,17 +474,27 @@ class Terminal(object):
             return None
         byte = self.getch()
         buf = [byte,]
+        print '1. buf:', buf
         # check for MSB; or just buffer for a rapidly firing input stream
+        # not sure why the 2nd byte fails the kbhit / select check ..
         while True:
+            print '| 1'
             if chk_start(buf[0]):
+                print '1a; MSB check'
                 if self.kbhit(poll_mbs):
                     byte = self.getch()
+                    print '1b; ok! +', repr(byte)
                     buf.append (byte)
                     detect = self.resolve_mbs(buf).next()
+                    print '1c; MSB end check'
                     if (detect.is_sequence and detect.code != self.KEY_ESCAPE):
                         # end of MBS,
+                        print '1c; OK!'
                         break
+                    else:
+                        print '1c; fail.'
                 else:
+                    print '1b; fail.'
                     # a poll for a 2nd+ byte failed; simple old ASCII escape.
                     break
             elif self.kbhit():
@@ -491,11 +502,15 @@ class Terminal(object):
                 # utf-8, I would suppose, as its not caught by chk_start().
                 byte = self.getch()
                 buf.append (byte)
+                print '2; ok! +', repr(byte)
             else:
                 # no more bytes available in 'check for multibyte seq' loop
+                print '3; no remaining bytes, break.'
                 break
+        print '< buf:', repr(buf)
         for keystroke in self.resolve_mbs(buf):
             self.i_buf.insert(0, keystroke)
+        print '> buf:', repr(self.i_buf)
         return self.i_buf.pop()
 
     @contextmanager
@@ -789,10 +804,6 @@ class Terminal(object):
                 break
             keyseq, keyname, keycode = scan_keymap(ucs)
             if (keyseq, keyname, keycode) == (None, None, None):
-                if ucs.startswith(unichr(esc)):
-                    # a multibyte sequence beginning with escape (27)
-                    # was not decoded -- please report !
-                    warnings.warn(decoder_errmsg % (ucs,))
                 yield Keystroke(ucs[0], None)
                 ucs = ucs[1:]
             else:
