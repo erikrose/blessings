@@ -136,10 +136,8 @@ class Terminal(object):
             locale.setlocale(locale.LC_ALL, '')
             self.encoding = locale.getpreferredencoding()
             if sys.platform != 'win32':
-                self.i_buf = unicode()
                 self._idecoder = codecs.getincrementaldecoder(self.encoding)()
-            else:
-                self.i_buf = bytes()
+            self.i_buf = list()
 
         if self.is_a_tty and self.i_stream:
             # create lookup dictionary for multibyte keyboard input sequences
@@ -209,7 +207,7 @@ class Terminal(object):
         # terminal capability, and, if any result is found, store the sequence
         # in the _keymap lookup table with the integer valued to be paired by
         # key codes.
-        for capability, i_val in curses.has_key._capability_names.iteritems():
+        for i_val, capability in curses.has_key._capability_names.iteritems():
             seq = curses.tigetstr(capability)
             if seq is not None:
                 self._keymap[seq.decode('iso8859-1')] = i_val
@@ -378,8 +376,9 @@ class Terminal(object):
 
     def _kbhit_posix(self, timeout=0):
         # there is no such 'kbhit' routine for posix ..
-        r_fds, w_fds, x_fds = select.select([sys.i_stream], [], [], timeout)
-        return sys.i_stream.fileno() in r_fds
+        print 'poll', timeout
+        r_fds, w_fds, x_fds = select.select([self.i_stream.fileno()], [], [], timeout)
+        return self.i_stream.fileno() in r_fds
 
     def kbhit(self, timeout=0):
         """ Returns True if a keypress has been detected on input.
@@ -498,7 +497,7 @@ class Terminal(object):
                 continue
             # eagerly read all input until next MSB start byte
             # or no subsequent bytes are ready on input stream.
-            ready = self.kbhit(waitfor)
+            ready = self.kbhit(waitfor if waitfor != float('inf') else None)
             while ready and not esc_active:
                 buf.append (self.getch())
                 esc_active = time.time() if chk_start(buf[-1]) else False
@@ -517,7 +516,7 @@ class Terminal(object):
 
         This is anagolous to calling python's tty.setcbreak().
 
-        In cbreak mode (sometimes called “rare” mode) normal tty line
+        In cbreak mode (sometimes called "rare" mode) normal tty line
         buffering is turned off and characters are available to be read one
         by one by ``getch()``. echo of input is also disabled, the application
         must explicitly copy-out any input received.
@@ -562,7 +561,7 @@ class Terminal(object):
             return
         else:
             # see python tty.setcbreak
-            mode = self._get_term_attrs()
+            mode = self._get_term_mode_posix()
             mode[tty.LFLAG] = (
                     mode[tty.LFLAG] | termios.ICANON if state else
                     mode[tty.LFLAG] & ~termios.ICANON)
@@ -575,7 +574,7 @@ class Terminal(object):
             return
         else:
             # see python tty.setcbreak
-            mode = self._get_term_attrs()
+            mode = self._get_term_mode_posix()
             mode[tty.LFLAG] = (
                     mode[tty.LFLAG] | termios.ECHO if state else
                     mode[tty.LFLAG] & ~termios.ECHO)
@@ -747,7 +746,7 @@ class Terminal(object):
             return self._resolve_mbs_posix(buf, self._idecoder)
 
     def _resolve_mbs_win32(self, buf):
-        return self._resolve_mbs(self, u''.join(buf))
+        return self._resolve_mbs(u''.join(buf))
 
     def _resolve_mbs_posix(self, buf, decoder, end=True):
         decoded = list()
@@ -756,7 +755,7 @@ class Terminal(object):
             ucs = decoder.decode(byte, final=is_final)
             if ucs is not None:
                 decoded.append(ucs)
-        return self._resolve_mbs(self, u''.join(decoded))
+        return self._resolve_mbs(u''.join(decoded))
 
     def _resolve_mbs(self, ucs):
         CR_NVT = u'\r\x00' # NVT return (telnet, etc.)
@@ -765,7 +764,7 @@ class Terminal(object):
         esc = curses.ascii.ESC
         decoder_errmsg = 'multibyte decoding failed in _resolve_multibyte: %r'
 
-        def resolve_keycode(self, integer):
+        def resolve_keycode(integer):
             """
             Returns printable string to represent matched multibyte sequence,
             such as 'KEY_LEFT'. For purposes of __repr__ or __str__ ?
@@ -844,14 +843,14 @@ class Terminal(object):
         assert self.is_a_tty, 'stream is not a a tty.'
         assert self.i_stream is not None, 'no terminal on input.'
         assert sys.platform != 'win32', 'Windows is without termios'
-        return termios.tcgetattr(self.i_fd)
+        return termios.tcgetattr(self.i_stream)
 
     def _set_term_mode_posix(self, mode):
         """ Set terminal attributes using tcsetattr with flag TCSANOW.  """
         assert self.is_a_tty, 'stream is not a a tty.'
         assert self.i_stream is not None, 'no terminal on input.'
         assert sys.platform != 'win32', 'Windows is without termios'
-        return termios.tcsetattr(self.i_fd, termios.TCSANOW, mode)
+        return termios.tcsetattr(self.i_stream, termios.TCSANOW, mode)
 
     def ljust(self, ucs, width=None):
         if width is None:
