@@ -254,3 +254,31 @@ def test_force_styling_none():
     """If ``force_styling=None`` is passed to the constructor, don't ever do styling."""
     t = TestTerminal(force_styling=None)
     eq_(t.save, '')
+
+
+
+def test_seqlen():
+    """Test the _seqlen function"""
+    t = TestTerminal()
+    seqs = [(u'', 0),
+            (u'xyzzy', 0),
+            (u'\x1b', 0),  # a single escape NOT an 'escape sequence'
+            (u'\x1bc', 2),  # reset
+            (u'\x1b#8', 3), # dec alignment tube test
+            (u'\x1b[m', 3), # sgr stuff
+            (u'\x1b[s', 3),
+            (u'\x1b[?25h', 6), # show|hide cursor
+            (u'\x1b[01;02m', 8), # fake sgr
+            (u'\x1b(0', 3), # shift code page
+            (u'\x1b)A', 3),
+            (u'\x1b[H', 3), # various movements, home, up
+            (u'\x1b[A', 3),
+            (t.home, len(t.home)),
+            (t.bold, len(t.bold)),
+            (t.red, len(t.red)),
+            (t.underline, len(t.underline)),
+            (t.reverse, len(t.reverse)),
+            ]
+    from blessings import _seqlen
+    for seq, seqlen in seqs:
+        eq_(seqlen, _seqlen(seq))
