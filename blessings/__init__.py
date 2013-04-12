@@ -1178,7 +1178,7 @@ def _seqlen(ucs):
     elif _ANSI_CODEPAGE.match(ucs) or _ANSI_WONTMOVE.match(ucs):
         return 3
     elif _ANSI_WILLMOVE.match(ucs):
-        return 4
+        return 3
     elif ucs[1] == '[':
         # all sequences are at least 4 (\033,[,0,m)
         if slen < 4:
