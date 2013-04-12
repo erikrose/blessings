@@ -4,25 +4,6 @@ import sys
 """Human tests; made interesting with a 'video game'
 """
 
-def refresh(term, board, level, score, inp):
-    sys.stdout.write(term.home + term.clear)
-    level_color = level % 7
-    if level_color == 0:
-        level_color = 4
-    for keycode, attr in board.iteritems():
-        sys.stdout.write(term.move(attr['row'], attr['column'])
-                + term.color(level_color)
-                + (term.reverse if attr['hit'] else term.bold)
-                + keycode + term.normal)
-    sys.stdout.write(term.move(term.height, 0)
-            + 'level: %s score: %s' % (level, score,))
-    sys.stdout.write('      %r, %s, %s' % (inp,
-        inp.code if inp is not None else None,
-        inp.name if inp is not None else None, ))
-    sys.stdout.flush()
-
-    sys.stdout.flush()
-
 def main():
     play_whack_a_key()
 
@@ -33,6 +14,26 @@ def play_whack_a_key():
     hit_highbit = 0
     hit_unicode = 0
     dirty = True
+
+    def refresh(term, board, level, score, inp):
+        sys.stdout.write(term.home + term.clear)
+        level_color = level % 7
+        if level_color == 0:
+            level_color = 4
+        for keycode, attr in board.iteritems():
+            sys.stdout.write(term.move(attr['row'], attr['column'])
+                    + term.color(level_color)
+                    + (term.reverse if attr['hit'] else term.bold)
+                    + keycode + term.normal)
+        sys.stdout.write(term.move(term.height, 0)
+                + 'level: %s score: %s' % (level, score,))
+        sys.stdout.write('      %r, %s, %s' % (inp,
+            inp.code if inp is not None else None,
+            inp.name if inp is not None else None, ))
+        sys.stdout.flush()
+
+        sys.stdout.flush()
+
 
     def build_gameboard(term):
         column, row = 0, 0
@@ -71,10 +72,10 @@ def play_whack_a_key():
                 refresh(term, gb, level, score, inp)
                 dirty = False
             inp = term.inkey(timeout=5.0)
+            dirty = True
             if inp is None:
+                dirty = False
                 continue
-            if inp == u'\x0c': # ctrl-l (refresh)
-                dirty = True
             if inp in (u'q', 'Q'):
                 break
             if (inp.is_sequence and
@@ -82,15 +83,14 @@ def play_whack_a_key():
                     0 == gb[inp.name]['hit']):
                 gb[inp.name]['hit'] = 1
                 score, level = add_score (score, 100, level)
-                dirty = True
-            elif inp.code > 128 and inp.code < 256 and hit_highbit < 5:
+            elif inp.code > 128 and inp.code < 256:
                 hit_highbit += 1
-                score, level = add_score (score, 100, level)
-                dirty = True
-            elif not inp.is_sequence and inp.code > 256 and hit_unicode < 5:
+                if hit_highbit < 5:
+                    score, level = add_score (score, 100, level)
+            elif not inp.is_sequence and inp.code > 256:
                 hit_unicode += 1
-                score, level = add_score (score, 100, level)
-                dirty = True
+                if hit_unicode < 5:
+                    score, level = add_score (score, 100, level)
     print term.move(term.height, 0)
     print 'Your final score was', score, 'at level', level
     if hit_highbit > 0:
