@@ -344,15 +344,14 @@ class Terminal(object):
             if ret != 0:
                 return (sbi.srWindow.Right - sbi.srWindow.Left + 1,
                         sbi.srWindow.Bottom - sbi.srWindow.Top + 1)
-        else:
-            buf = struct.pack('HHHH', 0, 0, 0, 0)
-            for fd in self.o_fd, sys.__stdout__:
-                try:
-                    value = fcntl.ioctl(fd, termios.TIOCGWINSZ, buf)
-                    return struct.unpack('hhhh', value)[0:2]
-                except IOError:
-                    pass
-        return None, None
+        buf = struct.pack('HHHH', 0, 0, 0, 0)
+        for fd in self.o_fd, sys.__stdout__:
+            try:
+                value = fcntl.ioctl(fd, termios.TIOCGWINSZ, buf)
+                return struct.unpack('hhhh', value)[0:2]
+            except IOError:
+                pass
+        return None, None  # should never be reached.
 
     def _kbhit_win32(self, timeout=0):
         hit = self._kbhit_win32()
@@ -532,11 +531,18 @@ class Terminal(object):
         This is anagolous to the curses.wrapper() helper function, and the
         python standard module tty.setcbreak().
         """
+        # the full terminal state could be stored (even "packed" and made
+        # serializable, as a github issue suggests; though seemingly without
+        # any real useful purpose). Then, later restored. Instead, we just
+        # selectively set and unset ICANON and ECHO, as we don't expect to
+        # manipulate any other variables ..
         self._canonical(False)
         self._echo(False)
-        yield
-        self._canonical(True)
-        self._echo(True)
+        try:
+            yield
+        finally:
+            self._canonical(True)
+            self._echo(True)
 
     @contextmanager
     def echo_off(self):
@@ -761,8 +767,6 @@ class Terminal(object):
         CR_LF = u'\r\n'    # carriage return + newline
         CR_CHAR = u'\n'    # returns only '\n' when return is detected.
         esc = curses.ascii.ESC
-        decoder_errmsg = 'multibyte decoding failed in _resolve_multibyte: %r'
-
         def resolve_keycode(integer):
             """
             Returns printable string to represent matched multibyte sequence,
@@ -864,19 +868,6 @@ class Terminal(object):
             width = self.width
         return AnsiString(ucs).center(width)
     center.__doc__ = unicode.center.__doc__
-
-    def __del__(self):
-        # the full terminal state could be stored (even "packed" and made
-        # serializable, as a github issue suggests; though seemingly without
-        # any real useful purpose). Then, restored on deletion. We just
-        # selectively set ICANON and ECHO on delete. This might occur if
-        # a crash occured while using a Context Manager.
-        if not self._state_canonical:
-            warnings.warn ("Set ICANON on cleanup.")
-            self._canonical(True)
-        if not self._state_echo:
-            warnings.warn ("Set ECHO on cleanup.")
-            self._echo(True)
 
 
 def derivative_colors(colors):
