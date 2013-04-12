@@ -963,7 +963,7 @@ class AnsiWrapper(textwrap.TextWrapper):
                     break
             if chunks and len(AnsiString(chunks[-1])) > width:
                 self._handle_long_word(chunks, cur_line, cur_len, width)
-            if (self.drop_whitespace
+            if (not hasattr(self, 'drop_whitespace') or self.drop_whitespace
                     and cur_line
                     and cur_line[-1].strip() == ''):
                 del cur_line[-1]
