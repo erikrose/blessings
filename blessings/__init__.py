@@ -376,7 +376,6 @@ class Terminal(object):
 
     def _kbhit_posix(self, timeout=0):
         # there is no such 'kbhit' routine for posix ..
-        print 'poll', timeout
         r_fds, w_fds, x_fds = select.select([self.i_stream.fileno()], [], [], timeout)
         return self.i_stream.fileno() in r_fds
 
@@ -386,10 +385,11 @@ class Terminal(object):
         A timeout of 0 returns immediately (default), A timeout of
         ``None`` blocks indefinitely. A timeout of non-zero blocks
         until timeout seconds elapsed. """
-        if sys.platform == 'win32':
-            return self._kbhit_win32(timeout)
-        else:
-            return self._kbhit_posix(timeout)
+        print 'kbhit', timeout,
+        val = (self._kbhit_win32(timeout) if sys.platform == 'win32' else
+                self._kbhit_posix(timeout))
+        print val
+        return val
 
     def getch(self):
         """ Read a single byte from input stream. """
@@ -451,64 +451,52 @@ class Terminal(object):
         assert self.i_stream is not None, 'no terminal on input.'
         esc = curses.ascii.ESC  # posix multibyte sequence (MBS) start mark
         wsb = ord('\xe0')       # win32 MBS start mark
-        esc_active = False      # time of MBS start mark appearance
-        esc_delay_next = 0.1    # when receiving MBS, wait no longer for
-                                # subsequent bytes after byte #2 received.
+        poll_mbs       = 0.15   # when receiving MBS, delay for (any) next byte
+
+        # return keystrokes buffered by previous calls immediately,
+        # regardless of timeout
+        if len(self.i_buf):
+            return self.i_buf.pop()
 
         # returns time-relative remaining for user-specified timeout
         timeleft = lambda cmp_time: (
-                float('inf') if timeout is None else
+                None if timeout is None else
                 timeout - (time.time() - cmp_time))
 
         # returns True if byte appears to mark the beginning of a MBS
-        chk_start = lambda byte: (ord(byte) == esc or (
-            sys.platform == 'win32' and ord(byte) == wsb))
-
-        # returns True if MBS has been cancelled by timeout
-        esc_cancel = lambda cmp_time: time.time() - cmp_time > esc_active
-
+        chk_start = lambda char: (ord(char) == esc or (
+            sys.platform == 'win32' and ord(char) == wsb))
 
         stime = time.time()
-        waitfor = timeleft(stime)
-        buf = list()
-        while waitfor > 0:
-            if len(self.i_buf):
-                # return keystroke buffered by previous call
-                return self.i_buf.pop()
-            if esc_active:
-                # SB received, check for MBS; give up after esc_delay elapsed,
-                # after bytes 2+ have been received attempt to match a MBS
-                # pattern.
-                ready = self.kbhit (esc_delay
-                        if 1 == len(buf) else esc_delay_next)
-                final = False
-                if ready:
-                    buf.append (self.getch())
+        ready = self.kbhit(timeleft(stime))
+        if not ready:
+            return None
+        byte = self.getch()
+        buf = [byte,]
+        # check for MSB; or just buffer for a rapidly firing input stream
+        while True:
+            if chk_start(buf[0]):
+                if self.kbhit(poll_mbs):
+                    byte = self.getch()
+                    buf.append (byte)
                     detect = self.resolve_mbs(buf).next()
-                    final = (detect.is_sequence
-                            and detect.code != self.KEY_ESCAPE)
-                if esc_cancel(esc_active):
-                    final = True
-                if final:
-                    for keystroke in self.resolve_mbs(buf):
-                        self.i_buf.append (keystroke)
-                    esc_active = False
-                    buf = list()
-                continue
-            # eagerly read all input until next MSB start byte
-            # or no subsequent bytes are ready on input stream.
-            ready = self.kbhit(waitfor if waitfor != float('inf') else None)
-            while ready and not esc_active:
-                buf.append (self.getch())
-                esc_active = time.time() if chk_start(buf[-1]) else False
-                ready = self.kbhit()
-            if len(buf) and not esc_active:
-                # input received that does not begin with MSB sequence, still,
-                # unix platforms benefit from utf-8 MSB decoding even though
-                # no escape sequence was detected. For win32, this call is
-                # mostly a pass-thru.
-                for keystroke in self.resolve_mbs(buf):
-                    self.i_buf.append (keystroke)
+                    if (detect.is_sequence and detect.code != self.KEY_ESCAPE):
+                        # end of MBS,
+                        break
+                else:
+                    # a poll for a 2nd+ byte failed; simple old ASCII escape.
+                    break
+            elif self.kbhit():
+                # more still immediately available; buffer. this also catches
+                # utf-8, I would suppose, as its not caught by chk_start().
+                byte = self.getch()
+                buf.append (byte)
+            else:
+                # no more bytes available in 'check for multibyte seq' loop
+                break
+        for keystroke in self.resolve_mbs(buf):
+            self.i_buf.insert(0, keystroke)
+        return self.i_buf.pop()
 
     @contextmanager
     def cbreak(self):
