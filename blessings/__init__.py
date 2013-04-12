@@ -13,6 +13,7 @@ from platform import python_version_tuple
 import textwrap
 import warnings
 import codecs
+import locale
 import struct
 import time
 import math
@@ -100,12 +101,12 @@ class Terminal(object):
         # os.isatty returns True if output stream is an open file descriptor
         # connected to the slave end of a terminal.
         self.is_a_tty = (o_stream is not None and os.isatty(o_fd))
-        self.do_styling = ((self.is_a_tty or force_styling) and
+        self._do_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
         # The desciptor to direct terminal sequences to.
-        self.o_fd = (sys.__stdout__.fileno() if o_stream is None else o_fd)
-        if self.do_styling:
+        self.o_fd = sys.__stdout__.fileno() if o_stream is None else o_fd
+        if self._do_styling:
             # Make things like tigetstr() work. Explicit args make setupterm()
             # work even when -s is passed to nosetests. Lean toward sending
             # init sequences to the stream if it has a file descriptor, and
@@ -132,7 +133,6 @@ class Terminal(object):
             # determine encoding of input stream. Only used for keyboard
             # input on posix systems. win32 systems use getwche which returns
             # unicode, and does not require decoding.
-            import locale
             locale.setlocale(locale.LC_ALL, '')
             self.encoding = locale.getpreferredencoding()
             if sys.platform != 'win32':
@@ -285,10 +285,6 @@ class Terminal(object):
     def do_styling(self):
         """Wether the terminal will attempt to output sequences."""
         return self._do_styling
-
-    @do_styling.setter
-    def do_styling(self, value):
-        self._do_styling = value
 
     @property
     def height(self):
