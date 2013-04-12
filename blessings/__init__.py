@@ -1073,7 +1073,7 @@ def _is_movement(ucs):
         return False
     elif ucs[0] != unichr(esc):
         return False
-    elif ucs[1] == u'c':
+    elif slen > 1 and ucs[1] == u'c':
         # reset
         return True
     elif slen < 3:
@@ -1081,7 +1081,7 @@ def _is_movement(ucs):
         return False
     elif _ANSI_CODEPAGE.match(ucs):
         return False
-    elif (ucs[0], ucs[1], ucs[2]) == (u'#', u'8'):
+    elif (ucs[0], ucs[1], ucs[2]) == (u'\x1b', u'#', u'8'):
         # 'fill the screen'
         return True
     elif _ANSI_WILLMOVE.match(ucs):
