@@ -317,7 +317,7 @@ def test_is_movement():
         if seq == '\x1b':
             continue
         for n in range(255):
-            seq_junk = seq + chr(n).decode('iso8859-1')*10
+            seq_junk = seq + unichr(n) * 10
             eq_(willmove, _is_movement(seq_junk))
 
 def test_ansiwrap():
