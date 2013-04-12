@@ -408,7 +408,7 @@ class Terminal(object):
         else:
             return msvcrt.getwch()
 
-    def _getch_posix():
+    def _getch_posix(self):
         """ Read 1 byte on posix systems. Will block until keypress
         unless kbhit() has first been called and returned True.
         No decoding of multibyte input is performed.  """
@@ -1156,10 +1156,11 @@ def _is_movement(ucs):
     #        Too many branches (23/12)
     # this isn't the best, perhaps for readability a giant REGEX can and
     # probably and already has been made.
+    esc = curses.ascii.ESC
     slen = unicode.__len__(ucs)
     if 0 == slen:
         return False
-    elif ucs[0] != unichr(ESC):
+    elif ucs[0] != unichr(esc):
         return False
     elif ucs[1] == u'c':
         # reset
