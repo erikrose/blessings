@@ -1014,16 +1014,16 @@ class AnsiString(unicode):
         new = unicode.__new__(cls, ucs)
         return new
 
-    def ljust(self, width):
-        return self + u' ' * (max(0, width - self.__len__()))
+    def ljust(self, width, fillchar=u' '):
+        return self + fillchar * (max(0, width - self.__len__()))
 
-    def rjust(self, width):
-        return u' ' * (max(0, width - self.__len__())) + self
+    def rjust(self, width, fillchar=u' '):
+        return fillchar * (max(0, width - self.__len__())) + self
 
-    def center(self, width):
+    def center(self, width, fillchar=u' '):
         split = max(0.0, float(width) - self.__len__()) / 2
-        return (u' ' * (max(0, int(math.floor(split)))) + self
-                + u' ' * (max(0, int(math.ceil(split)))))
+        return (fillchar * (max(0, int(math.floor(split)))) + self
+                + fillchar * (max(0, int(math.ceil(split)))))
 
     def __len__(self):
         """
