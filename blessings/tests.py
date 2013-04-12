@@ -256,7 +256,6 @@ def test_force_styling_none():
     eq_(t.save, '')
 
 
-
 def test_seqlen():
     """Test the _seqlen function"""
     t = TestTerminal()

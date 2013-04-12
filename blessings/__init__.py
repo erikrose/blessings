@@ -153,8 +153,8 @@ class Terminal(object):
         self.KEY_INSERT = self.KEY_IC
         self.KEY_PGUP = self.KEY_PPAGE
         self.KEY_PGDOWN = self.KEY_NPAGE
-        self.KEY_SPGUP = self.SR # scroll reverse (shift+pgup)
-        self.KEY_SPGDOWN = self.SF # scroll forward (shift+pgdown)
+        self.KEY_SPGUP = self.SR  # scroll reverse (shift+pgup)
+        self.KEY_SPGDOWN = self.SF  # scroll forward (shift+pgdown)
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
@@ -769,23 +769,35 @@ class Terminal(object):
         """Return a new ``FormattingString`` which implicitly receives my notion of "normal"."""
         return FormattingString(formatting, self.normal)
 
-    def ljust(self, ucs, width=None):
-        if width is None:
-            width = self.width
-        return AnsiString(ucs).ljust(width)
-    ljust.__doc__ = unicode.ljust.__doc__
+    def ljust(self, ucs, width=None, fillchar=u' '):
+        """T.ljust(ucs, [width], [fillchar]) -> string
 
-    def rjust(self, ucs, width=None):
+        Return ucs left-justified in a string of length width. Padding is
+        done using the specified fill character (default is a space).
+        Default width is terminal width. ucs is escape sequence safe."""
         if width is None:
             width = self.width
-        return AnsiString(ucs).rjust(width)
-    rjust.__doc__ = unicode.rjust.__doc__
+        return AnsiString(ucs).ljust(width, fillchar)
 
-    def center(self, ucs, width=None):
+    def rjust(self, ucs, width=None, fillchar=u' '):
+        """T.rjust(ucs, [width], [fillchar]) -> string
+
+        Return ucs right-justified in a string of length width. Padding is
+        done using the specified fill character (default is a space)
+        Default width is terminal width. ucs is escape sequence safe."""
         if width is None:
             width = self.width
-        return AnsiString(ucs).center(width)
-    center.__doc__ = unicode.center.__doc__
+        return AnsiString(ucs).rjust(width, fillchar)
+
+    def center(self, ucs, width=None, fillchar=u' '):
+        """T.center(ucs, [width], [fillchar]) -> string
+
+        Return ucs centered in a string of length width. Padding is
+        done using the specified fill character (default is a space).
+        Default width is terminal width. ucs is escape sequence safe."""
+        if width is None:
+            width = self.width
+        return AnsiString(ucs).center(width, fillchar)
 
 
 def derivative_colors(colors):
@@ -970,7 +982,6 @@ class AnsiWrapper(textwrap.TextWrapper):
             if cur_line:
                 lines.append(indent + u''.join(cur_line))
         return lines
-AnsiWrapper.__doc__ = textwrap.TextWrapper.__doc__
 
 
 def ansiwrap(ucs, width=70, **kwargs):
@@ -1005,17 +1016,14 @@ class AnsiString(unicode):
 
     def ljust(self, width):
         return self + u' ' * (max(0, width - self.__len__()))
-    ljust.__doc__ = unicode.ljust.__doc__
 
     def rjust(self, width):
         return u' ' * (max(0, width - self.__len__())) + self
-    rjust.__doc__ = unicode.rjust.__doc__
 
     def center(self, width):
         split = max(0.0, float(width) - self.__len__()) / 2
         return (u' ' * (max(0, int(math.floor(split)))) + self
                 + u' ' * (max(0, int(math.ceil(split)))))
-    center.__doc__ = unicode.center.__doc__
 
     def __len__(self):
         """
