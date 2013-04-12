@@ -282,3 +282,9 @@ def test_seqlen():
     from blessings import _seqlen
     for seq, seqlen in seqs:
         eq_(seqlen, _seqlen(seq))
+        # skip testing single \x1b + padding (\x1bc is a valid sequence)
+        if seq == '\x1b':
+            continue
+        for n in range(255):
+            seq_junk = seq + chr(n).decode('iso8859-1')*10
+            eq_(seqlen, _seqlen(seq_junk))
