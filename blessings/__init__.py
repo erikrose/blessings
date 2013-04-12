@@ -951,7 +951,8 @@ class AnsiWrapper(textwrap.TextWrapper):
             else:
                 indent = self.initial_indent
             width = self.width - len(indent)
-            if self.drop_whitespace and chunks[-1].strip() == '' and lines:
+            if (not hasattr(self, 'drop_whitespace') or
+                    self.drop_whitespace and chunks[-1].strip() == '' and lines):
                 del chunks[-1]
             while chunks:
                 chunk_len = len(AnsiString(chunks[-1]))
