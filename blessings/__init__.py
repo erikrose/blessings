@@ -245,7 +245,7 @@ class Terminal(object):
             (u"\x1b?x", self.KEY_UP),    (u"\x1b?r", self.KEY_DOWN),
             (u"\x1b?v", self.KEY_RIGHT), (u"\x1b?t", self.KEY_LEFT),
             (u"\x1b[@", self.KEY_IC),  # insert
-            (unichr(127), self.KEY_DC),  # delete
+            (unichr(127), self.KEY_BACKSPACE),  # ^? is backspace (int 127)
         ])
 
         # windows 'multibyte' translation, not tested.
