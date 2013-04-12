@@ -91,7 +91,7 @@ class Terminal(object):
         # long as the stream offers a .write method.
         try:
             o_fd = (o_stream.fileno() if hasattr(o_stream, 'fileno')
-                             and callable(o_stream.fileno) else None)
+                    and callable(o_stream.fileno) else None)
         except IOUnsupportedOperation:
             o_fd = None
 
@@ -99,7 +99,7 @@ class Terminal(object):
         # descriptor connected to the slave end of a terminal.
         self._is_a_tty = o_fd is not None and os.isatty(o_fd)
         self._do_styling = ((self.is_a_tty or force_styling) and
-                              force_styling is not None)
+                            force_styling is not None)
 
         # an open file descriptor of some sort is necessary for setupterm(),
         # even though it goes unused when an alternative stream is specified.
@@ -131,7 +131,7 @@ class Terminal(object):
         # used with Keystroke ``code`` property values for comparison to the
         # Terminal class instance it was received on.
         for keycode in [kc for kc in dir(curses) if kc.startswith('KEY_')]:
-            self._keycodes.append (keycode)
+            self._keycodes.append(keycode)
             setattr(self, keycode, getattr(curses, keycode))
 
         if self.is_a_tty:
@@ -153,7 +153,6 @@ class Terminal(object):
         self.KEY_INSERT = self.KEY_IC
         self.KEY_PGUP = self.KEY_PPAGE
         self.KEY_PGDOWN = self.KEY_NPAGE
-
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
@@ -245,7 +244,7 @@ class Terminal(object):
             (u"\x1b?v", self.KEY_RIGHT), (u"\x1b?t", self.KEY_LEFT),
             (u"\x1b[@", self.KEY_IC),  # insert
             (unichr(127), self.KEY_DC),  # delete
-            ])
+        ])
 
         # windows 'multibyte' translation, not tested.
         if sys.platform == 'win32':
@@ -266,7 +265,6 @@ class Terminal(object):
                 (u'\xe0\x53', self.KEY_DC),  # delete
             ])
 
-
     def __getattr__(self, attr):
         """Return parametrized terminal capabilities, like bold.
 
@@ -285,7 +283,7 @@ class Terminal(object):
 
         """
         resolution = (self._resolve_formatter(attr) if self.do_styling
-                else NullCallableString())
+                      else NullCallableString())
         setattr(self, attr, resolution)  # Cache capability codes.
         return resolution
 
@@ -328,15 +326,17 @@ class Terminal(object):
 
         """
         return self._height_and_width()[1]
+
     def _height_and_width_win32(self):
         # based on anatoly techtonik's work from pager.py, MIT/Pub Domain.
         # completely untested ... please report !!
-        #WIN32_I_FD = -10
+        # WIN32_I_FD = -10
         WIN32_O_FD = -11
         from ctypes import windll, Structure, byref
         from ctypes.wintypes import SHORT, WORD, DWORD
         console_handle = windll.kernel32.GetStdHandle(WIN32_O_FD)
             # CONSOLE_SCREEN_BUFFER_INFO Structure
+
         class COORD(Structure):
             _fields_ = [("X", SHORT), ("Y", SHORT)]
 
@@ -352,7 +352,7 @@ class Terminal(object):
                         ("dwMaximumWindowSize", DWORD)]
         sbi = CONSOLE_SCREEN_BUFFER_INFO()
         ret = windll.kernel32.GetConsoleScreenBufferInfo(
-                console_handle, byref(sbi))
+            console_handle, byref(sbi))
         if ret != 0:
             return (sbi.srWindow.Right - sbi.srWindow.Left + 1,
                     sbi.srWindow.Bottom - sbi.srWindow.Top + 1)
@@ -377,7 +377,7 @@ class Terminal(object):
                 pass
         # throw a hail mairy for environment values
         lines, cols = (os.environ.get('LINES', None),
-                os.environ.get('COLUMNS', None))
+                       os.environ.get('COLUMNS', None))
         if None not in (lines, cols):
             return lines, cols
         # ! should never be reached
@@ -432,7 +432,7 @@ class Terminal(object):
         assert self.is_a_tty, u'stream is not a a tty.'
         esc = curses.ascii.ESC  # posix multibyte sequence (MBS) start mark
         wsb = ord('\xe0')       # win32 MBS start mark
-        poll_mbs       = 3.35   # when receiving MBS, delay for (any) next byte
+        poll_mbs = 0.35         # when receiving MBS, delay for (any) next byte
 
         # return keystrokes buffered by previous calls immediately,
         # regardless of timeout
@@ -441,8 +441,8 @@ class Terminal(object):
 
         # returns time-relative remaining for user-specified timeout
         timeleft = lambda cmp_time: (
-                None if timeout is None else
-                timeout - (time.time() - cmp_time))
+            None if timeout is None else
+            timeout - (time.time() - cmp_time))
 
         # returns True if byte appears to mark the beginning of a MBS
         chk_start = lambda char: (ord(char) == esc or (
@@ -453,14 +453,14 @@ class Terminal(object):
         if not ready:
             return None
         byte = self.getch()
-        buf = [byte,]
+        buf = [byte, ]
         # check for MSB; or just buffer for a rapidly firing input stream
         # not sure why the 2nd byte fails the kbhit / select check ..
         while True:
             if chk_start(buf[0]):
-                if self.kbhit(esc_delay):
+                if (len(buf) == 1 and self.kbhit(esc_delay)) or self.kbhit():
                     byte = self.getch()
-                    buf.append (byte)
+                    buf.append(byte)
                     detect = self.resolve_mbs(buf).next()
                     if (detect.is_sequence and detect.code != self.KEY_ESCAPE):
                         # end of MBS,
@@ -472,7 +472,7 @@ class Terminal(object):
                 # more still immediately available; buffer. this also catches
                 # utf-8, I would suppose, as its not caught by chk_start().
                 byte = self.getch()
-                buf.append (byte)
+                buf.append(byte)
             else:
                 # no more bytes available in 'check for multibyte seq' loop
                 break
@@ -489,9 +489,9 @@ class Terminal(object):
         that a finally clause restores the terminal state.
 
         In cbreak mode (sometimes called "rare" mode) normal tty line
-        buffering is turned off and characters are available to be read one
-        by one by ``getch()``. echo of input is also disabled, the application
-        must explicitly copy-out any input received.
+        buffering is turned off and characters are available to be read
+        one by one by ``getch()``. echo of input is also disabled, the
+        application must explicitly copy-out any input received.
 
         More information can be found in the manual page for curses.h,
            http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak
@@ -500,9 +500,9 @@ class Terminal(object):
         Note also that setcbreak sets VMIN = 1 and VTIME = 0,
            http://www.unixwiz.net/techtips/termios-vmin-vtime.html
 
-        This is anagolous to the curses.wrapper() helper function, and the
-        python standard module tty.setcbreak(), with the exception that
-        the original terminal mode is restored when leaving context.
+        This is anagolous to the curses.wrapper() helper function, and
+        the python standard module tty.setcbreak(), with the exception
+        that the original terminal mode is restored when leaving context.
         """
         assert self.is_a_tty, u'stream is not a a tty.'
         mode = termios.tcgetattr(self.i_stream.fileno())
@@ -622,8 +622,10 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no such cap.
-        #self.__dict__['colors'] = ret  # Cache it. It's not changing. (Doesn't work.)
+        colors = tigetnum(
+            'colors')  # Returns -1 if no color support, -2 if no such cap.
+        # self.__dict__['colors'] = ret  # Cache it. It's not changing.
+        # (Doesn't work.)
         return colors if colors >= 0 else 0
 
     def _resolve_formatter(self, attr):
@@ -690,10 +692,11 @@ class Terminal(object):
         return self._resolve_mbs(u''.join(decoded))
 
     def _resolve_mbs(self, ucs):
-        CR_NVT = u'\r\x00' # NVT return (telnet, etc.)
+        CR_NVT = u'\r\x00'  # NVT return (telnet, etc.)
         CR_LF = u'\r\n'    # carriage return + newline
         CR_CHAR = u'\n'    # returns only '\n' when return is detected.
         esc = curses.ascii.ESC
+
         def resolve_keycode(integer):
             """
             Returns printable string to represent matched multibyte sequence,
@@ -718,11 +721,11 @@ class Terminal(object):
         # expect to receieve any of '\r\00', '\r\n', '\r', or '\n', but
         # yield only a single byte, u'\n'.
         while len(ucs):
-            if ucs[:2] in (CR_NVT, CR_LF): # telnet return or dos CR+LF
+            if ucs[:2] in (CR_NVT, CR_LF):  # telnet return or dos CR+LF
                 yield Keystroke(CR_CHAR, ('KEY_ENTER', self.KEY_ENTER))
                 ucs = ucs[2:]
                 continue
-            elif ucs[:1] in (u'\r', u'\n'): # single-byte CR
+            elif ucs[:1] in (u'\r', u'\n'):  # single-byte CR
                 yield Keystroke(CR_CHAR, ('KEY_ENTER', self.KEY_ENTER))
                 ucs = ucs[1:]
                 continue
@@ -790,7 +793,8 @@ def derivative_colors(colors):
                [('on_bright_' + c) for c in colors])
 
 
-COLORS = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'])
+COLORS = set(['black', 'red', 'green',
+             'yellow', 'blue', 'magenta', 'cyan', 'white'])
 COLORS.update(derivative_colors(COLORS))
 COMPOUNDABLES = (COLORS |
                  set(['bold', 'underline', 'reverse', 'blink', 'dim', 'italic',
@@ -904,7 +908,7 @@ class Keystroke(unicode):
         if self._keystroke is not None:
             return self._keystroke[1]
         assert 1 == len(self), (
-                'No integer value available for multibyte sequence')
+            'No integer value available for multibyte sequence')
         return ord(self)
 
 
@@ -972,7 +976,7 @@ def ansiwrap(ucs, width=70, **kwargs):
     """
     assert ('break_long_words' not in kwargs
             or not kwargs['break_long_words']), (
-                    'break_long_words is not sequence-safe')
+                'break_long_words is not sequence-safe')
     kwargs['break_long_words'] = False
     return AnsiWrapper(width=width, **kwargs).wrap(ucs)
 
@@ -1000,18 +1004,15 @@ class AnsiString(unicode):
         return self + u' ' * (max(0, width - self.__len__()))
     ljust.__doc__ = unicode.ljust.__doc__
 
-
     def rjust(self, width):
         return u' ' * (max(0, width - self.__len__())) + self
     rjust.__doc__ = unicode.rjust.__doc__
-
 
     def center(self, width):
         split = max(0.0, float(width) - self.__len__()) / 2
         return (u' ' * (max(0, int(math.floor(split)))) + self
                 + u' ' * (max(0, int(math.ceil(split)))))
     center.__doc__ = unicode.center.__doc__
-
 
     def __len__(self):
         """
@@ -1023,6 +1024,7 @@ class AnsiString(unicode):
         # 'nxt' points to first *ch beyond current ansi sequence, if any.
         # 'width' is currently estimated display length.
         nxt, width = 0, 0
+
         def get_padding(ucs):
             """
              get_padding(S) -> integer
@@ -1048,6 +1050,7 @@ class AnsiString(unicode):
                 width += 1
                 nxt = idx + _seqlen(self[idx:]) + 1
         return width
+
 
 def _is_movement(ucs):
     """
