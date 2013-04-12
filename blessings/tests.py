@@ -144,6 +144,9 @@ def test_mnemonic_colors():
     # Avoid testing red, blue, yellow, and cyan, since they might someday
     # change depending on terminal type.
     t = TestTerminal()
+    print t.blue, 'hi'
+    print repr(t.white)
+    print repr(color(7))
     eq_(t.white, color(7))
     eq_(t.green, color(2))  # Make sure it's different than white.
     eq_(t.on_black, on_color(0))

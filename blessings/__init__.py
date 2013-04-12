@@ -11,7 +11,6 @@ except ImportError:
 import os
 from platform import python_version_tuple
 import textwrap
-import warnings
 import codecs
 import locale
 import struct
@@ -100,12 +99,12 @@ class Terminal(object):
 
         # os.isatty returns True if output stream is an open file descriptor
         # connected to the slave end of a terminal.
-        self.is_a_tty = (o_stream is not None and os.isatty(o_fd))
+        self.is_a_tty = o_fd is not None and os.isatty(o_fd)
+        self.o_fd = sys.__stdout__.fileno() if o_fd is None else o_fd
         self._do_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
-        # The desciptor to direct terminal sequences to.
-        self.o_fd = sys.__stdout__.fileno() if o_stream is None else o_fd
+
         if self._do_styling:
             # Make things like tigetstr() work. Explicit args make setupterm()
             # work even when -s is passed to nosetests. Lean toward sending
@@ -114,7 +113,7 @@ class Terminal(object):
             # somewhere.
             setupterm(kind or os.environ.get('TERM', 'unknown'), self.o_fd)
 
-        self.o_stream = o_stream
+        self.stream = o_stream
         self.i_stream = i_stream
 
         # a beginning state of echo ON and canonical mode is assumed.
@@ -259,6 +258,8 @@ class Terminal(object):
                 (u'\xe0\x52', self.KEY_IC),  # insert
                 (u'\xe0\x53', self.KEY_DC),  # delete
             ])
+
+
     def __getattr__(self, attr):
         """Return parametrized terminal capabilities, like bold.
 
@@ -314,8 +315,6 @@ class Terminal(object):
         """Return a tuple of (terminal height, terminal width).
            Returns (None, None) if terminal window size is indeterminate.
        """
-        # tigetnum('lines') and tigetnum('cols') update only if we call
-        # setupterm() again.
         if sys.platform == 'win32':
             # based on anatoly techtonik's work from pager.py, MIT/Pub Domain.
             # completely untested ... please report !!
@@ -344,14 +343,17 @@ class Terminal(object):
             if ret != 0:
                 return (sbi.srWindow.Right - sbi.srWindow.Left + 1,
                         sbi.srWindow.Bottom - sbi.srWindow.Top + 1)
+        # tigetnum('lines') and tigetnum('cols') update only if we call
+        # setupterm() again.
         buf = struct.pack('HHHH', 0, 0, 0, 0)
-        for fd in self.o_fd, sys.__stdout__:
+        for fd in self.o_fd, sys.__stdout__.fileno():
             try:
                 value = fcntl.ioctl(fd, termios.TIOCGWINSZ, buf)
                 return struct.unpack('hhhh', value)[0:2]
             except IOError:
                 pass
-        return None, None  # should never be reached.
+        # should never be reached, if it is, make a hail mary at envion vars.
+        return os.environ.get('LINES', None), os.environ.get('COLUMNS', None)
 
     def _kbhit_win32(self, timeout=0):
         hit = self._kbhit_win32()
@@ -371,7 +373,7 @@ class Terminal(object):
 
     def _kbhit_posix(self, timeout=0):
         # there is no such 'kbhit' routine for posix ..
-        self.o_stream.flush()
+        self.stream.flush()
         fds = select.select([self.i_stream.fileno()], [], [], timeout)[0]
         return self.i_stream.fileno() in fds
 
@@ -381,10 +383,8 @@ class Terminal(object):
         A timeout of 0 returns immediately (default), A timeout of
         ``None`` blocks indefinitely. A timeout of non-zero blocks
         until timeout seconds elapsed. """
-        print 'kbhit', timeout,
         val = (self._kbhit_win32(timeout) if sys.platform == 'win32' else
                 self._kbhit_posix(timeout))
-        print repr(val)
         return val
 
     def getch(self):
@@ -606,31 +606,31 @@ class Terminal(object):
 
         """
         # Save position and move to the requested column, row, or both:
-        self.o_stream.write(self.save)
+        self.stream.write(self.save)
         if x is not None and y is not None:
-            self.o_stream.write(self.move(y, x))
+            self.stream.write(self.move(y, x))
         elif x is not None:
-            self.o_stream.write(self.move_x(x))
+            self.stream.write(self.move_x(x))
         elif y is not None:
-            self.o_stream.write(self.move_y(y))
+            self.stream.write(self.move_y(y))
         yield
 
         # Restore original cursor position:
-        self.o_stream.write(self.restore)
+        self.stream.write(self.restore)
 
     @contextmanager
     def fullscreen(self):
         """Return a context manager that enters fullscreen mode while inside it and restores normal mode on leaving."""
-        self.o_stream.write(self.enter_fullscreen)
+        self.stream.write(self.enter_fullscreen)
         yield
-        self.o_stream.write(self.exit_fullscreen)
+        self.stream.write(self.exit_fullscreen)
 
     @contextmanager
     def hidden_cursor(self):
         """Return a context manager that hides the cursor while inside it and makes it visible on leaving."""
-        self.o_stream.write(self.hide_cursor)
+        self.stream.write(self.hide_cursor)
         yield
-        self.o_stream.write(self.normal_cursor)
+        self.stream.write(self.normal_cursor)
 
     @property
     def color(self):
