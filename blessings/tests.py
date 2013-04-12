@@ -285,7 +285,7 @@ def test_seqlen():
         if seq == '\x1b':
             continue
         for n in range(255):
-            seq_junk = seq + chr(n).decode('iso8859-1')*10
+            seq_junk = seq + unichr(n)*10
             eq_(seqlen, _seqlen(seq_junk))
 
 def test_is_movement():
