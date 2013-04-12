@@ -40,9 +40,12 @@ def play_whack_a_key():
         board = dict()
         spacing = 2
         for keycode in term._keycodes:
-            if keycode.startswith('KEY_F') and len(keycode) >= len('KEY_F10'):
-                # skip F10+
-                continue
+            if keycode.startswith('KEY_F') and keycode[-1].isdigit():
+                p = 0
+                while not keycode[p].isdigit():
+                    p += 1
+                if int(keycode[p:]) > 24:
+                    continue
             if column + len(keycode) + (spacing * 2) >= term.width:
                 column = 0
                 row += 1
@@ -57,7 +60,7 @@ def play_whack_a_key():
         return board
 
     def add_score(score, pts, level):
-        lvl_multiplier = 4
+        lvl_multiplier = 10
         score += pts
         if 0 == (score % (pts * lvl_multiplier)):
             level += 1
