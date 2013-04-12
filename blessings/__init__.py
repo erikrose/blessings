@@ -147,9 +147,12 @@ class Terminal(object):
             # create lookup dictionary for multibyte keyboard input sequences
             self._init_keystrokes()
 
-        # Friendly mnemonics for 'KEY_DELETE' and 'KEY_INSERT'.
+        # Friendly mnemonics for 'KEY_DELETE', 'KEY_INSERT', 'KEY_PGUP',
+        # and 'KEY_PGDOWN'.
         self.KEY_DELETE = self.KEY_DC
         self.KEY_INSERT = self.KEY_IC
+        self.KEY_PGUP = self.KEY_PPAGE
+        self.KEY_PGDOWN = self.KEY_NPAGE
 
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
@@ -452,7 +455,7 @@ class Terminal(object):
         # not sure why the 2nd byte fails the kbhit / select check ..
         while True:
             if chk_start(buf[0]):
-                if self.kbhit(3):
+                if self.kbhit(esc_delay):
                     byte = self.getch()
                     buf.append (byte)
                     detect = self.resolve_mbs(buf).next()
