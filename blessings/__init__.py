@@ -441,7 +441,7 @@ class Terminal(object):
                 inp = term.inkey(3)
                 if inp is None:
                     print 'timeout after 3 seconds'
-                elif inp.value == term.KEY_UP:
+                elif inp.code == term.KEY_UP:
                         print 'moving up!'
                 else:
                     print 'pressed', 'sequence' if inp.is_sequence else 'ascii'
@@ -486,7 +486,7 @@ class Terminal(object):
                     buf.append (self.getch())
                     detect = self.resolve_mbs(buf).next()
                     final = (detect.is_sequence
-                            and detect.value != self.KEY_ESCAPE)
+                            and detect.code != self.KEY_ESCAPE)
                 if esc_cancel(esc_active):
                     final = True
                 if final:
@@ -869,6 +869,19 @@ class Terminal(object):
             width = self.width
         return AnsiString(ucs).center(width)
     center.__doc__ = unicode.center.__doc__
+
+    def __del__(self):
+        # the full terminal state could be stored (even "packed" and made
+        # serializable, as a github issue suggests; though seemingly without
+        # any real useful purpose). Then, restored on deletion. We just
+        # selectively set ICANON and ECHO on delete. This might occur if
+        # a crash occured while using a Context Manager.
+        if not self._state_canonical:
+            warnings.warn ("Set ICANON on cleanup.")
+            self._canonical(True)
+        if not self._state_echo:
+            warnings.warn ("Set ECHO on cleanup.")
+            self._echo(True)
 
 
 def derivative_colors(colors):
