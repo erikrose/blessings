@@ -215,14 +215,17 @@ class Terminal(object):
             if seq is not None:
                 self._keymap[seq.decode('iso8859-1')] = i_val
 
-        # include non-destructive space as KEY_RIGHT, in 'xterm-256color',
-        # 'kcuf1' = '\x1bOC' and 'cuf1' = '\x1b[C'. []]
+        # monkey-patch non-destructive space as KEY_RIGHT,
+        # in 'xterm-256color' 'kcuf1' is '\x1bOC' and 'cuf1' = '\x1b[C'.
+        # xterm sends '\x1b[C'
         ndsp = curses.tigetstr('cuf1')
         if ndsp is not None:
             self._keymap[ndsp.decode('iso8859-1')] = self.KEY_RIGHT
 
         # ... as well as a list of general NVT sequences you would
-        # expect to receive from remote terminals, such as putty, rxvt,
+        # expect to receive from any remote terminals. Notably the
+        # variables of ENTER (^J and ^M), backspace (^H), delete (127),
+        # and common sequencess across putty, rxvt, kermit, minicom,
         # SyncTerm, windows telnet, HyperTerminal, netrunner ...
         self._keymap.update([
             (unichr(10), self.KEY_ENTER), (unichr(13), self.KEY_ENTER),
