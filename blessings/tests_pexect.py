@@ -166,6 +166,41 @@ def test_inkey_esc_delay135():
     assert_greater_equal(float(elapsed), 1.35)
     assert_less_equal(float(elapsed), 1.50)
 
+def test_key_cspace():
+    """ Test null byte '\x00' is received as KEY_CSPACE (Ctrl+Spacebar) """
+    # KEY_CSPACE is a special case, test it.
+    SEQ_KEY_CSPACE = unichr(0)
+    timeout_1s = pexpect.spawn(sys.executable, [__file__, '-c1'])
+    timeout_1s.expect('> ')
+    timeout_1s.send(SEQ_KEY_CSPACE)
+    msg, substr = timeout_1s.read().rstrip().split(':', 1)
+    seq, code, name, elapsed = substr.split('|')
+    eq_(msg, 'received')
+    eq_(seq, SEQ_KEY_CSPACE)
+    eq_(code, '512')  # 512 is procedurally generated in __init__, so long as
+                      # curses.has_key.compatibility_names() doesn't change,
+                      # this won't be a problem.
+    eq_(name, 'KEY_CSPACE')
+    eq_(math.floor(float(elapsed)), 0.0)
+
+def test_key_sup_is_sr():
+    """ Test KEY_SR == KEY_SUP == byte sequence. """
+    from blessings import Terminal
+    t = partial(Terminal, kind='xterm-256color')()
+    # KEY_SUP is mnumonic (shift up) for KEY_SR, which is 'scroll reverse'
+    SEQ_KEY_SUP = '\x1b[1;2A'
+    timeout_1s = pexpect.spawn(sys.executable, [__file__, '-c1'])
+    timeout_1s.expect('> ')
+    timeout_1s.send(SEQ_KEY_SUP)
+    msg, substr = timeout_1s.read().rstrip().split(':', 1)
+    seq, code, name, elapsed = substr.split('|')
+    eq_(msg, 'received')
+    eq_(seq, SEQ_KEY_SUP)
+    eq_(code, '337', str(t.KEY_SUP))
+    eq_(name, 'KEY_SR')
+    eq_(math.floor(float(elapsed)), 0.0)
+
+
 if __name__ == '__main__':
     if len(sys.argv) == 1:
         sys.exit (1)
