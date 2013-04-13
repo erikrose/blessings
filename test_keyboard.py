@@ -70,7 +70,7 @@ def play_newtons_nightmare():
 
     def refresh(term, balls):
         # erase last gravity glpyh
-        sys.stdout.write('\b ')
+        sys.stdout.write(' ')
         def outofrange(ball):
             return (ball['y_pos'] < 0
                     or ball['y_pos'] > term.height
@@ -107,7 +107,7 @@ def play_newtons_nightmare():
                 if not outofrange(ball):
                     draw(ball)
         sys.stdout.write(term.move(int(gravity_y), int(gravity_x)))
-        sys.stdout.write('+')
+        sys.stdout.write('+\b')
         sys.stdout.flush()
 
     delay = 0.05
@@ -122,10 +122,14 @@ def play_newtons_nightmare():
             balls = step(balls)
             gravity_x += gravity_xs
             gravity_y += gravity_ys
-            if gravity_x >= (term.width - 1) or gravity_x <= 1:
+            if gravity_x >= (term.width - 2) or gravity_x <= 0:
                 gravity_xs *= -1
-            if gravity_y >= (term.height - 1) or gravity_y <= 1:
+                gravity_x = min(gravity_x, term.width - 2)
+                gravity_x = max(gravity_x, 0)
+            if gravity_y >= (term.height - 1) or gravity_y <= 0:
                 gravity_ys *= -1
+                gravity_y = min(gravity_y, term.height - 1)
+                gravity_y = max(gravity_y, 0)
             refresh(term, balls)
             if chk_die(balls):
                 sys.stdout.write(term.move(int(gravity_y), int(gravity_x)))
@@ -144,26 +148,30 @@ def play_newtons_nightmare():
                 continue
             if inp in (u'q', 'Q'):
                 break
-            if (inp.code == term.KEY_UP and gravity_y > 1.0
-                    and gravity_ys > -1.0):
+            if (inp.code == term.KEY_UP and gravity_y >= 1.0
+                    and gravity_ys >= -1.5):
                 gravity_ys -= 0.2
-            elif inp.code == term.KEY_SUP and gravity_y > 2.0:
+            elif inp.code == term.KEY_SUP and gravity_y >= 2.0:
                 gravity_y -= 2.0
-            elif (inp.code == term.KEY_DOWN and gravity_y < (term.height - 1)
-                    and gravity_ys < 1.0):
+                gravity_ys = 0
+            elif (inp.code == term.KEY_DOWN and gravity_y <= (term.height - 1)
+                    and gravity_ys <= 1.5):
                 gravity_ys += 0.2
-            elif inp.code == term.KEY_SDOWN and gravity_y < (term.height - 2):
+            elif inp.code == term.KEY_SDOWN and gravity_y <= (term.height - 2):
                 gravity_y += 2.0
-            elif (inp.code == term.KEY_LEFT and gravity_x > 1.0
-                    and gravity_xs > -1.0):
+                gravity_ys = 0
+            elif (inp.code == term.KEY_LEFT and gravity_x >= 1.0
+                    and gravity_xs >= -1.5):
                 gravity_xs -= 0.3
-            elif inp.code == term.KEY_SLEFT and gravity_x > 3.0:
+            elif inp.code == term.KEY_SLEFT and gravity_x >= 3.0:
                 gravity_x -= 3.0
-            elif (inp.code == term.KEY_RIGHT and gravity_x < (term.width - 1)
-                    and gravity_xs < 1.0):
+                gravity_xs = 0
+            elif (inp.code == term.KEY_RIGHT and gravity_x <= (term.width - 1)
+                    and gravity_xs <= 1.5):
                 gravity_xs += 0.3
-            elif inp.code == term.KEY_SRIGHT and gravity_x < (term.width - 3):
+            elif inp.code == term.KEY_SRIGHT and gravity_x <= (term.width - 3):
                 gravity_x += 3.0
+                gravity_xs = 0
         print term.move(term.height, 0)
         print 'Your final score was', score
         print 'press any key'
