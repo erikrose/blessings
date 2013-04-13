@@ -322,7 +322,7 @@ def test_is_movement():
 
 def test_ansiwrap():
     t = TestTerminal()
-    pgraph = 'pony express, all aboard, choo, choo! ' * 300
+    pgraph = 'pony express, all aboard, choo, choo! ' * 100
     pgraph_colored = u''.join([t.color(n % 7) + t.bold + ch
         for n, ch in enumerate(pgraph)])
     import textwrap
