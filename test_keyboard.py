@@ -209,9 +209,6 @@ def play_whack_a_key():
             inp.name if inp is not None else None, ))
         sys.stdout.flush()
 
-        sys.stdout.flush()
-
-
     def build_gameboard(term):
         column, row = 0, 0
         board = dict()
