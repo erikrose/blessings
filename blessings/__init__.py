@@ -444,7 +444,8 @@ class Terminal(object):
         # returns time-relative remaining for user-specified timeout
         timeleft = lambda cmp_time: (
             None if timeout is None else
-            timeout - (time.time() - cmp_time))
+            timeout - (time.time() - cmp_time)
+            if timeout != 0 else 0)
 
         # returns True if byte appears to mark the beginning of a MBS
         chk_start = lambda char: (ord(char) == esc or (
