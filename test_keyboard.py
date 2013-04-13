@@ -22,8 +22,8 @@ def play_newtons_nightmare():
         ball = {
             'x': float(random.randint(1, term.width)),
             'y': float(random.randint(1, term.height)),
-            'x_velocity': float(random.randint(1, 10)) * .1,
-            'y_velocity': float(random.randint(1, 10)) * .1,
+            'x_velocity': 1.0 - (float(random.randint(1, 20)) * .1),
+            'y_velocity': 1.0 - (float(random.randint(1, 20)) * .1),
             'color': random.randint(1, 7),
             'tail': [],
             }
@@ -173,9 +173,11 @@ def play_newtons_nightmare():
             elif inp.code == term.KEY_SRIGHT and gravity_x <= (term.width - 3):
                 gravity_x += 3.0
                 gravity_xs = 0
-        print term.move(term.height, 0)
-        print 'Your final score was', score
-        print 'press any key'
+        print term.move(term.height - 4, 0)
+        print term.clear_eol + 'Your final score was', score
+        print term.clear_eol + 'press any key'
+        print term.clear_eol,
+        sys.stdout.flush()
         term.inkey()
 
 def play_whack_a_key():
@@ -269,13 +271,16 @@ def play_whack_a_key():
                 hit_unicode += 1
                 if hit_unicode < 5:
                     score, level = add_score (score, 100, level)
-        print term.move(term.height, 0)
-        print 'Your final score was', score, 'at level', level
+        print term.move(term.height - 4, 0)
+        print term.clear_eol + 'Your final score was', score, 'at level', level
         if hit_highbit > 0:
-            print 'You hit', hit_highbit, 'extended ascii characters'
+            print term.clear_eol + 'You hit', hit_highbit,
+            print 'extended ascii characters'
         if hit_unicode > 0:
-            print 'You hit', hit_unicode, 'unicode characters'
-        print 'press any key'
+            print term.clear_eol + 'You hit', hit_unicode, 'unicode characters'
+        print term.clear_eol + 'press any key'
+        print term.clear_eol,
+        sys.stdout.flush()
         term.inkey()
 
 if __name__ == '__main__':
