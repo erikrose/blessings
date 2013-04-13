@@ -15,8 +15,8 @@ def play_newtons_nightmare():
     """
     term = blessings.Terminal()
     n_balls = int((term.width * term.height) * .01)
-    balls = list()
-    for n in range(n_balls):
+
+    def newball():
         ball = {
             'x': float(random.randint(1, term.width)),
             'y': float(random.randint(1, term.height)),
@@ -25,7 +25,11 @@ def play_newtons_nightmare():
             'color': random.randint(1, 7)
             }
         ball['x_pos'] = ball['y_pos'] = -1
-        balls.append(ball)
+        return ball
+
+    balls = list()
+    for n in range(n_balls):
+        balls.append (newball())
     gravity_x = term.width / 2
     gravity_y = term.height / 2
     gravity_xs = 0.0
@@ -101,6 +105,8 @@ def play_newtons_nightmare():
         sys.stdout.write(term.clear + term.home)
         while True:
             score += 1
+            if 0 == (score % 50):
+                balls.append (newball())
             delay = max(delay - 0.00001, 0.01)
             balls = step(balls)
             gravity_x += gravity_xs
@@ -111,6 +117,15 @@ def play_newtons_nightmare():
                 gravity_ys *= -1
             refresh(term, balls)
             if chk_die(balls):
+                sys.stdout.write(term.move(int(gravity_y), int(gravity_x)))
+                for n in range(1, 20):
+                    if 0 == (n % 2):
+                        sys.stdout.write(term.bold)
+                    else:
+                        sys.stdout.write(term.normal)
+                    sys.stdout.write('*\b')
+                    term.inkey(0.1)
+                    sys.stdout.flush()
                 break
             inp = term.inkey(delay)
             if inp is None:
