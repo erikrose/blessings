@@ -133,9 +133,15 @@ class Terminal(object):
         # Inherit curses keycap capability names, such as KEY_DOWN, to be
         # used with Keystroke ``code`` property values for comparison to the
         # Terminal class instance it was received on.
+        max_int = 256 # curses keycode values begin beyond 8-bit range
         for keycode in [kc for kc in dir(curses) if kc.startswith('KEY_')]:
+            value = getattr(curses, keycode)
             self._keycodes.append(keycode)
-            setattr(self, keycode, getattr(curses, keycode))
+            setattr(self, keycode, value)
+            max_int = max(max_int, value)
+        # Holy smokes; I made this up! Ctrl+Space sends \x00.
+        # Ctrl+Space is used in interfaces fe. midnight commander.
+        self.KEY_CSPACE = max_int + 1
 
         if self.is_a_tty:
             # determine encoding of input stream. Only used for keyboard
@@ -737,6 +743,10 @@ class Terminal(object):
                 continue
             elif 1 == len(ucs) and ucs == unichr(esc):
                 yield Keystroke(ucs[0], ('KEY_ESCAPE', self.KEY_ESCAPE))
+                break
+            elif 1 == len(ucs) and ucs == unichr(0):
+                # null byte isn't; actually is ctrl+spacebar;
+                yield Keystroke(ucs[0], ('KEY_CSPACE', self.KEY_CSPACE))
                 break
             keyseq, keyname, keycode = scan_keymap(ucs)
             if (keyseq, keyname, keycode) == (None, None, None):
