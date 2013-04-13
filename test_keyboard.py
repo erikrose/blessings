@@ -79,11 +79,12 @@ def play_newtons_nightmare():
         def erase(ball):
             sys.stdout.write(term.move(ball['y_pos'], ball['x_pos']))
             sys.stdout.write(term.color(ball['color']))
+            sys.stdout.write(term.bold)
             sys.stdout.write('.')
             sys.stdout.write(term.normal)
         def draw(ball):
-            sys.stdout.write(term.bold)
             sys.stdout.write(term.color(ball['color']))
+            sys.stdout.write(term.reverse)
             sys.stdout.write(term.move(ball['y_pos'], ball['x_pos']) + u'*')
             sys.stdout.write(term.normal)
         for ball in balls:
