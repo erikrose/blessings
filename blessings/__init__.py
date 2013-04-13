@@ -665,7 +665,7 @@ class Terminal(object):
             return code.decode('utf-8')
         return u''
 
-    def resolve_mbs(self, buf):
+    def resolve_mbs(self, buf, end=True):
         """ T._resolve_mbs(buf) -> Keystroke
 
         This generator yields unicode sequences with additional
@@ -678,19 +678,10 @@ class Terminal(object):
         of bytes recieved by sys.stdin.read(1), to be decoded to Unicode by
         the preferred locale.
         """
-        if sys.platform == 'win32':
-            return self._resolve_mbs_win32(buf)
-        else:
-            return self._resolve_mbs_posix(buf, self._idecoder)
-
-    def _resolve_mbs_win32(self, buf):
-        return self._resolve_mbs(u''.join(buf))
-
-    def _resolve_mbs_posix(self, buf, decoder, end=True):
         decoded = []
         for num, byte in enumerate(buf):
             is_final = end and num == (len(buf) - 1)
-            ucs = decoder.decode(byte, final=is_final)
+            ucs = self._idecoder.decode(byte, final=is_final)
             if ucs is not None:
                 decoded.append(ucs)
         return self._resolve_mbs(u''.join(decoded))
