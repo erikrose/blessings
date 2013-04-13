@@ -624,8 +624,8 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        colors = tigetnum(
-            'colors')  # Returns -1 if no color support, -2 if no such cap.
+        # Returns -1 if no color support, -2 if no such cap.
+        colors = tigetnum('colors')
         # self.__dict__['colors'] = ret  # Cache it. It's not changing.
         # (Doesn't work.)
         return colors if colors >= 0 else 0
