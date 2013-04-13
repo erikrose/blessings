@@ -26,8 +26,27 @@ def play_boxes():
     draws a bounding box between the two points.
     """
     term = blessings.Terminal()
+    def display_down(x, y):
+        sys.stdout.write(term.move(term.height -2, 0))
+        sys.stdout.write(term.clear_eol)
+        sys.stdout.write('LEFT_DOWN %s,%s' % (x, y))
+        sys.stdout.write(term.move(term.height -1, 0))
+        sys.stdout.write(term.clear_eol)
+        sys.stdout.flush()
 
-    def refresh(term, inp):
+    def display_release(x, y):
+        sys.stdout.write(term.move(term.height -1, 0))
+        sys.stdout.write(term.clear_eol)
+        sys.stdout.write('LEFT_RELEASE %s,%s' % (x, y))
+        sys.stdout.flush()
+
+    def display_box(color, top, botom, left, right):
+        sys.stdout.write(term.reverse)
+        sys.stdout.write(color)
+        for row in range(top, bottom):
+            sys.stdout.write(term.move(row, left))
+            sys.stdout.write('=' * (right - left))
+        sys.stdout.write(term.normal)
         sys.stdout.flush()
 
     with contextlib.nested(term.cbreak(), term.mouse_tracking()):
@@ -55,26 +74,15 @@ def play_boxes():
                 if action == MOUSE_BUTTON_LEFT:
                     drawing = True
                     start_col, start_row = x, y
-                    sys.stdout.write(term.move(term.height -2, 0))
-                    sys.stdout.write(term.clear_eol)
-                    sys.stdout.write(repr((action, x, y,)))
-                    sys.stdout.write(term.move(term.height -1, 0))
-                    sys.stdout.write(term.clear_eol)
+                    display_down(x, y)
                 elif action == MOUSE_BUTTON_RELEASED and drawing:
                     drawing = False
                     left, right = min(x, start_col), max(x, start_col)
                     top, bottom = min(y, start_row), max(y, start_row)
                     color = term.color((left + top) % 7)
                     if color == 1: color = 0
-                    for row in range(top, bottom):
-                        sys.stdout.write(term.move(row, left))
-                        sys.stdout.write(term.reverse)
-                        sys.stdout.write(color)
-                        sys.stdout.write('=' * (right - left))
-                        sys.stdout.write(term.normal)
-                    sys.stdout.write(term.move(term.height -1, 0))
-                    sys.stdout.write(term.clear_eol)
-                    sys.stdout.write(repr((action, x, y,)))
+                    display_release(x, y)
+                    display_box(color, top, bottom, left, right)
                 sys.stdout.flush()
         print term.move(term.height - 1, 0)
 if __name__ == '__main__':
