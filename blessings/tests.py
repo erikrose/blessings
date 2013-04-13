@@ -354,3 +354,9 @@ def test_ansistring():
     eq_(AnsiString(ladjusted).__len__(), len(pony_msg.ljust(t.width)))
     eq_(AnsiString(radjusted.lstrip()).__len__(), pony_len)
     eq_(AnsiString(radjusted).__len__(), len(pony_msg.rjust(t.width)))
+
+# TODO:
+# test _resolve_msb directly
+# test cbreak by using bitwise & for expected term settings
+# test getch() blocks when kbhit() returns False
+# assert do_styling with force_styling args
