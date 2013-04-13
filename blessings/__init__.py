@@ -35,6 +35,16 @@ if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till 3.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
 
+SET_X10_MOUSE = 9
+SET_VT200_MOUSE = 1000
+SET_VT200_HIGHLIGHT_MOUSE = 1001
+SET_BTN_EVENT_MOUSE = 1002
+SET_ANY_EVENT_MOUSE = 1003
+SET_FOCUS_EVENT_MOUSE = 1004
+SET_EXT_MODE_MOUSE = 1005
+SET_SGR_EXT_MODE_MOUSE = 1006
+SET_URXVT_EXT_MODE_MOUSE = 1015
+SET_ALTERNATE_SCROLL = 1007
 
 class Terminal(object):
     """An abstraction around terminal capabilities
@@ -494,6 +504,23 @@ class Terminal(object):
             self.i_buf.insert(0, keystroke)
         item = self.i_buf.pop()
         return item
+
+    @contextmanager
+    def mouse_tracking(self, mode=SET_URXVT_EXT_MODE_MOUSE):
+        """Return a context manager for sending the DEC control sequence
+        for entering the specified mouse tracking mode. """
+        # this guy egmot made a push to get 1015 accepted in all utf-8 terminals,
+        # http://www.midnight-commander.org/ticket/2662
+        # http://www.xfree86.org/current/ctlseqs.html#Mouse%20Tracking
+        # https://bugzilla.gnome.org/show_bug.cgi?id=662423
+        # http://web.fis.unico.it/public/rxvt/refer.html#Mouse
+        self.stream.write('\x1b[?%dh' % (mode,))
+        self.stream.flush()
+        try:
+            yield
+        finally:
+            self.stream.write('\x1b[?%dl' % (mode,))
+
 
     @contextmanager
     def cbreak(self):
@@ -1114,12 +1141,13 @@ def _is_movement(ucs):
         # unknown
         return False
     elif ucs[2] == '?':
-        # CSI + '?25(h|l)' # show|hide
+        # DEC private modes
+        # http://web.fis.unico.it/public/rxvt/refer.html#PrivateModes
+        # fe., show/hide cursor is CSI + '?25[hl]'
         ptr2 = 3
         while (ucs[ptr2].isdigit()):
             ptr2 += 1
-        if not ucs[ptr2] in u'hl':
-            # ? followed illegaly, UNKNOWN
+        if not ucs[ptr2] in u'tsrhl': # toggle,save,restore,set,reset
             return False
         return False
     elif ucs[2] in ('(', ')'):
