@@ -51,6 +51,9 @@ class Terminal(object):
         around with the terminal; it's almost always needed when the terminal
         is and saves sticking lots of extra args on client functions in
         practice.
+      ``encoding``
+        The encoding used for keyboard input in the ``inkey()`` method; by
+        default it is the preferred encoding of the environment locale.
     """
     def __init__(self, kind=None, stream=None, force_styling=False):
         """Initialize the terminal.
@@ -418,7 +421,7 @@ class Terminal(object):
         The result is a unicode-typed instance of the Keystroke class, with
         additional properties ``is_sequence`` (bool), ``name`` (str),
         and ``value`` (int). esc_delay defines the time after which
-        an escape key is pressed that the stream awaits a MBS.
+        an escape key is pressed that the stream awaits a multibyte sequence.
 
         with term.cbreak():
             inp = None
@@ -435,7 +438,6 @@ class Terminal(object):
         assert self.is_a_tty, u'stream is not a a tty.'
         esc = curses.ascii.ESC  # posix multibyte sequence (MBS) start mark
         wsb = ord('\xe0')       # win32 MBS start mark
-        poll_mbs = 0.35         # when receiving MBS, delay for (any) next byte
 
         # return keystrokes buffered by previous calls immediately,
         # regardless of timeout
@@ -459,13 +461,15 @@ class Terminal(object):
         byte = self.getch()
         buf = [byte, ]
         # check for MSB; or just buffer for a rapidly firing input stream
-        # not sure why the 2nd byte fails the kbhit / select check ..
+        # TODO: meta sends escape", where alt+1 would send '\x1b1' may be imposed
+        # a performance hit by the multibyte sequence decoder. It must be made
+        # aware.
         while True:
             if chk_start(buf[0]):
                 if (len(buf) == 1 and self.kbhit(esc_delay)) or self.kbhit():
                     byte = self.getch()
                     buf.append(byte)
-                    detect = self.resolve_mbs(buf).next()
+                    detect = self.resolve_mbs(self._decode_istream(buf)).next()
                     if (detect.is_sequence and detect.code != self.KEY_EXIT):
                         # end of MBS,
                         break
@@ -480,7 +484,7 @@ class Terminal(object):
             else:
                 # no more bytes available in 'check for multibyte seq' loop
                 break
-        for keystroke in self.resolve_mbs(buf):
+        for keystroke in self.resolve_mbs(self._decode_istream(buf)):
             self.i_buf.insert(0, keystroke)
         item = self.i_buf.pop()
         return item
@@ -665,28 +669,35 @@ class Terminal(object):
             return code.decode('utf-8')
         return u''
 
-    def resolve_mbs(self, buf, end=True):
-        """ T._resolve_mbs(buf) -> Keystroke
+    def _decode_istream(self, buf, end=True):
+        """ T._decode_istream(buf, end=True)
 
-        This generator yields unicode sequences with additional
-        ``.is_sequence``, ``.name``, and ``.code`` properties that
-        describle matching multibyte input sequences to keycode
-        translations (if any) detected in input buffer, ``buf``.
-
-        For win32 systems, the input buffer is a list of unicode values
-        received by getwch. For Posix systems, the input buffer is a list
-        of bytes recieved by sys.stdin.read(1), to be decoded to Unicode by
-        the preferred locale.
+        Incrementaly decode input byte buffer, ``buf``, using the encoding
+        specified by ``.encoding``. By default, encoding is the locale's
+        preferred encoding detected into Unicode.
         """
+
         decoded = []
         for num, byte in enumerate(buf):
             is_final = end and num == (len(buf) - 1)
             ucs = self._idecoder.decode(byte, final=is_final)
             if ucs is not None:
                 decoded.append(ucs)
-        return self._resolve_mbs(u''.join(decoded))
+        return u''.join(decoded)
 
-    def _resolve_mbs(self, ucs):
+    def resolve_mbs(self, ucs):
+        """ T._resolve_mbs(ucs) -> Keystroke
+
+        This generator yields unicode sequences with additional
+        ``.is_sequence``, ``.name``, and ``.code`` properties that
+        describle matching multibyte input sequences to keycode
+        translations (if any) detected in input unicode buffer, ``ucs``.
+
+        For win32 systems, the input buffer is a list of unicode values
+        received by getwch. For Posix systems, the input buffer is a list
+        of bytes recieved by sys.stdin.read(1), to be decoded to Unicode by
+        the preferred locale.
+        """
         CR_NVT = u'\r\x00'  # NVT return (telnet, etc.)
         CR_LF = u'\r\n'    # carriage return + newline
         CR_CHAR = u'\n'    # returns only '\n' when return is detected.
