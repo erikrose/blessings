@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import contextlib
 import blessings
 import random
 import sys
@@ -14,7 +15,8 @@ def play_newtons_nightmare():
     Go ahead, make yourself a rouge-like :-)
     """
     term = blessings.Terminal()
-    n_balls = int((term.width * term.height) * .01)
+    n_balls = 6
+    tail_length = 10
 
     def newball():
         ball = {
@@ -22,7 +24,8 @@ def play_newtons_nightmare():
             'y': float(random.randint(1, term.height)),
             'x_velocity': float(random.randint(1, 10)) * .1,
             'y_velocity': float(random.randint(1, 10)) * .1,
-            'color': random.randint(1, 7)
+            'color': random.randint(1, 7),
+            'tail': [],
             }
         ball['x_pos'] = ball['y_pos'] = -1
         return ball
@@ -70,9 +73,9 @@ def play_newtons_nightmare():
         sys.stdout.write('\b ')
         def outofrange(ball):
             return (ball['y_pos'] < 0
-                    or ball['y_pos'] > (term.height - 1)
+                    or ball['y_pos'] > term.height
                     or ball['x_pos'] < 0
-                    or ball['x_pos'] > (term.width - 1))
+                    or ball['x_pos'] > term.width)
         def erase(ball):
             sys.stdout.write(term.move(ball['y_pos'], ball['x_pos']))
             sys.stdout.write(term.color(ball['color']))
@@ -93,6 +96,14 @@ def play_newtons_nightmare():
                 # update position and draw
                 ball['x_pos'] = sx
                 ball['y_pos'] = sy
+                ball['tail'].insert(0, (sy, sx))
+                # erase last tail-end
+                if len(ball['tail']) > tail_length:
+                    y, x = ball['tail'].pop()
+                    if (x >= 0 and x <= term.width
+                            and y >= 0 and y <= term.height):
+                        sys.stdout.write(term.move(y, x))
+                        sys.stdout.write(' ')
                 if not outofrange(ball):
                     draw(ball)
         sys.stdout.write(term.move(int(gravity_y), int(gravity_x)))
@@ -101,7 +112,7 @@ def play_newtons_nightmare():
 
     delay = 0.05
     score = 0
-    with term.hidden_cursor() and term.cbreak():
+    with contextlib.nested(term.hidden_cursor(), term.cbreak()):
         sys.stdout.write(term.clear + term.home)
         while True:
             score += 1
@@ -120,12 +131,13 @@ def play_newtons_nightmare():
                 sys.stdout.write(term.move(int(gravity_y), int(gravity_x)))
                 for n in range(1, 20):
                     if 0 == (n % 2):
-                        sys.stdout.write(term.bold)
+                        sys.stdout.write(term.white_on_red)
                     else:
-                        sys.stdout.write(term.normal)
+                        sys.stdout.write(term.red_on_white)
                     sys.stdout.write('*\b')
                     term.inkey(0.1)
                     sys.stdout.flush()
+                sys.stdout.write(term.normal)
                 break
             inp = term.inkey(delay)
             if inp is None:
