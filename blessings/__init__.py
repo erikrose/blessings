@@ -153,8 +153,8 @@ class Terminal(object):
         self.KEY_INSERT = self.KEY_IC
         self.KEY_PGUP = self.KEY_PPAGE
         self.KEY_PGDOWN = self.KEY_NPAGE
-        self.KEY_SPGUP = self.SR  # scroll reverse (shift+pgup)
-        self.KEY_SPGDOWN = self.SF  # scroll forward (shift+pgdown)
+        self.KEY_SUP = self.SR  # scroll reverse (shift+pgup)
+        self.KEY_SDOWN = self.SF  # scroll forward (shift+pgdown)
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
