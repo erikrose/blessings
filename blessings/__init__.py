@@ -155,6 +155,7 @@ class Terminal(object):
         self.KEY_PGDOWN = self.KEY_NPAGE
         self.KEY_SUP = self.KEY_SR  # scroll reverse (shift+pgup)
         self.KEY_SDOWN = self.KEY_SF  # scroll forward (shift+pgdown)
+        self.KEY_ESCAPE = self.KEY_EXIT
 
     # Sugary names for commonly-used capabilities, intended to help avoid trips
     # to the terminfo man page and comments in your code:
@@ -465,7 +466,7 @@ class Terminal(object):
                     byte = self.getch()
                     buf.append(byte)
                     detect = self.resolve_mbs(buf).next()
-                    if (detect.is_sequence and detect.code != self.KEY_ESCAPE):
+                    if (detect.is_sequence and detect.code != self.KEY_EXIT):
                         # end of MBS,
                         break
                 else:
