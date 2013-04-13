@@ -144,22 +144,26 @@ def play_newtons_nightmare():
                 continue
             if inp in (u'q', 'Q'):
                 break
-            if (inp.code == term.KEY_UP
-                    and gravity_y > 1.0
+            if (inp.code == term.KEY_UP and gravity_y > 1.0
                     and gravity_ys > -1.0):
                 gravity_ys -= 0.2
-            elif (inp.code == term.KEY_DOWN
-                    and gravity_y < (term.height - 1)
+            elif inp.code == term.KEY_SUP and gravity_y > 2.0:
+                gravity_y -= 2.0
+            elif (inp.code == term.KEY_DOWN and gravity_y < (term.height - 1)
                     and gravity_ys < 1.0):
                 gravity_ys += 0.2
-            elif (inp.code == term.KEY_LEFT
-                    and gravity_x > 1.0
+            elif inp.code == term.KEY_SDOWN and gravity_y < (term.height - 2):
+                gravity_y += 2.0
+            elif (inp.code == term.KEY_LEFT and gravity_x > 1.0
                     and gravity_xs > -1.0):
                 gravity_xs -= 0.3
-            elif (inp.code == term.KEY_RIGHT
-                    and gravity_x < (term.width - 1)
+            elif inp.code == term.KEY_SLEFT and gravity_x > 3.0:
+                gravity_x -= 3.0
+            elif (inp.code == term.KEY_RIGHT and gravity_x < (term.width - 1)
                     and gravity_xs < 1.0):
                 gravity_xs += 0.3
+            elif inp.code == term.KEY_SRIGHT and gravity_x < (term.width - 3):
+                gravity_x += 3.0
         print term.move(term.height, 0)
         print 'Your final score was', score
         print 'press any key'
