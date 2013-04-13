@@ -35,16 +35,19 @@ if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till 3.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
 
-SET_X10_MOUSE = 9
-SET_VT200_MOUSE = 1000
-SET_VT200_HIGHLIGHT_MOUSE = 1001
-SET_BTN_EVENT_MOUSE = 1002
-SET_ANY_EVENT_MOUSE = 1003
-SET_FOCUS_EVENT_MOUSE = 1004
-SET_EXT_MODE_MOUSE = 1005
-SET_SGR_EXT_MODE_MOUSE = 1006
-SET_URXVT_EXT_MODE_MOUSE = 1015
-SET_ALTERNATE_SCROLL = 1007
+MMODE_X10 = 9
+MMODE_VT200 = 1000
+MMODE_VT200_HIGHLIGHT = 1001
+MMODE_BTN_EVENT = 1002
+MMODE_ANY_EVENT = 1003
+MMODE_FOCUS_EVENT = 1004
+MMODE_EXT_MODE = 1005
+MMODE_SGR_EXT_MODE = 1006
+MMODE_URXVT_EXT_MODE = 1015
+MMODE_ALTERNATE_SCROLL = 1007
+MMODE_XTERM_262 = 262
+MMODE_URXVT_910 = 910
+MMODE_DEFAULT = MMODE_URXVT_910
 
 class Terminal(object):
     """An abstraction around terminal capabilities
@@ -506,20 +509,31 @@ class Terminal(object):
         return item
 
     @contextmanager
-    def mouse_tracking(self, mode=SET_URXVT_EXT_MODE_MOUSE):
-        """Return a context manager for sending the DEC control sequence
-        for entering the specified mouse tracking mode. """
-        # this guy egmot made a push to get 1015 accepted in all utf-8 terminals,
+    def mouse_tracking(self, mode=MMODE_DEFAULT):
+        """ Return a context manager for sending the DEC control sequence
+        for entering the specified mouse tracking mode. The default mode is
+        the urxvt extension found in xterm, urxvt, iTerm2, and gnome-terminal."""
+        # this guy egmot made a push to get this mode in all utf-8 terminals,
         # http://www.midnight-commander.org/ticket/2662
         # http://www.xfree86.org/current/ctlseqs.html#Mouse%20Tracking
         # https://bugzilla.gnome.org/show_bug.cgi?id=662423
         # http://web.fis.unico.it/public/rxvt/refer.html#Mouse
-        self.stream.write('\x1b[?%dh' % (mode,))
+        if mode == MMODE_XTERM_262:
+            self.stream.write('\x1b[?%dh' % (MMODE_VT200,))
+            self.stream.write('\x1b[?%dh' % (MMODE_EXT_MODE,))
+        elif mode == MMODE_URXVT_910:
+            self.stream.write('\x1b[?%dh' % (MMODE_VT200,))
+            self.stream.write('\x1b[?%dh' % (MMODE_URXVT_EXT_MODE,))
+        else:
+            self.stream.write('\x1b[?%dh' % (mode,))
         self.stream.flush()
         try:
             yield
         finally:
-            self.stream.write('\x1b[?%dl' % (mode,))
+            if mode in (MMODE_XTERM_262, MMODE_URXVT_910):
+                self.stream.write('\x1b[?%dl' % (MMODE_VT200,))
+            else:
+                self.stream.write('\x1b[?%dl' % (mode,))
 
 
     @contextmanager
