@@ -123,9 +123,9 @@ class Terminal(object):
         self._state_canonical = True
 
         # dictionary of multibyte sequences to be paired with key codes
-        self._keymap = dict()
+        self._keymap = {}
         # list of key code names
-        self._keycodes = list()
+        self._keycodes = []
 
         # Inherit curses keycap capability names, such as KEY_DOWN, to be
         # used with Keystroke ``code`` property values for comparison to the
@@ -142,7 +142,7 @@ class Terminal(object):
             self.encoding = locale.getpreferredencoding()
             if sys.platform != 'win32':
                 self._idecoder = codecs.getincrementaldecoder(self.encoding)()
-            self.i_buf = list()
+            self.i_buf = []
 
             # create lookup dictionary for multibyte keyboard input sequences
             self._init_keystrokes()
@@ -685,7 +685,7 @@ class Terminal(object):
         return self._resolve_mbs(u''.join(buf))
 
     def _resolve_mbs_posix(self, buf, decoder, end=True):
-        decoded = list()
+        decoded = []
         for num, byte in enumerate(buf):
             is_final = end and num == (len(buf) - 1)
             ucs = decoder.decode(byte, final=is_final)
