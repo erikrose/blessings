@@ -1255,12 +1255,15 @@ def _seqlen(ucs):
             ptr2 = 3
             while (ucs[ptr2].isdigit()):
                 ptr2 += 1
+                if (ucs[ptr2]) == ';':
+                    # u'\x1b[?12;25h' cvvis
+                    ptr2 += 1
             if not ucs[ptr2] in u'hl':
                 # ? followed illegaly, UNKNOWN
                 return 0
             return ptr2 + 1
         # SGR
-        elif ucs[2].isdigit():
+        elif ucs[2].isdigit() or ucs[2] == ';':
             ptr2 = 2
             while (ucs[ptr2].isdigit()):
                 ptr2 += 1
