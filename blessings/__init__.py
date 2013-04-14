@@ -1051,9 +1051,8 @@ def ansiwrap(ucs, width=70, **kwargs):
 _ANSI_COLOR = re.compile(r'\033\[(\d{2,3})m')
 _ANSI_RIGHT = re.compile(r'\033\[(\d{1,4})C')
 _ANSI_CODEPAGE = re.compile(r'\033[\(\)][AB012]')
-_ANSI_WILLMOVE = re.compile(r'\033\[[HJuABCDEF]')
-_ANSI_WONTMOVE = re.compile(r'\033\[[sm]')
-
+_ANSI_WILLMOVE = re.compile(r'\033\[[HuABCDEFG]')
+_ANSI_WONTMOVE = re.compile(r'\033\[[smJK]')
 
 class AnsiString(unicode):
     """
@@ -1119,11 +1118,11 @@ class AnsiString(unicode):
 
 def _is_movement(ucs):
     """
-    is_movement(S) -> bool
+    _is_movement(ucs) -> bool
 
-    Returns True if string S begins with a known terminal escape
-    sequence that is "unhealthy for padding", that is, it has effects
-    on the cursor position that are indeterminate.
+    Returns True if ucs begins with a terminal sequence that is
+    "unhealthy for padding", that is, it has effects on the
+    cursor position that are indeterminate.
     """
     # pylint: disable=R0911,R09120
     #        Too many return statements (20/6)
@@ -1134,6 +1133,8 @@ def _is_movement(ucs):
     slen = unicode.__len__(ucs)
     if 0 == slen:
         return False
+    elif ucs[0] in u'\r\n\b':
+        return True
     elif ucs[0] != unichr(esc):
         return False
     elif slen > 1 and ucs[1] == u'c':
@@ -1199,11 +1200,12 @@ def _is_movement(ucs):
     if ptr2 >= slen:
         # unfinished sequence, hrm ..
         return False
-    elif ucs[ptr2] in u'ABCDEFGJKSTH':
-        # single attribute,
-        # up, down, right, left, bnl, bpl,
-        # pos, cls, cl, pgup, pgdown
+    elif ucs[ptr2] in u'ABCD':
+        # numeric up, down, right, left
         return True
+    elif ucs[ptr2] in u'KJ':
+        # clear_bol is 1K; clear_eos is 2J
+        return False
     elif ucs[ptr2] == 'm':
         # normal
         return False

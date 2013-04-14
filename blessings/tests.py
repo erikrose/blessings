@@ -16,7 +16,7 @@ from StringIO import StringIO
 import sys
 
 from nose import SkipTest
-from nose.tools import eq_
+from nose.tools import eq_, raises
 
 # This tests that __all__ is correct, since we use below everything that should
 # be imported:
@@ -162,6 +162,19 @@ def test_callable_numeric_colors():
     eq_(t.on_color(2)('smoo'), t.on_green + 'smoo' + t.normal)
     eq_(t.on_color(2)('smoo'), t.on_color(2) + 'smoo' + t.normal)
 
+@raises(TypeError)
+def test_callable_float_typeError():
+    """ floats are illegal as formatting parameters """
+    t = TestTerminal()
+    # floats are illegal
+    t.move(1.0, 1.0)
+
+@raises(TypeError)
+def test_callable_str_typeError():
+    """ strings are illegal as formatting parameters """
+    t = TestTerminal()
+    # floats are illegal
+    t.move('1.0', '1.0')
 
 def test_null_callable_numeric_colors():
     """``color(n)`` should be a no-op on null terminals."""
@@ -288,37 +301,58 @@ def test_seqlen():
             seq_junk = seq + unichr(n)*10
             eq_(seqlen, _seqlen(seq_junk))
 
-def test_is_movement():
-    """Test the _is_movement function"""
+def test_is_movement_true():
+    """ Test sequences that should be defined as movement """
     t = TestTerminal()
-    seqs = [(u'', False),
-            (u'xyzzy', False),
-            (u'\x1b', False),  # a single escape NOT an 'escape sequence'
-            (u'\x1bc', True),  # reset
-            (u'\x1b#8', True), # dec alignment tube test
-            (u'\x1b[m', False), # sgr stuff
-            (u'\x1b[s', False),
-            (u'\x1b[?25h', False), # show|hide cursor
-            (u'\x1b[01;02m', False), # fake sgr
-            (u'\x1b(0', False), # shift code page
-            (u'\x1b)A', False),
-            (u'\x1b[H', True), # various movements, home, up
-            (u'\x1b[A', True),
-            (t.home, True),
-            (t.bold, False),
-            (t.red, False),
-            (t.underline, False),
-            (t.reverse, False),
-            ]
     from blessings import _is_movement
-    for seq, willmove in seqs:
-        eq_(willmove, _is_movement(seq))
-        # skip testing single \x1b + padding (\x1bc is a valid sequence)
-        if seq == '\x1b':
-            continue
-        for n in range(255):
-            seq_junk = seq + unichr(n) * 10
-            eq_(willmove, _is_movement(seq_junk))
+    # reset terminal causes term.clear to happen
+    eq_(_is_movement(u'\x1bc'), True)
+    # dec alignment tube test, could go either way
+    eq_(_is_movement(u'\x1b#8'), True)
+    # various movements
+    eq_(_is_movement(t.move(98,76)), True)
+    eq_(_is_movement(t.move(54)), True)
+    eq_(_is_movement(t.cud1), True)
+    eq_(_is_movement(t.cub1), True)
+    eq_(_is_movement(t.cuf1), True)
+    eq_(_is_movement(t.cuu1), True)
+    eq_(_is_movement(t.cub(333)), True)
+    eq_(_is_movement(t.home), True)
+    # clear 'moves' because it includes t.home
+    eq_(_is_movement(t.clear), True)
+
+def test_is_movement_false():
+    """ Test sequences that are not movement """
+    t = TestTerminal()
+    from blessings import _is_movement
+    eq_(_is_movement(u''), False)
+    # not even a mbs
+    eq_(_is_movement(u'xyzzy'), False)
+    # a single escape is not movement
+    eq_(_is_movement(u'\x1b'), False)
+    # neither is positional argument with non-digit, which
+    # can happen when a position becomes a negative number
+    eq_(_is_movement(t.cuf(-333)), False)
+    # sgr reset
+    eq_(_is_movement(u'\x1b[m'), False)
+    eq_(_is_movement(u'\x1b[s'), False)
+    # fake sgr
+    eq_(_is_movement(u'\x1b[01;02m'), False)
+    # shift code page
+    eq_(_is_movement(u'\x1b(0'), False)
+    eq_(_is_movement(t.clear_eol), False)
+    # various erases don't *move*
+    eq_(_is_movement(t.clear_bol), False)
+    eq_(_is_movement(t.clear_eos), False)
+    eq_(_is_movement(t.bold), False)
+    # various paints don't move
+    eq_(_is_movement(t.red), False)
+    eq_(_is_movement(t.civis), False)
+    eq_(_is_movement(t.cnorm), False)
+    eq_(_is_movement(t.cvvis), False)
+    eq_(_is_movement(t.underline), False)
+    eq_(_is_movement(t.reverse), False)
+
 
 def test_ansiwrap():
     t = TestTerminal()
