@@ -162,7 +162,7 @@ def test_callable_numeric_colors():
     eq_(t.on_color(2)('smoo'), t.on_green + 'smoo' + t.normal)
     eq_(t.on_color(2)('smoo'), t.on_color(2) + 'smoo' + t.normal)
 
-@raises(TypeError)
+@raises(TypeError, DeprecationWarning)
 def test_callable_float_typeError():
     """ floats are illegal as formatting parameters """
     t = TestTerminal()
