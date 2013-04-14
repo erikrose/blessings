@@ -232,8 +232,8 @@ def play_pong():
                 if mousemove is None:
                     print term.move(term.height-2, 0) + term.clear_eol
                     print term.move(term.height-1, 0) + (
-                            'You quit by pressing the escape key; or, inputting a '
-                            'sequence I didn\'t particulary like.')
+                            "You inputted a sequence I didn't "
+                            "particulary like.")
                     break
                 if mousemove.code == MOUSE_SCROLL_FORWARD:
                     move_paddle(paddles['right'], paddles['right']['y'] + 1)
@@ -243,6 +243,8 @@ def play_pong():
                 move_paddle(paddles['right'], paddles['right']['y'] - int(paddle_height* .7))
             elif inp.code == term.KEY_DOWN:
                 move_paddle(paddles['right'], paddles['right']['y'] + int(paddle_height* .7))
+            elif inp.code == term.KEY_EXIT:
+                break
             sys.stdout.flush()
         sys.stdout.write(term.move(term.height -1, 0))
         sys.stdout.write(term.clear_eol)
@@ -317,9 +319,9 @@ def play_boxes():
         print term.clear + term.home + 'click and drag to draw a box'
         while True:
             inp = term.inkey()
-            if inp in (u'q', 'Q'):
+            if inp in (u'q', u'Q') or inp.code == term.KEY_EXIT:
                 break
-            if inp == '\x1b':
+            if inp == '\x1b' and not inp.is_sequence:
                 buf = get_mousebytes(term, [inp,])
                 action = MOUSE_REPORT.match(buf)
                 assert action is not None, (
