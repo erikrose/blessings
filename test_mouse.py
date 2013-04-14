@@ -84,7 +84,8 @@ def play_pong():
         sys.stdout.write(term.bold_green(': '))
         sys.stdout.write(term.bold_white(str(score_computer)))
 
-        sys.stdout.write(term.move(term.height, term.width - 10))
+        sys.stdout.write(term.move(term.height,
+            term.width - (8 + paddle_width)))
         sys.stdout.write(term.green('score'))
         sys.stdout.write(term.bold_green(': '))
         sys.stdout.write(term.bold_white(str(score_player)))
@@ -172,14 +173,16 @@ def play_pong():
             ball['xv'] *= -1
             diff = ball['y'] - (paddles['right']['y'] + (paddle_height / 2))
             ball['yv'] += diff / paddle_height
+            return True
         elif (ball['y'] >= paddles['left']['y'] and
                 ball['y'] <= paddles['left']['y'] + (paddle_height + 1) and
-                ball['x'] <= paddles['left']['x'] + paddle_width and
+                ball['x'] <= paddles['left']['x'] + (paddle_width + 1) and
                 ball['xv'] < 0):
             # bounce off computer's paddle
             ball['xv'] *= -1
             diff = ball['y'] - (paddles['left']['y'] + (paddle_height / 2))
             ball['yv'] += diff / paddle_height
+            return True
 
     def die_detect(ball):
         # returns 1: die on left, 2: die on right, 0: no death
