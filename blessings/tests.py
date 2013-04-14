@@ -277,90 +277,144 @@ def test_force_styling_none():
     eq_(t.save, '')
 
 
-def test_seqlen():
-    """Test the _seqlen function"""
-    t = TestTerminal()
-    seqs = [(u'', 0),
-            (u'xyzzy', 0),
-            (u'\x1b', 0),  # a single escape NOT an 'escape sequence'
-            (u'\x1bc', 2),  # reset
-            (u'\x1b#8', 3), # dec alignment tube test
-            (u'\x1b[m', 3), # sgr stuff
-            (u'\x1b[s', 3),
-            (u'\x1b[?25h', 6), # show|hide cursor
-            (u'\x1b[01;02m', 8), # fake sgr
-            (u'\x1b(0', 3), # shift code page
-            (u'\x1b)A', 3),
-            (u'\x1b[H', 3), # various movements, home, up
-            (u'\x1b[A', 3),
-            (t.home, len(t.home)),
-            (t.bold, len(t.bold)),
-            (t.red, len(t.red)),
-            (t.underline, len(t.underline)),
-            (t.reverse, len(t.reverse)),
-            ]
-    from blessings import _seqlen
-    for seq, seqlen in seqs:
-        eq_(seqlen, _seqlen(seq))
-        # skip testing single \x1b + padding (\x1bc is a valid sequence)
-        if seq == '\x1b':
-            continue
-        for n in range(255):
-            seq_junk = seq + unichr(n)*10
-            eq_(seqlen, _seqlen(seq_junk))
-
 def test_is_movement_true():
-    """ Test sequences that should be defined as movement """
+    """ Test parsers for correctness about sequences that result in cursor movement. """
     t = TestTerminal()
-    from blessings import _is_movement
+    from blessings import _seqlen, _is_movement
     # reset terminal causes term.clear to happen
     eq_(_is_movement(u'\x1bc'), True)
+    eq_(len(u'\x1bc'), _seqlen(u'\x1bc'))
     # dec alignment tube test, could go either way
     eq_(_is_movement(u'\x1b#8'), True)
+    eq_(len(u'\x1b#8'), _seqlen(u'\x1b#8'))
     # various movements
     eq_(_is_movement(t.move(98,76)), True)
+    eq_(len(t.move(98,76)), _seqlen(t.move(98,76)))
     eq_(_is_movement(t.move(54)), True)
+    eq_(len(t.move(54)), _seqlen(t.move(54)))
     eq_(_is_movement(t.cud1), True)
+    # cud1 is actually '\n'; although movement,
+    # is not a valid 'escape sequence'.
+    eq_(0, _seqlen(t.cud1))
     eq_(_is_movement(t.cub1), True)
+    # cub1 is actually '\b'; although movement,
+    # is not a valid 'escape sequence'.
+    eq_(0, _seqlen(t.cub1))
     eq_(_is_movement(t.cuf1), True)
+    eq_(len(t.cuf1), _seqlen(t.cuf1))
     eq_(_is_movement(t.cuu1), True)
+    eq_(len(t.cuu1), _seqlen(t.cuu1))
     eq_(_is_movement(t.cub(333)), True)
+    eq_(len(t.cub(333)), _seqlen(t.cub(333)))
     eq_(_is_movement(t.home), True)
-    # clear 'moves' because it includes t.home
+    eq_(len(t.home), _seqlen(t.home))
+    # t.clear returns t.home + t.clear_eos
     eq_(_is_movement(t.clear), True)
+    for subseq in t.clear.split('\x1b')[1:]:
+        eq_(len('\x1b' + subseq), _seqlen('\x1b' + subseq))
+
 
 def test_is_movement_false():
-    """ Test sequences that are not movement """
+    """ Test parsers for correctness about sequences that do not move the cursor. """
+    from blessings import _seqlen, _is_movement
     t = TestTerminal()
-    from blessings import _is_movement
     eq_(_is_movement(u''), False)
+    eq_(0, _seqlen(u''))
     # not even a mbs
     eq_(_is_movement(u'xyzzy'), False)
+    eq_(0, _seqlen(u'xyzzy'))
     # a single escape is not movement
     eq_(_is_movement(u'\x1b'), False)
-    # neither is positional argument with non-digit, which
-    # can happen when a position becomes a negative number
+    eq_(0, _seqlen(u'\x1b'))
+    # negative numbers, though printable as %d, do not result
+    # in movement; just garbage. Also not a valid sequence.
     eq_(_is_movement(t.cuf(-333)), False)
+    eq_(0, _seqlen(t.cuf(-333)))
     # sgr reset
     eq_(_is_movement(u'\x1b[m'), False)
+    eq_(len(u'\x1b[m'), _seqlen(u'\x1b[m'))
     eq_(_is_movement(u'\x1b[s'), False)
+    eq_(len(u'\x1b[s'), _seqlen(u'\x1b[s'))
     # fake sgr
     eq_(_is_movement(u'\x1b[01;02m'), False)
+    eq_(len(u'\x1b[01;02m'), _seqlen(u'\x1b[01;02m'))
     # shift code page
     eq_(_is_movement(u'\x1b(0'), False)
+    eq_(len(u'\x1b(0'), _seqlen(u'\x1b(0'))
     eq_(_is_movement(t.clear_eol), False)
+    eq_(len(t.clear_eol), _seqlen(t.clear_eol))
     # various erases don't *move*
     eq_(_is_movement(t.clear_bol), False)
+    eq_(len(t.clear_bol), _seqlen(t.clear_bol))
     eq_(_is_movement(t.clear_eos), False)
+    eq_(len(t.clear_eos), _seqlen(t.clear_eos))
     eq_(_is_movement(t.bold), False)
+    eq_(len(t.bold), _seqlen(t.bold))
     # various paints don't move
     eq_(_is_movement(t.red), False)
+    eq_(len(t.red), _seqlen(t.red))
     eq_(_is_movement(t.civis), False)
+    eq_(len(t.civis), _seqlen(t.civis))
     eq_(_is_movement(t.cnorm), False)
+    # t.cnorm actually returns two sequences on xterm-256color
+    for subseq in t.cnorm.split('\x1b')[1:]:
+        eq_(len('\x1b' + subseq), _seqlen('\x1b' + subseq))
     eq_(_is_movement(t.cvvis), False)
+    eq_(len(t.cvvis), _seqlen(t.cvvis))
     eq_(_is_movement(t.underline), False)
+    eq_(len(t.underline), _seqlen(t.underline))
     eq_(_is_movement(t.reverse), False)
-
+    eq_(len(t.reverse), _seqlen(t.reverse))
+    # some raw code variations of multi-valued sequences, From
+    # Thomas Dickey's vttest's color.c
+    # vanilla
+    eq_(len(u'\x1b[0m'), _seqlen(u'\x1b[0m'))
+    eq_(_is_movement(u'\x1b[0m'), False)
+    # bold
+    eq_(len(u'\x1b[0;1m'), _seqlen(u'\x1b[0;1m'))
+    eq_(_is_movement(u'\x1b[0;1m'), False)
+    # bold
+    eq_(len(u'\x1b[;1m'), _seqlen(u'\x1b[;1m'))
+    eq_(_is_movement(u'\x1b[;1m'), False)
+    # underline
+    eq_(len(u'\x1b[;4m'), _seqlen(u'\x1b[;4m'))
+    eq_(_is_movement(u'\x1b[;4m'), False)
+    # blink
+    eq_(len(u'\x1b[0;5m'), _seqlen(u'\x1b[0;5m'))
+    eq_(_is_movement(u'\x1b[0;5m'), False)
+    # bold blink
+    eq_(len(u'\x1b[0;5;1m'), _seqlen(u'\x1b[0;5;1m'))
+    eq_(_is_movement(u'\x1b[0;5;1m'), False)
+    # underline blink
+    eq_(len(u'\x1b[0;4;5m'), _seqlen(u'\x1b[0;4;5m'))
+    eq_(_is_movement(u'\x1b[0;4;5m'), False)
+    # bold underline blink
+    eq_(len(u'\x1b[0;1;4;5m'), _seqlen(u'\x1b[0;1;4;5m'))
+    eq_(_is_movement(u'\x1b[0;1;4;5m'), False)
+    # negative
+    eq_(len(u'\x1b[1;4;5;0;7m'), _seqlen(u'\x1b[1;4;5;0;7m'))
+    eq_(_is_movement(u'\x1b[1;4;5;0;7m'), False)
+    # bold negative
+    eq_(len(u'\x1b[0;1;7m'), _seqlen(u'\x1b[0;1;7m'))
+    eq_(_is_movement(u'\x1b[0;1;7m'), False)
+    # underline negative
+    eq_(len(u'\x1b[0;4;7m'), _seqlen(u'\x1b[0;4;7m'))
+    eq_(_is_movement(u'\x1b[0;4;7m'), False)
+    # bold underline negative
+    eq_(len(u'\x1b[0;1;4;7m'), _seqlen(u'\x1b[0;1;4;7m'))
+    eq_(_is_movement(u'\x1b[0;1;4;7m'), False)
+    # blink negative
+    eq_(len(u'\x1b[1;4;;5;7m'), _seqlen(u'\x1b[1;4;;5;7m'))
+    eq_(_is_movement(u'\x1b[1;4;;5;7m'), False)
+    # bold blink negative
+    eq_(len(u'\x1b[0;1;5;7m'), _seqlen(u'\x1b[0;1;5;7m'))
+    eq_(_is_movement(u'\x1b[0;1;5;7m'), False)
+    # underline blink negative
+    eq_(len(u'\x1b[0;4;5;7m'), _seqlen(u'\x1b[0;4;5;7m'))
+    eq_(_is_movement(u'\x1b[0;4;5;7m'), False)
+    # bold underline blink negative
+    eq_(len(u'\x1b[0;1;4;5;7m'), _seqlen(u'\x1b[0;1;4;5;7m'))
+    eq_(_is_movement(u'\x1b[0;1;4;5;7m'), False)
 
 def test_ansiwrap():
     t = TestTerminal()
