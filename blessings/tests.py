@@ -162,19 +162,27 @@ def test_callable_numeric_colors():
     eq_(t.on_color(2)('smoo'), t.on_green + 'smoo' + t.normal)
     eq_(t.on_color(2)('smoo'), t.on_color(2) + 'smoo' + t.normal)
 
-@raises(TypeError, DeprecationWarning)
-def test_callable_float_typeError():
-    """ floats are illegal as formatting parameters """
-    t = TestTerminal()
-    # floats are illegal
-    t.move(1.0, 1.0)
+# not sure about this, as python2.5 and 2.6 just
+# raise a DepricationWarning, we could check and
+# raise a TypeError ourselves for those platforms, or not.
+#@raises(TypeError)
+#def test_callable_float_typeError():
+#    """ floats are illegal as formatting parameters """
+#    t = TestTerminal()
+#    t.move(1.0, 1.0)
 
 @raises(TypeError)
 def test_callable_str_typeError():
     """ strings are illegal as formatting parameters """
     t = TestTerminal()
-    # floats are illegal
-    t.move('1.0', '1.0')
+    t.move('1', '1')
+
+@raises(TypeError)
+def test_callable_mixed_typeError():
+    """ strings are illegal as formatting parameters """
+    t = TestTerminal()
+    t.move(1, '1')
+
 
 def test_null_callable_numeric_colors():
     """``color(n)`` should be a no-op on null terminals."""
