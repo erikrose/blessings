@@ -20,14 +20,31 @@ MOUSE_BUTTON_RELEASED = 3
 MOUSE_SCROLL_REVERSE = 64
 MOUSE_SCROLL_FORWARD = 65
 
-def get_remaining_inkey(term, buf):
+class MouseEvent(object):
+    code = None
+    x = None
+    y = None
+
+def get_mouseaction(buf):
+    """ Seek 'buf' for mouse event terminal sequence, returning MouseEvent instance. """
+    action = MouseEvent()
+    event = MOUSE_REPORT.match(buf)
+    if event is None:
+        return None
+    code, x, y = event.groups()
+    code = int(code) - 32
+    x, y = int(x) - 1, int(y) - 1
+    action.code, action.x, action.y = code, x, y
+    return action
+
+def get_mousebytes(term, buf):
+
     inp = None
     while inp != u'M':
         inp = term.inkey(timeout=0.1)
         if inp is not None:
             buf.append(inp)
     return ''.join(buf)
-
 
 def play_pong():
     """
@@ -37,14 +54,16 @@ def play_pong():
     paddles = {}
     def newball():
         return {
-                'x': term.width / 2,
-                'y': term.height / 2,
+                'x': float(term.width) / 2,
+                'y': float(term.height) / 2,
                 'xv': random.choice([-1, 1]),
-                'yv': 1 - random.randint(1, 20) * .1
+                'yv': 1 - random.randint(1, 20) * .1,
+                'tail': [(term.width / 2, term.height / 2),],
                 }
     ball = newball()
     paddle_height = max(4, term.height / 7)
     paddle_width = max(2, term.width / 30)
+    tracer_length = term.width / 10
     paddle_ymax = (term.height - paddle_height - 1)
     paddles['left'] = {
             'x': 1,
@@ -56,7 +75,7 @@ def play_pong():
             }
     delay = 0.03
     score_player, score_computer = 0, 0
-    difficulty = 0.1
+    difficulty = 0.25
 
 
     def draw_score():
@@ -76,6 +95,9 @@ def play_pong():
         draw_paddle(paddles['right'])
         draw_score()
         draw_ball(ball)
+        msg = 'Use mouse scrollwheel or KEY_UP and KEY_DOWN to control paddle.'
+        sys.stdout.write(term.move(term.height-1, (term.width/2)-(len(msg)/2)))
+        sys.stdout.write(msg)
         sys.stdout.flush()
 
     def draw_paddle(paddle, erase=False):
@@ -90,7 +112,9 @@ def play_pong():
         sys.stdout.write(term.normal)
 
     def move_paddle(paddle, y):
-#        print y
+        # bounds checking
+        y = min(y, paddle_ymax)
+        y = max(0, y)
         dirty = int(paddle['y']) != int(y)
         if dirty:
             draw_paddle(paddle, erase=True)
@@ -98,26 +122,32 @@ def play_pong():
         if dirty:
             draw_paddle(paddle)
 
-    def erase_ball(ball):
-        sys.stdout.write(term.move(
-            int(ball['y']), int(ball['x'])))
-        sys.stdout.write('.')
+    def leave_tail(x, y):
+        sys.stdout.write(term.move(y, x))
+        sys.stdout.write(term.bold_white(u'.'))
+
+    def erase_tail(x, y):
+        sys.stdout.write(term.move(y, x))
+        sys.stdout.write(u' ')
 
     def draw_ball(ball):
-        y, x = int(ball['y']), int(ball['x'])
+        x, y = int(ball['x']), int(ball['y'])
         if (y >= 0 and y < term.height and
                 x >= 0 and x < term.width):
             sys.stdout.write(term.move(y, x))
-            sys.stdout.write(term.bold_white_on_green)
-            sys.stdout.write('*')
+            sys.stdout.write(term.green + term.reverse)
+            sys.stdout.write(u' ')
             sys.stdout.write(term.normal)
 
     def move_ball(ball):
         x, y = int(ball['x']), int(ball['y'])
         ball['x'] += ball['xv']
         ball['y'] += ball['yv']
-        if int(x) != int(ball['x']) or int(y) != int(ball['y']):
-            erase_ball({'x': x, 'y': y})
+        if x != int(ball['x']) or y != int(ball['y']):
+            leave_tail(x, y)
+            ball['tail'].insert(0, (x, y))
+            if len(ball['tail']) > tracer_length:
+                erase_tail(*ball['tail'].pop())
             draw_ball(ball)
 
     def move_paddle_ai(paddle, ball):
@@ -180,7 +210,7 @@ def play_pong():
             if die_detect(ball) == 1:
                 score_player += 1
                 ball = newball()
-                difficulty += .001
+                difficulty += .01
                 dirty = True
             elif die_detect(ball) == 2:
                 score_computer += 1
@@ -188,28 +218,37 @@ def play_pong():
                 dirty = True
             sys.stdout.flush()
             inp = term.inkey(delay)
+            if inp is None:
+                continue
             if inp in (u'q', 'Q'):
                 break
-            if inp == '\x1b':
-                buf = get_remaining_inkey(term, [inp,])
-                action = MOUSE_REPORT.match(buf)
-                assert action is not None, (
-                        'Unexpected escape sequence: %r' % (buf,))
-                action, x, y = action.groups()
-                action = int(action) - 32
-                x, y = int(x) - 1, int(y) - 1
-                if (action == MOUSE_SCROLL_FORWARD
-                        and paddles['right']['y'] < paddle_ymax):
+            if inp == '\x1b' and not inp.is_sequence:
+                # we received only a single '\x1b' from inkey().
+                # It could be a single escape key. Or, it could be a sequence
+                # not handled by inkey; here, mouse scroll event is saught
+                # after.
+                buf = get_mousebytes(term, [inp,])
+                mousemove = get_mouseaction(buf)
+                if mousemove is None:
+                    print term.move(term.height-2, 0) + term.clear_eol
+                    print term.move(term.height-1, 0) + (
+                            'You quit by pressing the escape key; or, inputting a '
+                            'sequence I didn\'t particulary like.')
+                    break
+                if mousemove.code == MOUSE_SCROLL_FORWARD:
                     move_paddle(paddles['right'], paddles['right']['y'] + 1)
-                elif (action == MOUSE_SCROLL_REVERSE
-                        and paddles['right']['y'] > 0):
+                elif mousemove.code == MOUSE_SCROLL_REVERSE:
                     move_paddle(paddles['right'], paddles['right']['y'] - 1)
-                sys.stdout.flush()
+            elif inp.code == term.KEY_UP:
+                move_paddle(paddles['right'], paddles['right']['y'] - int(paddle_height* .7))
+            elif inp.code == term.KEY_DOWN:
+                move_paddle(paddles['right'], paddles['right']['y'] + int(paddle_height* .7))
+            sys.stdout.flush()
         sys.stdout.write(term.move(term.height -1, 0))
         sys.stdout.write(term.clear_eol)
         if score_computer > score_player:
             print 'You lost!'
-        else:
+        elif score_player > score_computer:
             print 'You won!'
 
 def play_boxes():
@@ -281,7 +320,7 @@ def play_boxes():
             if inp in (u'q', 'Q'):
                 break
             if inp == '\x1b':
-                buf = get_remaining_inkey(term, [inp,])
+                buf = get_mousebytes(term, [inp,])
                 action = MOUSE_REPORT.match(buf)
                 assert action is not None, (
                         'Unexpected escape sequence: %r' % (buf,))
