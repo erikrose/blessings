@@ -79,7 +79,7 @@ def play_pong():
 
 
     def draw_score():
-        sys.stdout.write(term.move(term.height, paddle_width + 2))
+        sys.stdout.write(term.move(term.height, paddle_width + 1))
         sys.stdout.write(term.green('score'))
         sys.stdout.write(term.bold_green(': '))
         sys.stdout.write(term.bold_white(str(score_computer)))
@@ -95,7 +95,7 @@ def play_pong():
         draw_paddle(paddles['right'])
         draw_score()
         draw_ball(ball)
-        msg = 'Use mouse scrollwheel or KEY_UP and KEY_DOWN to control paddle.'
+        msg = 'Mouse scrollwheel, KEY_UP, or KEY_DOWN moves paddle.'
         sys.stdout.write(term.move(term.height-1, (term.width/2)-(len(msg)/2)))
         sys.stdout.write(msg)
         sys.stdout.flush()
