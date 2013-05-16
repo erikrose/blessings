@@ -433,6 +433,12 @@ Blessings is under the MIT License. See the LICENSE file.
 Version History
 ===============
 
+1.5.1
+  * Clean up fabfile, removing the redundant ``test`` command.
+  * Add Travis support.
+  * Make `python setup.py test` work without spurious errors on 2.6.
+  * Work around a tox parsing bug in its config file.
+
 1.5
   * Add syntactic sugar and documentation for ``enter_fullscreen`` and
     ``exit_fullscreen``.
