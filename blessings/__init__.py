@@ -235,24 +235,29 @@ class Terminal(object):
             self.stream.write(self.move_x(x))
         elif y is not None:
             self.stream.write(self.move_y(y))
-        yield
-
-        # Restore original cursor position:
-        self.stream.write(self.restore)
+        try:
+            yield
+        finally:
+            # Restore original cursor position:
+            self.stream.write(self.restore)
 
     @contextmanager
     def fullscreen(self):
         """Return a context manager that enters fullscreen mode while inside it and restores normal mode on leaving."""
         self.stream.write(self.enter_fullscreen)
-        yield
-        self.stream.write(self.exit_fullscreen)
+        try:
+            yield
+        finally:
+            self.stream.write(self.exit_fullscreen)
 
     @contextmanager
     def hidden_cursor(self):
         """Return a context manager that hides the cursor while inside it and makes it visible on leaving."""
         self.stream.write(self.hide_cursor)
-        yield
-        self.stream.write(self.normal_cursor)
+        try:
+            yield
+        finally:
+            self.stream.write(self.normal_cursor)
 
     @property
     def color(self):
