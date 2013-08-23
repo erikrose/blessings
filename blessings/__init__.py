@@ -453,10 +453,12 @@ class NullCallableString(unicode):
         new = unicode.__new__(cls, u'')
         return new
 
-    def __call__(self, arg):
-        if isinstance(arg, int):
+    def __call__(self, *args):
+        if len(args) != 1:
             return u''
-        return arg  # TODO: Force even strs in Python 2.x to be unicodes? Nah. How would I know what encoding to use to convert it?
+        if isinstance(args[0], int):
+            return u''
+        return args[0] # TODO: Force even strs in Python 2.x to be unicodes? Nah. How would I know what encoding to use to convert it?
 
 
 def split_into_formatters(compound):
