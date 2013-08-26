@@ -254,3 +254,12 @@ def test_force_styling_none():
     """If ``force_styling=None`` is passed to the constructor, don't ever do styling."""
     t = TestTerminal(force_styling=None)
     eq_(t.save, '')
+
+
+def test_null_callable_string():
+    """With no tty NullCallableString is used."""
+    t = TestTerminal(stream=StringIO())
+    eq_(t.bold('hello, world'), 'hello, world')
+    eq_(t.clear(), '')
+    eq_(t.move(1, 2), '')
+    eq_(t.move_x(1), '')
