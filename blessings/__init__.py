@@ -40,9 +40,13 @@ class Terminal(object):
         around with the terminal; it's almost always needed when the terminal
         is and saves sticking lots of extra args on client functions in
         practice.
+      ``does_styling``
+        Whether this ``Terminal`` attempts to emit capabilities. This is
+        influenced by ``is_a_tty`` and by the ``force_styling`` arg to the
+        constructor. You can examine this value to decide whether to draw
+        progress bars or other frippery.
       ``is_a_tty``
-        Whether ``stream`` appears to be a terminal. You can examine this value
-        to decide whether to draw progress bars or other frippery.
+        Whether ``stream`` appears to be a terminal.
 
     """
     def __init__(self, kind=None, stream=None, force_styling=False):
@@ -83,8 +87,8 @@ class Terminal(object):
             stream_descriptor = None
 
         self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
-        self._does_styling = ((self.is_a_tty or force_styling) and
-                              force_styling is not None)
+        self.does_styling = ((self.is_a_tty or force_styling) and
+                             force_styling is not None)
 
         # The desciptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
@@ -92,7 +96,7 @@ class Terminal(object):
         self._init_descriptor = (sys.__stdout__.fileno()
                                  if stream_descriptor is None
                                  else stream_descriptor)
-        if self._does_styling:
+        if self.does_styling:
             # Make things like tigetstr() work. Explicit args make setupterm()
             # work even when -s is passed to nosetests. Lean toward sending
             # init sequences to the stream if it has a file descriptor, and
@@ -168,7 +172,7 @@ class Terminal(object):
         Return values are always Unicode.
 
         """
-        resolution = self._resolve_formatter(attr) if self._does_styling else NullCallableString()
+        resolution = self._resolve_formatter(attr) if self.does_styling else NullCallableString()
         setattr(self, attr, resolution)  # Cache capability codes.
         return resolution
 

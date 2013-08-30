@@ -375,15 +375,15 @@ If you want to override this--like if you anticipate your program being piped
 through ``less -r``, which handles terminal escapes just fine--pass
 ``force_styling=True`` to the ``Terminal`` constructor.
 
-In any case, there is an ``is_a_tty`` attribute on ``Terminal`` that lets you
-see whether the attached stream seems to be a terminal. If it's false, you
-might refrain from drawing progress bars and other frippery, since you're
-apparently headed into a pipe::
+In any case, there is a ``does_styling`` attribute on ``Terminal`` that lets
+you see whether your capabilities will return actual, working formatting codes.
+If it's false, you should refrain from drawing progress bars and other frippery
+and just stick to content, since you're apparently headed into a pipe::
 
     from blessings import Terminal
 
     term = Terminal()
-    if term.is_a_tty:
+    if term.does_styling:
         with term.location(0, term.height - 1):
             print 'Progress: [=======>   ]'
     print term.bold('Important stuff')
@@ -432,6 +432,10 @@ Blessings is under the MIT License. See the LICENSE file.
 
 Version History
 ===============
+
+1.6
+  * Add ``does_styling`` attribute. This takes ``force_styling`` into account
+    and should replace most uses of ``is_a_tty``.
 
 1.5.1
   * Clean up fabfile, removing the redundant ``test`` command.
