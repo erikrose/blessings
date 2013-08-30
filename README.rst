@@ -438,6 +438,8 @@ Version History
   * Add Travis support.
   * Make `python setup.py test` work without spurious errors on 2.6.
   * Work around a tox parsing bug in its config file.
+  * Parametrizing a capability no longer crashes when there is no tty. (Vitja
+    Makarov)
 
 1.5
   * Add syntactic sugar and documentation for ``enter_fullscreen`` and

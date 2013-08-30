@@ -257,9 +257,13 @@ def test_force_styling_none():
 
 
 def test_null_callable_string():
-    """With no tty NullCallableString is used."""
+    """Make sure NullCallableString tolerates all numbers and kinds of args it might receive."""
     t = TestTerminal(stream=StringIO())
-    eq_(t.bold('hello, world'), 'hello, world')
+
+    # I don't promise this will keep working; it's not documented anywhere.
+    # However, it's what I intend to happen in an edge case, so let's make sure
+    # it works.
     eq_(t.clear(), '')
+
     eq_(t.move(1, 2), '')
     eq_(t.move_x(1), '')
