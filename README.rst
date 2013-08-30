@@ -440,6 +440,8 @@ Version History
   * Work around a tox parsing bug in its config file.
   * Make context managers clean up after themselves even if there's an
     exception. (Vitja Makarov)
+  * Parametrizing a capability no longer crashes when there is no tty. (Vitja
+    Makarov)
 
 1.5
   * Add syntactic sugar and documentation for ``enter_fullscreen`` and

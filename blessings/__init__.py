@@ -152,7 +152,7 @@ class Terminal(object):
         no_underline='rmul')
 
     def __getattr__(self, attr):
-        """Return parametrized terminal capabilities, like bold.
+        """Return a terminal capability, like bold.
 
         For example, you can say ``term.bold`` to get the string that turns on
         bold formatting and ``term.normal`` to get the string that turns it off
@@ -307,7 +307,11 @@ class Terminal(object):
         return colors if colors >= 0 else 0
 
     def _resolve_formatter(self, attr):
-        """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable capability."""
+        """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable capability.
+
+        Return a ``ParametrizingString`` or a ``FormattingString``.
+
+        """
         if attr in COLORS:
             return self._resolve_color(attr)
         elif attr in COMPOUNDABLES:
@@ -442,21 +446,46 @@ class FormattingString(unicode):
 
 
 class NullCallableString(unicode):
-    """A dummy class to stand in for ``FormattingString`` and ``ParametrizingString``
+    """A dummy callable Unicode to stand in for ``FormattingString`` and ``ParametrizingString``
 
-    A callable bytestring that returns an empty Unicode when called with an int
-    and the arg otherwise. We use this when there is no tty and so all
-    capabilities are blank.
+    We use this when there is no tty and thus all capabilities should be blank.
 
     """
     def __new__(cls):
         new = unicode.__new__(cls, u'')
         return new
 
-    def __call__(self, arg):
-        if isinstance(arg, int):
+    def __call__(self, *args):
+        """Return a Unicode or whatever you passed in as the first arg (hopefully a string of some kind).
+
+        When called with an int as the first arg, return an empty Unicode. An
+        int is a good hint that I am a ``ParametrizingString``, as there are
+        only about half a dozen string-returning capabilities on OS X's
+        terminfo man page which take any param that's not an int, and those are
+        seldom if ever used on modern terminal emulators. (Most have to do with
+        programming function keys. Blessings' story for supporting
+        non-string-returning caps is undeveloped.) And any parametrized
+        capability in a situation where all capabilities themselves are taken
+        to be blank are, of course, themselves blank.
+
+        When called with a non-int as the first arg (no no args at all), return
+        the first arg. I am acting as a ``FormattingString``.
+
+        """
+        if len(args) != 1 or isinstance(args[0], int):
+            # I am acting as a ParametrizingString.
+
+            # tparm can take not only ints but also (at least) strings as its
+            # second...nth args. But we don't support callably parametrizing
+            # caps that take non-ints yet, so we can cheap out here. TODO: Go
+            # through enough of the motions in the capability resolvers to
+            # determine which of 2 special-purpose classes,
+            # NullParametrizableString or NullFormattingString, to return, and
+            # retire this one.
             return u''
-        return arg  # TODO: Force even strs in Python 2.x to be unicodes? Nah. How would I know what encoding to use to convert it?
+        return args[0] # Should we force even strs in Python 2.x to be
+                       # unicodes? No. How would I know what encoding to use
+                       # to convert it?
 
 
 def split_into_formatters(compound):

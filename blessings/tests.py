@@ -254,3 +254,16 @@ def test_force_styling_none():
     """If ``force_styling=None`` is passed to the constructor, don't ever do styling."""
     t = TestTerminal(force_styling=None)
     eq_(t.save, '')
+
+
+def test_null_callable_string():
+    """Make sure NullCallableString tolerates all numbers and kinds of args it might receive."""
+    t = TestTerminal(stream=StringIO())
+
+    # I don't promise this will keep working; it's not documented anywhere.
+    # However, it's what I intend to happen in an edge case, so let's make sure
+    # it works.
+    eq_(t.clear(), '')
+
+    eq_(t.move(1, 2), '')
+    eq_(t.move_x(1), '')
