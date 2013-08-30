@@ -436,7 +436,7 @@ Version History
 1.5.1
   * Clean up fabfile, removing the redundant ``test`` command.
   * Add Travis support.
-  * Make `python setup.py test` work without spurious errors on 2.6.
+  * Make ``python setup.py test`` work without spurious errors on 2.6.
   * Work around a tox parsing bug in its config file.
   * Make context managers clean up after themselves even if there's an
     exception. (Vitja Makarov)
