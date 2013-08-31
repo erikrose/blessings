@@ -7,7 +7,8 @@ try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
     class IOUnsupportedOperation(Exception):
-        """A dummy exception to take the place of Python 3's ``io.UnsupportedOperation`` in Python 2"""
+        """A dummy exception to take the place of Python 3's
+        ``io.UnsupportedOperation`` in Python 2"""
 import os
 from os import isatty, environ
 from platform import python_version_tuple
@@ -19,7 +20,8 @@ from termios import TIOCGWINSZ
 __all__ = ['Terminal']
 
 
-if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till 3.2.10
+if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
+                                                                  # 3.2.10
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
@@ -86,7 +88,8 @@ class Terminal(object):
         except IOUnsupportedOperation:
             stream_descriptor = None
 
-        self.is_a_tty = stream_descriptor is not None and isatty(stream_descriptor)
+        self.is_a_tty = (stream_descriptor is not None and
+                         isatty(stream_descriptor))
         self.does_styling = ((self.is_a_tty or force_styling) and
                              force_styling is not None)
 
@@ -206,7 +209,8 @@ class Terminal(object):
         # setupterm() again.
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                return struct.unpack('hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                return struct.unpack(
+                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
                 pass
         return None, None  # Should never get here
@@ -247,7 +251,8 @@ class Terminal(object):
 
     @contextmanager
     def fullscreen(self):
-        """Return a context manager that enters fullscreen mode while inside it and restores normal mode on leaving."""
+        """Return a context manager that enters fullscreen mode while inside it
+        and restores normal mode on leaving."""
         self.stream.write(self.enter_fullscreen)
         try:
             yield
@@ -256,7 +261,8 @@ class Terminal(object):
 
     @contextmanager
     def hidden_cursor(self):
-        """Return a context manager that hides the cursor while inside it and makes it visible on leaving."""
+        """Return a context manager that hides the cursor while inside it and
+        makes it visible on leaving."""
         self.stream.write(self.hide_cursor)
         try:
             yield
@@ -306,12 +312,15 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no such cap.
-        #self.__dict__['colors'] = ret  # Cache it. It's not changing. (Doesn't work.)
+        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
+                                     # such cap.
+        #self.__dict__['colors'] = ret  # Cache it. It's not changing. (Doesn't
+                                        # work.)
         return colors if colors >= 0 else 0
 
     def _resolve_formatter(self, attr):
-        """Resolve a sugary or plain capability name, color, or compound formatting function name into a callable capability.
+        """Resolve a sugary or plain capability name, color, or compound
+        formatting function name into a callable capability.
 
         Return a ``ParametrizingString`` or a ``FormattingString``.
 
@@ -333,7 +342,8 @@ class Terminal(object):
                 return ParametrizingString(self._resolve_capability(attr))
 
     def _resolve_capability(self, atom):
-        """Return a terminal code for a capname or a sugary name, or an empty Unicode.
+        """Return a terminal code for a capname or a sugary name, or an empty
+        Unicode.
 
         The return value is always Unicode, because otherwise it is clumsy
         (especially in Python 3) to concatenate with real (Unicode) strings.
@@ -348,7 +358,8 @@ class Terminal(object):
         return u''
 
     def _resolve_color(self, color):
-        """Resolve a color like red or on_bright_green into a callable capability."""
+        """Resolve a color like red or on_bright_green into a callable
+        capability."""
         # TODO: Does curses automatically exchange red and blue and cyan and
         # yellow when a terminal supports setf/setb rather than setaf/setab?
         # I'll be blasted if I can find any documentation. The following
@@ -371,7 +382,8 @@ class Terminal(object):
         return self.setab or self.setb
 
     def _formatting_string(self, formatting):
-        """Return a new ``FormattingString`` which implicitly receives my notion of "normal"."""
+        """Return a new ``FormattingString`` which implicitly receives my
+        notion of "normal"."""
         return FormattingString(formatting, self.normal)
 
 
@@ -382,7 +394,8 @@ def derivative_colors(colors):
                [('on_bright_' + c) for c in colors])
 
 
-COLORS = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'])
+COLORS = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
+              'white'])
 COLORS.update(derivative_colors(COLORS))
 COMPOUNDABLES = (COLORS |
                  set(['bold', 'underline', 'reverse', 'blink', 'dim', 'italic',
@@ -390,7 +403,9 @@ COMPOUNDABLES = (COLORS |
 
 
 class ParametrizingString(unicode):
-    """A Unicode string which can be called to parametrize it as a terminal capability"""
+    """A Unicode string which can be called to parametrize it as a terminal
+    capability"""
+
     def __new__(cls, formatting, normal=None):
         """Instantiate.
 
@@ -432,7 +447,9 @@ class ParametrizingString(unicode):
 
 
 class FormattingString(unicode):
-    """A Unicode string which can be called upon a piece of text to wrap it in formatting"""
+    """A Unicode string which can be called upon a piece of text to wrap it in
+    formatting"""
+
     def __new__(cls, formatting, normal):
         new = unicode.__new__(cls, formatting)
         new._normal = normal
@@ -450,7 +467,8 @@ class FormattingString(unicode):
 
 
 class NullCallableString(unicode):
-    """A dummy callable Unicode to stand in for ``FormattingString`` and ``ParametrizingString``
+    """A dummy callable Unicode to stand in for ``FormattingString`` and
+    ``ParametrizingString``
 
     We use this when there is no tty and thus all capabilities should be blank.
 
@@ -460,7 +478,8 @@ class NullCallableString(unicode):
         return new
 
     def __call__(self, *args):
-        """Return a Unicode or whatever you passed in as the first arg (hopefully a string of some kind).
+        """Return a Unicode or whatever you passed in as the first arg
+        (hopefully a string of some kind).
 
         When called with an int as the first arg, return an empty Unicode. An
         int is a good hint that I am a ``ParametrizingString``, as there are
