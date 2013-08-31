@@ -17,4 +17,4 @@ Then Read This If You Want
 ==========================
 
 .. autoclass:: blessings.Terminal
-    :members: __init__, __getattr__, location, height, width, color, on_color, number_of_colors
+    :members: __init__, __getattr__, location, height, width, color, on_color, number_of_colors, fullscreen, hidden_cursor

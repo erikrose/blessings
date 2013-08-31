@@ -436,6 +436,7 @@ Version History
 1.6
   * Add ``does_styling`` attribute. This takes ``force_styling`` into account
     and should replace most uses of ``is_a_tty``.
+  * Add ``fullscreen()`` and ``hidden_cursor()`` to the auto-generated docs.
 
 1.5.1
   * Clean up fabfile, removing the redundant ``test`` command.
