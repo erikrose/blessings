@@ -77,7 +77,8 @@ def test_capability_without_tty():
 
 @forkit
 def test_capability_with_forced_tty():
-    """If we force styling, capabilities had better not (generally) be empty."""
+    """If we force styling, capabilities had better not (generally) be
+    empty."""
     t = TestTerminal(stream=StringIO(), force_styling=True)
     eq_(t.save, unicode_cap('sc'))
 
@@ -98,7 +99,8 @@ def height_and_width():
 
 @forkit
 def test_stream_attr():
-    """Make sure Terminal exposes a ``stream`` attribute that defaults to something sane."""
+    """Make sure Terminal exposes a ``stream`` attribute that defaults to
+    something sane."""
     eq_(Terminal().stream, sys.__stdout__)
 
 
@@ -240,7 +242,8 @@ def test_number_of_colors_dtterm_notty_forced_style():
 def test_formatting_functions():
     """Test crazy-ass formatting wrappers, both simple and compound."""
     t = TestTerminal()
-    # By now, it should be safe to use sugared attributes. Other tests test those.
+    # By now, it should be safe to use sugared attributes. Other tests test
+    # those.
     eq_(t.bold(u'hi'), t.bold + u'hi' + t.normal)
     eq_(t.green('hi'), t.green + u'hi' + t.normal)  # Plain strs for Python 2.x
     # Test some non-ASCII chars, probably not necessary:
@@ -249,7 +252,8 @@ def test_formatting_functions():
         t.bold + t.underline + t.green + t.on_red + u'boo' + t.normal)
     # Don't spell things like this:
     eq_(t.on_bright_red_bold_bright_green_underline('meh'),
-        t.on_bright_red + t.bold + t.bright_green + t.underline + u'meh' + t.normal)
+        t.on_bright_red + t.bold + t.bright_green + t.underline + u'meh' +
+                          t.normal)
 
 
 @forkit
@@ -298,14 +302,16 @@ def test_init_descriptor_always_initted():
 
 @forkit
 def test_force_styling_none():
-    """If ``force_styling=None`` is passed to the constructor, don't ever do styling."""
+    """If ``force_styling=None`` is passed to the constructor, don't ever do
+    styling."""
     t = TestTerminal(force_styling=None)
     eq_(t.save, '')
 
 
 @forkit
 def test_null_callable_string():
-    """Make sure NullCallableString tolerates all numbers and kinds of args it might receive."""
+    """Make sure NullCallableString tolerates all numbers and kinds of args it
+    might receive."""
     t = TestTerminal(stream=StringIO())
     eq_(t.clear, '')
     eq_(t.move(1, 2), '')
