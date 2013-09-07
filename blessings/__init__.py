@@ -1,20 +1,24 @@
-from collections import defaultdict
-from contextlib import contextmanager
+"""
+(c) 2012 Erik Rose
+MIT Licensed
+https://github.com/erikrose/blessings
+"""
 import curses
-from curses import tigetstr, tigetnum, setupterm, tparm
+import os
+import struct
+import sys
+from contextlib import contextmanager
+from curses import setupterm, tigetnum, tigetstr, tparm
 from fcntl import ioctl
+from platform import python_version_tuple
+from termios import TIOCGWINSZ
+
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
     class IOUnsupportedOperation(Exception):
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2"""
-import os
-from os import isatty, environ
-from platform import python_version_tuple
-import struct
-import sys
-from termios import TIOCGWINSZ
 
 
 __all__ = ['Terminal']
@@ -89,7 +93,7 @@ class Terminal(object):
             stream_descriptor = None
 
         self.is_a_tty = (stream_descriptor is not None and
-                         isatty(stream_descriptor))
+                         os.isatty(stream_descriptor))
         self.does_styling = ((self.is_a_tty or force_styling) and
                              force_styling is not None)
 
@@ -105,7 +109,7 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
+            setupterm(kind or os.environ.get('TERM', 'unknown'),
                       self._init_descriptor)
 
         self.stream = stream
