@@ -1,18 +1,24 @@
-from contextlib import contextmanager
+"""
+(c) 2012 Erik Rose
+MIT Licensed
+https://github.com/erikrose/blessings
+"""
 import curses
-from curses import tigetstr, tigetnum, setupterm, tparm
+import os
+import struct
+import sys
+from contextlib import contextmanager
+from curses import setupterm, tigetnum, tigetstr, tparm
 from fcntl import ioctl
+from platform import python_version_tuple
+from termios import TIOCGWINSZ
+
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
     class IOUnsupportedOperation(Exception):
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2"""
-import os
-from platform import python_version_tuple
-import struct
-import sys
-from termios import TIOCGWINSZ
 
 
 __all__ = ['Terminal']
