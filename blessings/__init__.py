@@ -9,7 +9,6 @@ except ImportError:
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2"""
 import os
-from os import isatty, environ
 from platform import python_version_tuple
 import struct
 import sys
@@ -88,7 +87,7 @@ class Terminal(object):
             stream_descriptor = None
 
         self.is_a_tty = (stream_descriptor is not None and
-                         isatty(stream_descriptor))
+                         os.isatty(stream_descriptor))
         self.does_styling = ((self.is_a_tty or force_styling) and
                              force_styling is not None)
 
@@ -104,7 +103,7 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
+            setupterm(kind or os.environ.get('TERM', 'unknown'),
                       self._init_descriptor)
 
         self.stream = stream
