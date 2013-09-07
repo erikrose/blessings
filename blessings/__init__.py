@@ -80,15 +80,14 @@ class Terminal(object):
             stream = sys.__stdout__
         try:
             stream_descriptor = (stream.fileno() if hasattr(stream, 'fileno')
-                                                 and callable(stream.fileno)
-                                 else None)
+                                 and callable(stream.fileno) else None)
         except IOUnsupportedOperation:
             stream_descriptor = None
 
         self.is_a_tty = (stream_descriptor is not None and
                          os.isatty(stream_descriptor))
         self._does_styling = ((self.is_a_tty or force_styling) and
-                             force_styling is not None)
+                              force_styling is not None)
 
         # The desciptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
@@ -328,8 +327,6 @@ class Terminal(object):
         # access to it.
         colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
                                      # such cap.
-        #self.__dict__['colors'] = ret  # Cache it. It's not changing. (Doesn't
-                                        # work.)
         return colors if colors >= 0 else 0
 
     def _resolve_formatter(self, attr):
@@ -520,9 +517,9 @@ class NullCallableString(unicode):
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
             return u''
-        return args[0] # Should we force even strs in Python 2.x to be
-                       # unicodes? No. How would I know what encoding to use
-                       # to convert it?
+        return args[0]  # Should we force even strs in Python 2.x to be
+                        # unicodes? No. How would I know what encoding to use
+                        # to convert it?
 
 
 def split_into_formatters(compound):
