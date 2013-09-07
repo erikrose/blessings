@@ -9,7 +9,6 @@ except ImportError:
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2"""
 import os
-from os import isatty, environ
 from platform import python_version_tuple
 import struct
 import sys
@@ -80,10 +79,17 @@ class Terminal(object):
         except IOUnsupportedOperation:
             stream_descriptor = None
 
+<<<<<<< HEAD
         self._is_a_tty = (stream_descriptor is not None and
                           isatty(stream_descriptor))
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
+=======
+        self.is_a_tty = (stream_descriptor is not None and
+                         os.isatty(stream_descriptor))
+        self.does_styling = ((self.is_a_tty or force_styling) and
+                             force_styling is not None)
+>>>>>>> 'os' imported but unused
 
         # The desciptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
@@ -97,7 +103,7 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
+            setupterm(kind or os.environ.get('TERM', 'unknown'),
                       self._init_descriptor)
 
         self.stream = stream
