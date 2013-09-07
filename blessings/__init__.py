@@ -87,7 +87,7 @@ class Terminal(object):
 
         self.is_a_tty = (stream_descriptor is not None and
                          os.isatty(stream_descriptor))
-        self.does_styling = ((self.is_a_tty or force_styling) and
+        self._does_styling = ((self.is_a_tty or force_styling) and
                              force_styling is not None)
 
         # The desciptor to direct terminal initialization sequences to.
