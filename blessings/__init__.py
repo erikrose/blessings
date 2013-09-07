@@ -1,4 +1,3 @@
-from collections import defaultdict
 from contextlib import contextmanager
 import curses
 from curses import tigetstr, tigetnum, setupterm, tparm
