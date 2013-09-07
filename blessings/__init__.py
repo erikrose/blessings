@@ -42,13 +42,6 @@ class Terminal(object):
         around with the terminal; it's almost always needed when the terminal
         is and saves sticking lots of extra args on client functions in
         practice.
-      ``does_styling``
-        Whether this ``Terminal`` attempts to emit capabilities. This is
-        influenced by ``is_a_tty`` and by the ``force_styling`` arg to the
-        constructor. You can examine this value to decide whether to draw
-        progress bars or other frippery.
-      ``is_a_tty``
-        Whether ``stream`` appears to be a terminal.
 
     """
     def __init__(self, kind=None, stream=None, force_styling=False):
@@ -88,10 +81,10 @@ class Terminal(object):
         except IOUnsupportedOperation:
             stream_descriptor = None
 
-        self.is_a_tty = (stream_descriptor is not None and
-                         isatty(stream_descriptor))
-        self.does_styling = ((self.is_a_tty or force_styling) and
-                             force_styling is not None)
+        self._is_a_tty = (stream_descriptor is not None and
+                          isatty(stream_descriptor))
+        self._does_styling = ((self.is_a_tty or force_styling) and
+                              force_styling is not None)
 
         # The desciptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
@@ -175,9 +168,26 @@ class Terminal(object):
         Return values are always Unicode.
 
         """
-        resolution = self._resolve_formatter(attr) if self.does_styling else NullCallableString()
+        resolution = (self._resolve_formatter(attr) if self.does_styling
+                      else NullCallableString())
         setattr(self, attr, resolution)  # Cache capability codes.
         return resolution
+
+    @property
+    def does_styling(self):
+        """ Whether this ``Terminal`` attempts to emit capabilities.
+
+        This is influenced by the ``is_a_tty`` property, and by the
+        ``force_styling`` argument to the constructor. You can examine
+        this value to decide whether to draw progress bars or other frippery.
+        """
+        return self._does_styling
+
+    @property
+    def is_a_tty(self):
+        """ Wether the ``stream`` appears to be associated with a terminal.
+        """
+        return self._is_a_tty
 
     @property
     def height(self):
@@ -188,8 +198,8 @@ class Terminal(object):
         piping to things that eventually display on the terminal (like ``less
         -R``) work. If a stream representing a terminal was passed in, return
         the dimensions of that terminal. If there somehow is no controlling
-        terminal, return ``None``. (Thus, you should check that ``is_a_tty`` is
-        true before doing any math on the result.)
+        terminal, return ``None``. (Thus, you should check that the property
+        ``is_a_tty`` is true before doing any math on the result.)
 
         """
         return self._height_and_width()[0]
