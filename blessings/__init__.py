@@ -85,17 +85,10 @@ class Terminal(object):
         except IOUnsupportedOperation:
             stream_descriptor = None
 
-<<<<<<< HEAD
-        self._is_a_tty = (stream_descriptor is not None and
-                          isatty(stream_descriptor))
-        self._does_styling = ((self.is_a_tty or force_styling) and
-                              force_styling is not None)
-=======
         self.is_a_tty = (stream_descriptor is not None and
                          os.isatty(stream_descriptor))
         self.does_styling = ((self.is_a_tty or force_styling) and
                              force_styling is not None)
->>>>>>> 'os' imported but unused
 
         # The desciptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
