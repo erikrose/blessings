@@ -15,7 +15,7 @@ local = partial(local, capture=False)
 ROOT = abspath(dirname(__file__))
 
 environ['PYTHONPATH'] = (((environ['PYTHONPATH'] + ':') if
-    environ.get('PYTHONPATH') else '') + ROOT)
+                          environ.get('PYTHONPATH') else '') + ROOT)
 
 
 def doc(kind='html'):
