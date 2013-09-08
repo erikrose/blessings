@@ -7,11 +7,13 @@ import curses
 import os
 import struct
 import sys
+import warnings
 from contextlib import contextmanager
 from curses import setupterm, tigetnum, tigetstr, tparm
 from fcntl import ioctl
 from platform import python_version_tuple
 from termios import TIOCGWINSZ
+
 
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
@@ -29,6 +31,8 @@ if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
+
+_CUR_TERM = None
 
 
 class Terminal(object):
@@ -85,7 +89,7 @@ class Terminal(object):
             stream_descriptor = None
 
         self._is_a_tty = (stream_descriptor is not None and
-                         os.isatty(stream_descriptor))
+                          os.isatty(stream_descriptor))
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
@@ -101,8 +105,19 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or os.environ.get('TERM', 'unknown'),
-                      self._init_descriptor)
+            cur_term = kind or os.environ.get('TERM', 'unknown')
+
+            global _CUR_TERM
+            if _CUR_TERM is not None and cur_term != _CUR_TERM:
+                warnings.warn('A terminal of kind "%s" has been requested; '
+                              'due to an internal python curses bug, terminal '
+                              'capabilities for a terminal of kind "%s" will continue '
+                              'to be returned for the remainder of this process. see: '
+                              'https://github.com/erikrose/blessings/issues/33' % (
+                                  cur_term, _CUR_TERM,), RuntimeWarning)
+            else:
+                _CUR_TERM = cur_term
+            setupterm(cur_term, self._init_descriptor)
 
         self.stream = stream
 
@@ -223,17 +238,28 @@ class Terminal(object):
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
                 return struct.unpack(
-                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                    'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
                 pass
         # when stdout is piped to another program, such as tee(1), this ioctl
         # will raise an IOError, in which case we fallback to LINES and COLUMNS
         # environ values, with a default size of 80x24 when undefined.
+        # detect a rare, strange, exception: when these values are non-int!
         try:
-            return int(os.environ.get('LINES', '24')), int(os.environ.get('COLUMNS', '80'))
-        except ValueError:
-            # what a strange thing, to put a non-int in LINES or COLUMNS
-            return 24, 80
+            lines = int(os.environ.get('LINES', '24'))
+        except ValueError as err:
+            warnings.warn("environment value 'LINES' "
+                          "is not an integer (%r): %s, using '24'." % (
+                              os.environ.get('LINES'), err,))
+            lines = 24
+        try:
+            cols = int(os.environ.get('COLUMNS', '80'))
+        except ValueError as err:
+            warnings.warn("environment value 'COLUMNS' "
+                          "is not an integer (%r): %s, using '80'." % (
+                              os.environ.get('COLUMNS'), err,))
+            cols = 80
+        return lines, cols
 
     @contextmanager
     def location(self, x=None, y=None):
