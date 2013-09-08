@@ -1,42 +1,37 @@
 # -*- coding: utf-8 -*-
-"""Automated tests for terminals without styling
+""" Automated tests for terminals without styling (force_styling=None).
 
-It was tempting to mock out curses to get predictable output from ``tigetstr``,
-but there are concrete integration-testing benefits in not doing so. For
-instance, ``tigetstr`` changed its return type in Python 3.2.3. So instead, we
-simply create all our test ``Terminal`` instances with a known terminal type.
-All we require from the host machine is that a standard terminfo definition of
-xterm-256color exists.
+Capabilities should return null strings (u'') for just about anything.
+setupterm() should never be called, and curses C-land exported functions,
+such as tigetstr() and tparm() should never be called, either.
 
 """
-from __future__ import with_statement  # Make 2.5-compatible
-from curses import tigetstr, tparm
-from StringIO import StringIO
-import sys
+from __future__ import with_statement
 
 from nose.tools import eq_
+from nose import SkipTest
+
+import os
+import sys
+import warnings
+from platform import python_version_tuple
+from blessings import Terminal
+from StringIO import StringIO
+
 
 # This tests that __all__ is correct, since we use below everything that should
 # be imported:
-from blessings import Terminal
 
 
 term = Terminal(stream=StringIO(), kind='xterm-256color', force_styling=None)
 
 
-def unicode_cap(cap):
-    """Return the result of ``tigetstr`` as Unicode, not a bytestring."""
-    return tigetstr(cap).decode('utf-8')
-
-
-def unicode_parm(cap, *parms):
-    """Return the result of ``tparm(tigetstr())`` except as Unicode."""
-    return tparm(tigetstr(cap), *parms).decode('utf-8')
-
-
 def test_capability():
     """Check that a capability lookup is null when force_styling=None """
-    sc = u''
+    sc, civis = u'', u''
+    eq_(term.save, sc)
+    eq_(term.save, sc)
+    eq_(term.hide_cursor, civis)
     eq_(term.save, sc)
 
 
@@ -45,15 +40,15 @@ def test_parametrization():
     eq_(term.cup(3, 4), u'')
 
 
+def test_stream_attr():
+    """Make sure Terminal exposes a ``stream`` attribute that defaults to something sane."""
+    assert hasattr(term.stream, 'write')
+
+
 def height_and_width():
     """Assert that ``height_and_width()`` returns ints."""
     assert isinstance(int, term.height)
     assert isinstance(int, term.width)
-
-
-def test_stream_attr():
-    """Make sure Terminal exposes a ``stream`` attribute that defaults to something sane."""
-    eq_(Terminal().stream, sys.__stdout__)
 
 
 def test_location():
@@ -118,10 +113,10 @@ def test_mnemonic_colors():
 
 def test_callable_numeric_colors():
     """``color(n)`` should return a formatting wrapper."""
-    eq_(term.color(5)('smoo'), term.magenta + 'smoo' + term.normal)
-    eq_(term.color(5)('smoo'), term.color(5) + 'smoo' + term.normal)
-    eq_(term.on_color(2)('smoo'), term.on_green + 'smoo' + term.normal)
-    eq_(term.on_color(2)('smoo'), term.on_color(2) + 'smoo' + term.normal)
+    eq_(term.color(5)('smoo'), 'smoo')
+    eq_(term.color(5)('smoo'), 'smoo')
+    eq_(term.on_color(2)('smoo'), 'smoo')
+    eq_(term.on_color(2)('smoo'), 'smoo')
 
 
 def test_null_callable_numeric_colors():
@@ -142,45 +137,65 @@ def test_number_of_colors_with_tty():
 
 def test_formatting_functions():
     """Test crazy-ass formatting wrappers, both simple and compound."""
-    # By now, it should be safe to use sugared attributes. Other tests test those.
-    eq_(term.bold(u'hi'), term.bold + u'hi' + term.normal)
-    eq_(term.green('hi'), term.green + u'hi' + term.normal)  # Plain strs for Python 2.x
+    # By now, it should be safe to use sugared attributes. Other tests test
+    # those.
+    eq_(term.bold(u'hi'), u'hi')
+    eq_(term.green('hi'), u'hi')  # Plain strs for Python 2.x
     # Test some non-ASCII chars, probably not necessary:
-    eq_(term.bold_green(u'boö'), term.bold + term.green + u'boö' + term.normal)
-    eq_(term.bold_underline_green_on_red('boo'),
-        term.bold + term.underline + term.green + term.on_red + u'boo' + term.normal)
+    eq_(term.bold_green(u'boö'), u'boö')
+    eq_(term.bold_underline_green_on_red('boo'), u'boo')
     # Don't spell things like this:
-    eq_(term.on_bright_red_bold_bright_green_underline('meh'),
-        term.on_bright_red + term.bold + term.bright_green + term.underline + u'meh' + term.normal)
+    eq_(term.on_bright_red_bold_bright_green_underline('meh'), u'meh')
 
 
 def test_nice_formatting_errors():
     """Make sure you get nice hints if you misspell a formatting wrapper."""
     try:
         term.bold_misspelled('hey')
-    except TypeError as err:
+    except TypeError, err:
         assert 'probably misspelled' in err.args[0]
 
     try:
         term.bold_misspelled(u'hey')  # unicode
-    except TypeError as err:
+    except TypeError, err:
         assert 'probably misspelled' in err.args[0]
 
     try:
         term.bold_misspelled(None)  # an arbitrary non-string
-    except TypeError as err:
+    except TypeError, err:
         assert 'probably misspelled' not in err.args[0]
 
     try:
         term.bold_misspelled('a', 'b')  # >1 string arg
-    except TypeError as err:
+    except TypeError, err:
         assert 'probably misspelled' not in err.args[0]
 
 
 def test_init_descriptor_always_initted():
     """We should be able to get a height and width even on no-tty Terminals."""
-    eq_(type(term.height), int)
-    eq_(type(term.width), int)
+    raise SkipTest
+    # unfortunately, I cannot fake past the direct use of sys.__stdout__ that
+    # occurs in the _height_and_width function to test the 80x24 fallback.
+
+    with warnings.catch_warnings(record=True) as warned:
+        class FakeStdout(StringIO):
+            def fileno(self):
+                return 9999
+        fckdterm = Terminal(stream=StringIO(), kind='xterm-256color', force_styling=None)
+        Terminal._init_descriptor = StringIO()
+        sys.__stdout__ = FakeStdout()
+        os.environ['COLUMNS']='x'
+        os.environ['LINES']='x'
+        eq_(type(term.height), int)
+        eq_(term.height, 24)
+        eq_(len(warned), 1)
+        assert issubclass(warned[-1].category, RuntimeWarning)
+        assert "due to an internal python curses bug" in warned[-1].message
+        eq_(type(term.width), int)
+        eq_(term.width, 80)
+        eq_(len(warned), 2)
+        assert issubclass(warned[-1].category, RuntimeWarning)
+        print(warned[-1].message)
 
 
 def test_null_callable_string():
