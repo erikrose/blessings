@@ -247,17 +247,17 @@ class Terminal(object):
         # detect a rare, strange, exception: when these values are non-int!
         try:
             lines = int(os.environ.get('LINES', '24'))
-        except ValueError as err:
-            warnings.warn("environment value 'LINES' "
-                          "is not an integer (%r): %s, using '24'." % (
-                              os.environ.get('LINES'), err,))
+        except ValueError(err):
+            warnings.warn("environment value 'LINES' is not an integer (%r): "
+                          "%s, using '24'." % (
+                              os.environ.get('LINES'), err,), RuntimeWarning)
             lines = 24
         try:
             cols = int(os.environ.get('COLUMNS', '80'))
-        except ValueError as err:
-            warnings.warn("environment value 'COLUMNS' "
-                          "is not an integer (%r): %s, using '80'." % (
-                              os.environ.get('COLUMNS'), err,))
+        except ValueError(err):
+            warnings.warn("environment value 'COLUMNS' is not an integer (%r): "
+                          "%s, using '80'." % (
+                              os.environ.get('COLUMNS'), err,), RuntimeWarning)
             cols = 80
         return lines, cols
 
