@@ -6,6 +6,7 @@ import curses
 from curses import setupterm, tigetnum, tigetstr, tparm
 from fcntl import ioctl
 
+
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
@@ -116,6 +117,10 @@ class Terminal(object):
             else:
                 _CUR_TERM = cur_term
             setupterm(cur_term, self._init_descriptor)
+<<<<<<< HEAD
+=======
+>>>>>>> emit warnings for issue #33, and LINES/COLUMNS
+>>>>>>> emit warnings for issue #33, and LINES/COLUMNS
 
         self.stream = stream
 
@@ -242,11 +247,22 @@ class Terminal(object):
         # when stdout is piped to another program, such as tee(1), this ioctl
         # will raise an IOError, in which case we fallback to LINES and COLUMNS
         # environ values, with a default size of 80x24 when undefined.
+        # detect a rare, strange, exception: when these values are non-int!
         try:
-            return int(os.environ.get('LINES', '24')), int(os.environ.get('COLUMNS', '80'))
-        except ValueError:
-            # what a strange thing, to put a non-int in LINES or COLUMNS
-            return 24, 80
+            lines = int(os.environ.get('LINES', '24'))
+        except ValueError as err:
+            warnings.warn("environment value 'LINES' "
+                          "is not an integer (%r): %s, using '24'." % (
+                              os.environ.get('LINES'), err,))
+            lines = 24
+        try:
+            cols = int(os.environ.get('COLUMNS', '80'))
+        except ValueError as err:
+            warnings.warn("environment value 'COLUMNS' "
+                          "is not an integer (%r): %s, using '80'." % (
+                              os.environ.get('COLUMNS'), err,))
+            cols = 80
+        return lines, cols
 
     @contextmanager
     def location(self, x=None, y=None):
