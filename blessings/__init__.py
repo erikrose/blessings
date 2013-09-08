@@ -226,7 +226,14 @@ class Terminal(object):
                         'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
                 pass
-        return None, None  # Should never get here
+        # when stdout is piped to another program, such as tee(1), this ioctl
+        # will raise an IOError, in which case we fallback to LINES and COLUMNS
+        # environ values, with a default size of 80x24 when undefined.
+        try:
+            return int(os.environ.get('LINES', '24')), int(os.environ.get('COLUMNS', '80'))
+        except ValueError:
+            # what a strange thing, to put a non-int in LINES or COLUMNS
+            return 24, 80
 
     @contextmanager
     def location(self, x=None, y=None):
@@ -318,16 +325,15 @@ class Terminal(object):
                 ...
 
         We also return 0 if the terminal won't tell us how many colors it
-        supports, which I think is rare.
-
+        supports, such as a stream not associated with a tty where
+        ``force_styling`` is not True.
         """
-        # This is actually the only remotely useful numeric capability. We
-        # don't name it after the underlying capability, because we deviate
-        # slightly from its behavior, and we might someday wish to give direct
-        # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
-                                     # such cap.
-        return colors if colors >= 0 else 0
+        # tigetnum('colors') returns -1 if no color support, -2 if no such
+        # capability. This higher-level capability provided by blessings,
+        # returns only non-negative values. For values (0, -1, -2), the value
+        # 0 is always returned.
+        colors = tigetnum('colors') if self.does_styling else -1
+        return 0 if colors < 0 else colors
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
