@@ -349,6 +349,11 @@ class Terminal(object):
         supports, such as a stream not associated with a tty where
         ``force_styling`` is not True.
         """
+        # This is actually the only remotely useful numeric capability. We
+        # don't name it after the underlying capability, because we deviate
+        # slightly from its behavior, and we might someday wish to give direct
+        # access to it.
+        #
         # tigetnum('colors') returns -1 if no color support, -2 if no such
         # capability. This higher-level capability provided by blessings
         # returns only non-negative values. For values (0, -1, -2), the value
@@ -356,7 +361,8 @@ class Terminal(object):
         colors = tigetnum('colors') if self.does_styling else -1
         #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
                                           # (Doesn't work.)
-        return 0 if colors < 0 else colors
+        return max(0, colors)
+
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
