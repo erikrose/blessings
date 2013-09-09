@@ -19,6 +19,7 @@ from platform import python_version_tuple
 import struct
 import sys
 from termios import TIOCGWINSZ
+
 import warnings
 
 __all__ = ['Terminal']
@@ -117,10 +118,6 @@ class Terminal(object):
             else:
                 _CUR_TERM = cur_term
             setupterm(cur_term, self._init_descriptor)
-<<<<<<< HEAD
-=======
->>>>>>> emit warnings for issue #33, and LINES/COLUMNS
->>>>>>> emit warnings for issue #33, and LINES/COLUMNS
 
         self.stream = stream
 
@@ -249,18 +246,18 @@ class Terminal(object):
         # environ values, with a default size of 80x24 when undefined.
         # detect a rare, strange, exception: when these values are non-int!
         try:
-            lines = int(os.environ.get('LINES', '24'))
-        except ValueError as err:
-            warnings.warn("environment value 'LINES' "
-                          "is not an integer (%r): %s, using '24'." % (
-                              os.environ.get('LINES'), err,))
+            lines = int(environ.get('LINES', '24'))
+        except ValueError(err):
+            warnings.warn("environment value 'LINES' is not an integer (%r): "
+                          "%s, using '24'." % (
+                              environ.get('LINES'), err,), RuntimeWarning)
             lines = 24
         try:
-            cols = int(os.environ.get('COLUMNS', '80'))
-        except ValueError as err:
-            warnings.warn("environment value 'COLUMNS' "
-                          "is not an integer (%r): %s, using '80'." % (
-                              os.environ.get('COLUMNS'), err,))
+            cols = int(environ.get('COLUMNS', '80'))
+        except ValueError(err):
+            warnings.warn("environment value 'COLUMNS' is not an integer (%r): "
+                          "%s, using '80'." % (
+                              environ.get('COLUMNS'), err,), RuntimeWarning)
             cols = 80
         return lines, cols
 
