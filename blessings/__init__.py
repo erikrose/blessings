@@ -1,19 +1,7 @@
-"""
-(c) 2012 Erik Rose
-MIT Licensed
-https://github.com/erikrose/blessings
-"""
-import curses
-import os
-import struct
-import sys
-import warnings
 from contextlib import contextmanager
+import curses
 from curses import setupterm, tigetnum, tigetstr, tparm
 from fcntl import ioctl
-from platform import python_version_tuple
-from termios import TIOCGWINSZ
-
 
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
@@ -22,6 +10,12 @@ except ImportError:
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2"""
 
+from os import isatty, environ
+from platform import python_version_tuple
+import struct
+import sys
+from termios import TIOCGWINSZ
+import warnings
 
 __all__ = ['Terminal']
 
@@ -84,12 +78,13 @@ class Terminal(object):
             stream = sys.__stdout__
         try:
             stream_descriptor = (stream.fileno() if hasattr(stream, 'fileno')
-                                 and callable(stream.fileno) else None)
+                                 and callable(stream.fileno)
+                                 else None)
         except IOUnsupportedOperation:
             stream_descriptor = None
 
         self._is_a_tty = (stream_descriptor is not None and
-                          os.isatty(stream_descriptor))
+                          isatty(stream_descriptor))
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
@@ -105,7 +100,7 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            cur_term = kind or os.environ.get('TERM', 'unknown')
+            cur_term = kind or environ.get('TERM', 'unknown')
 
             global _CUR_TERM
             if _CUR_TERM is not None and cur_term != _CUR_TERM:
@@ -246,18 +241,18 @@ class Terminal(object):
         # environ values, with a default size of 80x24 when undefined.
         # detect a rare, strange, exception: when these values are non-int!
         try:
-            lines = int(os.environ.get('LINES', '24'))
+            lines = int(environ.get('LINES', '24'))
         except ValueError(err):
             warnings.warn("environment value 'LINES' is not an integer (%r): "
                           "%s, using '24'." % (
-                              os.environ.get('LINES'), err,), RuntimeWarning)
+                              environ.get('LINES'), err,), RuntimeWarning)
             lines = 24
         try:
-            cols = int(os.environ.get('COLUMNS', '80'))
+            cols = int(environ.get('COLUMNS', '80'))
         except ValueError(err):
             warnings.warn("environment value 'COLUMNS' is not an integer (%r): "
                           "%s, using '80'." % (
-                              os.environ.get('COLUMNS'), err,), RuntimeWarning)
+                              environ.get('COLUMNS'), err,), RuntimeWarning)
             cols = 80
         return lines, cols
 
@@ -355,10 +350,12 @@ class Terminal(object):
         ``force_styling`` is not True.
         """
         # tigetnum('colors') returns -1 if no color support, -2 if no such
-        # capability. This higher-level capability provided by blessings,
+        # capability. This higher-level capability provided by blessings
         # returns only non-negative values. For values (0, -1, -2), the value
         # 0 is always returned.
         colors = tigetnum('colors') if self.does_styling else -1
+        #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
+                                          # (Doesn't work.)
         return 0 if colors < 0 else colors
 
     def _resolve_formatter(self, attr):
