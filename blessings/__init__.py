@@ -1,21 +1,21 @@
-from collections import defaultdict
 from contextlib import contextmanager
 import curses
-from curses import tigetstr, tigetnum, setupterm, tparm
+from curses import setupterm, tigetnum, tigetstr, tparm
 from fcntl import ioctl
+
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
     class IOUnsupportedOperation(Exception):
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2"""
-import os
+
 from os import isatty, environ
 from platform import python_version_tuple
 import struct
 import sys
 from termios import TIOCGWINSZ
-
+import warnings
 
 __all__ = ['Terminal']
 
@@ -25,6 +25,8 @@ if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
+
+_CUR_TERM = None
 
 
 class Terminal(object):
@@ -42,13 +44,6 @@ class Terminal(object):
         around with the terminal; it's almost always needed when the terminal
         is and saves sticking lots of extra args on client functions in
         practice.
-      ``does_styling``
-        Whether this ``Terminal`` attempts to emit capabilities. This is
-        influenced by ``is_a_tty`` and by the ``force_styling`` arg to the
-        constructor. You can examine this value to decide whether to draw
-        progress bars or other frippery.
-      ``is_a_tty``
-        Whether ``stream`` appears to be a terminal.
 
     """
     def __init__(self, kind=None, stream=None, force_styling=False):
@@ -83,15 +78,15 @@ class Terminal(object):
             stream = sys.__stdout__
         try:
             stream_descriptor = (stream.fileno() if hasattr(stream, 'fileno')
-                                                 and callable(stream.fileno)
+                                 and callable(stream.fileno)
                                  else None)
         except IOUnsupportedOperation:
             stream_descriptor = None
 
-        self.is_a_tty = (stream_descriptor is not None and
-                         isatty(stream_descriptor))
-        self.does_styling = ((self.is_a_tty or force_styling) and
-                             force_styling is not None)
+        self._is_a_tty = (stream_descriptor is not None and
+                          isatty(stream_descriptor))
+        self._does_styling = ((self.is_a_tty or force_styling) and
+                              force_styling is not None)
 
         # The desciptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
@@ -105,8 +100,19 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
-                      self._init_descriptor)
+            cur_term = kind or environ.get('TERM', 'unknown')
+
+            global _CUR_TERM
+            if _CUR_TERM is not None and cur_term != _CUR_TERM:
+                warnings.warn('A terminal of kind "%s" has been requested; '
+                              'due to an internal python curses bug, terminal '
+                              'capabilities for a terminal of kind "%s" will continue '
+                              'to be returned for the remainder of this process. see: '
+                              'https://github.com/erikrose/blessings/issues/33' % (
+                                  cur_term, _CUR_TERM,), RuntimeWarning)
+            else:
+                _CUR_TERM = cur_term
+            setupterm(cur_term, self._init_descriptor)
 
         self.stream = stream
 
@@ -175,9 +181,26 @@ class Terminal(object):
         Return values are always Unicode.
 
         """
-        resolution = self._resolve_formatter(attr) if self.does_styling else NullCallableString()
+        resolution = (self._resolve_formatter(attr) if self.does_styling
+                      else NullCallableString())
         setattr(self, attr, resolution)  # Cache capability codes.
         return resolution
+
+    @property
+    def does_styling(self):
+        """ Whether this ``Terminal`` attempts to emit capabilities.
+
+        This is influenced by the ``is_a_tty`` property, and by the
+        ``force_styling`` argument to the constructor. You can examine
+        this value to decide whether to draw progress bars or other frippery.
+        """
+        return self._does_styling
+
+    @property
+    def is_a_tty(self):
+        """ Wether the ``stream`` appears to be associated with a terminal.
+        """
+        return self._is_a_tty
 
     @property
     def height(self):
@@ -188,8 +211,8 @@ class Terminal(object):
         piping to things that eventually display on the terminal (like ``less
         -R``) work. If a stream representing a terminal was passed in, return
         the dimensions of that terminal. If there somehow is no controlling
-        terminal, return ``None``. (Thus, you should check that ``is_a_tty`` is
-        true before doing any math on the result.)
+        terminal, return ``None``. (Thus, you should check that the property
+        ``is_a_tty`` is true before doing any math on the result.)
 
         """
         return self._height_and_width()[0]
@@ -210,10 +233,28 @@ class Terminal(object):
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
                 return struct.unpack(
-                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                    'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
                 pass
-        return None, None  # Should never get here
+        # when stdout is piped to another program, such as tee(1), this ioctl
+        # will raise an IOError, in which case we fallback to LINES and COLUMNS
+        # environ values, with a default size of 80x24 when undefined.
+        # detect a rare, strange, exception: when these values are non-int!
+        try:
+            lines = int(environ.get('LINES', '24'))
+        except ValueError(err):
+            warnings.warn("environment value 'LINES' is not an integer (%r): "
+                          "%s, using '24'." % (
+                              environ.get('LINES'), err,), RuntimeWarning)
+            lines = 24
+        try:
+            cols = int(environ.get('COLUMNS', '80'))
+        except ValueError(err):
+            warnings.warn("environment value 'COLUMNS' is not an integer (%r): "
+                          "%s, using '80'." % (
+                              environ.get('COLUMNS'), err,), RuntimeWarning)
+            cols = 80
+        return lines, cols
 
     @contextmanager
     def location(self, x=None, y=None):
@@ -305,18 +346,17 @@ class Terminal(object):
                 ...
 
         We also return 0 if the terminal won't tell us how many colors it
-        supports, which I think is rare.
-
+        supports, such as a stream not associated with a tty where
+        ``force_styling`` is not True.
         """
-        # This is actually the only remotely useful numeric capability. We
-        # don't name it after the underlying capability, because we deviate
-        # slightly from its behavior, and we might someday wish to give direct
-        # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
-                                     # such cap.
-        #self.__dict__['colors'] = ret  # Cache it. It's not changing. (Doesn't
-                                        # work.)
-        return colors if colors >= 0 else 0
+        # tigetnum('colors') returns -1 if no color support, -2 if no such
+        # capability. This higher-level capability provided by blessings
+        # returns only non-negative values. For values (0, -1, -2), the value
+        # 0 is always returned.
+        colors = tigetnum('colors') if self.does_styling else -1
+        #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
+                                          # (Doesn't work.)
+        return 0 if colors < 0 else colors
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
@@ -506,9 +546,9 @@ class NullCallableString(unicode):
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
             return u''
-        return args[0] # Should we force even strs in Python 2.x to be
-                       # unicodes? No. How would I know what encoding to use
-                       # to convert it?
+        return args[0]  # Should we force even strs in Python 2.x to be
+                        # unicodes? No. How would I know what encoding to use
+                        # to convert it?
 
 
 def split_into_formatters(compound):
