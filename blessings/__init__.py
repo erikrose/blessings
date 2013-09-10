@@ -175,18 +175,18 @@ class Terminal(object):
 
     @property
     def does_styling(self):
-        """ Whether this ``Terminal`` attempts to emit capabilities.
+        """Whether attempt to emit capabilities
 
-        This is influenced by the ``is_a_tty`` property, and by the
+        This is influenced by the ``is_a_tty`` property and by the
         ``force_styling`` argument to the constructor. You can examine
         this value to decide whether to draw progress bars or other frippery.
+
         """
         return self._does_styling
 
     @property
     def is_a_tty(self):
-        """ Wether the ``stream`` appears to be associated with a terminal.
-        """
+        """Whether my ``stream`` appears to be associated with a terminal"""
         return self._is_a_tty
 
     @property
