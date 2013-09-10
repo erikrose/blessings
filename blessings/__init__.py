@@ -1,3 +1,6 @@
+"""A thin, practical wrapper around terminal coloring, styling, and
+positioning"""
+
 from contextlib import contextmanager
 import curses
 from curses import setupterm, tigetnum, tigetstr, tparm
