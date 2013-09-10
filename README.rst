@@ -434,8 +434,10 @@ Version History
 ===============
 
 1.6
-  * Add ``does_styling`` attribute. This takes ``force_styling`` into account
+  * Add ``does_styling`` property. This takes ``force_styling`` into account
     and should replace most uses of ``is_a_tty``.
+  * Make ``is_a_tty`` a read-only property, like ``does_styling``. Writing to
+    it never would have done anything constructive.
   * Add ``fullscreen()`` and ``hidden_cursor()`` to the auto-generated docs.
 
 1.5.1
