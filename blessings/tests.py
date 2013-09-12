@@ -13,8 +13,10 @@ from __future__ import with_statement  # Make 2.5-compatible
 from curses import tigetstr, tparm
 from functools import partial
 from StringIO import StringIO
-import sys
 import os
+import sys
+import warnings
+import multiprocessing
 
 from nose import SkipTest
 from nose.tools import eq_
@@ -26,6 +28,7 @@ from blessings import *
 
 TestTerminal = partial(Terminal, kind='xterm-256color')
 
+warnings.filterwarnings("error", category=RuntimeWarning)
 
 class forkit:
     """ This helper executes test cases in a child process,
@@ -33,17 +36,12 @@ class forkit:
         more than once per process (issue #33).
     """
     def __init__(self, func):
-        self.func = func
+        #self.func = func
+        self.proc = multiprocessing.Process(target=func)
     def __call__(self):
-        pid = os.fork()
-        if pid == 0:
-            # only the child process runs function,
-            self.func()
-            os._exit(0)
-        else:
-            # parent process waits for child to complete
-            os.waitpid(pid, 0)
-
+        self.proc.start()
+        self.proc.join()
+        eq_(self.proc.exitcode, 0)
 
 
 def unicode_cap(cap):
@@ -114,7 +112,7 @@ def test_stream_attr():
     """Make sure Terminal exposes a ``stream`` attribute."""
     @forkit
     def doit():
-        eq_(Terminal().stream, sys.__stdout__)
+        eq_(TestTerminal().stream, sys.__stdout__)
     doit()
 
 
@@ -213,6 +211,8 @@ def test_callable_numeric_colors():
     @forkit
     def doit():
         t = TestTerminal()
+        from blessings import FormattingString
+        eq_(type(t.color(5)), FormattingString)
         eq_(t.color(5)('smoo'), t.magenta + 'smoo' + t.normal)
         eq_(t.color(5)('smoo'), t.color(5) + 'smoo' + t.normal)
         eq_(t.on_color(2)('smoo'), t.on_green + 'smoo' + t.normal)
@@ -224,7 +224,9 @@ def test_null_callable_numeric_colors():
     """``color(n)`` should be a no-op on null terminals."""
     @forkit
     def doit():
-        t = TestTerminal(kind='vt220', force_styling=True)
+        t = TestTerminal(stream=StringIO())
+        from blessings import NullCallableString
+        eq_(type(t.color(5)), NullCallableString)
         eq_(t.color(5)('smoo'), 'smoo')
         eq_(t.on_color(6)('smoo'), 'smoo')
     doit()
@@ -243,7 +245,7 @@ def test_number_of_colors_xterm_notty_forced_style():
     """``number_of_colors`` should return 256 for xterm-256color when force_styling is True. """
     @forkit
     def doit():
-        term = Terminal(stream=StringIO(), kind='xterm-256color', force_styling=True)
+        term = TestTerminal(stream=StringIO(), kind='xterm-256color', force_styling=True)
         eq_(term.number_of_colors, 256)
     doit()
 
@@ -252,7 +254,7 @@ def test_number_of_colors_xterm_notty():
     """``number_of_colors`` should return 0 for xterm-256color when there's no tty. """
     @forkit
     def doit():
-        term = Terminal(stream=StringIO(), kind='xterm-256color')
+        term = TestTerminal(stream=StringIO(), kind='xterm-256color', force_styling=None)
         eq_(term.number_of_colors, 0)
     doit()
 
@@ -261,7 +263,7 @@ def test_number_of_colors_vt220_notty_forced_style():
     """``number_of_colors`` should return 0 for vt220 -- amber or green-on-black, only. """
     @forkit
     def doit():
-        term = Terminal(stream=StringIO(), kind='vt220', force_styling=True)
+        term = TestTerminal(stream=StringIO(), kind='vt220', force_styling=True)
         eq_(term.number_of_colors, 0)
     doit()
 
@@ -270,7 +272,7 @@ def test_number_of_colors_dtterm_notty_forced_style():
     """``number_of_colors`` should return 8 for dtterm -- an early sun xterm variant. """
     @forkit
     def doit():
-        term = Terminal(stream=StringIO(), kind='dtterm', force_styling=True)
+        term = TestTerminal(stream=StringIO(), kind='dtterm', force_styling=True)
         eq_(term.number_of_colors, 8)
     doit()
 
@@ -340,7 +342,7 @@ def test_init_descriptor_always_initted():
     """We should be able to get a height and width even on no-tty Terminals."""
     @forkit
     def doit():
-        t = Terminal(stream=StringIO())
+        t = TestTerminal(stream=StringIO())
         eq_(type(t.height), int)
     doit()
 
