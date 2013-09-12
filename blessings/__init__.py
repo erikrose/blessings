@@ -193,9 +193,9 @@ class Terminal(object):
 
     @property
     def does_styling(self):
-        """Whether attempt to emit capabilities
+        """ Whether this ``Terminal`` attempts to emit capabilities.
 
-        This is influenced by the ``is_a_tty`` property and by the
+        This is influenced by the ``is_a_tty`` property, and by the
         ``force_styling`` argument to the constructor. You can examine
         this value to decide whether to draw progress bars or other frippery.
 
@@ -204,7 +204,8 @@ class Terminal(object):
 
     @property
     def is_a_tty(self):
-        """Whether my ``stream`` appears to be associated with a terminal"""
+        """ Whether my ``stream`` appears to be associated with a terminal.
+        """
         return self._is_a_tty
 
     @property
@@ -238,7 +239,7 @@ class Terminal(object):
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
                 return struct.unpack(
-                    'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
                 pass
         # when stdout is piped to another program, such as tee(1), this ioctl
@@ -327,7 +328,9 @@ class Terminal(object):
         :arg num: The number, 0-15, of the color
 
         """
-        return ParametrizingString(self._foreground_color, self.normal)
+        return (ParametrizingString(self._foreground_color, self.normal)
+                if self.does_styling
+                else NullCallableString())
 
     @property
     def on_color(self):
@@ -336,7 +339,9 @@ class Terminal(object):
         See ``color()``.
 
         """
-        return ParametrizingString(self._background_color, self.normal)
+        return (ParametrizingString(self._background_color, self.normal)
+                if self.does_styling
+                else NullCallableString())
 
     @property
     def number_of_colors(self):
@@ -476,12 +481,12 @@ class ParametrizingString(unicode):
             parametrized = tparm(self.encode('utf-8'), *args).decode('utf-8')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
-        except curses.error:
+#        except curses.error:
             # Catch "must call (at least) setupterm() first" errors, as when
             # running simply `nosetests` (without progressive) on nose-
             # progressive. Perhaps the terminal has gone away between calling
             # tigetstr and calling tparm.
-            return u''
+#            return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
