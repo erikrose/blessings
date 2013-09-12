@@ -63,7 +63,7 @@ def test_capability():
     """
     @forkit
     def doit():
-        t = TestTerminal()
+        t = TestTerminal(force_styling=True)
         sc = unicode_cap('sc')
         eq_(t.save, sc)
         eq_(t.save, sc)  # Make sure caching doesn't screw it up.
@@ -94,11 +94,13 @@ def test_parametrization():
     """Test parametrizing a capability."""
     @forkit
     def doit():
-        eq_(TestTerminal().cup(3, 4), unicode_parm('cup', 3, 4))
+        t = TestTerminal(force_styling=True)
+        cup34 = unicode_parm('cup', 3, 4)
+        eq_(t.cup(3, 4), cup34)
     doit()
 
 
-def height_and_width():
+def test_height_and_width():
     """Assert that ``height_and_width()`` returns ints."""
     @forkit
     def doit():
@@ -194,7 +196,7 @@ def test_mnemonic_colors():
 
         # Avoid testing red, blue, yellow, and cyan, since they might someday
         # change depending on terminal type.
-        t = TestTerminal()
+        t = TestTerminal(force_styling=True)
         eq_(t.white, color(7))
         eq_(t.green, color(2))  # Make sure it's different than white.
         eq_(t.on_black, on_color(0))
@@ -210,7 +212,7 @@ def test_callable_numeric_colors():
     """``color(n)`` should return a formatting wrapper."""
     @forkit
     def doit():
-        t = TestTerminal()
+        t = TestTerminal(force_styling=True)
         from blessings import FormattingString
         eq_(type(t.color(5)), FormattingString)
         eq_(t.color(5)('smoo'), t.magenta + 'smoo' + t.normal)
