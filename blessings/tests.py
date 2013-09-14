@@ -16,7 +16,6 @@ from StringIO import StringIO
 import os
 import sys
 import warnings
-import multiprocessing
 
 from nose import SkipTest
 from nose.tools import eq_
@@ -36,12 +35,20 @@ class forkit:
         more than once per process (issue #33).
     """
     def __init__(self, func):
-        #self.func = func
-        self.proc = multiprocessing.Process(target=func)
+        self.func = func
+
     def __call__(self):
-        self.proc.start()
-        self.proc.join()
-        eq_(self.proc.exitcode, 0)
+        pid = os.fork()
+        if pid == 0:
+            # child process executes function, raises exception
+            # if failed, causing a non-zero exit code
+            self.func()
+            os._exit(0)
+
+        # parent process asserts exit code is 0, causing test
+        # to fail if child process raised an exception/assertion
+        pid, status = os.waitpid(pid, 0)
+        eq_(os.WEXITSTATUS(status), 0)
 
 
 def unicode_cap(cap):
