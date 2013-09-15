@@ -6,7 +6,8 @@ but there are concrete integration-testing benefits in not doing so. For
 instance, ``tigetstr`` changed its return type in Python 3.2.3. So instead, we
 simply create all our test ``Terminal`` instances with a known terminal type.
 All we require from the host machine is that a standard terminfo definition of
-xterm-256color exists.
+xterm-256color, dtterm, and vt220 exists, for testing 256, 8, and 0-color
+terminals, respectively.
 
 """
 from __future__ import with_statement  # Make 2.5-compatible
@@ -23,7 +24,6 @@ from nose.tools import eq_
 # This tests that __all__ is correct, since we use below everything that should
 # be imported:
 from blessings import *
-
 
 TestTerminal = partial(Terminal, kind='xterm-256color')
 
@@ -233,10 +233,23 @@ def test_null_callable_numeric_colors():
     """``color(n)`` should be a no-op on null terminals."""
     @forkit
     def doit():
+        # NullCallableString should not be used by mere mortals
+        assert 'NullCallableString' not in globals()
         t = TestTerminal(stream=StringIO())
         from blessings import NullCallableString
-        eq_(type(t.color(5)), NullCallableString)
+        # ensure bare unicode is not returned,
+        eq_(type(t.color(3)), NullCallableString)
+        eq_(type(t.bold), NullCallableString)
+        eq_(type(t.green_on_black), NullCallableString)
+        eq_(type(t.bright_blue), NullCallableString)
+        # an empty unicode should be returned for most capabilities
+        eq_(t.color(4), u'')
         eq_(t.color(5)('smoo'), 'smoo')
+        eq_(t.bold('smoo'), 'smoo')
+        eq_(t.green_on_black('smoo'), 'smoo')
+        eq_(t.bright_yellow('smoo'), 'smoo')
+        # even non-existant ones work
+        eq_(t.bright_bullshit('smoo'), 'smoo')
         eq_(t.on_color(6)('smoo'), 'smoo')
     doit()
 
@@ -320,6 +333,18 @@ def test_formatting_functions_without_tty():
     doit()
 
 
+def test_missing_formatting_errors():
+    """Unfortunately, missing ttys do not (yet?) throw formatting errors."""
+    @forkit
+    def doit():
+        t = TestTerminal(stream=StringIO())
+        t.bold_misspelled('hey')
+        t.bold_misspelled(u'hey')  # unicode
+        t.bold_misspelled(None)  # an arbitrary non-string
+        t.bold_misspelled('a', 'b')  # >1 string arg
+    doit()
+
+
 def test_nice_formatting_errors():
     """Make sure you get nice hints if you misspell a formatting wrapper."""
     @forkit
@@ -327,21 +352,25 @@ def test_nice_formatting_errors():
         t = TestTerminal()
         try:
             t.bold_misspelled('hey')
+            assert False, 'Should have thrown exception'
         except TypeError, e:
             assert 'probably misspelled' in e.args[0]
 
         try:
             t.bold_misspelled(u'hey')  # unicode
+            assert False, 'Should have thrown exception'
         except TypeError, e:
             assert 'probably misspelled' in e.args[0]
 
         try:
             t.bold_misspelled(None)  # an arbitrary non-string
+            assert False, 'Should have thrown exception'
         except TypeError, e:
             assert 'probably misspelled' not in e.args[0]
 
         try:
             t.bold_misspelled('a', 'b')  # >1 string arg
+            assert False, 'Should have thrown exception'
         except TypeError, e:
             assert 'probably misspelled' not in e.args[0]
     doit()
