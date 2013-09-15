@@ -5,15 +5,12 @@ from contextlib import contextmanager
 import curses
 from curses import setupterm, tigetnum, tigetstr, tparm
 from fcntl import ioctl
-
-
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
     class IOUnsupportedOperation(Exception):
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2"""
-
 from os import isatty, environ
 from platform import python_version_tuple
 import struct
