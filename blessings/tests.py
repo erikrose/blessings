@@ -29,6 +29,7 @@ TestTerminal = partial(Terminal, kind='xterm-256color')
 
 warnings.filterwarnings("error", category=RuntimeWarning)
 
+
 class forkit:
     """ This helper executes test cases in a child process,
         avoiding a Terminal illness: cannot call setupterm()
@@ -135,9 +136,9 @@ def test_location():
             t.stream.write(u'hi')
 
         eq_(t.stream.getvalue(), unicode_cap('sc') +
-                                 unicode_parm('cup', 4, 3) +
-                                 u'hi' +
-                                 unicode_cap('rc'))
+            unicode_parm('cup', 4, 3) +
+            u'hi' +
+            unicode_cap('rc'))
     doit()
 
 
@@ -149,8 +150,8 @@ def test_horizontal_location():
         with t.location(x=5):
             pass
         eq_(t.stream.getvalue(), unicode_cap('sc') +
-                                 unicode_parm('hpa', 5) +
-                                 unicode_cap('rc'))
+            unicode_parm('hpa', 5) +
+            unicode_cap('rc'))
     doit()
 
 
@@ -162,7 +163,7 @@ def test_null_location():
         with t.location():
             pass
         eq_(t.stream.getvalue(), unicode_cap('sc') +
-                                 unicode_cap('rc'))
+            unicode_cap('rc'))
     doit()
 
 
@@ -174,8 +175,8 @@ def test_zero_location():
         with t.location(0, 0):
             pass
         eq_(t.stream.getvalue(), unicode_cap('sc') +
-                                 unicode_parm('cup', 0, 0) +
-                                 unicode_cap('rc'))
+            unicode_parm('cup', 0, 0) +
+            unicode_cap('rc'))
     doit()
 
 
@@ -267,7 +268,8 @@ def test_number_of_colors_xterm_notty_forced_style():
     """``number_of_colors`` should return 256 for xterm-256color when force_styling is True. """
     @forkit
     def doit():
-        term = TestTerminal(stream=StringIO(), kind='xterm-256color', force_styling=True)
+        term = TestTerminal(
+            stream=StringIO(), kind='xterm-256color', force_styling=True)
         eq_(term.number_of_colors, 256)
     doit()
 
@@ -276,7 +278,8 @@ def test_number_of_colors_xterm_notty():
     """``number_of_colors`` should return 0 for xterm-256color when there's no tty. """
     @forkit
     def doit():
-        term = TestTerminal(stream=StringIO(), kind='xterm-256color', force_styling=None)
+        term = TestTerminal(
+            stream=StringIO(), kind='xterm-256color', force_styling=None)
         eq_(term.number_of_colors, 0)
     doit()
 
@@ -285,7 +288,8 @@ def test_number_of_colors_vt220_notty_forced_style():
     """``number_of_colors`` should return 0 for vt220 -- amber or green-on-black, only. """
     @forkit
     def doit():
-        term = TestTerminal(stream=StringIO(), kind='vt220', force_styling=True)
+        term = TestTerminal(
+            stream=StringIO(), kind='vt220', force_styling=True)
         eq_(term.number_of_colors, 0)
     doit()
 
@@ -294,7 +298,8 @@ def test_number_of_colors_dtterm_notty_forced_style():
     """``number_of_colors`` should return 8 for dtterm -- an early sun xterm variant. """
     @forkit
     def doit():
-        term = TestTerminal(stream=StringIO(), kind='dtterm', force_styling=True)
+        term = TestTerminal(
+            stream=StringIO(), kind='dtterm', force_styling=True)
         eq_(term.number_of_colors, 8)
     doit()
 
@@ -307,7 +312,8 @@ def test_formatting_functions():
         # By now, it should be safe to use sugared attributes. Other tests test
         # those.
         eq_(t.bold(u'hi'), t.bold + u'hi' + t.normal)
-        eq_(t.green('hi'), t.green + u'hi' + t.normal)  # Plain strs for Python 2.x
+        eq_(t.green('hi'), t.green + u'hi' +
+            t.normal)  # Plain strs for Python 2.x
         # Test some non-ASCII chars, probably not necessary:
         eq_(t.bold_green(u'boö'), t.bold + t.green + u'boö' + t.normal)
         eq_(t.bold_underline_green_on_red('boo'),
@@ -315,7 +321,7 @@ def test_formatting_functions():
         # Don't spell things like this:
         eq_(t.on_bright_red_bold_bright_green_underline('meh'),
             t.on_bright_red + t.bold + t.bright_green + t.underline + u'meh' +
-                              t.normal)
+            t.normal)
     doit()
 
 
