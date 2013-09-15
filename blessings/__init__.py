@@ -194,7 +194,6 @@ class Terminal(object):
         This is influenced by the ``is_a_tty`` property, and by the
         ``force_styling`` argument to the constructor. You can examine
         this value to decide whether to draw progress bars or other frippery.
-
         """
         return self._does_styling
 
