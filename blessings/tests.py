@@ -352,25 +352,25 @@ def test_nice_formatting_errors():
         t = TestTerminal()
         try:
             t.bold_misspelled('hey')
-            assert False, 'Should have thrown exception'
+            assert not t.is_a_tty or False, 'Should have thrown exception'
         except TypeError, e:
             assert 'probably misspelled' in e.args[0]
 
         try:
             t.bold_misspelled(u'hey')  # unicode
-            assert False, 'Should have thrown exception'
+            assert not t.is_a_tty or False, 'Should have thrown exception'
         except TypeError, e:
             assert 'probably misspelled' in e.args[0]
 
         try:
             t.bold_misspelled(None)  # an arbitrary non-string
-            assert False, 'Should have thrown exception'
+            assert not t.is_a_tty or False, 'Should have thrown exception'
         except TypeError, e:
             assert 'probably misspelled' not in e.args[0]
 
         try:
             t.bold_misspelled('a', 'b')  # >1 string arg
-            assert False, 'Should have thrown exception'
+            assert not t.is_a_tty or False, 'Should have thrown exception'
         except TypeError, e:
             assert 'probably misspelled' not in e.args[0]
     doit()
