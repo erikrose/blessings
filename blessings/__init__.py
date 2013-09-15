@@ -481,12 +481,12 @@ class ParametrizingString(unicode):
             parametrized = tparm(self.encode('utf-8'), *args).decode('utf-8')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
-#        except curses.error:
+        # except curses.error:
             # Catch "must call (at least) setupterm() first" errors, as when
             # running simply `nosetests` (without progressive) on nose-
             # progressive. Perhaps the terminal has gone away between calling
             # tigetstr and calling tparm.
-#            return u''
+            # return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -560,7 +560,12 @@ class NullCallableString(unicode):
             # determine which of 2 special-purpose classes,
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
-            return u''
+            #
+            # As a NullCallableString, even when provided with a parameter;
+            # such as t.color(5), we must also still be callable, as
+            # t.color(5)('shmoo'); so turtles all the way down: we return
+            # another NullCallableString.
+            return NullCallableString()
         return args[0]  # Should we force even strs in Python 2.x to be
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
