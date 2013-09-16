@@ -107,10 +107,11 @@ class Terminal(object):
             if _CUR_TERM is not None and cur_term != _CUR_TERM:
                 warnings.warn('A terminal of kind "%s" has been requested; '
                               'due to an internal python curses bug, terminal '
-                              'capabilities for a terminal of kind "%s" will continue '
-                              'to be returned for the remainder of this process. see: '
-                              'https://github.com/erikrose/blessings/issues/33' % (
-                                  cur_term, _CUR_TERM,), RuntimeWarning)
+                              'capabilities for a terminal of kind "%s" will '
+                              'continue to be returned for the remainder of '
+                              'this process. see: '
+                              'https://github.com/erikrose/blessings/issues/33'
+                              % (cur_term, _CUR_TERM,), RuntimeWarning)
             else:
                 _CUR_TERM = cur_term
             setupterm(cur_term, self._init_descriptor)
@@ -243,14 +244,14 @@ class Terminal(object):
         # detect a rare, strange, exception: when these values are non-int!
         try:
             lines = int(environ.get('LINES', '24'))
-        except ValueError(err):
+        except ValueError, err:
             warnings.warn("environment value 'LINES' is not an integer (%r): "
                           "%s, using '24'." % (
                               environ.get('LINES'), err,), RuntimeWarning)
             lines = 24
         try:
             cols = int(environ.get('COLUMNS', '80'))
-        except ValueError(err):
+        except ValueError, err:
             warnings.warn("environment value 'COLUMNS' is not an integer (%r): "
                           "%s, using '80'." % (
                               environ.get('COLUMNS'), err,), RuntimeWarning)
@@ -425,10 +426,12 @@ class Terminal(object):
 
     @property
     def _foreground_color(self):
+        """Returns attribute appropriate for setting foreground color."""
         return self.setaf or self.setf
 
     @property
     def _background_color(self):
+        """Returns attribute appropriate for setting background color."""
         return self.setab or self.setb
 
     def _formatting_string(self, formatting):
@@ -576,9 +579,9 @@ def split_into_formatters(compound):
     merged_segs = []
     # These occur only as prefixes, so they can always be merged:
     mergeable_prefixes = ['on', 'bright', 'on_bright']
-    for s in compound.split('_'):
+    for segment in compound.split('_'):
         if merged_segs and merged_segs[-1] in mergeable_prefixes:
-            merged_segs[-1] += '_' + s
+            merged_segs[-1] += '_' + segment
         else:
-            merged_segs.append(s)
+            merged_segs.append(segment)
     return merged_segs
