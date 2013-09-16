@@ -341,7 +341,7 @@ def test_formatting_functions():
             term.normal)  # Plain strs for Python 2.x
         # Test some non-ASCII chars, probably not necessary:
         eq_(term.bold_green(u'boö'),
-                term.bold + term.green + u'boö' + term.normal)
+            term.bold + term.green + u'boö' + term.normal)
         eq_(term.bold_underline_green_on_red('boo'),
             term.bold + term.underline + term.green +
             term.on_red + u'boo' + term.normal)

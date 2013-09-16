@@ -235,7 +235,7 @@ class Terminal(object):
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
                 return struct.unpack(
-                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                    'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
                 pass
         # when stdout is piped to another program, such as tee(1), this ioctl
@@ -245,15 +245,15 @@ class Terminal(object):
         try:
             lines = int(environ.get('LINES', '24'))
         except ValueError, err:
-            warnings.warn("environment value 'LINES' is not an integer (%r): "
-                          "%s, using '24'." % (
+            warnings.warn("environment value 'LINES' is not an integer (%r):"
+                          " %s, using '24'." % (
                               environ.get('LINES'), err,), RuntimeWarning)
             lines = 24
         try:
             cols = int(environ.get('COLUMNS', '80'))
         except ValueError, err:
-            warnings.warn("environment value 'COLUMNS' is not an integer (%r): "
-                          "%s, using '80'." % (
+            warnings.warn("environment value 'COLUMNS' is not an integer (%r):"
+                          " %s, using '80'." % (
                               environ.get('COLUMNS'), err,), RuntimeWarning)
             cols = 80
         return lines, cols
