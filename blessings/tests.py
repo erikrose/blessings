@@ -439,6 +439,16 @@ def test_null_callable_string():
         """ execute test in child process. """
         term = TestTerminal(stream=StringIO())
         eq_(term.clear, '')
+        # A previous note by ER declared: "I don't promise this will
+        # keep working; it's not documented anywhere. However, it's
+        # what I intend to happen in an edge case, so let's make sure
+        # it works.
+        # -- jquast: I think at the time it was removed, it didn't
+        # work, because NullCallableString would return a u'' if
+        # the capability did not receive any arguments, which would
+        # cause it not to be callable!
+        eq_(term.clear, '')
+        eq_(term.clear(), '')
         eq_(term.move(1, 2), '')
         eq_(term.move_x(1), '')
     doit()
