@@ -241,21 +241,8 @@ class Terminal(object):
         # when stdout is piped to another program, such as tee(1), this ioctl
         # will raise an IOError, in which case we fallback to LINES and COLUMNS
         # environ values, with a default size of 80x24 when undefined.
-        # detect a rare, strange, exception: when these values are non-int!
-        try:
-            lines = int(environ.get('LINES', '24'))
-        except ValueError, err:
-            warnings.warn("environment value 'LINES' is not an integer (%r):"
-                          " %s, using '24'." % (
-                              environ.get('LINES'), err,), RuntimeWarning)
-            lines = 24
-        try:
-            cols = int(environ.get('COLUMNS', '80'))
-        except ValueError, err:
-            warnings.warn("environment value 'COLUMNS' is not an integer (%r):"
-                          " %s, using '80'." % (
-                              environ.get('COLUMNS'), err,), RuntimeWarning)
-            cols = 80
+        lines = int(environ.get('LINES', '24'))
+        cols = int(environ.get('COLUMNS', '80'))
         return lines, cols
 
     @contextmanager
