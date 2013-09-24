@@ -285,25 +285,58 @@ def test_naked_color_cap():
 def test_num_colors_no_tty_or_styling():
     """``number_of_colors`` should return 0 when there's no tty."""
     @as_subprocess
-    def child():
+    def child_256():
         t = TestTerminal(stream=StringIO())
         eq_(t.number_of_colors, 0)
+    @as_subprocess
+    def child_8():
+        t = TestTerminal(kind='dtterm', stream=StringIO())
+        eq_(t.number_of_colors, 0)
+    @as_subprocess
+    def child_0():
+        t = TestTerminal(kind='vt220', stream=StringIO())
+        eq_(t.number_of_colors, 0)
+    child_256()
+    child_8()
+    child_0()
+
 
 def test_num_colors_no_tty_force_styling():
     """``number_of_colors`` may return 256 when force_styling is True."""
     @as_subprocess
-    def child():
+    def child_256():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         eq_(t.number_of_colors, 256)
-    child()
+    @as_subprocess
+    def child_8():
+        t = TestTerminal(kind='dtterm', stream=StringIO(), force_styling=True)
+        eq_(t.number_of_colors, 8)
+    @as_subprocess
+    def child_0():
+        t = TestTerminal(kind='vt220', stream=StringIO(), force_styling=True)
+        eq_(t.number_of_colors, 0)
+    child_256()
+    child_8()
+    child_0()
 
 def test_number_of_colors_with_tty():
     """``number_of_colors`` should work."""
     @as_subprocess
-    def child():
+    def child_256():
         t = TestTerminal()
         eq_(t.number_of_colors, 256)
-    child()
+    @as_subprocess
+    def child_8():
+        t = TestTerminal(kind='dtterm')
+        eq_(t.number_of_colors, 8)
+    @as_subprocess
+    def child_0():
+        t = TestTerminal(kind='vt220')
+        eq_(t.number_of_colors, 0)
+
+    child_256()
+    child_8()
+    child_0()
 
 def test_formatting_functions():
     """Test crazy-ass formatting wrappers, both simple and compound."""
