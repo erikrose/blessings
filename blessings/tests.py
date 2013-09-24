@@ -13,7 +13,7 @@ from __future__ import with_statement  # Make 2.5-compatible
 from curses import tigetstr, tparm
 from functools import partial
 from StringIO import StringIO
-import sys
+import sys, os, pty, traceback
 
 from nose import SkipTest
 from nose.tools import eq_
@@ -34,19 +34,45 @@ class as_subprocess:
         self.func = func
 
     def __call__(self):
-        pid = os.fork()
+        pid, master_fd = pty.fork()
         if pid == 0:
             # child process executes function, raises exception
             # if failed, causing a non-zero exit code, using the
             # protected _exit() function of ``os``; to prevent the
             # 'SystemExit' exception from being thrown.
-            self.func()
-            os._exit(0)
+            try:
+                self.func()
+            except Exception, err:
+                e_type, e_value, e_tb = sys.exc_info()
+                o_tb = traceback.format_tb(e_tb)
+                o_exc = traceback.format_exception_only(e_type, e_value)
+                os.write(sys.__stdout__.fileno(), '\n'.join(o_tb).rstrip())
+                # -=: throwback for Legend of Red Dragon ...
+                os.write(sys.__stdout__.fileno(), '\n%s\n' % ('-='*20,))
+                os.write(sys.__stdout__.fileno(), '\n'.join(o_exc).rstrip())
+                os._exit(1)
+            else:
+                os._exit(0)
+        else:
+            exc_output = ''
+            while True:
+                _exc = os.read(master_fd, 65534)
+                if not _exc:
+                    break
+                exc_output += _exc
 
-        # parent process asserts exit code is 0, causing test
-        # to fail if child process raised an exception/assertion
-        pid, status = os.waitpid(pid, 0)
-        eq_(os.WEXITSTATUS(status), 0)
+            # parent process asserts exit code is 0, causing test
+            # to fail if child process raised an exception/assertion
+            pid, status = os.waitpid(pid, 0)
+
+            # Display any output written by child process (esp. those
+            # AssertionError exceptions written to stderr).
+            exc_output_msg = 'Output in child process:\n%s\n%s\n%s' % (
+                    '='*40, exc_output, '='*40,)
+            eq_('', exc_output, exc_output_msg)
+
+            # Also test exit status is non-zero
+            eq_(os.WEXITSTATUS(status), 0)
 
 
 
