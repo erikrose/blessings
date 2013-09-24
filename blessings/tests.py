@@ -387,5 +387,5 @@ def test_setupterm_singleton_issue33():
             assert ('a terminal of kind "xterm-256color" will '
                     'continue to be returned' in err.args[0]), err.args[0]
         finally:
-        del warnings
+            del warnings
     child()
