@@ -329,7 +329,8 @@ class Terminal(object):
         :arg num: The number, 0-15, of the color
 
         """
-        return ParametrizingString(self._foreground_color, self.normal)
+        return (ParametrizingString(self._foreground_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def on_color(self):
@@ -338,7 +339,8 @@ class Terminal(object):
         See ``color()``.
 
         """
-        return ParametrizingString(self._background_color, self.normal)
+        return (ParametrizingString(self._background_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def number_of_colors(self):
