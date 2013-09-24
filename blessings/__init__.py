@@ -221,8 +221,6 @@ class Terminal(object):
 
     def _height_and_width(self):
         """Return a tuple of (terminal height, terminal width)."""
-        # tigetnum('lines') and tigetnum('cols') update only if we call
-        # setupterm() again.
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
                 return struct.unpack(
