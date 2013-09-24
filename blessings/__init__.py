@@ -360,11 +360,15 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
-                                     # such cap.
+        #
+        # tigetnum('colors') returns -1 if no color support, -2 if no such
+        # capability. This higher-level capability provided by blessings
+        # returns only non-negative values. For values (0, -1, -2), the value
+        # 0 is always returned.
+        colors = tigetnum('colors') if self.does_styling else -1
         #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
                                           # (Doesn't work.)
-        return colors if colors >= 0 else 0
+        return max(0, colors)
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
