@@ -133,8 +133,8 @@ def test_height_and_width_as_int():
     @as_subprocess
     def child():
         t = TestTerminal()  # kind shouldn't matter.
-        assert isinstance(int, t.height)
-        assert isinstance(int, t.width)
+        assert isinstance(t.height, int)
+        assert isinstance(t.width, int)
     child()
 
 def test_height_and_width_ioctl():
