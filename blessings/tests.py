@@ -19,7 +19,8 @@ from fcntl import ioctl
 import pty
 import os
 import struct
-import sys, os, pty, traceback
+import sys, os, pty, traceback, struct, termios
+from fcntl import ioctl
 
 from nose import SkipTest
 from nose.tools import eq_
@@ -138,8 +139,8 @@ def test_height_and_width_as_int():
     @as_subprocess
     def child():
         t = TestTerminal()  # kind shouldn't matter.
-        assert isinstance(t.height, int)
-        assert isinstance(t.width, int)
+        assert isinstance(int, t.height)
+        assert isinstance(int, t.width)
     child()
 
 def test_height_and_width_ioctl():
