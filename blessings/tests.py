@@ -443,7 +443,7 @@ def test_null_callable_string():
     def child():
         t = TestTerminal(stream=StringIO(), force_styling=None)
         eq_(t.clear, '')
-        eq_(t.bold, '')
+        eq_(t.bold(), '')
         eq_(t.bold('', 'x', 'huh?'), '')
         eq_(t.bold('', 9876), '')
         eq_(t.uhh(9876), '')
