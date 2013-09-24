@@ -8,17 +8,17 @@ Coding with Blessings looks like this... ::
 
     t = Terminal()
 
-    print t.bold('Hi there!')
-    print t.bold_red_on_bright_green('It hurts my eyes!')
+    print(t.bold('Hi there!'))
+    print(t.bold_red_on_bright_green('It hurts my eyes!'))
 
     with t.location(0, t.height - 1):
-        print 'This is at the bottom.'
+        print('This is at the bottom.')
 
 Or, for byte-level control, you can drop down and play with raw terminal
 capabilities::
 
-    print '{t.bold}All your {t.red}bold and red base{t.normal}'.format(t=t)
-    print t.wingo(2)
+    print('{t.bold}All your {t.red}bold and red base{t.normal}'.format(t=t))
+    print(t.wingo(2))
 
 The Pitch
 =========
@@ -62,14 +62,15 @@ of the screen::
         normal = tigetstr('sgr0')
     else:
         sc = cup = rc = underline = normal = ''
-    print sc  # Save cursor position.
+    print(sc)  # Save cursor position.
     if cup:
-        # tigetnum('lines') doesn't always update promptly, hence this:
+        # tigetnum('lines') and os.environ['LINES'] do not dynamically
+        # reflect the window size, query the kernel tty driver directly:
         height = struct.unpack('hhhh', ioctl(0, TIOCGWINSZ, '\000' * 8))[0]
-        print tparm(cup, height - 1, 0)  # Move cursor to bottom.
-    print 'This is {under}underlined{normal}!'.format(under=underline,
-                                                      normal=normal)
-    print rc  # Restore cursor position.
+        print(tparm(cup, height - 1, 0))  # Move cursor to bottom.
+    print('This is {under}underlined{normal}!'.format(under=underline,
+                                                      normal=normal))
+    print(rc)  # Restore cursor position.
 
 That was long and full of incomprehensible trash! Let's try it again, this time
 with Blessings::
@@ -78,7 +79,7 @@ with Blessings::
 
     term = Terminal()
     with term.location(0, term.height - 1):
-        print 'This is', term.underline('pretty!')
+        print('This is', term.underline('pretty!'))
 
 Much better.
 
@@ -99,18 +100,18 @@ available as attributes on a ``Terminal``. For example::
     from blessings import Terminal
 
     term = Terminal()
-    print 'I am ' + term.bold + 'bold' + term.normal + '!'
+    print('I am ' + term.bold + 'bold' + term.normal + '!')
 
 Though they are strings at heart, you can also use them as callable wrappers so
 you don't have to say ``normal`` afterward::
 
-    print 'I am', term.bold('bold') + '!'
+    print('I am', term.bold('bold') + '!')
 
 Or, if you want fine-grained control while maintaining some semblance of
 brevity, you can combine it with Python's string formatting, which makes
 attributes easy to access::
 
-    print 'All your {t.red}base {t.underline}are belong to us{t.normal}'.format(t=term)
+    print('All your {t.red}base {t.underline}are belong to us{t.normal}'.format(t=term))
 
 Simple capabilities of interest include...
 
@@ -153,14 +154,14 @@ attributes::
     from blessings import Terminal
 
     term = Terminal()
-    print term.red + term.on_green + 'Red on green? Ick!' + term.normal
-    print term.bright_red + term.on_bright_blue + 'This is even worse!' + term.normal
+    print(term.red + term.on_green + 'Red on green? Ick!' + term.normal)
+    print(term.bright_red + term.on_bright_blue + 'This is even worse!' + term.normal)
 
 You can also call them as wrappers, which sets everything back to normal at the
 end::
 
-    print term.red_on_green('Red on green? Ick!')
-    print term.yellow('I can barely see it.')
+    print(term.red_on_green('Red on green? Ick!'))
+    print(term.yellow('I can barely see it.'))
 
 The available colors are...
 
@@ -203,12 +204,12 @@ all together::
     from blessings import Terminal
 
     term = Terminal()
-    print term.bold_underline_green_on_yellow + 'Woo' + term.normal
+    print(term.bold_underline_green_on_yellow + 'Woo' + term.normal)
 
 Or you can use your newly coined attribute as a wrapper, which implicitly sets
 everything back to normal afterward::
 
-    print term.bold_underline_green_on_yellow('Woo')
+    print(term.bold_underline_green_on_yellow('Woo'))
 
 This compound notation comes in handy if you want to allow users to customize
 the formatting of your app: just have them pass in a format specifier like
@@ -237,22 +238,22 @@ screen. ``Terminal`` provides a context manager for doing this concisely::
 
     term = Terminal()
     with term.location(0, term.height - 1):
-        print 'Here is the bottom.'
-    print 'This is back where I came from.'
+        print('Here is the bottom.')
+    print('This is back where I came from.')
 
 Parameters to ``location()`` are ``x`` and then ``y``, but you can also pass
 just one of them, leaving the other alone. For example... ::
 
     with term.location(y=10):
-        print 'We changed just the row.'
+        print('We changed just the row.')
 
 If you're doing a series of ``move`` calls (see below) and want to return the
 cursor to its original position afterward, call ``location()`` with no
 arguments, and it will do only the position restoring::
 
     with term.location():
-        print term.move(1, 1) + 'Hi'
-        print term.move(9, 9) + 'Mom'
+        print(term.move(1, 1) + 'Hi')
+        print(term.move(9, 9) + 'Mom')
 
 Note that, since ``location()`` uses the terminal's built-in
 position-remembering machinery, you can't usefully nest multiple calls. Use
@@ -268,7 +269,7 @@ this::
     from blessings import Terminal
 
     term = Terminal()
-    print term.move(10, 1) + 'Hi, mom!'
+    print(term.move(10, 1) + 'Hi, mom!')
 
 ``move``
   Position the cursor elsewhere. Parameters are y coordinate, then x
@@ -303,7 +304,7 @@ cursor one character in various directions:
 
 For example... ::
 
-    print term.move_up + 'Howdy!'
+    print(term.move_up + 'Howdy!')
 
 Height And Width
 ----------------
@@ -385,8 +386,8 @@ and just stick to content, since you're apparently headed into a pipe::
     term = Terminal()
     if term.does_styling:
         with term.location(0, term.height - 1):
-            print 'Progress: [=======>   ]'
-    print term.bold('Important stuff')
+            print('Progress: [=======>   ]')
+    print(term.bold('Important stuff'))
 
 Shopping List
 =============
