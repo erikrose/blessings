@@ -139,9 +139,9 @@ def test_height_and_width_as_int():
 
 def test_height_and_width_ioctl():
     """ Create a virtual pty, and set and test a window size of 3, 2. """
-    lines, cols = 3, 2
-    pid, child_fd = pty.fork()
-    if pid == 0:
+    @as_subprocess
+    def child():
+        lines, cols = 3, 2
         # set our window size, see noahspurrier/pexpect about
         # the various platforms that return the wrong value
         # of TIOCSWINSZ, aparently it is large enough to roll
@@ -159,23 +159,7 @@ def test_height_and_width_ioctl():
         eq_(Terminal()._height_and_width(), (lines, cols))
         # note: stderr is never buffered, unlike stdout which is line-buffered,
         # one of those nice-to-knows.
-        os._exit(0)
-    else:
-        # parent process asserts exit code is 0, causing test
-        # to fail if child process raised an exception/assertion,
-        # both by exit status, and, also, by displaying any output
-        # it may have written.
-        exc_output = ''
-        while True:
-            _exc = os.read(child_fd, 65534)
-            if not _exc:
-                break
-            exc_output += _exc
-        pid, status = os.waitpid(pid, 0)
-        # test no output was written
-        eq_(exc_output, '')
-        # test exit 0
-        eq_(os.WEXITSTATUS(status), 0)
+    child()
 
 def test_stream_attr():
     """Make sure Terminal exposes a ``stream`` attribute that defaults to
