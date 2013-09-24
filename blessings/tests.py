@@ -264,8 +264,14 @@ def test_force_styling_none():
 def test_null_callable_string():
     """Make sure NullCallableString tolerates all numbers and kinds of args it
     might receive."""
-    t = TestTerminal(stream=StringIO())
+    t = TestTerminal(stream=StringIO(), force_styling=None)
     eq_(t.clear, '')
+    eq_(t.bold, '')
+    eq_(t.bold('', 'x', 'huh?'), '')
+    eq_(t.bold('', 9876), '')
+    eq_(t.uhh(9876), '')
+    eq_(t.clear('x'), 'x')
+    eq_(t.move(1, 2), '')
     eq_(t.move(1, 2), '')
     eq_(t.move_x(1), '')
 
