@@ -23,6 +23,7 @@ import warnings
 
 __all__ = ['Terminal']
 
+
 if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
                                                                   # 3.2.10
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
