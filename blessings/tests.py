@@ -303,7 +303,6 @@ def test_num_colors_no_tty_or_styling():
     child_8()
     child_0()
 
-
 def test_num_colors_no_tty_force_styling():
     """``number_of_colors`` may return 256 when force_styling is True."""
     @as_subprocess
@@ -336,7 +335,6 @@ def test_number_of_colors_with_tty():
     def child_0():
         t = TestTerminal(kind='vt220')
         eq_(t.number_of_colors, 0)
-
     child_256()
     child_8()
     child_0()
