@@ -17,7 +17,7 @@ import sys, os, pty, traceback, struct, termios
 from fcntl import ioctl
 
 from nose import SkipTest
-from nose.tools import eq_
+from nose.tools import eq_, raises
 
 # This tests that __all__ is correct, since we use below everything that should
 # be imported:
@@ -276,6 +276,17 @@ def test_null_callable_numeric_colors():
         eq_(t.on_color(6)('smoo'), 'smoo')
         eq_(t.stream.getvalue(), '')
     child()
+
+
+def test_callable_mixed_typeError():
+    """ strings are illegal as formatting parameters """
+    @as_subprocess
+    @raises(TypeError)
+    def child():
+        t = TestTerminal()
+        t.move(1, '1')
+    child()
+
 
 def test_naked_color_cap():
     """``term.color`` should return a stringlike capability."""
