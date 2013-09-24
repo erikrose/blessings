@@ -13,7 +13,8 @@ from __future__ import with_statement  # Make 2.5-compatible
 from curses import tigetstr, tparm
 from functools import partial
 from StringIO import StringIO
-import sys, os, pty, traceback
+import sys, os, pty, traceback, struct, termios
+from fcntl import ioctl
 
 from nose import SkipTest
 from nose.tools import eq_
@@ -135,6 +136,46 @@ def test_height_and_width_as_int():
         assert isinstance(t.height, int)
         assert isinstance(t.width, int)
     child()
+
+def test_height_and_width_ioctl():
+    """ Create a virtual pty, and set and test a window size of 3, 2. """
+    lines, cols = 3, 2
+    pid, child_fd = pty.fork()
+    if pid == 0:
+        # set our window size, see noahspurrier/pexpect about
+        # the various platforms that return the wrong value
+        # of TIOCSWINSZ, aparently it is large enough to roll
+        # over the signed bit on some platforms:
+        TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
+        if TIOCSWINSZ == 2148037735:
+            # Same bits, but with sign.
+            TIOCSWINSZ = -2146929561
+
+        # set the pty's virtual window size
+        val = struct.pack('HHHH', cols, lines, 0, 0)
+        ioctl(sys.__stdout__.fileno(), TIOCSWINSZ, val)
+
+        # test virtual size and exit 0
+        eq_(Terminal()._height_and_width(), (lines, cols))
+        # note: stderr is never buffered, unlike stdout which is line-buffered,
+        # one of those nice-to-knows.
+        os._exit(0)
+    else:
+        # parent process asserts exit code is 0, causing test
+        # to fail if child process raised an exception/assertion,
+        # both by exit status, and, also, by displaying any output
+        # it may have written.
+        exc_output = ''
+        while True:
+            _exc = os.read(child_fd, 65534)
+            if not _exc:
+                break
+            exc_output += _exc
+        pid, status = os.waitpid(pid, 0)
+        # test no output was written
+        eq_(exc_output, '')
+        # test exit 0
+        eq_(os.WEXITSTATUS(status), 0)
 
 def test_stream_attr():
     """Make sure Terminal exposes a ``stream`` attribute that defaults to
@@ -352,7 +393,6 @@ def test_nice_formatting_errors_notty():
         t.bold_misspelled(None)  # an arbitrary non-string
         t.bold_misspelled('a', 'b')  # >1 string arg
     child()
-
 
 def test_init_descriptor_always_initted():
     """We should be able to get a height and width even on no-tty Terminals."""

@@ -20,6 +20,10 @@ import sys
 from termios import TIOCGWINSZ
 import warnings
 
+# provide TIOCGWINSZ for platforms that are missing it,
+# according to noahspurrier/pexpect, they exist!
+import termios
+TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912)
 
 __all__ = ['Terminal']
 
@@ -252,16 +256,31 @@ class Terminal(object):
         return self._height_and_width()[1]
 
     def _height_and_width(self):
-        """Return a tuple of (terminal height, terminal width)."""
-        # tigetnum('lines') and tigetnum('cols') update only if we call
-        # setupterm() again.
+        """Return a tuple of the current terminal dimensions, (height, width),
+           except for instances not attached to a tty -- where the environment
+           values LINES and COLUMNS are returned. failing that, 24 and 80.
+        """
+        def get_winsize(tty_fd):
+            """Returns the value of the ``winsize`` struct for the terminal
+               specified by argument ``tty_fd`` as four integers:
+                 (rows, cols, xheight, yheight).
+               The first pair are character cells, the latter pixels.
+            """
+            val = ioctl(tty_fd, TIOCGWINSZ, '\x00' * 8)
+            return struct.unpack('hhhh', val)
+
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                return struct.unpack(
-                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                cols, lines, _xp, _yp = get_winsize(descriptor)
+                return lines, cols
             except IOError:
+                # when output stream, and init_descriptor stdout, is piped
+                # to another program, such as tee(1), this ioctl will raise
+                # an IOError.
                 pass
-        return None, None  # Should never get here
+        lines = int(environ.get('LINES', '24'))
+        cols = int(environ.get('COLUMNS', '80'))
+        return lines, cols
 
     @contextmanager
     def location(self, x=None, y=None):
