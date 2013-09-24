@@ -345,6 +345,8 @@ def test_nice_formatting_errors():
         try:
             t.bold_misspelled('hey')
             assert not t.is_a_tty or False, 'Should have thrown exception'
+            # (unless the test was run without a tty, in which, not throwing
+            # an exception is acceptable (see next test case.)
         except TypeError, e:
             assert 'probably misspelled' in e.args[0]
 
