@@ -559,7 +559,13 @@ class NullCallableString(unicode):
             # determine which of 2 special-purpose classes,
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
-            return u''
+            #
+            # As a NullCallableString, even when provided with a parameter,
+            # such as t.color(5), we must also still be callable:
+            #   t.color(5)('shmoo')
+            # is actually a NullCallable()().
+            # so turtles all the way down: we return another instance.
+            return NullCallableString()
         return args[0]  # Should we force even strs in Python 2.x to be
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
