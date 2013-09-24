@@ -18,16 +18,36 @@ from platform import python_version_tuple
 import struct
 import sys
 from termios import TIOCGWINSZ
+import warnings
 
 
 __all__ = ['Terminal']
-
 
 if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
                                                                   # 3.2.10
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
+
+# From libcurses/doc/ncurses-intro.html (ESR, Thomas Dickey, et. al):
+#
+#   "After the call to setupterm(), the global variable cur_term is set to
+#    point to the current structure of terminal capabilities. By calling
+#    setupterm() for each terminal, and saving and restoring cur_term, it
+#    is possible for a program to use two or more terminals at once."
+#
+# However, if you study Python's ./Modules/_cursesmodule.c, you'll find:
+#
+#   if (!initialised_setupterm && setupterm(termstr,fd,&err) == ERR) {
+#
+# Python - perhaps wrongly - will not allow a re-initialisation of *new*
+# terminals through setupterm(), so the value of cur_term cannot be changed,
+# and subsequent calls to setupterm() silently have *no effect* !
+#
+# Therefore, the ``kind`` of each Terminal() is, in essence, a singleton.
+# This global variable reflects that, and a warning is emitted if somebody
+# expects otherwise.
+_CUR_TERM = None
 
 
 class Terminal(object):
@@ -57,7 +77,9 @@ class Terminal(object):
         output when being sent to a tty and one-item-per-line when not.
 
         :arg kind: A terminal string as taken by ``setupterm()``. Defaults to
-            the value of the ``TERM`` environment variable.
+            the value of the ``TERM`` environment variable. As setupterm() may
+            only be called once per-process, this value is essentially a
+            singleton (All Terminal() instances must have the same ``kind``).
         :arg stream: A file-like object representing the terminal. Defaults to
             the original value of stdout, like ``curses.initscr()`` does.
         :arg force_styling: Whether to force the emission of capabilities, even
@@ -75,6 +97,7 @@ class Terminal(object):
             ``force_styling=None``.
 
         """
+        global _CUR_TERM
         if stream is None:
             stream = sys.__stdout__
         try:
@@ -101,8 +124,19 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
-                      self._init_descriptor)
+            cur_term = kind or environ.get('TERM', 'unknown')
+            if _CUR_TERM is None or cur_term == _CUR_TERM:
+                _CUR_TERM = cur_term
+            else:
+                warnings.warn('A terminal of kind "%s" has been requested; '
+                              'due to an internal python curses bug, terminal '
+                              'capabilities for a terminal of kind "%s" will '
+                              'continue to be returned for the remainder of '
+                              'this process. see: '
+                              'https://github.com/erikrose/blessings/issues/33'
+                              % (cur_term, _CUR_TERM,), RuntimeWarning)
+
+            setupterm(cur_term, self._init_descriptor)
 
         self.stream = stream
 
