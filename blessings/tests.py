@@ -290,7 +290,7 @@ def test_null_callable_numeric_colors():
     """``color(n)`` should be a no-op on null terminals."""
     @as_subprocess
     def child():
-        t = TestTerminal(stream=StringIO())
+        t = TestTerminal(stream=StringIO(), force_styling=None)
         eq_(t.color(5)('smoo'), 'smoo')
         eq_(t.on_color(6)('smoo'), 'smoo')
     child()
