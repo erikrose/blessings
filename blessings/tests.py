@@ -107,7 +107,7 @@ def test_capability_without_tty():
     """Assert capability templates are '' when stream is not a tty."""
     @as_subprocess
     def child():
-        t = TestTerminal(stream=StringIO())
+        t = TestTerminal(stream=StringIO(), force_styling=None)
         eq_(t.save, u'')
         eq_(t.red, u'')
         eq_(t.stream.getvalue(), '')
