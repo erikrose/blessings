@@ -73,11 +73,11 @@ def test_parametrization():
     eq_(TestTerminal().cup(3, 4), unicode_parm('cup', 3, 4))
 
 
-def height_and_width():
+def test_height_and_width_as_int():
     """Assert that ``height_and_width()`` returns ints."""
     t = TestTerminal()  # kind shouldn't matter.
-    assert isinstance(int, t.height)
-    assert isinstance(int, t.width)
+    assert isinstance(t.height, int)
+    assert isinstance(t.width, int)
 
 def test_height_and_width_ioctl():
     """ Create a virtual pty, and set and test a window size of 3, 2. """
