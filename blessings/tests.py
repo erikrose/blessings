@@ -257,17 +257,19 @@ def test_naked_color_cap():
         eq_(t.color + '', t.setaf + '')
     child()
 
-def test_number_of_colors_without_tty():
+def test_num_colors_no_tty_or_styling():
     """``number_of_colors`` should return 0 when there's no tty."""
     @as_subprocess
     def child():
-        # Hypothesis: once setupterm() has run and decided the tty supports 256
-        # colors, it never changes its mind.
-
         t = TestTerminal(stream=StringIO())
         eq_(t.number_of_colors, 0)
+
+def test_num_colors_no_tty_force_styling():
+    """``number_of_colors`` may return 256 when force_styling is True."""
+    @as_subprocess
+    def child():
         t = TestTerminal(stream=StringIO(), force_styling=True)
-        eq_(t.number_of_colors, 0)
+        eq_(t.number_of_colors, 256)
     child()
 
 def test_number_of_colors_with_tty():
