@@ -317,7 +317,7 @@ def test_num_colors_no_tty_force_styling():
     @as_subprocess
     def child_0():
         t = TestTerminal(kind='vt220', stream=StringIO(), force_styling=True)
-        eq_(t.number_of_colors, 0)
+        eq_(t.number_of_colors, 0) # actually, 1 color: amber or green :-)
     child_256()
     child_8()
     child_0()
