@@ -480,12 +480,6 @@ class ParametrizingString(unicode):
             parametrized = tparm(self.encode('utf-8'), *args).decode('utf-8')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
-        except curses.error:
-            # Catch "must call (at least) setupterm() first" errors, as when
-            # running simply `nosetests` (without progressive) on nose-
-            # progressive. Perhaps the terminal has gone away between calling
-            # tigetstr and calling tparm.
-            return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
