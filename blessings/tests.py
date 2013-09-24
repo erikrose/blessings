@@ -25,6 +25,30 @@ from blessings import *
 
 TestTerminal = partial(Terminal, kind='xterm-256color')
 
+class as_subprocess:
+    """ This helper executes test cases in a child process,
+        avoiding a Terminal illness: cannot call setupterm()
+        more than once per process (issue #33).
+    """
+    def __init__(self, func):
+        self.func = func
+
+    def __call__(self):
+        pid = os.fork()
+        if pid == 0:
+            # child process executes function, raises exception
+            # if failed, causing a non-zero exit code, using the
+            # protected _exit() function of ``os``; to prevent the
+            # 'SystemExit' exception from being thrown.
+            self.func()
+            os._exit(0)
+
+        # parent process asserts exit code is 0, causing test
+        # to fail if child process raised an exception/assertion
+        pid, status = os.waitpid(pid, 0)
+        eq_(os.WEXITSTATUS(status), 0)
+
+
 
 def unicode_cap(cap):
     """Return the result of ``tigetstr`` except as Unicode."""
