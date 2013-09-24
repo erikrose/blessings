@@ -342,6 +342,18 @@ def test_nice_formatting_errors():
             assert 'probably misspelled' not in e.args[0]
     child()
 
+def test_nice_formatting_errors_notty():
+    """does_styling=False does not recieve hints for formatting misspellings."""
+    @as_subprocess
+    def child():
+        t = TestTerminal(stream=StringIO(), force_styling=None)
+        t.bold_misspelled('hey')
+        t.bold_misspelled(u'hey')  # unicode
+        t.bold_misspelled(None)  # an arbitrary non-string
+        t.bold_misspelled('a', 'b')  # >1 string arg
+    child()
+
+
 def test_init_descriptor_always_initted():
     """We should be able to get a height and width even on no-tty Terminals."""
     @as_subprocess
