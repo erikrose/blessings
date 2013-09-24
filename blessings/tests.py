@@ -110,6 +110,7 @@ def test_capability_without_tty():
         t = TestTerminal(stream=StringIO())
         eq_(t.save, u'')
         eq_(t.red, u'')
+        eq_(t.stream.getvalue(), '')
     child()
 
 def test_capability_with_forced_tty():
@@ -119,6 +120,7 @@ def test_capability_with_forced_tty():
     def child():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         eq_(t.save, unicode_cap('sc'))
+        eq_(t.stream.getvalue(), '')
     child()
 
 def test_parametrization():
@@ -272,6 +274,7 @@ def test_null_callable_numeric_colors():
         t = TestTerminal(stream=StringIO(), force_styling=None)
         eq_(t.color(5)('smoo'), 'smoo')
         eq_(t.on_color(6)('smoo'), 'smoo')
+        eq_(t.stream.getvalue(), '')
     child()
 
 def test_naked_color_cap():
@@ -368,6 +371,7 @@ def test_formatting_functions_without_tty():
         eq_(t.bold_green(u'boö'), u'boö')
         eq_(t.bold_underline_green_on_red('loo'), u'loo')
         eq_(t.on_bright_red_bold_bright_green_underline('meh'), u'meh')
+        eq_(t.stream.getvalue(), '')
     child()
 
 def test_nice_formatting_errors():
@@ -411,6 +415,7 @@ def test_nice_formatting_errors_notty():
         t.bold_misspelled(u'hey')  # unicode
         t.bold_misspelled(None)  # an arbitrary non-string
         t.bold_misspelled('a', 'b')  # >1 string arg
+        eq_(t.stream.getvalue(), '')
     child()
 
 def test_init_descriptor_always_initted():
@@ -419,6 +424,7 @@ def test_init_descriptor_always_initted():
     def child():
         t = Terminal(stream=StringIO())
         eq_(type(t.height), int)
+        eq_(t.stream.getvalue(), '')
     child()
 
 def test_force_styling_none():
@@ -445,6 +451,7 @@ def test_null_callable_string():
         eq_(t.move(1, 2), '')
         eq_(t.move(1, 2), '')
         eq_(t.move_x(1), '')
+        eq_(t.stream.getvalue(), '')
     child()
 
 def test_setupterm_singleton_issue33():
