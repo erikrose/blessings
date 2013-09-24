@@ -17,8 +17,11 @@ from os import isatty, environ
 from platform import python_version_tuple
 import struct
 import sys
-from termios import TIOCGWINSZ
 
+# provide TIOCGWINSZ for platforms that are missing it,
+# according to noahspurrier/pexpect, they exist!
+import termios
+TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912)
 
 __all__ = ['Terminal']
 
