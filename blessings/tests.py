@@ -43,7 +43,7 @@ class as_subprocess:
             # 'SystemExit' exception from being thrown.
             try:
                 self.func()
-            except Exception, err:
+            except Exception:
                 e_type, e_value, e_tb = sys.exc_info()
                 o_tb = traceback.format_tb(e_tb)
                 o_exc = traceback.format_exception_only(e_type, e_value)
