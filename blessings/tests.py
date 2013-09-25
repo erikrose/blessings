@@ -55,26 +55,26 @@ class as_subprocess:
                 os._exit(1)
             else:
                 os._exit(0)
-        else:
-            exc_output = ''
-            while True:
-                _exc = os.read(master_fd, 65534)
-                if not _exc:
-                    break
-                exc_output += _exc
+        # parent
+        exc_output = b''
+        while True:
+            _exc = os.read(master_fd, 65534)
+            if not _exc:
+                break
+            exc_output += _exc
 
-            # parent process asserts exit code is 0, causing test
-            # to fail if child process raised an exception/assertion
-            pid, status = os.waitpid(pid, 0)
+        # parent process asserts exit code is 0, causing test
+        # to fail if child process raised an exception/assertion
+        pid, status = os.waitpid(pid, 0)
 
-            # Display any output written by child process (esp. those
-            # AssertionError exceptions written to stderr).
-            exc_output_msg = 'Output in child process:\n%s\n%s\n%s' % (
-                    '='*40, exc_output, '='*40,)
-            eq_('', exc_output, exc_output_msg)
+        # Display any output written by child process (esp. those
+        # AssertionError exceptions written to stderr).
+        exc_output_msg = 'Output in child process:\n%s\n%s\n%s' % (
+                u'=' * 40, exc_output.decode('utf-8'), u'=' * 40,)
+        eq_(b'', exc_output, exc_output_msg)
 
-            # Also test exit status is non-zero
-            eq_(os.WEXITSTATUS(status), 0)
+        # Also test exit status is non-zero
+        eq_(os.WEXITSTATUS(status), 0)
 
 
 
