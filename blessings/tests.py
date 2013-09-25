@@ -213,13 +213,20 @@ def test_horizontal_location():
 def test_null_location():
     """Make sure ``location()`` with no args just does position restoration."""
     @as_subprocess
-    def child():
+    def child_with_styling():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location():
             pass
         eq_(t.stream.getvalue(), unicode_cap('sc') +
                                  unicode_cap('rc'))
-    child()
+    def child_without_styling():
+        t = TestTerminal(stream=StringIO(), force_styling=None)
+        with t.location():
+            pass
+        eq_(t.stream.getvalue(), u'')
+
+    child_with_styling()
+    child_without_styling()
 
 def test_zero_location():
     """Make sure ``location()`` pays attention to 0-valued args."""
@@ -235,8 +242,8 @@ def test_zero_location():
 
 def test_null_fileno():
     """Make sure ``Terminal`` works when ``fileno`` is ``None``.
-    This simulates piping output to another program.
     """
+    # This simulates piping output to a programs such as tee(1) or less(1)
     @as_subprocess
     def child():
         out = StringIO()
