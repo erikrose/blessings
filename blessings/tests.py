@@ -480,8 +480,7 @@ def test_init_descriptor_always_initted():
     child()
 
 def test_force_styling_none():
-    """If ``force_styling=None`` is passed to the constructor, don't ever do
-    styling."""
+    """If ``force_styling=None`` is used, don't perform capabilities."""
     @as_subprocess
     def child():
         t = TestTerminal(force_styling=None)
