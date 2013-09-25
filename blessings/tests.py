@@ -175,7 +175,8 @@ def test_stream_attr():
 def test_location():
     """Make sure ``location()`` does what it claims."""
     @as_subprocess
-    def child():
+    def child_with_styling():
+        """Check side effect of location as a context manager with styling."""
         t = TestTerminal(stream=StringIO(), force_styling=True)
 
         with t.location(3, 4):
@@ -185,7 +186,17 @@ def test_location():
                                  unicode_parm('cup', 4, 3) +
                                  u'hi' +
                                  unicode_cap('rc'))
-    child()
+    def child_without_styling():
+        """No side effect for location as a context manager without styling."""
+        t = TestTerminal(stream=StringIO(), force_styling=None)
+
+        with t.location(3, 4):
+            t.stream.write(u'hi')
+
+        eq_(t.stream.getvalue(), u'hi')
+
+    child_with_styling()
+    child_without_styling()
 
 def test_horizontal_location():
     """Make sure we can move the cursor horizontally without changing rows."""
