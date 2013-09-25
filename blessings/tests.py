@@ -300,12 +300,36 @@ def test_null_callable_numeric_colors():
 def test_callable_mixed_typeError():
     """ strings are illegal as formatting parameters """
     @as_subprocess
-    @raises(TypeError)
-    def child():
+    @raises(TypeError)  # 'an integer is required'
+    def child_move_mixed():
         t = TestTerminal()
         t.move(1, '1')
-    child()
 
+    @as_subprocess
+    @raises(TypeError)  # 'an integer is required'
+    def child_move_2strs():
+        t = TestTerminal()
+        t.move('1', '1')
+
+    @as_subprocess
+    @raises(TypeError)  # 'an integer is required'
+    def child_color_2strs():
+        t = TestTerminal()
+        t.color('1', '1')
+
+    @as_subprocess
+#    @raises(TypeError)
+    def child_move_float():
+        #import warnings
+        #warnings.filterwarnings("error", category=TypeError)
+        #term = TestTerminal(force_styling=True)
+        term = TestTerminal()
+        term.move(1.0, 1.0)
+
+    child_move_mixed()
+    child_move_2strs()
+    child_color_2strs()
+    child_move_float()
 
 def test_naked_color_cap():
     """``term.color`` should return a stringlike capability."""
