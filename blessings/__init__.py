@@ -17,8 +17,11 @@ from os import isatty, environ
 from platform import python_version_tuple
 import struct
 import sys
-from termios import TIOCGWINSZ
 
+# provide TIOCGWINSZ for platforms that are missing it,
+# according to noahspurrier/pexpect, they exist!
+import termios
+TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912)
 
 __all__ = ['Terminal']
 
@@ -217,16 +220,31 @@ class Terminal(object):
         return self._height_and_width()[1]
 
     def _height_and_width(self):
-        """Return a tuple of (terminal height, terminal width)."""
-        # tigetnum('lines') and tigetnum('cols') update only if we call
-        # setupterm() again.
+        """Return a tuple of the current terminal dimensions, (height, width),
+           except for instances not attached to a tty -- where the environment
+           values LINES and COLUMNS are returned. failing that, 24 and 80.
+        """
+        def get_winsize(tty_fd):
+            """Returns the value of the ``winsize`` struct for the terminal
+               specified by argument ``tty_fd`` as four integers:
+                 (rows, cols, xheight, yheight).
+               The first pair are character cells, the latter pixels.
+            """
+            val = ioctl(tty_fd, TIOCGWINSZ, '\x00' * 8)
+            return struct.unpack('hhhh', val)
+
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                return struct.unpack(
-                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                cols, lines, _xp, _yp = get_winsize(descriptor)
+                return lines, cols
             except IOError:
+                # when output stream, and init_descriptor stdout, is piped
+                # to another program, such as tee(1), this ioctl will raise
+                # an IOError.
                 pass
-        return None, None  # Should never get here
+        lines = int(environ.get('LINES', '24'))
+        cols = int(environ.get('COLUMNS', '80'))
+        return lines, cols
 
     @contextmanager
     def location(self, x=None, y=None):
@@ -294,7 +312,8 @@ class Terminal(object):
         :arg num: The number, 0-15, of the color
 
         """
-        return ParametrizingString(self._foreground_color, self.normal)
+        return (ParametrizingString(self._foreground_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def on_color(self):
@@ -303,7 +322,8 @@ class Terminal(object):
         See ``color()``.
 
         """
-        return ParametrizingString(self._background_color, self.normal)
+        return (ParametrizingString(self._background_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def number_of_colors(self):
@@ -325,11 +345,15 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
-                                     # such cap.
+        #
+        # tigetnum('colors') returns -1 if no color support, -2 if no such
+        # capability. This higher-level capability provided by blessings
+        # returns only non-negative values. For values (0, -1, -2), the value
+        # 0 is always returned.
+        colors = tigetnum('colors') if self.does_styling else -1
         #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
                                           # (Doesn't work.)
-        return colors if colors >= 0 else 0
+        return max(0, colors)
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
@@ -518,7 +542,13 @@ class NullCallableString(unicode):
             # determine which of 2 special-purpose classes,
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
-            return u''
+            #
+            # As a NullCallableString, even when provided with a parameter,
+            # such as t.color(5), we must also still be callable:
+            #   t.color(5)('shmoo')
+            # is actually a NullCallable()().
+            # so turtles all the way down: we return another instance.
+            return NullCallableString()
         return args[0]  # Should we force even strs in Python 2.x to be
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
