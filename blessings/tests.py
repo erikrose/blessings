@@ -45,12 +45,13 @@ class as_subprocess:
                 self.func()
             except Exception:
                 e_type, e_value, e_tb = sys.exc_info()
-                o_tb = traceback.format_tb(e_tb)
-                o_exc = traceback.format_exception_only(e_type, e_value)
-                os.write(sys.__stdout__.fileno(), '\n'.join(o_tb).rstrip())
-                # -=: throwback for Legend of Red Dragon ...
-                os.write(sys.__stdout__.fileno(), '\n%s\n' % ('-='*20,))
-                os.write(sys.__stdout__.fileno(), '\n'.join(o_exc).rstrip())
+                o_err = list()
+                for line in traceback.format_tb(e_tb):
+                    o_err.append (line.rstrip().encode('utf-8'))
+                o_err.append (b'-=' * 20)
+                o_err.extend ([_exc.rstrip().encode('utf-8')
+                    for _exc in traceback.format_exception_only(e_type, e_value)])
+                os.write(sys.__stdout__.fileno(), b'\n'.join(o_err))
                 os._exit(1)
             else:
                 os._exit(0)
