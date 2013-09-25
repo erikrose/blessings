@@ -485,6 +485,8 @@ def test_force_styling_none():
     def child():
         t = TestTerminal(force_styling=None)
         eq_(t.save, '')
+        eq_(t.color(9), '')
+        eq_(t.bold('oi'), 'oi')
     child()
 
 def test_null_callable_string():
