@@ -48,7 +48,7 @@ class as_subprocess:
                 o_err = list()
                 for line in traceback.format_tb(e_tb):
                     o_err.append (line.rstrip().encode('utf-8'))
-                o_err.append (b'-=' * 20)
+                o_err.append (('-=' * 20).encode('ascii'))
                 o_err.extend ([_exc.rstrip().encode('utf-8')
                     for _exc in traceback.format_exception_only(e_type, e_value)])
                 os.write(sys.__stdout__.fileno(), b'\n'.join(o_err))
