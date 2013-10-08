@@ -56,8 +56,6 @@ class as_subprocess:
             else:
                 os._exit(0)
 
-        import time
-        time.sleep(1)
         # parent
         exc_output = b''
         while True:
