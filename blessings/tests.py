@@ -55,6 +55,11 @@ class as_subprocess:
                 os._exit(1)
             else:
                 os._exit(0)
+
+        # parent process asserts exit code is 0, causing test
+        # to fail if child process raised an exception/assertion
+        pid, status = os.waitpid(pid, 0)
+
         exc_output = b''
         while True:
             _exc = os.read(master_fd, 65534)
@@ -62,9 +67,6 @@ class as_subprocess:
                 break
             exc_output += _exc
 
-        # parent process asserts exit code is 0, causing test
-        # to fail if child process raised an exception/assertion
-        pid, status = os.waitpid(pid, 0)
 
         # Display any output written by child process (esp. those
         # AssertionError exceptions written to stderr).
