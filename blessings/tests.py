@@ -55,9 +55,6 @@ class as_subprocess:
                 os._exit(1)
             else:
                 os._exit(0)
-        import time
-        time.sleep(1)
-        # parent
         exc_output = b''
         while True:
             _exc = os.read(master_fd, 65534)
