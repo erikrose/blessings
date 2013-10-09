@@ -28,7 +28,13 @@ import re
 import termios
 TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912)
 
+<<<<<<< HEAD
 __all__ = ['Terminal', 'Sequence']
+=======
+
+__all__ = ['Terminal', 'Sequence']
+
+>>>>>>> 988d4d5e188f7d6cbfaf658efea0f99bb8ce2f5a
 
 
 if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
@@ -36,6 +42,82 @@ if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
+
+_SEQ_WONTMOVE = re.compile(
+        r'\x1b('  # curses.ascii.ESC
+        r'([\(\)\*\+\$]'  # Designate G0-G3,Kangi Character Set
+            r'[0AB<5CK])'  # 0=DEC,A=UK,B=USASCII,<=Multinational
+                           # 5/C=Finnish,K=German
+        r'|7'  # save_cursor
+        r'|\[('  # \x1b[: Begin Control Sequence Initiator(CSI) ...
+            r'[0-2]?[JK]'  # J:erase in display (0=below,1=above,2=All)
+                           # K:erase in line (0=right,1=left,2=All)
+            r'|\d{1,4};\d{1,4};\d{1,4};\d{1,4};\d{1,4}T'
+                            # Initiate hilite mouse tracking, params are
+                            # func;startx;starty;firstrow;lastrow
+            r'|[025]W'  # tabular funcs: 0=set,2=clear Current,5=clear All
+            r'|[03]g'  # tab clear: 0=current,3=all
+            r'|4[hl]'  # hl: insert, replace mode.
+            r'|(\d{0,3}(;\d{0,3}){1,5}|\d{1,3}|)m' # |(\d{1;3})
+                         # SGR (attributes), extraordinarily forgiving!
+            r'|0?c'  # send device attributes (terminal replies!)
+            r'|[5-8]n'  # device status report, 5: answers OK, 6: cursor pos,
+                       # 7: display name, 8: version number (terminal replies!)
+            r'|[zs]'  # save_cursor
+        r'|(\?'  # DEC Private Modes -- extraordinarily forgiving!
+            r'[0-9]{0,4}(;\d{1,4}){0,4}[hlrst]' # hlrst:set, reset, restore, save, toggle:
+                # 1: application keys, 2: ansi/vt52 mode, 3: 132/80 columns,
+                # 4: smooth/jump scroll, 5: normal/reverse video,
+                # 6: origin/cursor mode 7: wrap/no wrap at margin,
+                # 8: auto-repeat keys?, 9: X10 XTerm Mouse reporting,
+                # 10: menubar visible/invis (rxvt), 25: cursor visable/invis
+                # 30: scrollbar visible/invis, 35: xterm shift+key sequences,
+                # 38: Tektronix mode, 40: allow 80/132, 44: margin bell,
+                # 45: reverse wraparound mode on/off, 46: unknown
+                # 47: use alt/normal screen buffer, 66: app/normal keypad,
+                # 67: backspace sends BS/DEL, 1000: X11 Xterm Mouse reporting
+                # 1001: X11 Xterm Mouse Tracking
+                # 1010: donot/do scroll-to-bottom on output, 1011: "" on input
+                # 1047: use alt/normal screen buffer, clear if returning
+                # 1048: save/restore cursor position
+                # 1049: is 1047+1048 combined.
+                # !! Most of these do not cause cursor movement. Instead of
+                #    tracking each individual mode, we bucket them all as
+                #    "healthy for padding" (not movement).
+        r')' # end DEC Private Modes
+      r')'  # end CSI
+    r')')  # end \x1b
+
+
+# mrxvt_seq.txt by Gautam Iyer <gi1242@users.sourceforge.net> was invaluable
+# in the authoring of these regular expressions. The current author of xterm
+# (Thomas Dickey) also provides many invaluable resources.
+_SEQ_WILLMOVE = re.compile(
+        r'\x1b('  # curses.ascii.ESC
+        r'[cZ]'  # rs1: reset string (cursor position undefined)
+        r'|8'  # restore_cursor
+        r'|#8'  # DEC Alignment Screen Test (cursor position undefined)
+        r'|(\[('  # \x1b[: Begin Control Sequence Initiator(CSI) ...
+            r'(\d{1,4})?[AeBCaDEFG\'IZdLMPX]'
+                # [Ae]B[Ca]D: up/down/forward/backword N-times
+                # EF: down/up N times, goto 1st column,
+                # [G']IZ: to column N, forward N tabstops, backward N tabstops
+                # d: to line N, # LMP:insert/delete N lines, Delete N chars
+                                 # X: del N chars
+            r'|(\d{1,4})?(;\d{1,4})?[Hf]'
+                # H: home, opt. (row, col)
+                # f: horiz/vert pos
+            r'|u'  # restore_cursor
+            r'|[0-9]x'  # DEC request terminal parameters (terminal replies!)
+        r')'  # end CSI
+        r'|\][0-9]{1,2};[\s\w]+(' # Set XTerm params, ESC ] Ps;Pt ST
+            + '\x9c'  # 8-bit terminator
+            + '|\a'   # old terminator (BEL)
+            + r'|\x1b\\)'  # 7-bit terminator
+    r')'  # end CSI
+r')')  # end x1b
+
+_SEQ_SGR_RIGHT = re.compile(r'\033\[(\d{1,4})C')
 
 # From libcurses/doc/ncurses-intro.html (ESR, Thomas Dickey, et. al):
 #
@@ -57,6 +139,7 @@ if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
 # expects otherwise.
 _CUR_TERM = None
 
+<<<<<<< HEAD
 _SEQ_WONTMOVE = re.compile(
         r'\x1b('  # curses.ascii.ESC
         r'([\(\)\*\+\$]'  # Designate G0-G3,Kangi Character Set
@@ -134,6 +217,8 @@ r')')  # end x1b
 
 _SEQ_SGR_RIGHT = re.compile(r'\033\[(\d{1,4})C')
 
+=======
+>>>>>>> 988d4d5e188f7d6cbfaf658efea0f99bb8ce2f5a
 class Terminal(object):
     """An abstraction around terminal capabilities
 
@@ -350,7 +435,11 @@ class Terminal(object):
 
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
+<<<<<<< HEAD
                 lines, cols, _yp, _xp = get_winsize(descriptor)
+=======
+                lines, cols, _xp, _yp = get_winsize(descriptor)
+>>>>>>> 988d4d5e188f7d6cbfaf658efea0f99bb8ce2f5a
                 return lines, cols
             except IOError:
                 # when output stream, and init_descriptor stdout, is piped
