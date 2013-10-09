@@ -28,13 +28,7 @@ import re
 import termios
 TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912)
 
-<<<<<<< HEAD
 __all__ = ['Terminal', 'Sequence']
-=======
-
-__all__ = ['Terminal', 'Sequence']
-
->>>>>>> 988d4d5e188f7d6cbfaf658efea0f99bb8ce2f5a
 
 
 if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
@@ -139,7 +133,6 @@ _SEQ_SGR_RIGHT = re.compile(r'\033\[(\d{1,4})C')
 # expects otherwise.
 _CUR_TERM = None
 
-<<<<<<< HEAD
 _SEQ_WONTMOVE = re.compile(
         r'\x1b('  # curses.ascii.ESC
         r'([\(\)\*\+\$]'  # Designate G0-G3,Kangi Character Set
@@ -217,8 +210,6 @@ r')')  # end x1b
 
 _SEQ_SGR_RIGHT = re.compile(r'\033\[(\d{1,4})C')
 
-=======
->>>>>>> 988d4d5e188f7d6cbfaf658efea0f99bb8ce2f5a
 class Terminal(object):
     """An abstraction around terminal capabilities
 
@@ -435,14 +426,10 @@ class Terminal(object):
 
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-<<<<<<< HEAD
                 lines, cols, _yp, _xp = get_winsize(descriptor)
-=======
-                lines, cols, _xp, _yp = get_winsize(descriptor)
->>>>>>> 988d4d5e188f7d6cbfaf658efea0f99bb8ce2f5a
                 return lines, cols
             except IOError:
-                # when output stream, and init_descriptor stdout, is piped
+                # when output is a non-tty, and init_descriptor stdout, is piped
                 # to another program, such as tee(1), this ioctl will raise
                 # an IOError.
                 pass
