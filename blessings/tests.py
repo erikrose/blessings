@@ -324,10 +324,10 @@ def test_callable_mixed_typeError():
         t.color('1', '1')
 
     @as_subprocess
-#    @raises(TypeError)
+    @raises(TypeError)
     def child_move_float():
-        #import warnings
-        #warnings.filterwarnings("error", category=TypeError)
+        import warnings
+        warnings.filterwarnings("error", category=TypeError)
         #term = TestTerminal(force_styling=True)
         term = TestTerminal()
         term.move(1.0, 1.0)
@@ -353,7 +353,7 @@ def test_num_colors_no_tty_or_styling():
         eq_(t.number_of_colors, 0)
     @as_subprocess
     def child_8():
-        t = TestTerminal(kind='dtterm', stream=StringIO())
+        t = TestTerminal(kind='ansi', stream=StringIO())
         eq_(t.number_of_colors, 0)
     @as_subprocess
     def child_0():
@@ -371,7 +371,7 @@ def test_num_colors_no_tty_force_styling():
         eq_(t.number_of_colors, 256)
     @as_subprocess
     def child_8():
-        t = TestTerminal(kind='dtterm', stream=StringIO(), force_styling=True)
+        t = TestTerminal(kind='ansi', stream=StringIO(), force_styling=True)
         eq_(t.number_of_colors, 8)
     @as_subprocess
     def child_0():
@@ -389,7 +389,7 @@ def test_number_of_colors_with_tty():
         eq_(t.number_of_colors, 256)
     @as_subprocess
     def child_8():
-        t = TestTerminal(kind='dtterm')
+        t = TestTerminal(kind='ansi')
         eq_(t.number_of_colors, 8)
     @as_subprocess
     def child_0():
