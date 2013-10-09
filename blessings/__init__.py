@@ -18,7 +18,12 @@ from platform import python_version_tuple
 import struct
 import sys
 from termios import TIOCGWINSZ
+import warnings
 
+# provide TIOCGWINSZ for platforms that are missing it,
+# according to noahspurrier/pexpect, they exist!
+import termios
+TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912)
 
 __all__ = ['Terminal']
 
@@ -28,6 +33,26 @@ if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
+
+# From libcurses/doc/ncurses-intro.html (ESR, Thomas Dickey, et. al):
+#
+#   "After the call to setupterm(), the global variable cur_term is set to
+#    point to the current structure of terminal capabilities. By calling
+#    setupterm() for each terminal, and saving and restoring cur_term, it
+#    is possible for a program to use two or more terminals at once."
+#
+# However, if you study Python's ./Modules/_cursesmodule.c, you'll find:
+#
+#   if (!initialised_setupterm && setupterm(termstr,fd,&err) == ERR) {
+#
+# Python - perhaps wrongly - will not allow a re-initialisation of *new*
+# terminals through setupterm(), so the value of cur_term cannot be changed,
+# and subsequent calls to setupterm() silently have *no effect* !
+#
+# Therefore, the ``kind`` of each Terminal() is, in essence, a singleton.
+# This global variable reflects that, and a warning is emitted if somebody
+# expects otherwise.
+_CUR_TERM = None
 
 
 class Terminal(object):
@@ -57,7 +82,9 @@ class Terminal(object):
         output when being sent to a tty and one-item-per-line when not.
 
         :arg kind: A terminal string as taken by ``setupterm()``. Defaults to
-            the value of the ``TERM`` environment variable.
+            the value of the ``TERM`` environment variable. As setupterm() may
+            only be called once per-process, this value is essentially a
+            singleton (All Terminal() instances must have the same ``kind``).
         :arg stream: A file-like object representing the terminal. Defaults to
             the original value of stdout, like ``curses.initscr()`` does.
         :arg force_styling: Whether to force the emission of capabilities, even
@@ -75,6 +102,7 @@ class Terminal(object):
             ``force_styling=None``.
 
         """
+        global _CUR_TERM
         if stream is None:
             stream = sys.__stdout__
         try:
@@ -101,8 +129,19 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
-                      self._init_descriptor)
+            cur_term = kind or environ.get('TERM', 'unknown')
+            if _CUR_TERM is None or cur_term == _CUR_TERM:
+                _CUR_TERM = cur_term
+            else:
+                warnings.warn('A terminal of kind "%s" has been requested; '
+                              'due to an internal python curses bug, terminal '
+                              'capabilities for a terminal of kind "%s" will '
+                              'continue to be returned for the remainder of '
+                              'this process. see: '
+                              'https://github.com/erikrose/blessings/issues/33'
+                              % (cur_term, _CUR_TERM,), RuntimeWarning)
+
+            setupterm(cur_term, self._init_descriptor)
 
         self.stream = stream
 
@@ -217,16 +256,31 @@ class Terminal(object):
         return self._height_and_width()[1]
 
     def _height_and_width(self):
-        """Return a tuple of (terminal height, terminal width)."""
-        # tigetnum('lines') and tigetnum('cols') update only if we call
-        # setupterm() again.
+        """Return a tuple of the current terminal dimensions, (height, width),
+           except for instances not attached to a tty -- where the environment
+           values LINES and COLUMNS are returned. failing that, 24 and 80.
+        """
+        def get_winsize(tty_fd):
+            """Returns the value of the ``winsize`` struct for the terminal
+               specified by argument ``tty_fd`` as four integers:
+                 (lines, cols, y_height, x_height).
+               The first pair are character cells, the latter pixel size.
+            """
+            val = ioctl(tty_fd, TIOCGWINSZ, '\x00' * 8)
+            return struct.unpack('hhhh', val)
+
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                return struct.unpack(
-                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                lines, cols, _yp, _xp = get_winsize(descriptor)
+                return lines, cols
             except IOError:
+                # when output stream, and init_descriptor stdout, is piped
+                # to another program, such as tee(1), this ioctl will raise
+                # an IOError.
                 pass
-        return None, None  # Should never get here
+        lines = int(environ.get('LINES', '24'))
+        cols = int(environ.get('COLUMNS', '80'))
+        return lines, cols
 
     @contextmanager
     def location(self, x=None, y=None):
@@ -294,7 +348,8 @@ class Terminal(object):
         :arg num: The number, 0-15, of the color
 
         """
-        return ParametrizingString(self._foreground_color, self.normal)
+        return (ParametrizingString(self._foreground_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def on_color(self):
@@ -303,7 +358,8 @@ class Terminal(object):
         See ``color()``.
 
         """
-        return ParametrizingString(self._background_color, self.normal)
+        return (ParametrizingString(self._background_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def number_of_colors(self):
@@ -325,11 +381,15 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
-                                     # such cap.
+        #
+        # tigetnum('colors') returns -1 if no color support, -2 if no such
+        # capability. This higher-level capability provided by blessings
+        # returns only non-negative values. For values (0, -1, -2), the value
+        # 0 is always returned.
+        colors = tigetnum('colors') if self.does_styling else -1
         #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
                                           # (Doesn't work.)
-        return colors if colors >= 0 else 0
+        return max(0, colors)
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
@@ -439,12 +499,6 @@ class ParametrizingString(unicode):
             parametrized = tparm(self.encode('utf-8'), *args).decode('utf-8')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
-        except curses.error:
-            # Catch "must call (at least) setupterm() first" errors, as when
-            # running simply `nosetests` (without progressive) on nose-
-            # progressive. Perhaps the terminal has gone away between calling
-            # tigetstr and calling tparm.
-            return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -518,7 +572,13 @@ class NullCallableString(unicode):
             # determine which of 2 special-purpose classes,
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
-            return u''
+            #
+            # As a NullCallableString, even when provided with a parameter,
+            # such as t.color(5), we must also still be callable:
+            #   t.color(5)('shmoo')
+            # is actually a NullCallable()().
+            # so turtles all the way down: we return another instance.
+            return NullCallableString()
         return args[0]  # Should we force even strs in Python 2.x to be
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
