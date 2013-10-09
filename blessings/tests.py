@@ -51,7 +51,7 @@ class as_subprocess:
                 o_err.append (('-=' * 20).encode('ascii'))
                 o_err.extend ([_exc.rstrip().encode('utf-8')
                     for _exc in traceback.format_exception_only(e_type, e_value)])
-                os.write(sys.__stdout__.fileno(), b'\n'.join(o_err))
+                os.write(sys.__stdout__.fileno(), '\n'.join(o_err))
                 os._exit(1)
             else:
                 os._exit(0)
@@ -60,7 +60,7 @@ class as_subprocess:
         # to fail if child process raised an exception/assertion
         pid, status = os.waitpid(pid, 0)
 
-        exc_output = b''
+        exc_output = ''
         while True:
             try:
                 _exc = os.read(master_fd, 65534)
@@ -77,7 +77,7 @@ class as_subprocess:
         # AssertionError exceptions written to stderr).
         exc_output_msg = 'Output in child process:\n%s\n%s\n%s' % (
                 u'=' * 40, exc_output.decode('utf-8'), u'=' * 40,)
-        eq_(b'', exc_output, exc_output_msg)
+        eq_('', exc_output, exc_output_msg)
 
         # Also test exit status is non-zero
         eq_(os.WEXITSTATUS(status), 0)
