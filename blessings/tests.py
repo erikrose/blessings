@@ -324,7 +324,6 @@ def test_callable_mixed_typeError():
         t.color('1', '1')
 
     @as_subprocess
-    @raises(TypeError)
     def child_move_float():
         import warnings
         warnings.filterwarnings("error", category=DeprecationWarning)
