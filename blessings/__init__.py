@@ -351,7 +351,7 @@ class Terminal(object):
 
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                cols, lines, _xp, _yp = get_winsize(descriptor)
+                lines, cols, _xp, _yp = get_winsize(descriptor)
                 return lines, cols
             except IOError:
                 # when output stream, and init_descriptor stdout, is piped
