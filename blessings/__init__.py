@@ -263,15 +263,15 @@ class Terminal(object):
         def get_winsize(tty_fd):
             """Returns the value of the ``winsize`` struct for the terminal
                specified by argument ``tty_fd`` as four integers:
-                 (rows, cols, xheight, yheight).
-               The first pair are character cells, the latter pixels.
+                 (lines, cols, y_height, x_height).
+               The first pair are character cells, the latter pixel size.
             """
             val = ioctl(tty_fd, TIOCGWINSZ, '\x00' * 8)
             return struct.unpack('hhhh', val)
 
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                cols, lines, _xp, _yp = get_winsize(descriptor)
+                lines, cols, _yp, _xp = get_winsize(descriptor)
                 return lines, cols
             except IOError:
                 # when output stream, and init_descriptor stdout, is piped

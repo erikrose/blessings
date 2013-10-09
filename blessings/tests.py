@@ -161,13 +161,13 @@ def test_height_and_width_ioctl():
             TIOCSWINSZ = -2146929561
 
         # set the pty's virtual window size
-        val = struct.pack('HHHH', cols, lines, 0, 0)
+        val = struct.pack('HHHH', lines, cols, 0, 0)
         ioctl(sys.__stdout__.fileno(), TIOCSWINSZ, val)
 
-        # test virtual size and exit 0
+        # test new virtual window size
         eq_(Terminal()._height_and_width(), (lines, cols))
-        # note: stderr is never buffered, unlike stdout which is line-buffered,
-        # one of those nice-to-knows.
+        eq_(Terminal().height, lines)
+        eq_(Terminal().width, cols)
     child()
 
 def test_stream_attr():
