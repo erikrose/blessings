@@ -48,31 +48,36 @@ class as_subprocess:
                 o_err = list()
                 for line in traceback.format_tb(e_tb):
                     o_err.append (line.rstrip().encode('utf-8'))
-                o_err.append (b'-=' * 20)
+                o_err.append (('-=' * 20).encode('ascii'))
                 o_err.extend ([_exc.rstrip().encode('utf-8')
                     for _exc in traceback.format_exception_only(e_type, e_value)])
-                os.write(sys.__stdout__.fileno(), b'\n'.join(o_err))
+                os.write(sys.__stdout__.fileno(), '\n'.join(o_err))
                 os._exit(1)
             else:
                 os._exit(0)
-
-        # parent
-        exc_output = b''
-        while True:
-            _exc = os.read(master_fd, 65534)
-            if not _exc:
-                break
-            exc_output += _exc
 
         # parent process asserts exit code is 0, causing test
         # to fail if child process raised an exception/assertion
         pid, status = os.waitpid(pid, 0)
 
+        exc_output = ''
+        while True:
+            try:
+                _exc = os.read(master_fd, 65534)
+            except OSError:
+                # linux EOF
+                break
+            if _exc == '':
+                # bsd EOF
+                break
+            exc_output += _exc
+
+
         # Display any output written by child process (esp. those
         # AssertionError exceptions written to stderr).
         exc_output_msg = 'Output in child process:\n%s\n%s\n%s' % (
                 u'=' * 40, exc_output.decode('utf-8'), u'=' * 40,)
-        eq_(b'', exc_output, exc_output_msg)
+        eq_('', exc_output, exc_output_msg)
 
         # Also test exit status is non-zero
         eq_(os.WEXITSTATUS(status), 0)
@@ -319,10 +324,10 @@ def test_callable_mixed_typeError():
         t.color('1', '1')
 
     @as_subprocess
-#    @raises(TypeError)
+    @raises(TypeError)
     def child_move_float():
-        #import warnings
-        #warnings.filterwarnings("error", category=TypeError)
+        import warnings
+        warnings.filterwarnings("error", category=TypeError)
         #term = TestTerminal(force_styling=True)
         term = TestTerminal()
         term.move(1.0, 1.0)
@@ -348,7 +353,7 @@ def test_num_colors_no_tty_or_styling():
         eq_(t.number_of_colors, 0)
     @as_subprocess
     def child_8():
-        t = TestTerminal(kind='dtterm', stream=StringIO())
+        t = TestTerminal(kind='ansi', stream=StringIO())
         eq_(t.number_of_colors, 0)
     @as_subprocess
     def child_0():
@@ -366,7 +371,7 @@ def test_num_colors_no_tty_force_styling():
         eq_(t.number_of_colors, 256)
     @as_subprocess
     def child_8():
-        t = TestTerminal(kind='dtterm', stream=StringIO(), force_styling=True)
+        t = TestTerminal(kind='ansi', stream=StringIO(), force_styling=True)
         eq_(t.number_of_colors, 8)
     @as_subprocess
     def child_0():
@@ -384,7 +389,7 @@ def test_number_of_colors_with_tty():
         eq_(t.number_of_colors, 256)
     @as_subprocess
     def child_8():
-        t = TestTerminal(kind='dtterm')
+        t = TestTerminal(kind='ansi')
         eq_(t.number_of_colors, 8)
     @as_subprocess
     def child_0():
