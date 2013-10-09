@@ -6,7 +6,7 @@ but there are concrete integration-testing benefits in not doing so. For
 instance, ``tigetstr`` changed its return type in Python 3.2.3. So instead, we
 simply create all our test ``Terminal`` instances with a known terminal type.
 All we require from the host machine is that a standard terminfo definition of
-xterm-256color exists.
+xterm-256color, ansi, and vt220 exists.
 
 """
 from __future__ import with_statement  # Make 2.5-compatible
@@ -327,9 +327,8 @@ def test_callable_mixed_typeError():
     @raises(TypeError)
     def child_move_float():
         import warnings
-        warnings.filterwarnings("error", category=TypeError)
-        #term = TestTerminal(force_styling=True)
-        term = TestTerminal()
+        warnings.filterwarnings("error", category=DeprecationWarning)
+        term = TestTerminal(force_styling=True)
         term.move(1.0, 1.0)
 
     child_move_mixed()
