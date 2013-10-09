@@ -573,7 +573,7 @@ def testsequence_is_movement_false():
     """ Test parsers for correctness about sequences that do not move the cursor. """
     @as_subprocess
     def child_mnemonics():
-    from blessings import sequence_length, sequence_is_movement
+        from blessings import sequence_length, sequence_is_movement
         t = TestTerminal()
         eq_(sequence_is_movement(u''), False)
         eq_(0, sequence_length(u''))
@@ -632,6 +632,7 @@ def testsequence_is_movement_false():
 
     @as_subprocess
     def child_rawcodes():
+        from blessings import sequence_length, sequence_is_movement
         # some raw code variations of multi-valued sequences
         # vanilla
         eq_(len(u'\x1b[0m'), sequence_length(u'\x1b[0m'))
