@@ -693,6 +693,16 @@ def test_SequenceWrapper():
                 ('whugga ' * 10) + ('choo, choo! ')) * 30
         pgraph_colored = u''.join([t.color(n % 7) + t.bold + ch
             for n, ch in enumerate(pgraph)])
+
+        # set pty winsize for t.width
+        lines, cols = 20, 40
+        TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
+        if TIOCSWINSZ == 2148037735:
+            TIOCSWINSZ = -2146929561
+        val = struct.pack('HHHH', lines, cols, 0, 0)
+        ioctl(sys.__stdout__.fileno(), TIOCSWINSZ, val)
+
+        # begin textwrap tests,
         import textwrap
         internal_wrapped = textwrap.wrap(pgraph, t.width, break_long_words=False)
         my_wrapped = t.wrap(pgraph)
