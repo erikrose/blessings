@@ -319,6 +319,50 @@ It's simple to get the height and width of the terminal, in characters::
 These are newly updated each time you ask for them, so they're safe to use from
 SIGWINCH handlers.
 
+Sequence Awareness
+------------------
+
+Blessings is fully aware of the printable width of strings containing sequences,
+providing .center, .ljust, and .rjust methods on the Terminal class, using the
+screen width as the default value of ``width``::
+
+    from blessings import Terminal
+
+    term = Terminal()
+    print term.move(term.height / 2) + term.center(term.bold('Bold and Centered'))
+
+Additionally, a sequence-aware version of textwrap.wrap() is supplied on the
+Terminal class, so now you may prettyfy text, but continue to wrap it in the same
+way you would wrap plaintext::
+
+    from blessings import Terminal
+
+    term = Terminal()
+
+    # from Chapter 63 of Tao Te Ching
+    poem = ('Plan difficult tasks through the simplest tasks',
+            'Achieve large tasks through the smallest tasks',
+            'The difficult tasks of the world',
+            'Must be handled through the simple tasks',
+            'The large tasks of the world',
+            'Must be handled through the small tasks',
+            'Therefore, sages never attempt great deeds all through life',
+            'Thus they can achieve greatness',)
+
+    def bg_3tone(line):
+      # bold green the first word, then alternate bold_cyan and cyan
+      return ' '.join((
+            (term.bold_green if not n
+             else term.bold_cyan if n % 2
+             else term.cyan)(part)
+                     for n, part in enumerate(line.split())))
+
+    # wrap each line of a colorized version of the poem to 25 columns,
+    # with subsequent lines padded by 4 spaces.
+    for line_seq in (bg_3tone(line) for line in poem):
+        print '\n'.join(term.wrap(line_seq, width=25, subsequent_indent=' '*4))
+
+
 Clearing The Screen
 -------------------
 
