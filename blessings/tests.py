@@ -62,8 +62,13 @@ class as_subprocess:
 
         exc_output = b''
         while True:
-            _exc = os.read(master_fd, 65534)
-            if not _exc:
+            try:
+                _exc = os.read(master_fd, 65534)
+            except OSError:
+                # linux EOF
+                break
+            if _exc == '':
+                # bsd EOF
                 break
             exc_output += _exc
 
