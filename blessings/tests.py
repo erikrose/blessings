@@ -701,6 +701,17 @@ def test_SequenceWrapper():
         # ensure our last line ends at the same column
         from blessings import Sequence
         eq_(len(internal_wrapped[-1]), Sequence(my_wrapped_colored[-1]).__len__())
+
+        # test subsequent_indent=
+        internal_wrapped = textwrap.wrap(pgraph, t.width, break_long_words=False, subsequent_indent=' '*4)
+        my_wrapped = t.wrap(pgraph, subsequent_indent=' '*4)
+        my_wrapped_colored = t.wrap(pgraph_colored, subsequent_indent=' '*4)
+
+        eq_(internal_wrapped, my_wrapped)
+        eq_(len(internal_wrapped), len(t.wrap(pgraph_colored)))
+        eq_(len(internal_wrapped[-1]), Sequence(my_wrapped_colored[-1]).__len__())
+
+
     child()
 
 def test_Sequence():
