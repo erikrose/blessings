@@ -592,7 +592,6 @@ def test_SequenceWrapper():
         eq_(internal_wrapped, my_wrapped)
         eq_(len(internal_wrapped), len(my_wrapped_colored))
         eq_(len(internal_wrapped[-1]), Sequence(my_wrapped_colored[-1]).__len__())
-
     child()
 
 def test_Sequence():
