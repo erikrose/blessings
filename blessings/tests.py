@@ -550,134 +550,17 @@ def test_sequence_is_movement_true():
             eq_(len('\x1b' + subseq), _sequence_length('\x1b' + subseq))
     child()
 
-
-def testsequence_is_movement_false():
-    """ Test parsers for correctness about sequences that do not move the cursor. """
-    @as_subprocess
-    def child_mnemonics():
-        from blessings import sequence_length, sequence_is_movement
-        t = TestTerminal()
-        eq_(sequence_is_movement(u''), False)
-        eq_(0, sequence_length(u''))
-        # not even a mbs
-        eq_(sequence_is_movement(u'xyzzy'), False)
-        eq_(0, sequence_length(u'xyzzy'))
-        # a single escape is not movement
-        eq_(sequence_is_movement(u'\x1b'), False)
-        eq_(0, sequence_length(u'\x1b'))
-        # negative numbers, though printable as %d, do not result
-        # in movement; just garbage. Also not a valid sequence.
-        eq_(sequence_is_movement(t.cuf(-333)), False)
-        eq_(0, sequence_length(t.cuf(-333)))
-        # sgr reset
-        eq_(sequence_is_movement(u'\x1b[m'), False)
-        eq_(len(u'\x1b[m'), sequence_length(u'\x1b[m'))
-        # save cursor (sc)
-        eq_(sequence_is_movement(u'\x1b[s'), False)
-        eq_(len(u'\x1b[s'), sequence_length(u'\x1b[s'))
-        # restore cursor (rc)
-        eq_(sequence_is_movement(u'\x1b[s'), False)
-        eq_(len(u'\x1b[s'), sequence_length(u'\x1b[s'))
-        # fake sgr
-        eq_(sequence_is_movement(u'\x1b[01;02m'), False)
-        eq_(len(u'\x1b[01;02m'), sequence_length(u'\x1b[01;02m'))
-        # shift code page
-        eq_(sequence_is_movement(u'\x1b(0'), False)
-        eq_(len(u'\x1b(0'), sequence_length(u'\x1b(0'))
-        eq_(sequence_is_movement(t.clear_eol), False)
-        eq_(len(t.clear_eol), sequence_length(t.clear_eol))
-        # various erases don't *move*
-        eq_(sequence_is_movement(t.clear_bol), False)
-        eq_(len(t.clear_bol), sequence_length(t.clear_bol))
-        eq_(sequence_is_movement(t.clear_eos), False)
-        eq_(len(t.clear_eos), sequence_length(t.clear_eos))
-        eq_(sequence_is_movement(t.bold), False)
-        eq_(len(t.bold), sequence_length(t.bold))
-        # various paints don't move
-        eq_(sequence_is_movement(t.red), False)
-        eq_(len(t.red), sequence_length(t.red))
-        eq_(sequence_is_movement(t.civis), False)
-        eq_(len(t.civis), sequence_length(t.civis))
-        eq_(sequence_is_movement(t.cnorm), False)
-        # t.cnorm actually returns two sequences on xterm-256color
-        for subseq in t.cnorm.split('\x1b')[1:]:
-            eq_(len('\x1b' + subseq), sequence_length('\x1b' + subseq))
-        eq_(sequence_is_movement(t.cvvis), False)
-        eq_(len(t.cvvis), sequence_length(t.cvvis))
-        eq_(sequence_is_movement(t.underline), False)
-        eq_(len(t.underline), sequence_length(t.underline))
-        eq_(sequence_is_movement(t.reverse), False)
-        eq_(len(t.reverse), sequence_length(t.reverse))
-        for _num in range(256):
-            eq_(sequence_is_movement(t.color(_num)), False)
-            eq_(len(t.color(_num)), sequence_length(t.color(_num)))
-
-    @as_subprocess
-    def child_raw():
-        from blessings import sequence_length, sequence_is_movement
-        # some raw code variations of multi-valued sequences
-        # vanilla
-        eq_(len(u'\x1b[0m'), sequence_length(u'\x1b[0m'))
-        eq_(sequence_is_movement(u'\x1b[0m'), False)
-        # bold
-        eq_(len(u'\x1b[0;1m'), sequence_length(u'\x1b[0;1m'))
-        eq_(sequence_is_movement(u'\x1b[0;1m'), False)
-        # bold
-        eq_(len(u'\x1b[;1m'), sequence_length(u'\x1b[;1m'))
-        eq_(sequence_is_movement(u'\x1b[;1m'), False)
-        # underline
-        eq_(len(u'\x1b[;4m'), sequence_length(u'\x1b[;4m'))
-        eq_(sequence_is_movement(u'\x1b[;4m'), False)
-        # blink
-        eq_(len(u'\x1b[0;5m'), sequence_length(u'\x1b[0;5m'))
-        eq_(sequence_is_movement(u'\x1b[0;5m'), False)
-        # bold blink
-        eq_(len(u'\x1b[0;5;1m'), sequence_length(u'\x1b[0;5;1m'))
-        eq_(sequence_is_movement(u'\x1b[0;5;1m'), False)
-        # underline blink
-        eq_(len(u'\x1b[0;4;5m'), sequence_length(u'\x1b[0;4;5m'))
-        eq_(sequence_is_movement(u'\x1b[0;4;5m'), False)
-        # bold underline blink
-        eq_(len(u'\x1b[0;1;4;5m'), sequence_length(u'\x1b[0;1;4;5m'))
-        eq_(sequence_is_movement(u'\x1b[0;1;4;5m'), False)
-        # negative
-        eq_(len(u'\x1b[1;4;5;0;7m'), sequence_length(u'\x1b[1;4;5;0;7m'))
-        eq_(sequence_is_movement(u'\x1b[1;4;5;0;7m'), False)
-        # bold negative
-        eq_(len(u'\x1b[0;1;7m'), sequence_length(u'\x1b[0;1;7m'))
-        eq_(sequence_is_movement(u'\x1b[0;1;7m'), False)
-        # underline negative
-        eq_(len(u'\x1b[0;4;7m'), sequence_length(u'\x1b[0;4;7m'))
-        eq_(sequence_is_movement(u'\x1b[0;4;7m'), False)
-        # bold underline negative
-        eq_(len(u'\x1b[0;1;4;7m'), sequence_length(u'\x1b[0;1;4;7m'))
-        eq_(sequence_is_movement(u'\x1b[0;1;4;7m'), False)
-        # blink negative
-        eq_(len(u'\x1b[1;4;;5;7m'), sequence_length(u'\x1b[1;4;;5;7m'))
-        eq_(sequence_is_movement(u'\x1b[1;4;;5;7m'), False)
-        # bold blink negative
-        eq_(len(u'\x1b[0;1;5;7m'), sequence_length(u'\x1b[0;1;5;7m'))
-        eq_(sequence_is_movement(u'\x1b[0;1;5;7m'), False)
-        # underline blink negative
-        eq_(len(u'\x1b[0;4;5;7m'), sequence_length(u'\x1b[0;4;5;7m'))
-        eq_(sequence_is_movement(u'\x1b[0;4;5;7m'), False)
-        # bold underline blink negative
-        eq_(len(u'\x1b[0;1;4;5;7m'), sequence_length(u'\x1b[0;1;4;5;7m'))
-        eq_(sequence_is_movement(u'\x1b[0;1;4;5;7m'), False)
-
-    child_mnemonics()
-    child_raw()
-
 def test_SequenceWrapper():
     """ Test that text wrapping accounts for sequences correctly. """
     @as_subprocess
     def child():
+        import textwrap
         # set the pty's virtual window size
         lines, cols = 5, 15
         TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
         if TIOCSWINSZ == 2148037735:
             TIOCSWINSZ = -2146929561
-        val = struct.pack('HHHH', cols, lines, 0, 0)
+        val = struct.pack('HHHH', lines, cols, 0, 0)
         ioctl(sys.__stdout__.fileno(), TIOCSWINSZ, val)
 
         # build a test paragraph, along with a very colorful version
@@ -909,68 +792,3 @@ def test_sequence_is_movement_false():
         eq_(_sequence_is_movement(u'\x1b[0;1;4;5;7m'), False)
     child_rawcodes()
 
-def test_SequenceWrapper():
-    """ Test that text wrapping accounts for sequences correctly. """
-    @as_subprocess
-    def child():
-        t = TestTerminal()
-        pgraph = 'pony express, all aboard, choo, choo! '  + (
-                ('whugga ' * 10) + ('choo, choo! ')) * 30
-        pgraph_colored = u''.join([t.color(n % 7) + t.bold + ch
-            for n, ch in enumerate(pgraph)])
-
-        # set pty winsize for t.width
-        lines, cols = 20, 40
-        TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
-        if TIOCSWINSZ == 2148037735:
-            TIOCSWINSZ = -2146929561
-        val = struct.pack('HHHH', lines, cols, 0, 0)
-        ioctl(sys.__stdout__.fileno(), TIOCSWINSZ, val)
-
-        # begin textwrap tests,
-        import textwrap
-        internal_wrapped = textwrap.wrap(pgraph, t.width, break_long_words=False)
-        my_wrapped = t.wrap(pgraph)
-        my_wrapped_colored = t.wrap(pgraph_colored)
-        # ensure we textwrap ascii the same as python
-        eq_(internal_wrapped, my_wrapped)
-        # ensure our colored textwrap is the same line length
-        eq_(len(internal_wrapped), len(t.wrap(pgraph_colored)))
-        # ensure our last line ends at the same column
-        from blessings import Sequence
-        eq_(len(internal_wrapped[-1]), Sequence(my_wrapped_colored[-1]).__len__())
-
-        # test subsequent_indent=
-        internal_wrapped = textwrap.wrap(pgraph, t.width, break_long_words=False, subsequent_indent=' '*4)
-        my_wrapped = t.wrap(pgraph, subsequent_indent=' '*4)
-        my_wrapped_colored = t.wrap(pgraph_colored, subsequent_indent=' '*4)
-
-        eq_(internal_wrapped, my_wrapped)
-        eq_(len(internal_wrapped), len(t.wrap(pgraph_colored)))
-        eq_(len(internal_wrapped[-1]), Sequence(my_wrapped_colored[-1]).__len__())
-
-
-    child()
-
-def test_Sequence():
-    """Tests functions related to Sequence class, namely ljust, rjus"""
-    @as_subprocess
-    def child():
-        t = TestTerminal()
-        from blessings import Sequence
-        pony_msg = 'pony express, all aboard, choo, choo! '
-        pony_len = len(pony_msg)
-        pony_colored = u''.join(
-                [t.color(n % 7) + ch for n, ch in enumerate(pony_msg)]
-                + [t.normal])
-        ladjusted = Sequence(t.ljust(pony_colored))
-        radjusted = Sequence(t.rjust(pony_colored))
-        centered = Sequence(t.center(pony_colored))
-        eq_(Sequence(pony_colored).__len__(), pony_len)
-        eq_(Sequence(centered.strip()).__len__(), pony_len)
-        eq_(Sequence(centered).__len__(), len(pony_msg.center(t.width)))
-        eq_(Sequence(ladjusted.rstrip()).__len__(), pony_len)
-        eq_(Sequence(ladjusted).__len__(), len(pony_msg.ljust(t.width)))
-        eq_(Sequence(radjusted.lstrip()).__len__(), pony_len)
-        eq_(Sequence(radjusted).__len__(), len(pony_msg.rjust(t.width)))
-    child()
