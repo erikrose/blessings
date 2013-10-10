@@ -585,7 +585,8 @@ def test_SequenceWrapper():
         eq_(len(internal_wrapped[-1]), Sequence(my_wrapped_colored[-1]).__len__())
 
         # test subsequent_indent=
-        internal_wrapped = textwrap.wrap(pgraph, t.width, break_long_words=False, subsequent_indent=' '*4)
+        internal_wrapped = textwrap.wrap(pgraph, t.width,
+                break_long_words=False, subsequent_indent=' '*4)
         my_wrapped = t.wrap(pgraph, subsequent_indent=' '*4)
         my_wrapped_colored = t.wrap(pgraph_colored, subsequent_indent=' '*4)
 
