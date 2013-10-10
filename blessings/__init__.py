@@ -800,9 +800,10 @@ class _SequenceTextWrapper(textwrap.TextWrapper):
 
     def _wrap_chunks(self, chunks):
         """
-        escape-sequence aware varient of wrap_chunks, though
+        escape-sequence aware varient of _wrap_chunks. Though
         movement sequences, such as term.left() are certainly not
-        honored.
+        honored, sequences such as term.bold() are, and are not
+        broken mid-sequence.
         """
         lines = []
         if self.width <= 0 or not isinstance(self.width, int):
