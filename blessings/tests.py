@@ -601,7 +601,6 @@ def test_Sequence():
     @as_subprocess
     def child():
         t = TestTerminal()
-        from blessings import Sequence
         pony_msg = 'pony express, all aboard, choo, choo! '
         pony_len = len(pony_msg)
         pony_colored = u''.join(
