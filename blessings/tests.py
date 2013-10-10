@@ -570,7 +570,6 @@ def test_SequenceWrapper():
         pgraph_colored = u''.join([t.color(n % 7) + t.bold + ch
             for n, ch in enumerate(pgraph)])
 
-        import textwrap
         internal_wrapped = textwrap.wrap(pgraph, t.width, break_long_words=False)
         my_wrapped = t.wrap(pgraph)
         my_wrapped_colored = t.wrap(pgraph_colored)
