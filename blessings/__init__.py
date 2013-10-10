@@ -875,24 +875,6 @@ class Sequence(unicode):
         # ``nxt``: points to first character beyond current escape sequence.
         # ``width``: currently estimated display length.
         nxt, width = 0, 0
-
-        def get_padding(text):
-            """ get_padding(S) -> integer
-
-            Returns int('nn') in SGR sequence '\\033[nnC' for use with replacing
-            Terminal().right(nn) with printable characters, Otherwise 0 if
-            ``S`` is not an escape sequence, or an SGR sequence of form '\\033[nnC'.
-            """
-            # Use case: displaying ansi art, which presumes \r\n remains
-            # that line as empty; however, if this ansi art is placed in a
-            # pager window, and scrolling upward is performed, or re-displayed
-            # over existing text, then an undesirable "ghosting" effect occurs,
-            # where previously displayed artwork is not overwritten.
-            right = _SEQ_SGR_RIGHT.match(text)
-            return (0 if right is None
-                    else int(right.group(1)))
-            # XXX test get_padding(1), make global method and test directly
-
         for idx in range(0, unicode.__len__(self)):
             # account for width of sequences that contain padding (a sort of
             # SGR-equivalent cheat for the python equivalent of ' '*N, for
@@ -962,6 +944,25 @@ def _sequence_length(ucs):
     # no matching sequence found
     return 0
 
+
+def _sequence_padding(text):
+    """ _sequence_padding(S) -> integer
+
+    Returns int('nn') in SGR sequence '\\033[nnC' for use with replacing
+    Terminal().right(nn) with printable characters, Otherwise 0 if
+    ``S`` is not an escape sequence, or an SGR sequence of form '\\033[nnC'.
+    """
+    # Use case: displaying ansi art, which presumes \r\n remains
+    # that line as empty; however, if this ansi art is placed in a
+    # pager window, and scrolling upward is performed, or re-displayed
+    # over existing text, then an undesirable "ghosting" effect occurs,
+    # where previously displayed artwork is not overwritten.
+    right = _SEQ_SGR_RIGHT.match(text)
+    return (0 if right is None
+            else int(right.group(1)))
+
+
+def _sequence_is_movement(ucs):
     """
     _sequence_is_movement(S) -> bool
 
