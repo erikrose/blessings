@@ -635,7 +635,7 @@ def test_setupterm_singleton_issue33():
             del warnings
     child()
 
-def testsequence_is_movement_true():
+def test_sequence_is_movement_true():
     """ Test parsers for correctness about sequences that result in cursor movement. """
     @as_subprocess
     def child():
