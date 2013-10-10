@@ -582,7 +582,6 @@ def test_SequenceWrapper():
         eq_(len(internal_wrapped), len(t.wrap(pgraph_colored)))
 
         # ensure our last line ends at the same column
-        from blessings import Sequence
         eq_(len(internal_wrapped[-1]), Sequence(my_wrapped_colored[-1]).__len__())
 
         # test subsequent_indent=
