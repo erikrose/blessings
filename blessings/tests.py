@@ -597,7 +597,7 @@ def test_SequenceWrapper():
     child()
 
 def test_Sequence():
-    """Tests functions related to Sequence class, namely ljust, rjus"""
+    """Tests methods related to Sequence class, namely ljust, rjust, center"""
     @as_subprocess
     def child():
         t = TestTerminal()
