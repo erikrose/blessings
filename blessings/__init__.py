@@ -668,7 +668,7 @@ class Terminal(object):
             if not line.strip():
                 lines.append(u'')
                 continue
-            for wrapped in SequenceTextWrapper(width, **kwargs).wrap(text):
+            for wrapped in _SequenceTextWrapper(width, **kwargs).wrap(text):
                 lines.append(wrapped)
         return lines
 
@@ -796,7 +796,7 @@ class NullCallableString(unicode):
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
 
-class SequenceTextWrapper(textwrap.TextWrapper):
+class _SequenceTextWrapper(textwrap.TextWrapper):
 
     def _wrap_chunks(self, chunks):
         """
@@ -859,7 +859,7 @@ class Sequence(unicode):
                 + fillchar * (max(0, int(math.ceil(split)))))
     @property
     def will_move(self):
-        return sequence_is_movement(self)
+        return _sequence_is_movement(self)
 
     def __len__(self):
         """  S.__len__() -> integer
@@ -898,10 +898,10 @@ class Sequence(unicode):
             # very large values of N that may xmit fewer bytes than many raw
             # spaces. It should be noted, however, that this is a
             # non-destructive space.
-            width += get_padding(self[idx:])
+            width += _sequence_padding(self[idx:])
             if idx == nxt:
                 # point beyond this sequence
-                nxt = idx + sequence_length(self[idx:])
+                nxt = idx + _sequence_length(self[idx:])
             if nxt <= idx:
                 # TODO:
                 # 'East Asian Fullwidth' and 'East Asian Wide' characters
@@ -914,7 +914,7 @@ class Sequence(unicode):
                 # those east asian fullwidth characters.
                 width += 1
                 # point beyond next sequence, if any, otherwise next character
-                nxt = idx + sequence_length(self[idx:]) + 1
+                nxt = idx + _sequence_length(self[idx:]) + 1
         return width
 
 
@@ -937,9 +937,9 @@ def split_into_formatters(compound):
     return merged_segs
 
 
-def sequence_length(ucs):
+def _sequence_length(ucs):
     """
-    sequence_length(S) -> integer
+    _sequence_length(S) -> integer
 
     Returns non-zero for string ``S`` that begins with an escape sequence,
     with value of the number of characters until sequence is complete.  For
@@ -961,9 +961,8 @@ def sequence_length(ucs):
     # no matching sequence found
     return 0
 
-def sequence_is_movement(ucs):
     """
-    sequence_is_movement(S) -> bool
+    _sequence_is_movement(S) -> bool
 
     Returns True for string ``S`` that begins with an escape sequence that
     may cause the cursor position to move.
