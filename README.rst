@@ -323,23 +323,25 @@ Sequence Awareness
 ------------------
 
 Blessings is fully aware of the printable width of strings containing sequences,
-providing .center, .ljust, and .rjust methods on the Terminal class, using the
-screen width as the default value of ``width``::
+providing ``.center``, ``.ljust``, and ``.rjust`` methods on the Terminal class,
+using the terminal screen's width as the default ``width`` value::
 
     from blessings import Terminal
 
     term = Terminal()
     print term.move(term.height / 2) + term.center(term.bold('Bold and Centered'))
 
-Additionally, a sequence-aware version of textwrap.wrap() is supplied on the
-Terminal class, so now you may prettyfy text, but continue to wrap it in the same
-way you would wrap plaintext::
+Additionally, a sequence-aware version of ``textwrap.wrap()`` is supplied on the
+Terminal class as ``.wrap``, so now you may stylize text, but continue to
+word-wrap it in the same way you would wrap plaintext. The default ``width`` value
+is also the Terminal screen's width, and it accepts all of the same keyword values
+as the ``textwrap.wrap()`` function. This example uses a static width value 25 with
+a short poem from Chapter 63 of Tao Te Ching::
 
     from blessings import Terminal
 
     term = Terminal()
 
-    # from Chapter 63 of Tao Te Ching
     poem = ('Plan difficult tasks through the simplest tasks',
             'Achieve large tasks through the smallest tasks',
             'The difficult tasks of the world',
