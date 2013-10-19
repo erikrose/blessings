@@ -45,13 +45,13 @@ _SEQ_WONTMOVE = re.compile(
         r'|\[('  # \x1b[: Begin Control Sequence Initiator(CSI) ...
             r'[0-2]?[JK]'  # J:erase in display (0=below,1=above,2=All)
                            # K:erase in line (0=right,1=left,2=All)
-            r'|\d{1,4};\d{1,4};\d{1,4};\d{1,4};\d{1,4}T'
+            r'|\d+;\d+;\d+;\d+;\dT'
                             # Initiate hilite mouse tracking, params are
                             # func;startx;starty;firstrow;lastrow
             r'|[025]W'  # tabular funcs: 0=set,2=clear Current,5=clear All
             r'|[03]g'  # tab clear: 0=current,3=all
             r'|4[hl]'  # hl: insert, replace mode.
-            r'|(\d{0,3}(;\d{0,3}){1,5}|\d{1,3}|)m' # |(\d{1;3})
+            r'|(\d{0,3}(;\d{0,3}){1,5}|\d{1,3}|)m'
                          # SGR (attributes), extraordinarily forgiving!
             r'|0?c'  # send device attributes (terminal replies!)
             r'|[5-8]n'  # device status report, 5: answers OK, 6: cursor pos,
