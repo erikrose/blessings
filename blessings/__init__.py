@@ -800,8 +800,8 @@ class Sequence(unicode):
 
         Return the printable length of a string that contains (some types) of
         (escape) sequences. Although accounted for, strings containing
-        sequences such as cls() will not give accurate returns (length of 0).
-        backspace (\b) delete (chr(127)), are accounted for, however.
+        sequences such as 'clear' will not give accurate returns
+        (length of 0).
         """
         # TODO: also \a, and other such characters are accounted for in the
         #       same way that python does, they are considered 'lengthy'
