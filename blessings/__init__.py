@@ -569,6 +569,16 @@ class Terminal(object):
             width = self.width
         return Sequence(text).center(width, fillchar)
 
+    @staticmethod
+    def length(text):
+        """T.length(text) -> int
+
+        Return printable length of string ``text``, which may contain (some
+        kinds) of sequences. Strings containing sequences such as 'clear',
+        which repositions the cursor will not give accurate results.
+        """
+        return Sequence(text).__len__()
+
     def wrap(self, text, width=None, **kwargs):
         """
         T.wrap(S, [width=None, indent=u'']) -> unicode
