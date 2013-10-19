@@ -634,6 +634,7 @@ def test_setupterm_singleton_issue33():
             del warnings
     child()
 
+
 def test_sequence_is_movement_true():
     """ Test parsers for correctness about sequences that result in cursor movement. """
     @as_subprocess
@@ -783,4 +784,54 @@ def test_sequence_is_movement_false():
         eq_(len(u'\x1b[0;1;4;5;7m'), _unprintable_length(u'\x1b[0;1;4;5;7m'))
         eq_(_sequence_is_movement(u'\x1b[0;1;4;5;7m'), False)
     child_rawcodes()
+
+
+def test_string_containing_unprintable_length():
+    """ Ensure T.length(string containing sequence) is correct. """
+    @as_subprocess
+    def child():
+        from itertools import chain, cycle
+        t = TestTerminal()
+        # Create a list of ascii characters, to be seperated
+        # by word, to be zipped up with a cycling list of
+        # terminal sequences. Then, compare the length of
+        # each, the basic plain_text.__len__ vs. the Terminal
+        # method length. They should be equal.
+        plain_text = ('The softest things of the world '
+                      'Override the hardest things of the world '
+                      'That which has no substance '
+                      'Enters into that which has no openings')
+        seqs = (t.bold, t.underline, t.bold_underline, t.bold_red,
+                t.reverse_red, t.blink_red, t.home, t.clear_eol,
+                t.enter_fullscreen, t.exit_fullscreen,)
+        text_wseqs = u''.join(chain(*zip(plain_text, cycle(seqs))))
+        #sys.stderr.write(text_wseqs)
+        eq_(t.length(text_wseqs), len(plain_text))
+        # horizontally, we decide move_down and move_up are 0,
+        eq_(t.length(t.move_down), 0)
+        eq_(t.length(t.move_down(2)), 0)
+        eq_(t.length(t.move_up), 0)
+        eq_(t.length(t.move_up(2)), 0)
+        # other things aren't so simple, somewhat edge cases,
+        # moving backwards and forwards horizontally must be
+        # accounted for as a "length", as <x><move right 10><y>
+        # will result in a printed column length of 12 (even
+        # though columns 2-11 are non-destructive space
+        eq_(t.length('\b'), -1)
+        eq_(t.length(t.move_left), -1)
+        eq_(t.length(t.cub(10)), -10)
+        eq_(t.length(t.move_right), 1)
+        eq_(t.length(t.cuf(10)), 10)
+
+        # vertical spacing is unaccounted as a 'length'
+        eq_(t.length(t.move_up), 0)
+        eq_(t.length(t.cuu(10)), 0)
+        eq_(t.length(t.move_down), 0)
+        eq_(t.length(t.cud(10)), 0)
+        # this is how manpages perform underlining, this is done
+        # with the 'overstrike' capability of teletypes, and aparently
+        # less(1), '123' -> '1\b_2\b_3\b_'
+        text_wseqs = u''.join(chain(*zip(plain_text, cycle(['\b_']))))
+        eq_(t.length(text_wseqs), len(plain_text))
+    child()
 
