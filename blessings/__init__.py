@@ -916,4 +916,4 @@ def _sequence_is_movement(ucs):
     """
     if len(ucs) and ucs[0] in u'\r\n\b':
         return True
-    return False if _SEQ_WILLMOVE.match(ucs) is None else True
+    return bool(_SEQ_WILLMOVE.match(ucs))
