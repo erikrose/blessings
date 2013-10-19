@@ -114,7 +114,7 @@ class Terminal(object):
             stream_descriptor = None
 
         self._is_a_tty = (stream_descriptor is not None and
-                         isatty(stream_descriptor))
+                          isatty(stream_descriptor))
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
@@ -275,10 +275,10 @@ class Terminal(object):
                 lines, cols, _yp, _xp = get_winsize(descriptor)
                 return lines, cols
             except IOError:
-                # when output is a non-tty, and init_descriptor stdout, is piped
-                # to another program, such as tee(1), this ioctl will raise
-                # an IOError.
+                # when output is a non-tty and piped to another program,
+                # such as tee(1), this ioctl will raise an IOError.
                 pass
+        # in the case that our stream is not a tty, we fallback to env values.
         lines = int(environ.get('LINES', '24'))
         cols = int(environ.get('COLUMNS', '80'))
         return lines, cols
@@ -464,8 +464,8 @@ class Terminal(object):
         """T.ljust(text, [width], [fillchar]) -> string
 
         Return string ``text``, left-justified by printable length ``width``.
-        Padding is done using the specified fill character (default is a space).
-        Default width is the attached terminal's width. ``text`` is
+        Padding is done using the specified fill character (default is a
+        space).  Default width is the attached terminal's width. ``text`` is
         escape-sequence safe."""
         if width is None:
             width = self.width
@@ -486,8 +486,8 @@ class Terminal(object):
         """T.center(text, [width], [fillchar]) -> string
 
         Return string ``text``, centered by printable length ``width``.
-        Padding is done using the specified fill character (default is a space).
-        Default width is the attached terminal's width. ``text`` is
+        Padding is done using the specified fill character (default is a
+        space).  Default width is the attached terminal's width. ``text`` is
         escape-sequence safe."""
         if width is None:
             width = self.width
@@ -511,13 +511,14 @@ class Terminal(object):
         terminal instance ``T``, wrapped by the virtual printable length,
         irregardless of the escape sequences it may contain. Returns a list
         of strings that may contain escape sequences. See textwrap.TextWrapper
-        class for available keyword args to customize wrapping behaviour. Note
-        that the keyword argument ``break_long_words`` may not be set True, as
+        class for available keyword args to customize wrapping behaviour.
+
+        Note that the keyword argument ``break_long_words`` may not be set,
         it is not sequence-safe.
         """
         _blw = 'break_long_words'
         assert (_blw not in kwargs or not kwargs[_blw]), (
-                "keyword argument `{}' is not sequence-safe".format(_blw))
+            "keyword argument `{}' is not sequence-safe".format(_blw))
         width = self.width if width is None else width
         lines = []
         for line in text.splitlines():
