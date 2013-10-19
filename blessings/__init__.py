@@ -729,6 +729,7 @@ class NullCallableString(unicode):
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
 
+
 class _SequenceTextWrapper(textwrap.TextWrapper):
 
     def _wrap_chunks(self, chunks):
@@ -791,6 +792,7 @@ class Sequence(unicode):
         split = max(0.0, float(width) - self.__len__()) / 2
         return (fillchar * (max(0, int(math.floor(split)))) + self
                 + fillchar * (max(0, int(math.ceil(split)))))
+
     @property
     def will_move(self):
         return _sequence_is_movement(self)
@@ -814,10 +816,10 @@ class Sequence(unicode):
             # very large values of N that may xmit fewer bytes than many raw
             # spaces. It should be noted, however, that this is a
             # non-destructive space.
-            width += _sequence_padding(self[idx:])
+            width += _horizontal_distance(self[idx:])
             if idx == nxt:
                 # point beyond this sequence
-                nxt = idx + _sequence_length(self[idx:])
+                nxt = idx + _unprintable_length(self[idx:])
             if nxt <= idx:
                 # TODO:
                 # 'East Asian Fullwidth' and 'East Asian Wide' characters
@@ -830,9 +832,8 @@ class Sequence(unicode):
                 # those east asian fullwidth characters.
                 width += 1
                 # point beyond next sequence, if any, otherwise next character
-                nxt = idx + _sequence_length(self[idx:]) + 1
+                nxt = idx + _unprintable_length(self[idx:]) + 1
         return width
-
 
 
 def split_into_formatters(compound):
@@ -853,9 +854,9 @@ def split_into_formatters(compound):
     return merged_segs
 
 
-def _sequence_length(ucs):
+def _unprintable_length(ucs):
     """
-    _sequence_length(S) -> integer
+    _unprintable_length(S) -> integer
 
     Returns non-zero for string ``S`` that begins with a terminal sequence,
     with value of the number of characters until sequence is complete.  For
@@ -876,8 +877,8 @@ def _sequence_length(ucs):
     return 0
 
 
-def _sequence_padding(text):
-    """ _sequence_padding(S) -> integer
+def _horizontal_distance(ucs):
+    """ _horizontal_distance(S) -> integer
 
     Returns Integer n in SGR sequence of form <ESC>[<n>C (T.move_right(nn)).
     Returns Integer -(n) in SGR sequence of form <ESC>[<n>D (T.move_left(nn)).
