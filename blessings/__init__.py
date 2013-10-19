@@ -857,24 +857,22 @@ def _sequence_length(ucs):
     """
     _sequence_length(S) -> integer
 
-    Returns non-zero for string ``S`` that begins with an escape sequence,
+    Returns non-zero for string ``S`` that begins with a terminal sequence,
     with value of the number of characters until sequence is complete.  For
     use as a 'next' pointer to skip past sequences.  If string ``S`` is not
-    a sequence, 0 is returned.
+    a sequence, 0 is returned. A sequence may be a typical terminal sequence
+    beginning with <esc>, especially a Control Sequence Initiator(CSI, \033[),
+    or those of '\a', '\b', '\r', '\n',
     """
-    _esc = '\x1b'
-    ulen = unicode.__len__(ucs)
-    if ulen in (0, 1) or not ucs.startswith(_esc):
-        # '' or '\x1b', or any other value not beginning with '\x1b' returns 0.
-        # A single string of value '\x1b' is not a *sequence* ..
-        # It is simply a single escape character. Though unprintable, it
-        # doesn\'t merit anything on its own.
-        return 0
+    # simple terminal control characters,
+    if any([ucs.startswith(_ch) for _ch in u'\a\b\r\n']):
+        return 1
+    # known multibyte sequences,
     matching_seq = _SEQ_WILLMOVE.match(ucs) or _SEQ_WONTMOVE.match(ucs)
     if matching_seq is not None:
         start, end = matching_seq.span()
         return end
-    # no matching sequence found
+    # none found, must be printable!
     return 0
 
 
