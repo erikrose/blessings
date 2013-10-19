@@ -56,17 +56,17 @@ class as_subprocess:
             else:
                 os._exit(0)
 
-        exc_output = ''
+        exc_output = unicode()
         while True:
             try:
                 _exc = os.read(master_fd, 65534)
             except OSError:
                 # linux EOF
                 break
-            if _exc == '':
+            if not _exc:
                 # bsd EOF
                 break
-            exc_output += _exc
+            exc_output += _exc.decode('utf-8')
 
         # parent process asserts exit code is 0, causing test
         # to fail if child process raised an exception/assertion
@@ -76,7 +76,7 @@ class as_subprocess:
         # Display any output written by child process (esp. those
         # AssertionError exceptions written to stderr).
         exc_output_msg = 'Output in child process:\n%s\n%s\n%s' % (
-                u'=' * 40, exc_output.decode('utf-8'), u'=' * 40,)
+                u'=' * 40, exc_output, u'=' * 40,)
         eq_('', exc_output, exc_output_msg)
 
         # Also test exit status is non-zero
