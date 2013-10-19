@@ -17,7 +17,6 @@ from os import isatty, environ
 from platform import python_version_tuple
 import struct
 import sys
-from termios import TIOCGWINSZ
 import warnings
 import textwrap
 import math
