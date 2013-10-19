@@ -110,7 +110,8 @@ _SEQ_WILLMOVE = re.compile(
     r')'  # end CSI
 r')')  # end x1b
 
-_SEQ_SGR_RIGHT = re.compile(r'\033\[(\d{1,4})C')
+_SEQ_SGR_RIGHT = re.compile(r'\033\[(\d+)?C')
+_SEQ_SGR_LEFT = re.compile(r'\033\[(\d+)?D')
 
 # From libcurses/doc/ncurses-intro.html (ESR, Thomas Dickey, et. al):
 #
@@ -880,18 +881,24 @@ def _sequence_length(ucs):
 def _sequence_padding(text):
     """ _sequence_padding(S) -> integer
 
-    Returns int('nn') in SGR sequence '\\033[nnC' for use with replacing
-    Terminal().right(nn) with printable characters, Otherwise 0 if
-    ``S`` is not an escape sequence, or an SGR sequence of form '\\033[nnC'.
+    Returns Integer n in SGR sequence of form <ESC>[<n>C (T.move_right(nn)).
+    Returns Integer -(n) in SGR sequence of form <ESC>[<n>D (T.move_left(nn)).
+    Returns -1 for backspace (0x08), Otherwise 0.
     """
-    # Use case: displaying ansi art, which presumes \r\n remains
-    # that line as empty; however, if this ansi art is placed in a
-    # pager window, and scrolling upward is performed, or re-displayed
-    # over existing text, then an undesirable "ghosting" effect occurs,
-    # where previously displayed artwork is not overwritten.
-    right = _SEQ_SGR_RIGHT.match(text)
-    return (0 if right is None
-            else int(right.group(1)))
+    # TODO: Return tabstop length for \t
+    if ucs.startswith('\b'):
+        return -1
+    left = _SEQ_SGR_LEFT.match(ucs)
+    if left:
+        cols = left.group(1)
+        return -1 * (int(cols) if cols else 1)
+
+    right = _SEQ_SGR_RIGHT.match(ucs)
+    if right:
+        cols = right.group(1)
+        return int(cols) if cols else 1
+
+    return 0
 
 
 def _sequence_is_movement(ucs):
