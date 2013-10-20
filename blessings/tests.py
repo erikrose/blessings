@@ -510,7 +510,7 @@ def test_init_descriptor_always_initted():
     """We should be able to get a height and width even on no-tty Terminals."""
     @as_subprocess
     def child():
-        t = Terminal(stream=StringIO())
+        t = TestTerminal(stream=StringIO())
         eq_(type(t.height), int)
         eq_(t.stream.getvalue(), '')
     child()
