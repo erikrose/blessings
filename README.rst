@@ -331,38 +331,25 @@ using the terminal screen's width as the default ``width`` value::
     term = Terminal()
     print term.move(term.height / 2) + term.center(term.bold('Bold and Centered'))
 
-Additionally, a sequence-aware version of ``textwrap.wrap()`` is supplied on the
-Terminal class as ``.wrap``, so now you may stylize text, but continue to
-word-wrap it in the same way you would wrap plaintext. The default ``width`` value
-is also the Terminal screen's width, and it accepts all of the same keyword values
-as the ``textwrap.wrap()`` function. This example uses a static width value 25 with
-a short poem from Chapter 63 of Tao Te Ching::
+or, simply measure their printable length using ``.length``.  Naturally, a
+sequence-aware version of ``textwrap.wrap()`` is supplied on the Terminal class
+as method ``.wrap``, so now you may word-wrap stylized text. The default ``width``
+value is also the Terminal screen's width, and it accepts all of the same keyword
+values as the ``textwrap.wrap()`` function.
+
+This example uses a width value of 25 with a short poem from Tao Te Ching::
 
     from blessings import Terminal
 
-    term = Terminal()
+    t = Terminal()
 
-    poem = ('Plan difficult tasks through the simplest tasks',
-            'Achieve large tasks through the smallest tasks',
-            'The difficult tasks of the world',
-            'Must be handled through the simple tasks',
-            'The large tasks of the world',
-            'Must be handled through the small tasks',
-            'Therefore, sages never attempt great deeds all through life',
-            'Thus they can achieve greatness',)
-
-    def bg_3tone(line):
-      # bold green the first word, then alternate bold_cyan and cyan
-      return ' '.join((
-            (term.bold_green if not n
-             else term.bold_cyan if n % 2
-             else term.cyan)(part)
-                     for n, part in enumerate(line.split())))
-
-    # wrap each line of a colorized version of the poem to 25 columns,
-    # with subsequent lines padded by 4 spaces.
-    for line_seq in (bg_3tone(line) for line in poem):
-        print '\n'.join(term.wrap(line_seq, width=25, subsequent_indent=' '*4))
+    poem = (term.bold_blue('Plan difficult tasks ')
+            + term.bold_black('through the simplest tasks'),
+            term.bold_cyan('Achieve large tasks ')
+            + term.cyan('through the smallest tasks'))
+    for line in poem:
+        print('\n'.join(term.wrap(line, width=25,
+                                  subsequent_indent=' '*4)))
 
 
 Clearing The Screen
