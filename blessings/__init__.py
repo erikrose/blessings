@@ -131,8 +131,11 @@ class Terminal(object):
             # send them to stdout as a fallback, since they have to go
             # somewhere.
             cur_term = kind or environ.get('TERM', 'unknown')
+            setupterm(cur_term, self._init_descriptor)
+
             if _CUR_TERM is None or cur_term == _CUR_TERM:
                 _CUR_TERM = cur_term
+                _init_sequence_patterns(self)
             else:
                 warnings.warn('A terminal of kind "%s" has been requested; '
                               'due to an internal python curses bug, terminal '
@@ -141,9 +144,6 @@ class Terminal(object):
                               'this process. see: '
                               'https://github.com/erikrose/blessings/issues/33'
                               % (cur_term, _CUR_TERM,), RuntimeWarning)
-
-            setupterm(cur_term, self._init_descriptor)
-            _init_sequence_patterns(self)
 
         self.stream = stream
 
