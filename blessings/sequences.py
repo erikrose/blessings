@@ -214,7 +214,8 @@ def _unprintable_length(ucs, term=None):
     or those of '\a', '\b', '\r', '\n',
     """
     # simple terminal control characters,
-    if any([ucs.startswith(_ch) for _ch in u'\a\b\r\n']):
+    if any([ucs.startswith(_ch) for _ch in u'\a\b\r\n\x0e\x0f']):
+        # x0e,x0f = shift out, shift in
         return 1
     # known multibyte sequences,
     matching_seq = _SEQ_WILLMOVE.match(ucs) or _SEQ_WONTMOVE.match(ucs)
