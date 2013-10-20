@@ -38,7 +38,7 @@ class as_subprocess:
     def __init__(self, func):
         self.func = func
 
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         pid, master_fd = pty.fork()
         if pid == 0:
             # child process executes function, raises exception
@@ -46,7 +46,7 @@ class as_subprocess:
             # protected _exit() function of ``os``; to prevent the
             # 'SystemExit' exception from being thrown.
             try:
-                self.func()
+                self.func(*args, **kwargs)
             except Exception:
                 e_type, e_value, e_tb = sys.exc_info()
                 o_err = list()
