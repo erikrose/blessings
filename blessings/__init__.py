@@ -470,7 +470,7 @@ class Terminal(object):
         escape-sequence safe."""
         if width is None:
             width = self.width
-        return _Sequence(text).ljust(width, fillchar)
+        return _Sequence(text, self).ljust(width, fillchar)
 
     def rjust(self, text, width=None, fillchar=u' '):
         """T.rjust(text, [width], [fillchar]) -> string
@@ -481,7 +481,7 @@ class Terminal(object):
         escape-sequence safe."""
         if width is None:
             width = self.width
-        return _Sequence(text).rjust(width, fillchar)
+        return _Sequence(text, self).rjust(width, fillchar)
 
     def center(self, text, width=None, fillchar=u' '):
         """T.center(text, [width], [fillchar]) -> string
@@ -492,17 +492,16 @@ class Terminal(object):
         escape-sequence safe."""
         if width is None:
             width = self.width
-        return _Sequence(text).center(width, fillchar)
+        return _Sequence(text, self).center(width, fillchar)
 
-    @staticmethod
-    def length(text):
+    def length(self, text):
         """T.length(text) -> int
 
         Return printable length of string ``text``, which may contain (some
         kinds) of sequences. Strings containing sequences such as 'clear',
         which repositions the cursor will not give accurate results.
         """
-        return _Sequence(text).__len__()
+        return _Sequence(text, self).__len__()
 
     def wrap(self, text, width=None, **kwargs):
         """
@@ -520,6 +519,7 @@ class Terminal(object):
         _blw = 'break_long_words'
         assert (_blw not in kwargs or not kwargs[_blw]), (
             "keyword argument `{}' is not sequence-safe".format(_blw))
+        kwargs['term'] = self.term
         width = self.width if width is None else width
         lines = []
         for line in text.splitlines():

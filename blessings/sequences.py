@@ -45,13 +45,13 @@ class _SequenceTextWrapper(textwrap.TextWrapper):
                     chunks[-1].strip() == '' and lines):
                 del chunks[-1]
             while chunks:
-                chunk_len = len(_Sequence(chunks[-1]))
+                chunk_len = len(_Sequence(chunks[-1], self.term))
                 if cur_len + chunk_len <= width:
                     cur_line.append(chunks.pop())
                     cur_len += chunk_len
                 else:
                     break
-            if chunks and len(_Sequence(chunks[-1])) > width:
+            if chunks and len(_Sequence(chunks[-1], self.term)) > width:
                 self._handle_long_word(chunks, cur_line, cur_len, width)
             if (not hasattr(self, 'drop_whitespace')
                 or self.drop_whitespace) and (
@@ -69,9 +69,9 @@ class _Sequence(unicode):
     .center(), and .len()
     """
 
-    def __new__(cls, term, sequence_text):
+    def __new__(cls, sequence_text, term=None):
         new = unicode.__new__(cls, sequence_text)
-        self.term = term
+        new._term = term
         return new
 
     def ljust(self, width, fillchar=u' '):
@@ -108,10 +108,10 @@ class _Sequence(unicode):
             # very large values of N that may xmit fewer bytes than many raw
             # spaces. It should be noted, however, that this is a
             # non-destructive space.
-            width += _horizontal_distance(self[idx:], term)
+            width += _horizontal_distance(self[idx:], self._term)
             if idx == nxt:
                 # point beyond this sequence
-                nxt = idx + _unprintable_length(self[idx:], term)
+                nxt = idx + _unprintable_length(self[idx:], self._term)
             if nxt <= idx:
                 # TODO:
                 # 'East Asian Fullwidth' and 'East Asian Wide' characters
@@ -124,7 +124,7 @@ class _Sequence(unicode):
                 # those east asian fullwidth characters.
                 width += 1
                 # point beyond next sequence, if any, otherwise next character
-                nxt = idx + _unprintable_length(self[idx:], term) + 1
+                nxt = idx + _unprintable_length(self[idx:], self._term) + 1
         return width
 
 # We provide a database of "typical" sequences. mrxvt_seq.txt by Gautam Iyer
