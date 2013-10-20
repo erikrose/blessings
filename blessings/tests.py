@@ -579,10 +579,10 @@ def test_sequence_is_movement_true():
         eq_(_sequence_is_movement(t.restore, t), True)
         eq_(len(t.restore), _unprintable_length(t.restore, t))
         eq_(len(t.clear), sum([
-            _unprintable_length('\x1b{}'.format(seq), t)
+            _unprintable_length('\x1b%s' % (seq,), t)
             for seq in t.clear.split('\x1b')]))
         eq_(any([
-            _sequence_is_movement('\x1b{}'.format(seq), t)
+            _sequence_is_movement('\x1b%s' % (seq,), t)
             for seq in t.clear.split('\x1b')]), True)
     child()
     child('screen')
@@ -733,16 +733,16 @@ def test_sequence_is_movement_false():
             eq_(len(t.color(_num)), _unprintable_length(t.color(_num), t))
         eq_(_sequence_is_movement(t.normal, t), False)
         eq_(len(t.normal), sum([
-            _unprintable_length('\x1b{}'.format(seq), t)
+            _unprintable_length('\x1b%s' % (seq,), t)
             for seq in t.normal.split('\x1b')]))
         eq_(any([
-            _sequence_is_movement('\x1b{}'.format(seq), t)
+            _sequence_is_movement('\x1b%s' % (seq,), t)
             for seq in t.normal_cursor.split('\x1b')]), False)
         eq_(len(t.normal_cursor), sum([
-            _unprintable_length('\x1b{}'.format(seq), t)
+            _unprintable_length('\x1b%s' % (seq,), t)
             for seq in t.normal_cursor.split('\x1b')]))
         eq_(any([
-            _sequence_is_movement('\x1b{}'.format(seq), t)
+            _sequence_is_movement('\x1b%s' % (seq,), t)
             for seq in t.normal_cursor.split('\x1b')]), False)
         eq_(_sequence_is_movement(t.hide_cursor, t), False)
         eq_(len(t.hide_cursor), _unprintable_length(t.hide_cursor, t))

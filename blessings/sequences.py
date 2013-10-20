@@ -248,12 +248,12 @@ def _horizontal_distance(ucs, term=None):
             SGR sequences (\033[C, \033[D, \033[nC, \033[nD
         """
         # match cub1(left), cuf1(right)
-        one = getattr(term, '{}1'.format(cap))
+        one = getattr(term, '%s1' % (cap,))
         if one and ucs.startswith(one):
             return unit
 
         # match cub(n), cuf(n) using regular expressions
-        re_pattern = getattr(term, '_re_{}'.format(cap))
+        re_pattern = getattr(term, '_re_%s' % (cap,))
         _dist = re_pattern.match(ucs)
         if _dist:
             return unit * int(_dist.group(1))
