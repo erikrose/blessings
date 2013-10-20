@@ -27,8 +27,8 @@ from nose.tools import eq_, raises
 # be imported:
 from blessings import *
 
-
 TestTerminal = partial(Terminal, kind='xterm-256color')
+
 
 class as_subprocess:
     """ This helper executes test cases in a child process,
@@ -76,16 +76,14 @@ class as_subprocess:
         # to fail if child process raised an exception/assertion
         pid, status = os.waitpid(pid, 0)
 
-
         # Display any output written by child process (esp. those
         # AssertionError exceptions written to stderr).
         exc_output_msg = 'Output in child process:\n%s\n%s\n%s' % (
-                u'=' * 40, exc_output, u'=' * 40,)
+            u'=' * 40, exc_output, u'=' * 40,)
         eq_('', exc_output, exc_output_msg)
 
         # Also test exit status is non-zero
         eq_(os.WEXITSTATUS(status), 0)
-
 
 
 def unicode_cap(cap):
@@ -124,6 +122,7 @@ def test_capability_without_tty():
         eq_(t.stream.getvalue(), '')
     child()
 
+
 def test_capability_with_forced_tty():
     """If we force styling, capabilities had better not be empty."""
     @as_subprocess
@@ -133,12 +132,14 @@ def test_capability_with_forced_tty():
         eq_(t.stream.getvalue(), '')
     child()
 
+
 def test_parametrization():
     """Test parametrizing a capability."""
     @as_subprocess
     def child():
         eq_(TestTerminal().cup(3, 4), unicode_parm('cup', 3, 4))
     child()
+
 
 def test_height_and_width_as_int():
     """Assert that ``height_and_width()`` returns ints."""
@@ -148,6 +149,7 @@ def test_height_and_width_as_int():
         assert isinstance(t.height, int)
         assert isinstance(t.width, int)
     child()
+
 
 def test_height_and_width_ioctl():
     """ Create a virtual pty, and set and test a window size of 3, 2. """
@@ -173,6 +175,7 @@ def test_height_and_width_ioctl():
         eq_(Terminal().width, cols)
     child()
 
+
 def test_stream_attr():
     """Make sure Terminal exposes a ``stream`` attribute that defaults to
     something sane."""
@@ -180,6 +183,7 @@ def test_stream_attr():
     def child():
         eq_(Terminal().stream, sys.__stdout__)
     child()
+
 
 def test_location():
     """Make sure ``location()`` does what it claims."""
@@ -191,10 +195,10 @@ def test_location():
         with t.location(3, 4):
             t.stream.write(u'hi')
 
-        eq_(t.stream.getvalue(), unicode_cap('sc') +
-                                 unicode_parm('cup', 4, 3) +
-                                 u'hi' +
-                                 unicode_cap('rc'))
+        eq_(t.stream.getvalue(),
+            unicode_cap('sc') + unicode_parm('cup', 4, 3)
+            + u'hi' + unicode_cap('rc'))
+
     def child_without_styling():
         """No side effect for location as a context manager without styling."""
         t = TestTerminal(stream=StringIO(), force_styling=None)
@@ -207,6 +211,7 @@ def test_location():
     child_with_styling()
     child_without_styling()
 
+
 def test_horizontal_location():
     """Make sure we can move the cursor horizontally without changing rows."""
     @as_subprocess
@@ -214,10 +219,11 @@ def test_horizontal_location():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location(x=5):
             pass
-        eq_(t.stream.getvalue(), unicode_cap('sc') +
-                                 unicode_parm('hpa', 5) +
-                                 unicode_cap('rc'))
+        eq_(t.stream.getvalue(),
+            unicode_cap('sc') + unicode_parm('hpa', 5)
+            + unicode_cap('rc'))
     child()
+
 
 def test_null_location():
     """Make sure ``location()`` with no args just does position restoration."""
@@ -226,8 +232,9 @@ def test_null_location():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location():
             pass
-        eq_(t.stream.getvalue(), unicode_cap('sc') +
-                                 unicode_cap('rc'))
+        eq_(t.stream.getvalue(),
+            unicode_cap('sc') + unicode_cap('rc'))
+
     def child_without_styling():
         t = TestTerminal(stream=StringIO(), force_styling=None)
         with t.location():
@@ -237,6 +244,7 @@ def test_null_location():
     child_with_styling()
     child_without_styling()
 
+
 def test_zero_location():
     """Make sure ``location()`` pays attention to 0-valued args."""
     @as_subprocess
@@ -244,10 +252,11 @@ def test_zero_location():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location(0, 0):
             pass
-        eq_(t.stream.getvalue(), unicode_cap('sc') +
-                                 unicode_parm('cup', 0, 0) +
-                                 unicode_cap('rc'))
+        eq_(t.stream.getvalue(),
+            unicode_cap('sc') + unicode_parm('cup', 0, 0) +
+            unicode_cap('rc'))
     child()
+
 
 def test_null_fileno():
     """Make sure ``Terminal`` works when ``fileno`` is ``None``.
@@ -260,6 +269,7 @@ def test_null_fileno():
         t = TestTerminal(stream=out)
         eq_(t.save, u'')
     child()
+
 
 def test_mnemonic_colors():
     """Make sure color shortcuts work."""
@@ -284,6 +294,7 @@ def test_mnemonic_colors():
         eq_(t.on_bright_green, on_color(10))
     child()
 
+
 def test_callable_numeric_colors():
     """``color(n)`` should return a formatting wrapper."""
     @as_subprocess
@@ -294,6 +305,7 @@ def test_callable_numeric_colors():
         eq_(t.on_color(2)('smoo'), t.on_green + 'smoo' + t.normal)
         eq_(t.on_color(2)('smoo'), t.on_color(2) + 'smoo' + t.normal)
     child()
+
 
 def test_null_callable_numeric_colors():
     """``color(n)`` should be a no-op on null terminals."""
@@ -339,6 +351,7 @@ def test_callable_mixed_typeError():
     child_color_2strs()
     child_move_float()
 
+
 def test_naked_color_cap():
     """``term.color`` should return a stringlike capability."""
     @as_subprocess
@@ -347,16 +360,19 @@ def test_naked_color_cap():
         eq_(t.color + '', t.setaf + '')
     child()
 
+
 def test_num_colors_no_tty_or_styling():
     """``number_of_colors`` should return 0 when there's no tty."""
     @as_subprocess
     def child_256():
         t = TestTerminal(stream=StringIO())
         eq_(t.number_of_colors, 0)
+
     @as_subprocess
     def child_8():
         t = TestTerminal(kind='ansi', stream=StringIO())
         eq_(t.number_of_colors, 0)
+
     @as_subprocess
     def child_0():
         t = TestTerminal(kind='vt220', stream=StringIO())
@@ -365,23 +381,27 @@ def test_num_colors_no_tty_or_styling():
     child_8()
     child_0()
 
+
 def test_num_colors_no_tty_force_styling():
     """``number_of_colors`` may return 256 when force_styling is True."""
     @as_subprocess
     def child_256():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         eq_(t.number_of_colors, 256)
+
     @as_subprocess
     def child_8():
         t = TestTerminal(kind='ansi', stream=StringIO(), force_styling=True)
         eq_(t.number_of_colors, 8)
+
     @as_subprocess
     def child_0():
         t = TestTerminal(kind='vt220', stream=StringIO(), force_styling=True)
-        eq_(t.number_of_colors, 0) # actually, 1 color: amber or green :-)
+        eq_(t.number_of_colors, 0)
     child_256()
     child_8()
     child_0()
+
 
 def test_number_of_colors_with_tty():
     """``number_of_colors`` should work."""
@@ -389,10 +409,12 @@ def test_number_of_colors_with_tty():
     def child_256():
         t = TestTerminal()
         eq_(t.number_of_colors, 256)
+
     @as_subprocess
     def child_8():
         t = TestTerminal(kind='ansi')
         eq_(t.number_of_colors, 8)
+
     @as_subprocess
     def child_0():
         t = TestTerminal(kind='vt220')
@@ -400,6 +422,7 @@ def test_number_of_colors_with_tty():
     child_256()
     child_8()
     child_0()
+
 
 def test_formatting_functions():
     """Test crazy-ass formatting wrappers, both simple and compound."""
@@ -409,16 +432,18 @@ def test_formatting_functions():
         # By now, it should be safe to use sugared attributes. Other tests test
         # those.
         eq_(t.bold(u'hi'), t.bold + u'hi' + t.normal)
-        eq_(t.green('hi'), t.green + u'hi' + t.normal)  # Plain strs for Python 2.x
+        # Plain strs for Python 2.x
+        eq_(t.green('hi'), t.green + u'hi' + t.normal)
         # Test some non-ASCII chars, probably not necessary:
         eq_(t.bold_green(u'boö'), t.bold + t.green + u'boö' + t.normal)
         eq_(t.bold_underline_green_on_red('boo'),
             t.bold + t.underline + t.green + t.on_red + u'boo' + t.normal)
         # Don't spell things like this:
         eq_(t.on_bright_red_bold_bright_green_underline('meh'),
-            t.on_bright_red + t.bold + t.bright_green + t.underline + u'meh' +
-                              t.normal)
+            t.on_bright_red + t.bold + t.bright_green + t.underline
+            + u'meh' + t.normal)
     child()
+
 
 def test_formatting_functions_without_tty():
     """Test crazy-ass formatting wrappers when there's no tty."""
@@ -433,6 +458,7 @@ def test_formatting_functions_without_tty():
         eq_(t.on_bright_red_bold_bright_green_underline('meh'), u'meh')
         eq_(t.stream.getvalue(), '')
     child()
+
 
 def test_nice_formatting_errors():
     """Make sure you get nice hints if you misspell a formatting wrapper."""
@@ -466,8 +492,9 @@ def test_nice_formatting_errors():
             assert 'probably misspelled' not in e.args[0]
     child()
 
+
 def test_nice_formatting_errors_notty():
-    """does_styling=False does not recieve hints for formatting misspellings."""
+    """does_styling=False does not hint of formatting misspellings."""
     @as_subprocess
     def child():
         t = TestTerminal(stream=StringIO(), force_styling=None)
@@ -478,6 +505,7 @@ def test_nice_formatting_errors_notty():
         eq_(t.stream.getvalue(), '')
     child()
 
+
 def test_init_descriptor_always_initted():
     """We should be able to get a height and width even on no-tty Terminals."""
     @as_subprocess
@@ -486,6 +514,7 @@ def test_init_descriptor_always_initted():
         eq_(type(t.height), int)
         eq_(t.stream.getvalue(), '')
     child()
+
 
 def test_force_styling_none():
     """If ``force_styling=None`` is used, don't perform capabilities."""
@@ -496,6 +525,7 @@ def test_force_styling_none():
         eq_(t.color(9), '')
         eq_(t.bold('oi'), 'oi')
     child()
+
 
 def test_null_callable_string():
     """Make sure NullCallableString tolerates all numbers and kinds of args it
@@ -515,44 +545,43 @@ def test_null_callable_string():
         eq_(t.stream.getvalue(), '')
     child()
 
+
 def test_sequence_is_movement_true():
-    """ Test parsers for correctness about sequences that result in cursor movement. """
+    """ Test parsers for sequences that result in cursor movement. """
     @as_subprocess
     def child():
         t = TestTerminal()
-        from blessings import _unprintable_length, _sequence_is_movement
+        from blessings.sequences import (_unprintable_length,
+                                         _sequence_is_movement)
         # reset terminal causes term.clear to happen
-        eq_(sequence_is_movement(u'\x1bc'), True)
-        eq_(len(u'\x1bc'), _unprintable_length(u'\x1bc'))
+        eq_(_sequence_is_movement(u'\x1bc', t), True)
+        eq_(len(u'\x1bc'), _unprintable_length(u'\x1bc', t))
         # dec alignment tube test, could go either way
-        eq_(sequence_is_movement(u'\x1b#8'), True)
-        eq_(len(u'\x1b#8'), _unprintable_length(u'\x1b#8'))
+        eq_(_sequence_is_movement(u'\x1b#8', t), True)
+        eq_(len(u'\x1b#8'), _unprintable_length(u'\x1b#8', t))
         # various movements
-        eq_(sequence_is_movement(t.move(98, 76)), True)
-        eq_(len(t.move(98, 76)), _unprintable_length(t.move(98, 76)))
-        eq_(sequence_is_movement(t.move(54)), True)
-        eq_(len(t.move(54)), _unprintable_length(t.move(54)))
-        eq_(sequence_is_movement(t.cud1), True)
-        # cud1 is actually '\n'; although movement,
-        # is not a valid 'escape sequence'.
-        eq_(0, _unprintable_length(t.cud1))
-        eq_(sequence_is_movement(t.cub1), True)
-        # cub1 is actually '\b'; although movement,
-        # is not a valid 'escape sequence'.
-        eq_(0, _unprintable_length(t.cub1))
-        eq_(sequence_is_movement(t.cuf1), True)
-        eq_(len(t.cuf1), _unprintable_length(t.cuf1))
-        eq_(sequence_is_movement(t.cuu1), True)
-        eq_(len(t.cuu1), _unprintable_length(t.cuu1))
-        eq_(sequence_is_movement(t.cub(333)), True)
-        eq_(len(t.cub(333)), _unprintable_length(t.cub(333)))
-        eq_(sequence_is_movement(t.home), True)
-        eq_(len(t.home), _unprintable_length(t.home))
+        eq_(_sequence_is_movement(t.move(98, 76), t), True)
+        eq_(len(t.move(98, 76)), _unprintable_length(t.move(98, 76), t))
+        eq_(_sequence_is_movement(t.move(54), t), True)
+        eq_(len(t.move(54)), _unprintable_length(t.move(54), t))
+        eq_(_sequence_is_movement(t.cud1, t), True)
+        eq_(len(t.cud1), _unprintable_length(t.cud1, t))
+        eq_(_sequence_is_movement(t.cub1, t), True)
+        eq_(len(t.cub1), _unprintable_length(t.cub1, t))
+        eq_(_sequence_is_movement(t.cuf1, t), True)
+        eq_(len(t.cuf1), _unprintable_length(t.cuf1, t))
+        eq_(_sequence_is_movement(t.cuu1, t), True)
+        eq_(len(t.cuu1), _unprintable_length(t.cuu1, t))
+        eq_(_sequence_is_movement(t.cub(333), t), True)
+        eq_(len(t.cub(333)), _unprintable_length(t.cub(333), t))
+        eq_(_sequence_is_movement(t.home, t), True)
+        eq_(len(t.home), _unprintable_length(t.home, t))
         # t.clear returns t.home + t.clear_eos
-        eq_(sequence_is_movement(t.clear), True)
+        eq_(_sequence_is_movement(t.clear, t), True)
         for subseq in t.clear.split('\x1b')[1:]:
-            eq_(len('\x1b' + subseq), _unprintable_length('\x1b' + subseq))
+            eq_(len('\x1b' + subseq), _unprintable_length('\x1b' + subseq, t))
     child()
+
 
 def test_SequenceWrapper():
     """ Test that text wrapping accounts for sequences correctly. """
@@ -569,12 +598,14 @@ def test_SequenceWrapper():
 
         # build a test paragraph, along with a very colorful version
         t = TestTerminal()
-        pgraph = 'pony express, all aboard, choo, choo! '  + (
-                ('whugga ' * 10) + ('choo, choo! ')) * 30
-        pgraph_colored = u''.join([t.color(n % 7) + t.bold + ch
+        pgraph = 'pony express, all aboard, choo, choo! ' + (
+            ('whugga ' * 10) + ('choo, choo! ')) * 30
+        pgraph_colored = u''.join([
+            t.color(n % 7) + t.bold + ch
             for n, ch in enumerate(pgraph)])
 
-        internal_wrapped = textwrap.wrap(pgraph, t.width, break_long_words=False)
+        internal_wrapped = textwrap.wrap(pgraph, t.width,
+                                         break_long_words=False)
         my_wrapped = t.wrap(pgraph)
         my_wrapped_colored = t.wrap(pgraph_colored)
 
@@ -585,40 +616,47 @@ def test_SequenceWrapper():
         eq_(len(internal_wrapped), len(t.wrap(pgraph_colored)))
 
         # ensure our last line ends at the same column
-        eq_(len(internal_wrapped[-1]), Sequence(my_wrapped_colored[-1]).__len__())
+        eq_(len(internal_wrapped[-1]), t.length(my_wrapped_colored[-1]))
 
         # test subsequent_indent=
         internal_wrapped = textwrap.wrap(pgraph, t.width,
-                break_long_words=False, subsequent_indent=' '*4)
+                                         break_long_words=False,
+                                         subsequent_indent=' '*4)
         my_wrapped = t.wrap(pgraph, subsequent_indent=' '*4)
         my_wrapped_colored = t.wrap(pgraph_colored, subsequent_indent=' '*4)
 
         eq_(internal_wrapped, my_wrapped)
         eq_(len(internal_wrapped), len(my_wrapped_colored))
-        eq_(len(internal_wrapped[-1]), Sequence(my_wrapped_colored[-1]).__len__())
+        eq_(len(internal_wrapped[-1]), t.length(my_wrapped_colored[-1]))
     child()
+
 
 def test_Sequence():
     """Tests methods related to Sequence class, namely ljust, rjust, center"""
     @as_subprocess
-    def child():
-        t = TestTerminal()
+    def child(kind='xterm-256color'):
+        t = TestTerminal(kind=kind)
         pony_msg = 'pony express, all aboard, choo, choo! '
         pony_len = len(pony_msg)
         pony_colored = u''.join(
-                [t.color(n % 7) + ch for n, ch in enumerate(pony_msg)]
-                + [t.normal])
-        ladjusted = Sequence(t.ljust(pony_colored))
-        radjusted = Sequence(t.rjust(pony_colored))
-        centered = Sequence(t.center(pony_colored))
-        eq_(Sequence(pony_colored).__len__(), pony_len)
-        eq_(Sequence(centered.strip()).__len__(), pony_len)
-        eq_(Sequence(centered).__len__(), len(pony_msg.center(t.width)))
-        eq_(Sequence(ladjusted.rstrip()).__len__(), pony_len)
-        eq_(Sequence(ladjusted).__len__(), len(pony_msg.ljust(t.width)))
-        eq_(Sequence(radjusted.lstrip()).__len__(), pony_len)
-        eq_(Sequence(radjusted).__len__(), len(pony_msg.rjust(t.width)))
-    child()
+            [t.color(n % 7) + ch for n, ch in enumerate(pony_msg)]
+            ) + t.normal
+        ladjusted = t.ljust(pony_colored)
+        radjusted = t.rjust(pony_colored)
+        centered = t.center(pony_colored)
+        eq_(t.length(pony_colored), pony_len)
+        eq_(t.length(centered.strip()), pony_len)
+        eq_(t.length(centered), len(pony_msg.center(t.width)))
+        eq_(t.length(ladjusted.rstrip()), pony_len)
+        eq_(t.length(ladjusted), len(pony_msg.ljust(t.width)))
+        eq_(t.length(radjusted.lstrip()), pony_len)
+        eq_(t.length(radjusted), len(pony_msg.rjust(t.width)))
+    #child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
+    child('screen')
+
 
 def test_setupterm_singleton_issue33():
     """A warning is emitted if a new terminal ``kind`` is used per process."""
@@ -631,7 +669,8 @@ def test_setupterm_singleton_issue33():
             assert not term.is_a_tty or False, 'Should have thrown exception'
         except RuntimeWarning, err:
             assert (err.args[0].startswith(
-                    'A terminal of kind "vt220" has been requested')), err.args[0]
+                    'A terminal of kind "vt220" has been requested')
+                    ), err.args[0]
             assert ('a terminal of kind "xterm-256color" will '
                     'continue to be returned' in err.args[0]), err.args[0]
         finally:
@@ -639,154 +678,140 @@ def test_setupterm_singleton_issue33():
     child()
 
 
-def test_sequence_is_movement_true():
-    """ Test parsers for correctness about sequences that result in cursor movement. """
-    @as_subprocess
-    def child():
-        t = TestTerminal()
-        from blessings import _unprintable_length, _sequence_is_movement
-        # reset terminal causes term.clear to happen
-        eq_(_sequence_is_movement(u'\x1bc'), True)
-        eq_(len(u'\x1bc'), _unprintable_length(u'\x1bc'))
-        # dec alignment tube test, could go either way
-        eq_(_sequence_is_movement(u'\x1b#8'), True)
-        eq_(len(u'\x1b#8'), _unprintable_length(u'\x1b#8'))
-        # various movements
-        eq_(_sequence_is_movement(t.move(98, 76)), True)
-        eq_(len(t.move(98, 76)), _unprintable_length(t.move(98, 76)))
-        eq_(_sequence_is_movement(t.move(54)), True)
-        eq_(len(t.move(54)), _unprintable_length(t.move(54)))
-        eq_(_sequence_is_movement(t.cud1), True)
-        eq_(len(t.cud1), _unprintable_length(t.cud1))
-        eq_(_sequence_is_movement(t.cub1), True)
-        eq_(len(t.cub1), _unprintable_length(t.cub1))
-        eq_(_sequence_is_movement(t.cuf1), True)
-        eq_(len(t.cuf1), _unprintable_length(t.cuf1))
-        eq_(_sequence_is_movement(t.cuu1), True)
-        eq_(len(t.cuu1), _unprintable_length(t.cuu1))
-        eq_(_sequence_is_movement(t.cub(333)), True)
-        eq_(len(t.cub(333)), _unprintable_length(t.cub(333)))
-        eq_(_sequence_is_movement(t.home), True)
-        eq_(len(t.home), _unprintable_length(t.home))
-        # t.clear returns t.home + t.clear_eos
-        eq_(_sequence_is_movement(t.clear), True)
-        for subseq in t.clear.split('\x1b')[1:]:
-            eq_(len('\x1b' + subseq), _unprintable_length('\x1b' + subseq))
-    child()
-
 def test_sequence_is_movement_false():
-    """ Test parsers for correctness about sequences that do not move the cursor. """
+    """ Test parsers for about sequences that do not move the cursor. """
     @as_subprocess
     def child_mnemonics():
-        from blessings import _unprintable_length, _sequence_is_movement
+        from blessings.sequences import (_unprintable_length,
+                                         _sequence_is_movement)
         t = TestTerminal()
-        eq_(sequence_is_movement(u''), False)
-        eq_(0, _unprintable_length(u''))
+        eq_(_sequence_is_movement(u'', t), False)
+        eq_(0, _unprintable_length(u'', t))
         # not even a mbs
-        eq_(sequence_is_movement(u'xyzzy'), False)
-        eq_(0, _unprintable_length(u'xyzzy'))
+        eq_(_sequence_is_movement(u'xyzzy', t), False)
+        eq_(0, _unprintable_length(u'xyzzy', t))
         # a single escape is not movement
-        eq_(sequence_is_movement(u'\x1b'), False)
-        eq_(0, _unprintable_length(u'\x1b'))
+        eq_(_sequence_is_movement(u'\x1b', t), False)
+        eq_(0, _unprintable_length(u'\x1b', t))
         # negative numbers, though printable as %d, do not result
         # in movement; just garbage. Also not a valid sequence.
-        eq_(sequence_is_movement(t.cuf(-333)), False)
-        eq_(0, _unprintable_length(t.cuf(-333)))
-        # sgr reset
-        eq_(sequence_is_movement(u'\x1b[m'), False)
-        eq_(len(u'\x1b[m'), _unprintable_length(u'\x1b[m'))
-        # save cursor (sc)
-        eq_(sequence_is_movement(u'\x1b[s'), False)
-        eq_(len(u'\x1b[s'), _unprintable_length(u'\x1b[s'))
-        # restore cursor (rc)
-        eq_(sequence_is_movement(u'\x1b[s'), False)
-        eq_(len(u'\x1b[s'), _unprintable_length(u'\x1b[s'))
-        # fake sgr
-        eq_(sequence_is_movement(u'\x1b[01;02m'), False)
-        eq_(len(u'\x1b[01;02m'), _unprintable_length(u'\x1b[01;02m'))
-        # shift code page
-        eq_(sequence_is_movement(u'\x1b(0'), False)
-        eq_(len(u'\x1b(0'), _unprintable_length(u'\x1b(0'))
-        eq_(sequence_is_movement(t.clear_eol), False)
-        eq_(len(t.clear_eol), _unprintable_length(t.clear_eol))
+        eq_(_sequence_is_movement(t.cuf(-333), t), False)
+        eq_(0, _unprintable_length(t.cuf(-333), t))
+        eq_(_sequence_is_movement(t.clear_eol, t), False)
+        eq_(len(t.clear_eol), _unprintable_length(t.clear_eol, t))
         # various erases don't *move*
-        eq_(sequence_is_movement(t.clear_bol), False)
-        eq_(len(t.clear_bol), _unprintable_length(t.clear_bol))
-        eq_(sequence_is_movement(t.clear_eos), False)
-        eq_(len(t.clear_eos), _unprintable_length(t.clear_eos))
-        eq_(sequence_is_movement(t.bold), False)
-        eq_(len(t.bold), _unprintable_length(t.bold))
+        eq_(_sequence_is_movement(t.clear_bol, t), False)
+        eq_(len(t.clear_bol), _unprintable_length(t.clear_bol, t))
+        eq_(_sequence_is_movement(t.clear_eos, t), False)
+        eq_(len(t.clear_eos), _unprintable_length(t.clear_eos, t))
+        eq_(_sequence_is_movement(t.bold, t), False)
+        eq_(len(t.bold), _unprintable_length(t.bold, t))
         # various paints don't move
-        eq_(sequence_is_movement(t.red), False)
-        eq_(len(t.red), _unprintable_length(t.red))
-        eq_(sequence_is_movement(t.civis), False)
-        eq_(len(t.civis), _unprintable_length(t.civis))
-        eq_(sequence_is_movement(t.cnorm), False)
-        # t.cnorm actually returns two sequences on xterm-256color
-        for subseq in t.cnorm.split('\x1b')[1:]:
-            eq_(len('\x1b' + subseq), _unprintable_length('\x1b' + subseq))
-        eq_(sequence_is_movement(t.cvvis), False)
-        eq_(len(t.cvvis), _unprintable_length(t.cvvis))
-        eq_(sequence_is_movement(t.underline), False)
-        eq_(len(t.underline), _unprintable_length(t.underline))
-        eq_(sequence_is_movement(t.reverse), False)
-        eq_(len(t.reverse), _unprintable_length(t.reverse))
-        for _num in range(256):
-            eq_(sequence_is_movement(t.color(_num)), False)
-            eq_(len(t.color(_num)), _unprintable_length(t.color(_num)))
+        eq_(_sequence_is_movement(t.red, t), False)
+        eq_(len(t.red), _unprintable_length(t.red, t))
+        eq_(_sequence_is_movement(t.civis, t), False)
+        eq_(len(t.civis), _unprintable_length(t.civis, t))
+        eq_(_sequence_is_movement(t.cnorm, t), False)
+        eq_(_sequence_is_movement(t.cvvis, t), False)
+        eq_(len(t.cvvis), _unprintable_length(t.cvvis, t))
+        eq_(_sequence_is_movement(t.underline, t), False)
+        eq_(len(t.underline), _unprintable_length(t.underline, t))
+        eq_(_sequence_is_movement(t.reverse, t), False)
+        eq_(len(t.reverse), _unprintable_length(t.reverse, t))
+        for _num in range(t.number_of_colors):
+            eq_(_sequence_is_movement(t.color(_num), t), False)
+            eq_(len(t.color(_num)), _unprintable_length(t.color(_num), t))
+        eq_(_sequence_is_movement(t.normal, t), False)
+        eq_(len(t.normal), _unprintable_length(t.reverse, t))
+        eq_(_sequence_is_movement(t.hide_cursor, t), False)
+        eq_(len(t.hide_cursor), _unprintable_length(t.hide_cursor, t))
+        eq_(_sequence_is_movement(t.normal_cursor, t), False)
+        eq_(len(t.normal_cursor), _unprintable_length(t.normal_cursor, t))
+        eq_(_sequence_is_movement(t.save, t), False)
+        eq_(len(t.save), _unprintable_length(t.save, t))
+        eq_(_sequence_is_movement(t.restore, t), False)
+        eq_(len(t.restore), _unprintable_length(t.restore, t))
+        eq_(_sequence_is_movement(t.italic, t), False)
+        eq_(len(t.italic), _unprintable_length(t.italic, t))
+        eq_(_sequence_is_movement(t.standout, t), False)
+        eq_(len(t.standout), _unprintable_length(t.standout, t))
+
 
     @as_subprocess
     def child_rawcodes():
-        from blessings import _unprintable_length, _sequence_is_movement
+        from blessings.sequences import (_unprintable_length,
+                                         _sequence_is_movement)
         # some raw code variations of multi-valued sequences
         # vanilla
-        eq_(len(u'\x1b[0m'), _unprintable_length(u'\x1b[0m'))
-        eq_(_sequence_is_movement(u'\x1b[0m'), False)
+        t = TestTerminal()
+        eq_(len(u'\x1b[0m'), _unprintable_length(u'\x1b[0m', t))
+        eq_(_sequence_is_movement(u'\x1b[0m', t), False)
         # bold
-        eq_(len(u'\x1b[0;1m'), _unprintable_length(u'\x1b[0;1m'))
-        eq_(_sequence_is_movement(u'\x1b[0;1m'), False)
+        eq_(len(u'\x1b[0;1m'), _unprintable_length(u'\x1b[0;1m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;1m', t), False)
         # bold
-        eq_(len(u'\x1b[;1m'), _unprintable_length(u'\x1b[;1m'))
-        eq_(_sequence_is_movement(u'\x1b[;1m'), False)
+        eq_(len(u'\x1b[;1m'), _unprintable_length(u'\x1b[;1m', t))
+        eq_(_sequence_is_movement(u'\x1b[;1m', t), False)
         # underline
-        eq_(len(u'\x1b[;4m'), _unprintable_length(u'\x1b[;4m'))
-        eq_(_sequence_is_movement(u'\x1b[;4m'), False)
+        eq_(len(u'\x1b[;4m'), _unprintable_length(u'\x1b[;4m', t))
+        eq_(_sequence_is_movement(u'\x1b[;4m', t), False)
         # blink
-        eq_(len(u'\x1b[0;5m'), _unprintable_length(u'\x1b[0;5m'))
-        eq_(_sequence_is_movement(u'\x1b[0;5m'), False)
+        eq_(len(u'\x1b[0;5m'), _unprintable_length(u'\x1b[0;5m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;5m', t), False)
         # bold blink
-        eq_(len(u'\x1b[0;5;1m'), _unprintable_length(u'\x1b[0;5;1m'))
-        eq_(_sequence_is_movement(u'\x1b[0;5;1m'), False)
+        eq_(len(u'\x1b[0;5;1m'), _unprintable_length(u'\x1b[0;5;1m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;5;1m', t), False)
         # underline blink
-        eq_(len(u'\x1b[0;4;5m'), _unprintable_length(u'\x1b[0;4;5m'))
-        eq_(_sequence_is_movement(u'\x1b[0;4;5m'), False)
+        eq_(len(u'\x1b[0;4;5m'), _unprintable_length(u'\x1b[0;4;5m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;4;5m', t), False)
         # bold underline blink
-        eq_(len(u'\x1b[0;1;4;5m'), _unprintable_length(u'\x1b[0;1;4;5m'))
-        eq_(_sequence_is_movement(u'\x1b[0;1;4;5m'), False)
+        eq_(len(u'\x1b[0;1;4;5m'), _unprintable_length(u'\x1b[0;1;4;5m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;1;4;5m', t), False)
         # negative
-        eq_(len(u'\x1b[1;4;5;0;7m'), _unprintable_length(u'\x1b[1;4;5;0;7m'))
-        eq_(_sequence_is_movement(u'\x1b[1;4;5;0;7m'), False)
+        eq_(len(u'\x1b[1;4;5;0;7m'),
+            _unprintable_length(u'\x1b[1;4;5;0;7m', t))
+        eq_(_sequence_is_movement(u'\x1b[1;4;5;0;7m', t), False)
         # bold negative
-        eq_(len(u'\x1b[0;1;7m'), _unprintable_length(u'\x1b[0;1;7m'))
-        eq_(_sequence_is_movement(u'\x1b[0;1;7m'), False)
+        eq_(len(u'\x1b[0;1;7m'), _unprintable_length(u'\x1b[0;1;7m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;1;7m', t), False)
         # underline negative
-        eq_(len(u'\x1b[0;4;7m'), _unprintable_length(u'\x1b[0;4;7m'))
-        eq_(_sequence_is_movement(u'\x1b[0;4;7m'), False)
+        eq_(len(u'\x1b[0;4;7m'), _unprintable_length(u'\x1b[0;4;7m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;4;7m', t), False)
         # bold underline negative
-        eq_(len(u'\x1b[0;1;4;7m'), _unprintable_length(u'\x1b[0;1;4;7m'))
-        eq_(_sequence_is_movement(u'\x1b[0;1;4;7m'), False)
+        eq_(len(u'\x1b[0;1;4;7m'), _unprintable_length(u'\x1b[0;1;4;7m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;1;4;7m', t), False)
         # blink negative
-        eq_(len(u'\x1b[1;4;;5;7m'), _unprintable_length(u'\x1b[1;4;;5;7m'))
-        eq_(_sequence_is_movement(u'\x1b[1;4;;5;7m'), False)
+        eq_(len(u'\x1b[1;4;;5;7m'), _unprintable_length(u'\x1b[1;4;;5;7m', t))
+        eq_(_sequence_is_movement(u'\x1b[1;4;;5;7m', t), False)
         # bold blink negative
-        eq_(len(u'\x1b[0;1;5;7m'), _unprintable_length(u'\x1b[0;1;5;7m'))
-        eq_(_sequence_is_movement(u'\x1b[0;1;5;7m'), False)
+        eq_(len(u'\x1b[0;1;5;7m'), _unprintable_length(u'\x1b[0;1;5;7m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;1;5;7m', t), False)
         # underline blink negative
-        eq_(len(u'\x1b[0;4;5;7m'), _unprintable_length(u'\x1b[0;4;5;7m'))
-        eq_(_sequence_is_movement(u'\x1b[0;4;5;7m'), False)
+        eq_(len(u'\x1b[0;4;5;7m'), _unprintable_length(u'\x1b[0;4;5;7m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;4;5;7m', t), False)
         # bold underline blink negative
-        eq_(len(u'\x1b[0;1;4;5;7m'), _unprintable_length(u'\x1b[0;1;4;5;7m'))
-        eq_(_sequence_is_movement(u'\x1b[0;1;4;5;7m'), False)
+        eq_(len(u'\x1b[0;1;4;5;7m'),
+            _unprintable_length(u'\x1b[0;1;4;5;7m', t))
+        eq_(_sequence_is_movement(u'\x1b[0;1;4;5;7m', t), False)
+        # sgr reset
+        eq_(_sequence_is_movement(u'\x1b[m', t), False)
+        eq_(len(u'\x1b[m'), _unprintable_length(u'\x1b[m', t))
+        # save cursor (sc)
+        eq_(_sequence_is_movement(u'\x1b[s', t), False)
+        eq_(len(u'\x1b[s'), _unprintable_length(u'\x1b[s', t))
+        # restore cursor (rc)
+        eq_(_sequence_is_movement(u'\x1b[s', t), False)
+        eq_(len(u'\x1b[s'), _unprintable_length(u'\x1b[s', t))
+        # fake sgr
+        eq_(_sequence_is_movement(u'\x1b[01;02m', t), False)
+        eq_(len(u'\x1b[01;02m'), _unprintable_length(u'\x1b[01;02m', t))
+        # shift code page
+        eq_(_sequence_is_movement(u'\x1b(0'), False, t)
+        eq_(len(u'\x1b(0'), _unprintable_length(u'\x1b(0'), t)
+        # t.cnorm actually returns two sequences on xterm-256color
+        for subseq in t.cnorm.split('\x1b')[1:]:
+            eq_(len('\x1b' + subseq), _unprintable_length('\x1b' + subseq, t))
+
     child_rawcodes()
 
 
