@@ -235,34 +235,49 @@ def _horizontal_distance(ucs, term=None):
     Returns Integer n in SGR sequence of form <ESC>[<n>C (T.move_right(nn)).
     Returns Integer -(n) in SGR sequence of form <ESC>[<n>D (T.move_left(nn)).
     Returns -1 for backspace (0x08), Otherwise 0.
+    Tabstop (\t) cannot be correctly calculated, as the relative column
+    position cannot be determined: 8 is always (and incorrectly) returned.
     """
+    def term_distance(cap, unit):
+        """ Match by simple cub1/cuf1 string matching (distance of 1)
+            Or, by regular expression (using dynamic regular expressions
+            built using cub(n) and cuf(n). Failing that, the standard
+            SGR sequences (\033[C, \033[D, \033[nC, \033[nD
+        """
+        # match cub1(left), cuf1(right)
+        one = getattr(term, '{}1'.format(cap))
+        if one and ucs.startswith(one):
+            return unit
+
+        # match cub(n), cuf(n) using regular expressions
+        re_pattern = getattr(term, '_re_{}'.format(cap))
+        _dist = re_pattern.match(ucs)
+        if _dist:
+            return unit * int(_dist.group(1))
+
+        # match SGR left,right
+
     if ucs.startswith('\b'):
         return -1
+
     elif ucs.startswith('\t'):
-        # as best as I can prove it, it is always 8 (by default):
-        # https://en.wikipedia.org/wiki/Tab_key#Tab_characters
-        #  "A common horizontal tab size of eight characters evolved,
-        #   despite five characters being half an inch and the typical
-        #   paragraph indentation of the time, because as a power of two it
-        #   was easier to calculate in binary for the limited digital
-        #   electronics available."
+        # as best as I can prove it, a tabstop is always 8 by default.
+        # Within the context provided by blessings, which is 1. unaware
+        # of the output device's current cursor position, and 2. unaware
+        # of when or where a user may chose to output any given string,
+        # it is impossible to determine how many cells any particular
+        # \t would consume on the output device.
         return 8
 
-    # matching 'left' direction,
-    if term.cub1 and ucs.startswith(term.cub1):
-        # matches terminal's "left" definition
-        return -1
-    else:
-        left = (term._RE_CUB and term._RE_CUB.match(ucs)
-                or _SEQ_SGR_LEFT.match(ucs))
-        if left:
-            cols = left.group(1)
-            return -1 * (int(cols) if cols else 1)
-
+    _td = term and (term_distance('cub', -1) or term_distance('cuf', 1))
+    if _td:
+        return _td
+    left = _SEQ_SGR_LEFT.match(ucs)
+    if left:
+        return -1 * int(left.group(1))
     right = _SEQ_SGR_RIGHT.match(ucs)
     if right:
-        cols = right.group(1)
-        return int(cols) if cols else 1
+        return 1 * int(right.group(1))
 
     return 0
 
