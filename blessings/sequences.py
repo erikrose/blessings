@@ -3,9 +3,23 @@ import math
 import re
 
 
+def _init_sequence_patterns(term):
+    def build_numeric_capability(cap):
+        cap = getattr(term, cap)
+        if cap:
+            cap_re = re.escape(cap(99)).replace('99', r'(\d+)?')
+#            assert False, repr(cap_re)
+            return re.compile(cap_re)
+        return None
+    term._re_cuf = build_numeric_capability('cuf')
+    term._re_cub = build_numeric_capability('cub')
+    term._re_willmove = re.compile('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
 
 
 class _SequenceTextWrapper(textwrap.TextWrapper):
+    def __init__(self, width, **kwargs):
+        self.term = kwargs.pop('term')
+        textwrap.TextWrapper.__init__(self, width, **kwargs)
 
     def _wrap_chunks(self, chunks):
         """
@@ -275,4 +289,6 @@ def _sequence_is_movement(ucs, term=None):
     """
     if len(ucs) and ucs[0] in u'\r\n\b':
         return True
-    return bool(_SEQ_WILLMOVE.match(ucs))
+    return bool(_SEQ_WILLMOVE.match(ucs) or
+                term and term._re_willmove.match(ucs) or
+                _horizontal_distance(ucs, term))

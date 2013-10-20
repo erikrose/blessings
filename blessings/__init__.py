@@ -19,7 +19,7 @@ import struct
 import sys
 import warnings
 
-from .sequences import _SequenceTextWrapper, _Sequence
+from .sequences import _SequenceTextWrapper, _Sequence, _init_sequence_patterns
 
 # provide TIOCGWINSZ for platforms that are missing it,
 # according to noahspurrier/pexpect, they exist!
@@ -143,6 +143,7 @@ class Terminal(object):
                               % (cur_term, _CUR_TERM,), RuntimeWarning)
 
             setupterm(cur_term, self._init_descriptor)
+            _init_sequence_patterns(self)
 
         self.stream = stream
 
