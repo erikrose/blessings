@@ -723,15 +723,22 @@ def test_sequence_is_movement_false():
             eq_(_sequence_is_movement(t.color(_num), t), False)
             eq_(len(t.color(_num)), _unprintable_length(t.color(_num), t))
         eq_(_sequence_is_movement(t.normal, t), False)
-        eq_(len(t.normal), _unprintable_length(t.reverse, t))
+        eq_(len(t.normal), sum([
+            _unprintable_length('\x1b{}'.format(seq), t)
+            for seq in t.normal.split('\x1b')]))
+        eq_(any([
+            _sequence_is_movement('\x1b{}'.format(seq), t)
+            for seq in t.normal_cursor.split('\x1b')]), False)
+        eq_(len(t.normal_cursor), sum([
+            _unprintable_length('\x1b{}'.format(seq), t)
+            for seq in t.normal_cursor.split('\x1b')]))
+        eq_(any([
+            _sequence_is_movement('\x1b{}'.format(seq), t)
+            for seq in t.normal_cursor.split('\x1b')]), False)
         eq_(_sequence_is_movement(t.hide_cursor, t), False)
         eq_(len(t.hide_cursor), _unprintable_length(t.hide_cursor, t))
-        eq_(_sequence_is_movement(t.normal_cursor, t), False)
-        eq_(len(t.normal_cursor), _unprintable_length(t.normal_cursor, t))
         eq_(_sequence_is_movement(t.save, t), False)
         eq_(len(t.save), _unprintable_length(t.save, t))
-        eq_(_sequence_is_movement(t.restore, t), False)
-        eq_(len(t.restore), _unprintable_length(t.restore, t))
         eq_(_sequence_is_movement(t.italic, t), False)
         eq_(len(t.italic), _unprintable_length(t.italic, t))
         eq_(_sequence_is_movement(t.standout, t), False)
