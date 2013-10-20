@@ -21,7 +21,6 @@ import struct
 import termios
 from fcntl import ioctl
 
-from nose import SkipTest
 from nose.tools import eq_, raises
 
 # This tests that __all__ is correct, since we use below everything that should
