@@ -660,6 +660,7 @@ def test_Sequence():
 
 def test_setupterm_singleton_issue33():
     """A warning is emitted if a new terminal ``kind`` is used per process."""
+    @as_subprocess
     def child():
         import warnings
         warnings.filterwarnings("error", category=RuntimeWarning)
