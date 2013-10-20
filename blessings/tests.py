@@ -549,8 +549,8 @@ def test_null_callable_string():
 def test_sequence_is_movement_true():
     """ Test parsers for sequences that result in cursor movement. """
     @as_subprocess
-    def child():
-        t = TestTerminal()
+    def child(kind='xterm-256color'):
+        t = TestTerminal(kind=kind)
         from blessings.sequences import (_unprintable_length,
                                          _sequence_is_movement)
         # reset terminal causes term.clear to happen
@@ -576,17 +576,24 @@ def test_sequence_is_movement_true():
         eq_(len(t.cub(333)), _unprintable_length(t.cub(333), t))
         eq_(_sequence_is_movement(t.home, t), True)
         eq_(len(t.home), _unprintable_length(t.home, t))
-        # t.clear returns t.home + t.clear_eos
-        eq_(_sequence_is_movement(t.clear, t), True)
-        for subseq in t.clear.split('\x1b')[1:]:
-            eq_(len('\x1b' + subseq), _unprintable_length('\x1b' + subseq, t))
+        eq_(_sequence_is_movement(t.restore, t), True)
+        eq_(len(t.restore), _unprintable_length(t.restore, t))
+        eq_(len(t.clear), sum([
+            _unprintable_length('\x1b{}'.format(seq), t)
+            for seq in t.clear.split('\x1b')]))
+        eq_(any([
+            _sequence_is_movement('\x1b{}'.format(seq), t)
+            for seq in t.clear.split('\x1b')]), True)
     child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
 
 
 def test_SequenceWrapper():
     """ Test that text wrapping accounts for sequences correctly. """
     @as_subprocess
-    def child():
+    def child(kind='xterm-256color'):
         import textwrap
         # set the pty's virtual window size
         lines, cols = 5, 15
@@ -597,7 +604,7 @@ def test_SequenceWrapper():
         ioctl(sys.__stdout__.fileno(), TIOCSWINSZ, val)
 
         # build a test paragraph, along with a very colorful version
-        t = TestTerminal()
+        t = TestTerminal(kind=kind)
         pgraph = 'pony express, all aboard, choo, choo! ' + (
             ('whugga ' * 10) + ('choo, choo! ')) * 30
         pgraph_colored = u''.join([
@@ -629,6 +636,9 @@ def test_SequenceWrapper():
         eq_(len(internal_wrapped), len(my_wrapped_colored))
         eq_(len(internal_wrapped[-1]), t.length(my_wrapped_colored[-1]))
     child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
 
 
 def test_Sequence():
@@ -651,11 +661,10 @@ def test_Sequence():
         eq_(t.length(ladjusted), len(pony_msg.ljust(t.width)))
         eq_(t.length(radjusted.lstrip()), pony_len)
         eq_(t.length(radjusted), len(pony_msg.rjust(t.width)))
-    #child()
+    child()
     child('screen')
     child('vt220')
     child('rxvt')
-    child('screen')
 
 
 def test_setupterm_singleton_issue33():
@@ -682,10 +691,10 @@ def test_setupterm_singleton_issue33():
 def test_sequence_is_movement_false():
     """ Test parsers for about sequences that do not move the cursor. """
     @as_subprocess
-    def child_mnemonics():
+    def child_mnemonics(kind='xterm-256color'):
         from blessings.sequences import (_unprintable_length,
                                          _sequence_is_movement)
-        t = TestTerminal()
+        t = TestTerminal(kind=kind)
         eq_(_sequence_is_movement(u'', t), False)
         eq_(0, _unprintable_length(u'', t))
         # not even a mbs
@@ -743,7 +752,6 @@ def test_sequence_is_movement_false():
         eq_(len(t.italic), _unprintable_length(t.italic, t))
         eq_(_sequence_is_movement(t.standout, t), False)
         eq_(len(t.standout), _unprintable_length(t.standout, t))
-
 
     @as_subprocess
     def child_rawcodes():
@@ -820,15 +828,19 @@ def test_sequence_is_movement_false():
         for subseq in t.cnorm.split('\x1b')[1:]:
             eq_(len('\x1b' + subseq), _unprintable_length('\x1b' + subseq, t))
 
+    child_mnemonics()
+    child_mnemonics('screen')
+    child_mnemonics('vt220')
+    child_mnemonics('rxvt')
     child_rawcodes()
 
 
 def test_string_containing_unprintable_length():
     """ Ensure T.length(string containing sequence) is correct. """
     @as_subprocess
-    def child():
+    def child(kind='xterm-256color'):
         from itertools import chain, cycle
-        t = TestTerminal()
+        t = TestTerminal(kind=kind)
         # Create a list of ascii characters, to be seperated
         # by word, to be zipped up with a cycling list of
         # terminal sequences. Then, compare the length of
@@ -842,7 +854,6 @@ def test_string_containing_unprintable_length():
                 t.reverse_red, t.blink_red, t.home, t.clear_eol,
                 t.enter_fullscreen, t.exit_fullscreen,)
         text_wseqs = u''.join(chain(*zip(plain_text, cycle(seqs))))
-        #sys.stderr.write(text_wseqs)
         eq_(t.length(text_wseqs), len(plain_text))
         # horizontally, we decide move_down and move_up are 0,
         eq_(t.length(t.move_down), 0)
@@ -871,4 +882,6 @@ def test_string_containing_unprintable_length():
         text_wseqs = u''.join(chain(*zip(plain_text, cycle(['\b_']))))
         eq_(t.length(text_wseqs), len(plain_text))
     child()
-
+    child('screen')
+    child('vt220')
+    child('rxvt')
