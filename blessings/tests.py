@@ -13,7 +13,12 @@ from __future__ import with_statement  # Make 2.5-compatible
 from curses import tigetstr, tparm
 from functools import partial
 from StringIO import StringIO
-import sys, os, pty, traceback, struct, termios
+import sys
+import os
+import pty
+import traceback
+import struct
+import termios
 from fcntl import ioctl
 
 from nose import SkipTest
