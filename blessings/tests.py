@@ -807,18 +807,9 @@ def test_sequence_is_movement_false():
             eq_(_sequence_is_movement(t.color(_num), t), False)
             eq_(len(t.color(_num)), _unprintable_length(t.color(_num), t))
         eq_(_sequence_is_movement(t.normal, t), False)
-        eq_(len(t.normal), sum([
-            _unprintable_length('\x1b%s' % (seq,), t)
-            for seq in t.normal.split('\x1b')]))
-        eq_(any([
-            _sequence_is_movement('\x1b%s' % (seq,), t)
-            for seq in t.normal_cursor.split('\x1b')]), False)
-        eq_(len(t.normal_cursor), sum([
-            _unprintable_length('\x1b%s' % (seq,), t)
-            for seq in t.normal_cursor.split('\x1b')]))
-        eq_(any([
-            _sequence_is_movement('\x1b%s' % (seq,), t)
-            for seq in t.normal_cursor.split('\x1b')]), False)
+        eq_(len(t.normal), _unprintable_length(t.normal, t))
+        eq_(_sequence_is_movement(t.normal_cursor, t), False)
+        eq_(len(t.normal_cursor), _unprintable_length(t.normal_cursor, t))
         eq_(_sequence_is_movement(t.hide_cursor, t), False)
         eq_(len(t.hide_cursor), _unprintable_length(t.hide_cursor, t))
         eq_(_sequence_is_movement(t.save, t), False)
@@ -857,11 +848,6 @@ def test_string_containing_unprintable_length():
                       'Override the hardest things of the world '
                       'That which has no substance '
                       'Enters into that which has no openings')
-        seqs = (t.bold, t.underline, t.bold_underline, t.bold_red,
-                t.reverse_red, t.blink_red, t.home, t.clear_eol,
-                t.enter_fullscreen, t.exit_fullscreen,)
-        text_wseqs = u''.join(chain(*zip(plain_text, cycle(seqs))))
-        eq_(t.length(text_wseqs), len(plain_text))
         if t.bold:
             eq_(t.length(t.bold), 0)
             eq_(t.length(t.bold('x')), 1)
