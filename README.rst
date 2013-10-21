@@ -319,6 +319,39 @@ It's simple to get the height and width of the terminal, in characters::
 These are newly updated each time you ask for them, so they're safe to use from
 SIGWINCH handlers.
 
+Sequence Awareness
+------------------
+
+Blessings is fully aware of the printable width of strings containing sequences,
+providing ``.center``, ``.ljust``, and ``.rjust`` methods on the Terminal class,
+using the terminal screen's width as the default ``width`` value::
+
+    from blessings import Terminal
+
+    term = Terminal()
+    print term.move(term.height / 2) + term.center(term.bold('Bold and Centered'))
+
+or, simply measure their printable length using ``.length``.  Naturally, a
+sequence-aware version of ``textwrap.wrap()`` is supplied on the Terminal class
+as method ``.wrap``, so now you may word-wrap stylized text. The default ``width``
+value is also the Terminal screen's width, and it accepts all of the same keyword
+values as the ``textwrap.wrap()`` function.
+
+This example uses a width value of 25 with a short poem from Tao Te Ching::
+
+    from blessings import Terminal
+
+    t = Terminal()
+
+    poem = (term.bold_blue('Plan difficult tasks ')
+            + term.bold_black('through the simplest tasks'),
+            term.bold_cyan('Achieve large tasks ')
+            + term.cyan('through the smallest tasks'))
+    for line in poem:
+        print('\n'.join(term.wrap(line, width=25,
+                                  subsequent_indent=' '*4)))
+
+
 Clearing The Screen
 -------------------
 
