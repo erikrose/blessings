@@ -275,7 +275,7 @@ def test_null_fileno():
 def test_mnemonic_colors():
     """Make sure color shortcuts work."""
     @as_subprocess
-    def child():
+    def child(kind='xterm-256color'):
         def color(num):
             return unicode_parm('setaf', num)
 
@@ -284,7 +284,6 @@ def test_mnemonic_colors():
 
         # Avoid testing red, blue, yellow, and cyan, since they might someday
         # change depending on terminal type.
-        t = TestTerminal()
         eq_(t.white, color(7))
         eq_(t.green, color(2))  # Make sure it's different than white.
         eq_(t.on_black, on_color(0))
@@ -293,7 +292,20 @@ def test_mnemonic_colors():
         eq_(t.bright_green, color(10))
         eq_(t.on_bright_black, on_color(8))
         eq_(t.on_bright_green, on_color(10))
+        t = TestTerminal(kind=kind)
     child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
+    child('aixterm')
+    child('cons25')
+    child('eterm')
+    child('linux')
+    child('minix')
+    child('putty')
+    child('wyse520')
+    child('kermit')
+#    child('avatar')
 
 
 def test_callable_numeric_colors():
@@ -510,29 +522,53 @@ def test_nice_formatting_errors_notty():
 def test_init_descriptor_always_initted():
     """We should be able to get a height and width even on no-tty Terminals."""
     @as_subprocess
-    def child():
+    def child(kind='xterm-256color'):
         t = TestTerminal(stream=StringIO())
         eq_(type(t.height), int)
         eq_(t.stream.getvalue(), '')
     child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
+    child('aixterm')
+    child('cons25')
+    child('eterm')
+    child('linux')
+    child('minix')
+    child('putty')
+    child('wyse520')
+    child('kermit')
+#    child('avatar')
 
 
 def test_force_styling_none():
     """If ``force_styling=None`` is used, don't perform capabilities."""
     @as_subprocess
-    def child():
+    def child(kind='xterm-256color'):
         t = TestTerminal(force_styling=None)
         eq_(t.save, '')
         eq_(t.color(9), '')
         eq_(t.bold('oi'), 'oi')
     child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
+    child('aixterm')
+    child('cons25')
+    child('eterm')
+    child('linux')
+    child('minix')
+    child('putty')
+    child('wyse520')
+    child('kermit')
+#    child('avatar')
 
 
 def test_null_callable_string():
     """Make sure NullCallableString tolerates all numbers and kinds of args it
     might receive."""
     @as_subprocess
-    def child():
+    def child(kind='xterm-256color'):
         t = TestTerminal(stream=StringIO(), force_styling=None)
         eq_(t.clear, '')
         eq_(t.bold(), '')
@@ -545,6 +581,18 @@ def test_null_callable_string():
         eq_(t.move_x(1), '')
         eq_(t.stream.getvalue(), '')
     child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
+    child('aixterm')
+    child('cons25')
+    child('eterm')
+    child('linux')
+    child('minix')
+    child('putty')
+    child('wyse520')
+    child('kermit')
+#    child('avatar')
 
 
 def test_sequence_is_movement_true():
@@ -589,6 +637,15 @@ def test_sequence_is_movement_true():
     child('screen')
     child('vt220')
     child('rxvt')
+    child('aixterm')
+    child('cons25')
+    child('eterm')
+    child('linux')
+    child('minix')
+    child('putty')
+    child('wyse520')
+    child('kermit')
+#    child('avatar')
 
 
 def test_SequenceWrapper():
@@ -640,6 +697,15 @@ def test_SequenceWrapper():
     child('screen')
     child('vt220')
     child('rxvt')
+    child('aixterm')
+    child('cons25')
+    child('eterm')
+    child('linux')
+    child('minix')
+    child('putty')
+    child('wyse520')
+    child('kermit')
+#    child('avatar')
 
 
 def test_Sequence():
@@ -666,6 +732,15 @@ def test_Sequence():
     child('screen')
     child('vt220')
     child('rxvt')
+    child('aixterm')
+    child('cons25')
+    child('eterm')
+    child('linux')
+    child('minix')
+    child('putty')
+    child('wyse520')
+    child('kermit')
+#    child('avatar')
 
 
 def test_setupterm_singleton_issue33():
@@ -834,6 +909,15 @@ def test_sequence_is_movement_false():
     child_mnemonics('vt220')
     child_mnemonics('rxvt')
     child_rawcodes()
+    child_mnemonics('aixterm')
+    child_mnemonics('cons25')
+    child_mnemonics('eterm')
+    child_mnemonics('linux')
+    child_mnemonics('minix')
+    child_mnemonics('putty')
+    child_mnemonics('wyse520')
+    child_mnemonics('kermit')
+#    child_mnemonics('avatar')
 
 
 def test_string_containing_unprintable_length():
@@ -886,3 +970,12 @@ def test_string_containing_unprintable_length():
     child('screen')
     child('vt220')
     child('rxvt')
+    child('aixterm')
+    child('cons25')
+    child('eterm')
+    child('linux')
+    child('minix')
+    child('putty')
+    child('wyse520')
+    child('kermit')
+#    child('avatar')
