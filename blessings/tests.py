@@ -51,10 +51,11 @@ class as_subprocess:
                 e_type, e_value, e_tb = sys.exc_info()
                 o_err = list()
                 for line in traceback.format_tb(e_tb):
-                    o_err.append (line.rstrip().encode('utf-8'))
-                o_err.append (('-=' * 20).encode('ascii'))
-                o_err.extend ([_exc.rstrip().encode('utf-8')
-                    for _exc in traceback.format_exception_only(e_type, e_value)])
+                    o_err.append(line.rstrip().encode('utf-8'))
+                o_err.append(('-=' * 20).encode('ascii'))
+                o_err.extend([_exc.rstrip().encode('utf-8') for _exc in
+                              traceback.format_exception_only(
+                                  e_type, e_value)])
                 os.write(sys.__stdout__.fileno(), '\n'.join(o_err))
                 os._exit(1)
             else:
