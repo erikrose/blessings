@@ -260,8 +260,7 @@ def test_zero_location():
 
 
 def test_null_fileno():
-    """Make sure ``Terminal`` works when ``fileno`` is ``None``.
-    """
+    """Make sure ``Terminal`` works when ``fileno`` is ``None``.  """
     # This simulates piping output to a programs such as tee(1) or less(1)
     @as_subprocess
     def child():
@@ -605,6 +604,7 @@ def test_sequence_is_movement_true():
                                          _sequence_is_movement)
         eq_(_sequence_is_movement(t.move(98, 76), t), True)
         eq_(len(t.move(98, 76)), _unprintable_length(t.move(98, 76), t))
+
         eq_(_sequence_is_movement(t.move(54), t), True)
         eq_(len(t.move(54)), _unprintable_length(t.move(54), t))
         if t.cud1:

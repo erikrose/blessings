@@ -249,7 +249,8 @@ class _SequenceTextWrapper(textwrap.TextWrapper):
         """
         lines = []
         if self.width <= 0 or not isinstance(self.width, int):
-            raise ValueError("invalid width %r (must be > 0)" % self.width)
+            raise ValueError("invalid width %r(%s) (must be integer > 0)" % (
+                self.width, type(self.width)))
         chunks.reverse()
         while chunks:
             cur_line = []
@@ -358,8 +359,9 @@ def _unprintable_length(ucs, term):
     or those of '\a', '\b', '\r', '\n',
     """
     # simple terminal control characters,
-    if any([ucs.startswith(_ch) for _ch in u'\a\b\r\n\x0e\x0f']):
-        # x0e,x0f = shift out, shift in
+    # x0e,x0f = shift out, shift in
+    ctrl_seqs = u'\a\b\r\n\x0e\x0f'
+    if any([ucs.startswith(_ch) for _ch in ctrl_seqs]):
         return 1
     # known multibyte sequences,
     matching_seq = term and (
