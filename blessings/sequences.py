@@ -4,21 +4,240 @@ import re
 
 
 def _init_sequence_patterns(term):
-    def build_numeric_capability(cap):
-        cap = getattr(term, cap)
-        if cap:
-            cap_re = re.escape(cap(99)).replace('99', r'(\d+)?')
-#            assert False, repr(cap_re)
-            return re.compile(cap_re)
-        return None
-    term._re_cuf = build_numeric_capability('cuf')
-    term._re_cub = build_numeric_capability('cub')
-    term._re_willmove = re.compile('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    def bnc(cap, optional=False, base_num=99, nparams=1):
+        """ Build re from capability having matching numeric parameter """
+        _cap = getattr(term, cap)
+        if _cap:
+            cap_re = re.escape(_cap(*((base_num,) * nparams)))
+            for num in range(base_num-1, base_num+2):
+                if str(num) in cap_re:
+                    cap_re = cap_re.replace(str(num),
+                                            r'(\d+)%s' % ('?' if optional
+                                                          else '',))
+                    return cap_re
+                elif base_num == 99 and re.escape(u'\x83') in cap_re:
+                    # kermit, binary-packed
+                    cap_re = cap_re.replace(re.escape(u'\x83'), u'.')
+                    return cap_re
+                #elif re.escape(u'\x08cc') in cap_re:
+                #    # avatar, binary-packed
+                #    cap_re = cap_re.replace(re.escape(u'\x08cc'), u'...')
+                #    return cap_re
+            assert False, ('Unknown parameter in %r, %r' % (cap, cap_re))
+
+    def bna(cap, num=99, nparams=1):
+        """ Build re from capability having *any* matching parameters """
+        _cap = getattr(term, cap)
+        if _cap:
+            cap_re = re.escape(_cap(*((num,) * nparams)))
+            cap_re = re.sub('(\d+)', r'(\d+)', cap_re)
+            if r'(\d+)' in cap_re:
+                return cap_re
+            cap_rex01 = re.escape(_cap(*((1,) * nparams)))
+            if num == 99 and re.escape(u'\x01') in cap_rex01:
+                # kermit, binary packed
+                cap_re = cap_re.replace(re.escape(u'\xff'), r'.')
+                return cap_re
+            ## avatar
+            #if re.escape(u'\x01') in cap_re255:
+            #    cap_re = cap_re.replace(re.escape(u'\xdf'), r'.')
+            #    return cap_re
+            assert r'(\d+)' in cap_re, (
+                'Could not discover numeric capability '
+                'in %r, %r' % (cap, cap_re,))
+
+    # static pattern matching for _horiontal_distance
+    #
+    # parm_right_cursor: Move #1 characters to the right
+    term._cuf = bnc('cuf', optional=True)
+    term._re_cuf = re.compile(term._cuf) if term._cuf else None
+    # cursor_right: Non-destructive space (move right one space)
+    term._cuf1 = term.cuf1
+    # parm_left_cursor: Move #1 characters to the left
+    term._cub = bnc('cub', optional=True)
+    term._re_cub = re.compile(term._cub) if term._cub else None
+    # cursor_left: Move left one space
+    term._cub1 = term.cub1
+
+    # _will_move for _sequence_is_movement
+    #
+    will_move = set()
+    # carriage_return
+    will_move.add(re.escape(term.cr))
+    # column_address: Horizontal position, absolute
+    will_move.add(bnc('hpa'))
+    # row_address: Vertical position #1 absolute
+    will_move.add(bnc('vpa'))
+    # cursor_address: Move to row #1 columns #2
+    will_move.add(bnc('cup', nparams=2))
+    # cursor_down: Down one line
+    will_move.add(re.escape(term.cud1))
+    # cursor_home: Home cursor (if no cup)
+    will_move.add(re.escape(term.home))
+    # cursor_left: Move left one space
+    will_move.add(re.escape(term.cub1))
+    # cursor_right: Non-destructive space (move right one space)
+    will_move.add(re.escape(term.cuf1))
+    # cursor_up: Up one line
+    will_move.add(re.escape(term.cuu1))
+    # param_down_cursor: Down #1 lines
+    will_move.add(bnc('cud', optional=True))
+    # restore_cursor: Restore cursor to position of last save_cursor
+    will_move.add(re.escape(term.rc))
+    # clear_screen: clear screen and home cursor
+    will_move.add(re.escape(term.clear))
+    # add cuf and cub stored seperately for horiz movement
+    if term._cuf:
+        will_move.add(term._cuf)
+    if term._cub:
+        will_move.add(term._cub)
+    # cursor_up: Up one line
+    will_move.add(re.escape(term.enter_fullscreen))
+    will_move.add(re.escape(term.exit_fullscreen))
+
+    # _wont_move for _unprintable_length
+    #
+    wont_move = set()
+    # print_screen: Print contents of screen
+    wont_move.add(re.escape(term.mc0))
+    # prtr_off: Turn off printer
+    wont_move.add(re.escape(term.mc4))
+    # prtr_on: Turn on printer
+    wont_move.add(re.escape(term.mc5))
+    # reset_{1,2,3}string: Reset string
+    wont_move.update(map(re.escape, (term.r1, term.r2, term.r3,)))
+    # save_cursor: Save current cursor position (P)
+    wont_move.add(re.escape(term.sc))
+    # set_tab: Set a tab in every row, current columns
+    wont_move.add(re.escape(term.hts))
+    # enter_bold_mode: Turn on bold (extra bright) mode
+    wont_move.add(re.escape(term.bold))
+    # enter_underline_mode: Begin underline mode
+    wont_move.add(re.escape(term.underline))
+    # enter_blink_mode: Turn on blinking
+    wont_move.add(re.escape(term.blink))
+    # enter_dim_mode: Turn on half-bright mode
+    wont_move.add(re.escape(term.dim))
+    # cursor_invisible: Make cursor invisible
+    wont_move.add(re.escape(term.civis))
+    # cursor_visible: Make cursor very visible
+    wont_move.add(re.escape(term.cvvis))
+    # cursor_normal: Make cursor appear normal (undo civis/cvvis)
+    wont_move.add(re.escape(term.cnorm))
+    # clear_all_tabs: Clear all tab stops
+    wont_move.add(re.escape(term.tbc))
+    # change_scroll_region: Change region to line #1 to line #2
+    wont_move.add(bnc('csr', nparams=2))
+    # clr_bol: Clear to beginning of line
+    wont_move.add(re.escape(term.el1))
+    # clr_eol: Clear to end of line
+    wont_move.add(re.escape(term.el))
+    # clr_eos: Clear to end of screen
+    wont_move.add(re.escape(term.clear_eos))
+    # delete_character: Delete character
+    wont_move.add(re.escape(term.dch1))
+    # delete_line: Delete line (P*)
+    wont_move.add(re.escape(term.dl1))
+    # erase_chars: Erase #1 characters
+    wont_move.add(bnc('ech'))
+    # insert_line: Insert line (P*)
+    wont_move.add(re.escape(term.il1))
+    # parm_dch: Delete #1 characters
+    wont_move.add(bnc('dch'))
+    # parm_delete_line: Delete #1 lines
+    wont_move.add(bnc('dl'))
+    # exit_alt_charset_mode: End alternate character set (P)
+    wont_move.add(re.escape(term.rmacs))
+    # exit_am_mode: Turn off automatic margins
+    wont_move.add(re.escape(term.rmam))
+    # exit_attribute_mode: Turn off all attributes
+    wont_move.add(re.escape(term.sgr0))
+    # exit_ca_mode: Strings to end programs using cup
+    wont_move.add(re.escape(term.rmcup))
+    # exit_insert_mode: Exit insert mode
+    wont_move.add(re.escape(term.rmir))
+    # exit_standout_mode: Exit standout mode
+    wont_move.add(re.escape(term.rmso))
+    # exit_underline_mode: Exit underline mode
+    wont_move.add(re.escape(term.rmul))
+    # flash_hook: Flash switch hook
+    wont_move.add(re.escape(term.hook))
+    # flash_screen: Visible bell (may not move cursor)
+    wont_move.add(re.escape(term.flash))
+    # keypad_local: Leave 'keyboard_transmit' mode
+    wont_move.add(re.escape(term.rmkx))
+    # keypad_xmit: Enter 'keyboard_transmit' mode
+    wont_move.add(re.escape(term.smkx))
+    # meta_off: Turn off meta mode
+    wont_move.add(re.escape(term.rmm))
+    # meta_on: Turn on meta mode (8th-bit on)
+    wont_move.add(re.escape(term.smm))
+    # orig_pair: Set default pair to its original value
+    wont_move.add(re.escape(term.op))
+    # parm_ich: Insert #1 characters
+    wont_move.add(bnc('ich'))
+    # parm_index: Scroll forward #1
+    wont_move.add(bnc('indn'))
+    # parm_insert_line: Insert #1 lines
+    wont_move.add(bnc('il'))
+    # erase_chars: Erase #1 characters
+    wont_move.add(bnc('ech'))
+    # parm_rindex: Scroll back #1 lines
+    wont_move.add(bnc('rin'))
+    # parm_up_cursor: Up #1 lines
+    wont_move.add(bnc('cuu'))
+    # scroll_forward: Scroll text up (P)
+    wont_move.add(re.escape(term.ind))
+    # scroll_reverse: Scroll text down (P)
+    wont_move.add(re.escape(term.rev))
+
+    # the following are not *exactly* legal, being extra forgiving.
+    #
+    # set_attributes: Define video attributes #1-#9 (PG9)
+    for _num in range(1,10):
+        wont_move.add(bna('sgr', nparams=_num))
+    # tab: Tab to next 8-space hardware tab stop
+    wont_move.add(re.escape(term.ht))
+    # set_a_background: Set background color to #1, using ANSI escape
+    wont_move.add(bna('setab', num=1))
+    wont_move.add(bna('setab', num=(term.number_of_colors - 1)))
+    # set_a_foreground: Set foreground color to #1, using ANSI escape
+    wont_move.add(bna('setaf', num=1))
+    wont_move.add(bna('setaf', num=(term.number_of_colors - 1)))
+
+    def merge_sequences(inp):
+        """ Merge a list of input sequence patterns into a resulting
+        regular expression.
+        1. filtering out the empty capabilities into a single set,
+        ordered by longest-first.
+        2. Further splitting sequences containing 'sub-sequences'
+        (by char \x1b) into their own independent sequence; resolving
+        sequences such as t.normal_cursor, (u'\x1b[34h\x1b[?25h') into
+        two independent sequences (u'\x1b[34h' and u'\x1b[?25h').
+        """
+        inp = list(filter(None, inp))
+        #out = set()
+        #for seq in inp:
+        #    #if re.escape('\x1b') in seq[1:]:
+        #    #    out.update([re.escape('\x1b') + '%s' % (sub_seq)
+        #    #                for sub_seq in seq.split(re.escape('\x1b'))
+        #    #                if sub_seq])
+        #    #else:
+        #    #    assert seq != re.escape('\x1b'), seq
+        #        out.add(seq)
+        return sorted(inp, key=len, reverse=True)
+
+    # store pre-compiled list as '_will_move' and '_wont_move', for debugging
+    term._will_move = merge_sequences(will_move)
+    term._re_will_move = re.compile('(%s)' % ('|'.join(term._will_move)))
+
+    term._wont_move = merge_sequences(wont_move)
+    term._re_wont_move = re.compile('(%s)' % ('|'.join(term._wont_move)))
 
 
 class _SequenceTextWrapper(textwrap.TextWrapper):
-    def __init__(self, width, **kwargs):
-        self.term = kwargs.pop('term')
+    def __init__(self, width, term, **kwargs):
+        self.term = term
         textwrap.TextWrapper.__init__(self, width, **kwargs)
 
     def _wrap_chunks(self, chunks):
@@ -69,7 +288,7 @@ class _Sequence(unicode):
     .center(), and .len()
     """
 
-    def __new__(cls, sequence_text, term=None):
+    def __new__(cls, sequence_text, term):
         new = unicode.__new__(cls, sequence_text)
         new._term = term
         return new
@@ -127,84 +346,7 @@ class _Sequence(unicode):
                 nxt = idx + _unprintable_length(self[idx:], self._term) + 1
         return width
 
-# We provide a database of "typical" sequences. mrxvt_seq.txt by Gautam Iyer
-# <gi1242@users.sourceforge.net> was invaluable in the authoring of these
-# regular expressions. The current author of xterm (Thomas Dickey) also
-# provides many invaluable resources.
-
-_SEQ_WONTMOVE = re.compile(
-    r'\x1b('  # curses.ascii.ESC
-        r'([\(\)\*\+\$]'  # Designate G0-G3,Kangi Character Set
-            r'[0AB<5CK])'  # 0=DEC,A=UK,B=USASCII,<=Multinational
-                           # 5/C=Finnish,K=German
-        r'|7'  # save_cursor
-        r'|\[('  # \x1b[: Begin Control Sequence Initiator(CSI) ...
-            r'[0-2]?[JK]'  # J:erase in display (0=below,1=above,2=All)
-                           # K:erase in line (0=right,1=left,2=All)
-            r'|\d+;\d+;\d+;\d+;\dT'
-                           # Initiate hilite mouse tracking, params are
-                           # func;startx;starty;firstrow;lastrow
-            r'|[025]W'  # tabular funcs: 0=set,2=clear Current,5=clear All
-            r'|[03]g'  # tab clear: 0=current,3=all
-            r'|4[hl]'  # hl: insert, replace mode.
-            r'|(\d{0,3}(;\d{0,3}){1,5}|\d{1,3}|)m'
-                        # SGR (attributes), extraordinarily forgiving!
-            r'|0?c'  # send device attributes (terminal replies!)
-            r'|[5-8]n'  # device status report, 5: answers OK, 6: cursor pos,
-                       # 7: display name, 8: version number (terminal replies!)
-            r'|[zs]'  # save_cursor
-        r'|(\?'  # DEC Private Modes -- extraordinarily forgiving!
-            r'[0-9]{0,4}(;\d{1,4}){0,4}[hlrst]'
-                # hlrst:set, reset, restore, save, toggle:
-                # 1: application keys, 2: ansi/vt52 mode, 3: 132/80 columns,
-                # 4: smooth/jump scroll, 5: normal/reverse video,
-                # 6: origin/cursor mode 7: wrap/no wrap at margin,
-                # 8: auto-repeat keys?, 9: X10 XTerm Mouse reporting,
-                # 10: menubar visible/invis (rxvt), 25: cursor visable/invis
-                # 30: scrollbar visible/invis, 35: xterm shift+key sequences,
-                # 38: Tektronix mode, 40: allow 80/132, 44: margin bell,
-                # 45: reverse wraparound mode on/off, 46: unknown
-                # 47: use alt/normal screen buffer, 66: app/normal keypad,
-                # 67: backspace sends BS/DEL, 1000: X11 Xterm Mouse reporting
-                # 1001: X11 Xterm Mouse Tracking
-                # 1010: donot/do scroll-to-bottom on output, 1011: "" on input
-                # 1047: use alt/normal screen buffer, clear if returning
-                # 1048: save/restore cursor position
-                # 1049: is 1047+1048 combined.
-                # !! Most of these do not cause cursor movement. Instead of
-                #    tracking each individual mode, we bucket them all as
-                #    "healthy for padding" (not movement).
-        r')'  # end DEC Private Modes
-      r')'  # end CSI
-    r')')  # end \x1b
-
-_SEQ_WILLMOVE = re.compile(
-        r'\x1b('  # curses.ascii.ESC
-        r'[cZ]'  # rs1: reset string (cursor position undefined)
-        r'|8'  # restore_cursor
-        r'|#8'  # DEC Alignment Screen Test (cursor position undefined)
-        r'|(\[('  # \x1b[: Begin Control Sequence Initiator(CSI) ...
-            r'(\d{1,4})?[AeBCaDEFG\'IZdLMPX]'
-                # [Ae]B[Ca]D: up/down/forward/backword N-times
-                # EF: down/up N times, goto 1st column,
-                # [G']IZ: to column N, forward N tabstops, backward N tabstops
-                # d: to line N, # LMP:insert/delete N lines, Delete N chars
-                # X: del N chars
-            r'|(\d{1,4})?(;\d{1,4})?[Hf]'
-                # H: home, opt. (row, col)
-                # f: horiz/vert pos
-            r'|u'  # restore_cursor
-            r'|[0-9]x'  # DEC request terminal parameters (terminal replies!)
-        r')'  # end CSI
-        r'|\][0-9]{1,2};[\s\w]+('  # Set XTerm params, ESC ] Ps;Pt ST
-            + '\x9c'  # 8-bit terminator
-            + '|\a'   # old terminator (BEL)
-            + r'|\x1b\\)'  # 7-bit terminator
-    r')'  # end CSI
-r')')  # end x1b
-
-
-def _unprintable_length(ucs, term=None):
+def _unprintable_length(ucs, term):
     """
     _unprintable_length(S) -> integer
 
@@ -220,19 +362,17 @@ def _unprintable_length(ucs, term=None):
         # x0e,x0f = shift out, shift in
         return 1
     # known multibyte sequences,
-    matching_seq = _SEQ_WILLMOVE.match(ucs) or _SEQ_WONTMOVE.match(ucs)
-    if matching_seq is not None:
+    matching_seq = term and (
+        term._re_will_move.match(ucs) or     # terminal-specific auto-generated
+        term._re_wont_move.match(ucs))
+    if matching_seq:
         start, end = matching_seq.span()
         return end
     # none found, must be printable!
     return 0
 
 
-_SEQ_SGR_RIGHT = re.compile(r'\033\[(\d+)?C')
-_SEQ_SGR_LEFT = re.compile(r'\033\[(\d+)?D')
-
-
-def _horizontal_distance(ucs, term=None):
+def _horizontal_distance(ucs, term):
     """ _horizontal_distance(S) -> integer
 
     Returns Integer n in SGR sequence of form <ESC>[<n>C (T.move_right(nn)).
@@ -241,24 +381,24 @@ def _horizontal_distance(ucs, term=None):
     Tabstop (\t) cannot be correctly calculated, as the relative column
     position cannot be determined: 8 is always (and incorrectly) returned.
     """
+
     def term_distance(cap, unit):
         """ Match by simple cub1/cuf1 string matching (distance of 1)
             Or, by regular expression (using dynamic regular expressions
             built using cub(n) and cuf(n). Failing that, the standard
             SGR sequences (\033[C, \033[D, \033[nC, \033[nD
         """
+        assert cap in ('cuf', 'cub')
         # match cub1(left), cuf1(right)
-        one = getattr(term, '%s1' % (cap,))
+        one = getattr(term, '_%s1' % (cap,))
         if one and ucs.startswith(one):
             return unit
 
         # match cub(n), cuf(n) using regular expressions
         re_pattern = getattr(term, '_re_%s' % (cap,))
-        _dist = re_pattern.match(ucs)
+        _dist = re_pattern and re_pattern.match(ucs)
         if _dist:
             return unit * int(_dist.group(1))
-
-        # match SGR left,right
 
     if ucs.startswith('\b'):
         return -1
@@ -272,20 +412,10 @@ def _horizontal_distance(ucs, term=None):
         # \t would consume on the output device.
         return 8
 
-    _td = term and (term_distance('cub', -1) or term_distance('cuf', 1))
-    if _td:
-        return _td
-    left = _SEQ_SGR_LEFT.match(ucs)
-    if left:
-        return -1 * int(left.group(1))
-    right = _SEQ_SGR_RIGHT.match(ucs)
-    if right:
-        return 1 * int(right.group(1))
-
-    return 0
+    return term_distance('cub', -1) or term_distance('cuf', 1) or 0
 
 
-def _sequence_is_movement(ucs, term=None):
+def _sequence_is_movement(ucs, term):
     """
     _sequence_is_movement(S) -> bool
 
@@ -307,6 +437,4 @@ def _sequence_is_movement(ucs, term=None):
     """
     if len(ucs) and ucs[0] in u'\r\n\b':
         return True
-    return bool(_SEQ_WILLMOVE.match(ucs) or
-                term and term._re_willmove.match(ucs) or
-                _horizontal_distance(ucs, term))
+    return bool(term._re_will_move.match(ucs))
