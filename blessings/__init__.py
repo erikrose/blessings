@@ -429,7 +429,7 @@ class Terminal(object):
             # We can encode escape sequences as UTF-8 because they never
             # contain chars > 127, and UTF-8 never changes anything within that
             # range..
-            return code.decode('utf-8')
+            return code.decode('latin1')
         return u''
 
     def _resolve_color(self, color):
@@ -567,7 +567,7 @@ class ParametrizingString(unicode):
             # Re-encode the cap, because tparm() takes a bytestring in Python
             # 3. However, appear to be a plain Unicode string otherwise so
             # concats work.
-            parametrized = tparm(self.encode('utf-8'), *args).decode('utf-8')
+            parametrized = tparm(self.encode('latin1'), *args).decode('latin1')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
         except TypeError:
