@@ -603,13 +603,6 @@ def test_sequence_is_movement_true():
         t = TestTerminal(kind=kind)
         from blessings.sequences import (_unprintable_length,
                                          _sequence_is_movement)
-        # reset terminal causes term.clear to happen
-        eq_(_sequence_is_movement(u'\x1bc', t), True)
-        eq_(len(u'\x1bc'), _unprintable_length(u'\x1bc', t))
-        # dec alignment tube test, could go either way
-        eq_(_sequence_is_movement(u'\x1b#8', t), True)
-        eq_(len(u'\x1b#8'), _unprintable_length(u'\x1b#8', t))
-        # various movements
         eq_(_sequence_is_movement(t.move(98, 76), t), True)
         eq_(len(t.move(98, 76)), _unprintable_length(t.move(98, 76), t))
         eq_(_sequence_is_movement(t.move(54), t), True)
@@ -785,9 +778,6 @@ def test_sequence_is_movement_false():
         # not even a mbs
         eq_(_sequence_is_movement(u'xyzzy', t), False)
         eq_(0, _unprintable_length(u'xyzzy', t))
-        # a single escape is not movement
-        eq_(_sequence_is_movement(u'\x1b', t), False)
-        eq_(0, _unprintable_length(u'\x1b', t))
         # negative numbers, though printable as %d, do not result
         # in movement; just garbage. Also not a valid sequence.
         eq_(_sequence_is_movement(t.cuf(-333), t), False)
@@ -837,87 +827,10 @@ def test_sequence_is_movement_false():
         eq_(len(t.italic), _unprintable_length(t.italic, t))
         eq_(_sequence_is_movement(t.standout, t), False)
         eq_(len(t.standout), _unprintable_length(t.standout, t))
-
-    @as_subprocess
-    def child_rawcodes():
-        from blessings.sequences import (_unprintable_length,
-                                         _sequence_is_movement)
-        # some raw code variations of multi-valued sequences
-        # vanilla
-        t = TestTerminal()
-        eq_(len(u'\x1b[0m'), _unprintable_length(u'\x1b[0m', t))
-        eq_(_sequence_is_movement(u'\x1b[0m', t), False)
-        # bold
-        eq_(len(u'\x1b[0;1m'), _unprintable_length(u'\x1b[0;1m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;1m', t), False)
-        # bold
-        eq_(len(u'\x1b[;1m'), _unprintable_length(u'\x1b[;1m', t))
-        eq_(_sequence_is_movement(u'\x1b[;1m', t), False)
-        # underline
-        eq_(len(u'\x1b[;4m'), _unprintable_length(u'\x1b[;4m', t))
-        eq_(_sequence_is_movement(u'\x1b[;4m', t), False)
-        # blink
-        eq_(len(u'\x1b[0;5m'), _unprintable_length(u'\x1b[0;5m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;5m', t), False)
-        # bold blink
-        eq_(len(u'\x1b[0;5;1m'), _unprintable_length(u'\x1b[0;5;1m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;5;1m', t), False)
-        # underline blink
-        eq_(len(u'\x1b[0;4;5m'), _unprintable_length(u'\x1b[0;4;5m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;4;5m', t), False)
-        # bold underline blink
-        eq_(len(u'\x1b[0;1;4;5m'), _unprintable_length(u'\x1b[0;1;4;5m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;1;4;5m', t), False)
-        # negative
-        eq_(len(u'\x1b[1;4;5;0;7m'),
-            _unprintable_length(u'\x1b[1;4;5;0;7m', t))
-        eq_(_sequence_is_movement(u'\x1b[1;4;5;0;7m', t), False)
-        # bold negative
-        eq_(len(u'\x1b[0;1;7m'), _unprintable_length(u'\x1b[0;1;7m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;1;7m', t), False)
-        # underline negative
-        eq_(len(u'\x1b[0;4;7m'), _unprintable_length(u'\x1b[0;4;7m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;4;7m', t), False)
-        # bold underline negative
-        eq_(len(u'\x1b[0;1;4;7m'), _unprintable_length(u'\x1b[0;1;4;7m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;1;4;7m', t), False)
-        # blink negative
-        eq_(len(u'\x1b[1;4;;5;7m'), _unprintable_length(u'\x1b[1;4;;5;7m', t))
-        eq_(_sequence_is_movement(u'\x1b[1;4;;5;7m', t), False)
-        # bold blink negative
-        eq_(len(u'\x1b[0;1;5;7m'), _unprintable_length(u'\x1b[0;1;5;7m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;1;5;7m', t), False)
-        # underline blink negative
-        eq_(len(u'\x1b[0;4;5;7m'), _unprintable_length(u'\x1b[0;4;5;7m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;4;5;7m', t), False)
-        # bold underline blink negative
-        eq_(len(u'\x1b[0;1;4;5;7m'),
-            _unprintable_length(u'\x1b[0;1;4;5;7m', t))
-        eq_(_sequence_is_movement(u'\x1b[0;1;4;5;7m', t), False)
-        # sgr reset
-        eq_(_sequence_is_movement(u'\x1b[m', t), False)
-        eq_(len(u'\x1b[m'), _unprintable_length(u'\x1b[m', t))
-        # save cursor (sc)
-        eq_(_sequence_is_movement(u'\x1b[s', t), False)
-        eq_(len(u'\x1b[s'), _unprintable_length(u'\x1b[s', t))
-        # restore cursor (rc)
-        eq_(_sequence_is_movement(u'\x1b[s', t), False)
-        eq_(len(u'\x1b[s'), _unprintable_length(u'\x1b[s', t))
-        # fake sgr
-        eq_(_sequence_is_movement(u'\x1b[01;02m', t), False)
-        eq_(len(u'\x1b[01;02m'), _unprintable_length(u'\x1b[01;02m', t))
-        # shift code page
-        eq_(_sequence_is_movement(u'\x1b(0'), False, t)
-        eq_(len(u'\x1b(0'), _unprintable_length(u'\x1b(0'), t)
-        # t.cnorm actually returns two sequences on xterm-256color
-        for subseq in t.cnorm.split('\x1b')[1:]:
-            eq_(len('\x1b' + subseq), _unprintable_length('\x1b' + subseq, t))
-
     child_mnemonics()
     child_mnemonics('screen')
     child_mnemonics('vt220')
     child_mnemonics('rxvt')
-    child_rawcodes()
     child_mnemonics('aixterm')
     child_mnemonics('cons25')
     child_mnemonics('eterm')
