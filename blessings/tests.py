@@ -284,15 +284,16 @@ def test_mnemonic_colors():
 
         # Avoid testing red, blue, yellow, and cyan, since they might someday
         # change depending on terminal type.
-        eq_(t.white, color(7))
-        eq_(t.green, color(2))  # Make sure it's different than white.
-        eq_(t.on_black, on_color(0))
-        eq_(t.on_green, on_color(2))
-        eq_(t.bright_black, color(8))
-        eq_(t.bright_green, color(10))
-        eq_(t.on_bright_black, on_color(8))
-        eq_(t.on_bright_green, on_color(10))
         t = TestTerminal(kind=kind)
+        if t.number_of_colors:
+            eq_(t.white, color(7))
+            eq_(t.green, color(2))  # Make sure it's different than white.
+            eq_(t.on_black, on_color(0))
+            eq_(t.on_green, on_color(2))
+            eq_(t.bright_black, color(8))
+            eq_(t.bright_green, color(10))
+            eq_(t.on_bright_black, on_color(8))
+            eq_(t.on_bright_green, on_color(10))
     child()
     child('screen')
     child('vt220')
@@ -613,26 +614,34 @@ def test_sequence_is_movement_true():
         eq_(len(t.move(98, 76)), _unprintable_length(t.move(98, 76), t))
         eq_(_sequence_is_movement(t.move(54), t), True)
         eq_(len(t.move(54)), _unprintable_length(t.move(54), t))
-        eq_(_sequence_is_movement(t.cud1, t), True)
-        eq_(len(t.cud1), _unprintable_length(t.cud1, t))
-        eq_(_sequence_is_movement(t.cub1, t), True)
-        eq_(len(t.cub1), _unprintable_length(t.cub1, t))
-        eq_(_sequence_is_movement(t.cuf1, t), True)
-        eq_(len(t.cuf1), _unprintable_length(t.cuf1, t))
-        eq_(_sequence_is_movement(t.cuu1, t), True)
-        eq_(len(t.cuu1), _unprintable_length(t.cuu1, t))
-        eq_(_sequence_is_movement(t.cub(333), t), True)
-        eq_(len(t.cub(333)), _unprintable_length(t.cub(333), t))
-        eq_(_sequence_is_movement(t.home, t), True)
-        eq_(len(t.home), _unprintable_length(t.home, t))
-        eq_(_sequence_is_movement(t.restore, t), True)
-        eq_(len(t.restore), _unprintable_length(t.restore, t))
-        eq_(len(t.clear), sum([
-            _unprintable_length('\x1b%s' % (seq,), t)
-            for seq in t.clear.split('\x1b')]))
-        eq_(any([
-            _sequence_is_movement('\x1b%s' % (seq,), t)
-            for seq in t.clear.split('\x1b')]), True)
+        if t.cud1:
+            eq_(_sequence_is_movement(t.cud1, t), True)
+            eq_(len(t.cud1), _unprintable_length(t.cud1, t))
+        if t.cub1:
+            eq_(_sequence_is_movement(t.cub1, t), True)
+            eq_(len(t.cub1), _unprintable_length(t.cub1, t))
+        if t.cuf1:
+            eq_(_sequence_is_movement(t.cuf1, t), True)
+            eq_(len(t.cuf1), _unprintable_length(t.cuf1, t))
+        if t.cuu1:
+            eq_(_sequence_is_movement(t.cuu1, t), True)
+            eq_(len(t.cuu1), _unprintable_length(t.cuu1, t))
+        if t.cub:
+            eq_(_sequence_is_movement(t.cub(333), t), True)
+            eq_(len(t.cub(333)), _unprintable_length(t.cub(333), t))
+        if t.cuf:
+            eq_(_sequence_is_movement(t.cuf(333), t), True)
+            eq_(len(t.cuf(333)), _unprintable_length(t.cuf(333), t))
+        if t.home:
+            eq_(_sequence_is_movement(t.home, t), True)
+            eq_(len(t.home), _unprintable_length(t.home, t))
+        if t.restore:
+            eq_(_sequence_is_movement(t.restore, t), True)
+            eq_(len(t.restore), _unprintable_length(t.restore, t))
+        if t.clear:
+            # clear moves, why? it contains HOME sequence!
+            eq_(len(t.clear), _unprintable_length(t.clear, t))
+            eq_(_sequence_is_movement(t.clear, t), True)
     child()
     child('screen')
     child('vt220')
@@ -940,6 +949,35 @@ def test_string_containing_unprintable_length():
                 t.enter_fullscreen, t.exit_fullscreen,)
         text_wseqs = u''.join(chain(*zip(plain_text, cycle(seqs))))
         eq_(t.length(text_wseqs), len(plain_text))
+        if t.bold:
+            eq_(t.length(t.bold), 0)
+            eq_(t.length(t.bold('x')), 1)
+            eq_(t.length(t.bold_red), 0)
+            eq_(t.length(t.bold_red('x')), 1)
+        if t.underline:
+            eq_(t.length(t.underline), 0)
+            eq_(t.length(t.underline('x')), 1)
+            eq_(t.length(t.underline_red), 0)
+            eq_(t.length(t.underline_red('x')), 1)
+        if t.reverse:
+            eq_(t.length(t.reverse), 0)
+            eq_(t.length(t.reverse('x')), 1)
+            eq_(t.length(t.reverse_red), 0)
+            eq_(t.length(t.reverse_red('x')), 1)
+        if t.blink:
+            eq_(t.length(t.blink), 0)
+            eq_(t.length(t.blink('x')), 1)
+            eq_(t.length(t.blink_red), 0)
+            eq_(t.length(t.blink_red('x')), 1)
+        if t.home:
+            eq_(t.length(t.home), 0)
+        if t.clear_eol:
+            eq_(t.length(t.clear_eol), 0)
+        if t.enter_fullscreen:
+            eq_(t.length(t.enter_fullscreen), 0)
+        if t.exit_fullscreen:
+            eq_(t.length(t.exit_fullscreen), 0)
+
         # horizontally, we decide move_down and move_up are 0,
         eq_(t.length(t.move_down), 0)
         eq_(t.length(t.move_down(2)), 0)
@@ -952,9 +990,11 @@ def test_string_containing_unprintable_length():
         # though columns 2-11 are non-destructive space
         eq_(t.length('\b'), -1)
         eq_(t.length(t.move_left), -1)
-        eq_(t.length(t.cub(10)), -10)
+        if t.cub:
+            eq_(t.length(t.cub(10)), -10)
         eq_(t.length(t.move_right), 1)
-        eq_(t.length(t.cuf(10)), 10)
+        if t.cuf:
+            eq_(t.length(t.cuf(10)), 10)
 
         # vertical spacing is unaccounted as a 'length'
         eq_(t.length(t.move_up), 0)
