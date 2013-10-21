@@ -304,7 +304,7 @@ def test_mnemonic_colors():
 #    child('minix')
 #    child('putty')
 #    child('wyse520')
-    child('kermit')
+#    child('kermit')
 #    child('avatar')
 
 
@@ -537,7 +537,7 @@ def test_init_descriptor_always_initted():
 #    child('minix')
 #    child('putty')
 #    child('wyse520')
-    child('kermit')
+#    child('kermit')
 #    child('avatar')
 
 
@@ -560,7 +560,7 @@ def test_force_styling_none():
 #    child('minix')
 #    child('putty')
 #    child('wyse520')
-    child('kermit')
+#    child('kermit')
 #    child('avatar')
 
 
@@ -591,7 +591,7 @@ def test_null_callable_string():
 #    child('minix')
 #    child('putty')
 #    child('wyse520')
-    child('kermit')
+#    child('kermit')
 #    child('avatar')
 
 
@@ -646,7 +646,7 @@ def test_sequence_is_movement_true():
 #    child('minix')
 #    child('putty')
 #    child('wyse520')
-    child('kermit')
+#    child('kermit')
 #    child('avatar')
 
 
@@ -706,7 +706,7 @@ def test_SequenceWrapper():
 #    child('minix')
 #    child('putty')
 #    child('wyse520')
-    child('kermit')
+#    child('kermit')
 #    child('avatar')
 
 
@@ -741,7 +741,7 @@ def test_Sequence():
 #    child('minix')
 #    child('putty')
 #    child('wyse520')
-    child('kermit')
+#    child('kermit')
 #    child('avatar')
 
 
@@ -830,7 +830,7 @@ def test_sequence_is_movement_false():
 #    child_mnemonics('minix')
 #    child_mnemonics('putty')
 #    child_mnemonics('wyse520')
-    child_mnemonics('kermit')
+#    child_mnemonics('kermit')
 #    child_mnemonics('avatar')
 
 
@@ -917,5 +917,5 @@ def test_string_containing_unprintable_length():
 #    child('minix')
 #    child('putty')
 #    child('wyse520')
-    child('kermit')
+#    child('kermit')
 #    child('avatar')
