@@ -797,8 +797,9 @@ def test_sequence_is_movement_false():
         eq_(_sequence_is_movement(t.civis, t), False)
         eq_(len(t.civis), _unprintable_length(t.civis, t))
         eq_(_sequence_is_movement(t.cnorm, t), False)
-        eq_(_sequence_is_movement(t.cvvis, t), False)
-        eq_(len(t.cvvis), _unprintable_length(t.cvvis, t))
+        if t.cvvis:
+            eq_(_sequence_is_movement(t.cvvis, t), False)
+            eq_(len(t.cvvis), _unprintable_length(t.cvvis, t))
         eq_(_sequence_is_movement(t.underline, t), False)
         eq_(len(t.underline), _unprintable_length(t.underline, t))
         eq_(_sequence_is_movement(t.reverse, t), False)
