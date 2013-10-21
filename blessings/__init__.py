@@ -519,14 +519,14 @@ class Terminal(object):
         _blw = 'break_long_words'
         assert (_blw not in kwargs or not kwargs[_blw]), (
             "keyword argument `{}' is not sequence-safe".format(_blw))
-        kwargs['term'] = self.term
-        width = self.width if width is None else width
         lines = []
+        width = self.width if width is None else width
         for line in text.splitlines():
             if not line.strip():
                 lines.append(u'')
                 continue
-            for wrapped in _SequenceTextWrapper(width, **kwargs).wrap(text):
+            for wrapped in _SequenceTextWrapper(width=width, term=self,
+                                                **kwargs).wrap(text):
                 lines.append(wrapped)
         return lines
 
