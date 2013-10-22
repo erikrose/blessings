@@ -17,7 +17,7 @@ from os import isatty, environ
 from platform import python_version_tuple
 import struct
 import sys
-from termios import TIOCGWINSZ
+import termios
 
 
 __all__ = ['Terminal']
@@ -223,7 +223,8 @@ class Terminal(object):
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
                 return struct.unpack(
-                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                    'hhhh',
+                    ioctl(descriptor, termios.TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
                 pass
         return None, None  # Should never get here
