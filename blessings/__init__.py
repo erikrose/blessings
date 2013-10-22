@@ -18,6 +18,7 @@ from platform import python_version_tuple
 import struct
 import sys
 import termios
+import tty
 
 
 __all__ = ['Terminal']
@@ -282,6 +283,25 @@ class Terminal(object):
             yield
         finally:
             self.stream.write(self.normal_cursor)
+
+    @contextmanager
+    def unbuffered_input(self):
+        """Return a context manager that stops input from being grouped into
+        chunks by the tty before being passed to stdin and turns of local
+        printing of input characters.
+        """
+        if self.is_a_tty:
+            orig_tty_attrs = termios.tcgetattr(self.stream)
+            tty.setcbreak(self.stream)
+            try:
+                yield
+            finally:
+                # Only restore original attrs after we've recieved all input
+                # from the stream by specifying TCSADRAIN
+                termios.tcsetattr(
+                    self.stream, termios.TCSADRAIN, orig_tty_attrs)
+        else:
+            yield
 
     @property
     def color(self):
