@@ -16,6 +16,7 @@ from StringIO import StringIO
 import sys
 import pty
 import traceback
+import os
 
 from nose import SkipTest
 from nose.tools import eq_
