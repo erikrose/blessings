@@ -98,12 +98,9 @@ def unicode_parm(cap, *parms):
 
 
 def test_capability():
-    """Check that a capability lookup works.
-
-    Also test that Terminal grabs a reasonable default stream. This test
-    assumes it will be run from a tty.
-
-    """
+    """Check that capability lookup works."""
+    # Also test that Terminal grabs a reasonable default stream. This test
+    # assumes it will be run from a tty.
     t = TestTerminal()
     sc = unicode_cap('sc')
     eq_(t.save, sc)
