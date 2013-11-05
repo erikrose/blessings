@@ -385,6 +385,8 @@ class Terminal(object):
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
+        if self.number_of_colors == 0:
+            return NullCallableString()
         return self._formatting_string(
             color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset))
 
