@@ -217,7 +217,10 @@ class Terminal(object):
         return self._height_and_width()[1]
 
     def _height_and_width(self):
-        """Return a tuple of (terminal height, terminal width)."""
+        """Return a tuple of (terminal height, terminal width),
+           using TIOCGWINSZ (Terminal I/O-Control: Get Window Size),
+           falling back to environment variables (LINES, COLUMNS),
+           and 25 x 80 when otherwise unavailable."""
         # tigetnum('lines') and tigetnum('cols') update only if we call
         # setupterm() again.
         for descriptor in self._init_descriptor, sys.__stdout__:
@@ -225,8 +228,13 @@ class Terminal(object):
                 return struct.unpack(
                         'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
+                # when the output stream or init descriptor is not a tty, such
+                # as when when stdout is piped to another program, fe. tee(1),
+                # these ioctls will raise IOError
                 pass
-        return None, None  # Should never get here
+        lines, cols = (int(environ.get('LINES', '24')),
+                       int(environ.get('COLUMNS', '80')))
+        return lines, cols
 
     @contextmanager
     def location(self, x=None, y=None):
@@ -294,7 +302,8 @@ class Terminal(object):
         :arg num: The number, 0-15, of the color
 
         """
-        return ParametrizingString(self._foreground_color, self.normal)
+        return (ParametrizingString(self._foreground_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def on_color(self):
@@ -303,7 +312,8 @@ class Terminal(object):
         See ``color()``.
 
         """
-        return ParametrizingString(self._background_color, self.normal)
+        return (ParametrizingString(self._background_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def number_of_colors(self):
@@ -325,11 +335,11 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
-                                     # such cap.
+        # Returns -1 if no color support, -2 if no such capability.
+        colors = self.does_styling and tigetnum('colors') or -1
         #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
                                           # (Doesn't work.)
-        return colors if colors >= 0 else 0
+        return max(0, colors)
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
@@ -367,7 +377,7 @@ class Terminal(object):
             # We can encode escape sequences as UTF-8 because they never
             # contain chars > 127, and UTF-8 never changes anything within that
             # range..
-            return code.decode('utf-8')
+            return code.decode('latin1')
         return u''
 
     def _resolve_color(self, color):
@@ -383,6 +393,8 @@ class Terminal(object):
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
+        if self.number_of_colors == 0:
+            return NullCallableString()
         return self._formatting_string(
             color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset))
 
@@ -436,15 +448,16 @@ class ParametrizingString(unicode):
             # Re-encode the cap, because tparm() takes a bytestring in Python
             # 3. However, appear to be a plain Unicode string otherwise so
             # concats work.
-            parametrized = tparm(self.encode('utf-8'), *args).decode('utf-8')
+            # We use *latin1* encoding so that bytes emitted by tparam are
+            # encoded to their native value: some terminal kinds, such as
+            # 'avatar' or 'kermit', emit 8-bit bytes in range 0x7f to 0xff.
+            # latin1 leaves these values unmodified in their conversion to
+            # unicode byte values. The terminal emulator will 'catch' and
+            # handle these values, even if emitting utf8 encoded text, where
+            # these bytes would otherwise be illegal utf8 start bytes.
+            parametrized = tparm(self.encode('latin1'), *args).decode('latin1')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
-        except curses.error:
-            # Catch "must call (at least) setupterm() first" errors, as when
-            # running simply `nosetests` (without progressive) on nose-
-            # progressive. Perhaps the terminal has gone away between calling
-            # tigetstr and calling tparm.
-            return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -518,7 +531,12 @@ class NullCallableString(unicode):
             # determine which of 2 special-purpose classes,
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
-            return u''
+            # As a NullCallableString, even when provided with a parameter,
+            # such as t.color(5), we must also still be callable, fe:
+            # >>> t.color(5)('shmoo')
+            # is actually simplified result of NullCallable()(), so
+            # turtles all the way down: we return another instance.
+            return NullCallableString()
         return args[0]  # Should we force even strs in Python 2.x to be
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
