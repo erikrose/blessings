@@ -302,8 +302,7 @@ class Terminal(object):
         :arg num: The number, 0-15, of the color
 
         """
-        return (ParametrizingString(self._foreground_color, self.normal)
-                if self.does_styling else NullCallableString())
+        return ParametrizingString(self._foreground_color, self.normal)
 
     @property
     def on_color(self):
@@ -312,8 +311,7 @@ class Terminal(object):
         See ``color()``.
 
         """
-        return (ParametrizingString(self._background_color, self.normal)
-                if self.does_styling else NullCallableString())
+        return ParametrizingString(self._background_color, self.normal)
 
     @property
     def number_of_colors(self):
@@ -335,11 +333,11 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        # Returns -1 if no color support, -2 if no such capability.
-        colors = self.does_styling and tigetnum('colors') or -1
+        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
+                                     # such cap.
         #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
                                           # (Doesn't work.)
-        return max(0, colors)
+        return colors if colors >= 0 else 0
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
@@ -393,8 +391,6 @@ class Terminal(object):
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
-        if self.number_of_colors == 0:
-            return NullCallableString()
         return self._formatting_string(
             color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset))
 
@@ -451,6 +447,12 @@ class ParametrizingString(unicode):
             parametrized = tparm(self.encode('utf-8'), *args).decode('utf-8')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
+        except curses.error:
+            # Catch "must call (at least) setupterm() first" errors, as when
+            # running simply `nosetests` (without progressive) on nose-
+            # progressive. Perhaps the terminal has gone away between calling
+            # tigetstr and calling tparm.
+            return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -524,12 +526,7 @@ class NullCallableString(unicode):
             # determine which of 2 special-purpose classes,
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
-            # As a NullCallableString, even when provided with a parameter,
-            # such as t.color(5), we must also still be callable, fe:
-            # >>> t.color(5)('shmoo')
-            # is actually simplified result of NullCallable()(), so
-            # turtles all the way down: we return another instance.
-            return NullCallableString()
+            return u''
         return args[0]  # Should we force even strs in Python 2.x to be
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
