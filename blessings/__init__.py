@@ -375,7 +375,7 @@ class Terminal(object):
             # We can encode escape sequences as UTF-8 because they never
             # contain chars > 127, and UTF-8 never changes anything within that
             # range..
-            return code.decode('utf-8')
+            return code.decode('latin1')
         return u''
 
     def _resolve_color(self, color):
@@ -444,7 +444,14 @@ class ParametrizingString(unicode):
             # Re-encode the cap, because tparm() takes a bytestring in Python
             # 3. However, appear to be a plain Unicode string otherwise so
             # concats work.
-            parametrized = tparm(self.encode('utf-8'), *args).decode('utf-8')
+            # We use *latin1* encoding so that bytes emitted by tparam are
+            # encoded to their native value: some terminal kinds, such as
+            # 'avatar' or 'kermit', emit 8-bit bytes in range 0x7f to 0xff.
+            # latin1 leaves these values unmodified in their conversion to
+            # unicode byte values. The terminal emulator will 'catch' and
+            # handle these values, even if emitting utf8 encoded text, where
+            # these bytes would otherwise be illegal utf8 start bytes.
+            parametrized = tparm(self.encode('latin1'), *args).decode('latin1')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
         except curses.error:
