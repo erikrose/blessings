@@ -28,12 +28,12 @@ TestTerminal = partial(Terminal, kind='xterm-256color')
 
 def unicode_cap(cap):
     """Return the result of ``tigetstr`` except as Unicode."""
-    return tigetstr(cap).decode('utf-8')
+    return tigetstr(cap).decode('latin1')
 
 
 def unicode_parm(cap, *parms):
     """Return the result of ``tparm(tigetstr())`` except as Unicode."""
-    return tparm(tigetstr(cap), *parms).decode('utf-8')
+    return tparm(tigetstr(cap), *parms).decode('latin1')
 
 
 def test_capability():
