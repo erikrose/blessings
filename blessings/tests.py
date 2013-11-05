@@ -159,7 +159,7 @@ def test_stream_attr():
 def test_location():
     """Make sure ``location()`` does what it claims."""
     @as_subprocess
-    def child():
+    def child_with_styling():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location(3, 4):
             t.stream.write(u'hi')
@@ -167,7 +167,20 @@ def test_location():
                                  unicode_parm('cup', 4, 3) +
                                  u'hi' +
                                  unicode_cap('rc'))
-    child()
+    child_with_styling()
+
+    @as_subprocess
+    def child_without_styling():
+        """No side effect for location as a context manager without styling."""
+        t = TestTerminal(stream=StringIO(), force_styling=None)
+
+        with t.location(3, 4):
+            t.stream.write(u'hi')
+
+        eq_(t.stream.getvalue(), u'hi')
+
+    child_with_styling()
+    child_without_styling()
 
 
 def test_horizontal_location():
@@ -223,14 +236,14 @@ def test_null_fileno():
 def test_mnemonic_colors():
     """Make sure color shortcuts work."""
     @as_subprocess
-    def child():
+    def child(kind='xterm-256color'):
         def color(num):
             return unicode_parm('setaf', num)
         def on_color(num):
             return unicode_parm('setab', num)
         # Avoid testing red, blue, yellow, and cyan, since they might someday
         # change depending on terminal type.
-        t = TestTerminal()
+        t = TestTerminal(kind=kind)
         eq_(t.white, color(7))
         eq_(t.green, color(2))  # Make sure it's different than white.
         eq_(t.on_black, on_color(0))
@@ -240,6 +253,12 @@ def test_mnemonic_colors():
         eq_(t.on_bright_black, on_color(8))
         eq_(t.on_bright_green, on_color(10))
     child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
+    child('cons25')
+    child('linux')
+    child('ansi')
 
 
 def test_callable_numeric_colors():
@@ -276,24 +295,50 @@ def test_naked_color_cap():
 def test_number_of_colors_without_tty():
     """``number_of_colors`` should return 0 when there's no tty."""
     @as_subprocess
-    def child_nostyle():
+    def child_256_nostyle():
         t = TestTerminal(stream=StringIO())
         eq_(t.number_of_colors, 0)
+    child_256_nostyle()
+
     @as_subprocess
-    def child_forcestyle():
+    def child_256_forcestyle():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         eq_(t.number_of_colors, 256)
-    child_nostyle()
-    child_forcestyle()
+    child_256_forcestyle()
+
+    @as_subprocess
+    def child_8_forcestyle():
+        t = TestTerminal(kind='ansi', stream=StringIO(), force_styling=True)
+        eq_(t.number_of_colors, 8)
+    child_8_forcestyle()
+
+    @as_subprocess
+    def child_0_forcestyle():
+        t = TestTerminal(kind='vt220', stream=StringIO(), force_styling=True)
+        eq_(t.number_of_colors, 0)
+    child_0_forcestyle()
 
 
 def test_number_of_colors_with_tty():
     """``number_of_colors`` should work."""
     @as_subprocess
-    def child():
+    def child_256():
         t = TestTerminal()
         eq_(t.number_of_colors, 256)
-    child()
+    child_256()
+
+    @as_subprocess
+    def child_8():
+        t = TestTerminal(kind='ansi')
+        eq_(t.number_of_colors, 8)
+    child_8()
+
+    @as_subprocess
+    def child_0():
+        t = TestTerminal(kind='vt220')
+        eq_(t.number_of_colors, 0)
+    child_0()
+
 
 def test_formatting_functions():
     """Test crazy-ass formatting wrappers, both simple and compound."""
@@ -362,24 +407,53 @@ def test_nice_formatting_errors():
 def test_init_descriptor_always_initted():
     """We should be able to get a height and width on no-tty Terminals."""
     @as_subprocess
-    def child():
-        t = Terminal(stream=StringIO())
+    def child(kind='xterm-256color'):
+        t = Terminal(kind=kind, stream=StringIO())
         eq_(type(t.height), int)
     child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
+    child('cons25')
+    child('linux')
+    child('ansi')
 
 
 def test_force_styling_none():
     """If ``force_styling=None`` is used, don't ever do styling."""
     @as_subprocess
-    def child():
-        t = TestTerminal(force_styling=None)
+    def child(kind='xterm-256color'):
+        t = TestTerminal(kind=kind, force_styling=None)
         eq_(t.save, '')
+        eq_(t.color(9), '')
+        eq_(t.bold('oi'), 'oi')
     child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
+    child('cons25')
+    child('linux')
+    child('ansi')
 
 
 def test_null_callable_string():
     """Make sure NullCallableString tolerates all kinds of args."""
-    t = TestTerminal(stream=StringIO())
-    eq_(t.clear, '')
-    eq_(t.move(1, 2), '')
-    eq_(t.move_x(1), '')
+    @as_subprocess
+    def child(kind='xterm-256color'):
+        t = TestTerminal(stream=StringIO())
+        eq_(t.clear, '')
+        eq_(t.move(1, 2), '')
+        eq_(t.move_x(1), '')
+        eq_(t.bold(), '')
+        eq_(t.bold('', 'x', 'huh?'), '')
+        eq_(t.bold('', 9876), '')
+        eq_(t.uhh(9876), '')
+        eq_(t.clear('x'), 'x')
+    child()
+    child('screen')
+    child('vt220')
+    child('rxvt')
+    child('cons25')
+    child('linux')
+    child('ansi')
+
