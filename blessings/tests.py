@@ -237,21 +237,22 @@ def test_mnemonic_colors():
     """Make sure color shortcuts work."""
     @as_subprocess
     def child(kind='xterm-256color'):
-        def color(num):
-            return unicode_parm('setaf', num)
-        def on_color(num):
-            return unicode_parm('setab', num)
+        def color(t, num):
+            return t.number_of_colors and unicode_parm('setaf', num) or ''
+
+        def on_color(t, num):
+            return t.number_of_colors and unicode_parm('setab', num) or ''
         # Avoid testing red, blue, yellow, and cyan, since they might someday
         # change depending on terminal type.
         t = TestTerminal(kind=kind)
-        eq_(t.white, color(7))
-        eq_(t.green, color(2))  # Make sure it's different than white.
-        eq_(t.on_black, on_color(0))
-        eq_(t.on_green, on_color(2))
-        eq_(t.bright_black, color(8))
-        eq_(t.bright_green, color(10))
-        eq_(t.on_bright_black, on_color(8))
-        eq_(t.on_bright_green, on_color(10))
+        eq_(t.white, color(t, 7))
+        eq_(t.green, color(t, 2))  # Make sure it's different than white.
+        eq_(t.on_black, on_color(t, 0))
+        eq_(t.on_green, on_color(t, 2))
+        eq_(t.bright_black, color(t, 8))
+        eq_(t.bright_green, color(t, 10))
+        eq_(t.on_bright_black, on_color(t, 8))
+        eq_(t.on_bright_green, on_color(t, 10))
     child()
     child('screen')
     child('vt220')
