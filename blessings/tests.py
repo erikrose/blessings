@@ -268,3 +268,28 @@ def test_null_callable_string():
     eq_(t.clear, '')
     eq_(t.move(1, 2), '')
     eq_(t.move_x(1), '')
+
+
+def test_setupterm_singleton_issue33():
+    """A warning is emitted if a new terminal ``kind`` is used per process."""
+    @as_subprocess
+    def child():
+        import warnings
+        warnings.filterwarnings("error", category=RuntimeWarning)
+
+        # instantiate first terminal, of type xterm-256color
+        term = TestTerminal(force_styling=True)
+
+        try:
+            # a second instantiation raises RuntimeWarning
+            term = TestTerminal(kind="vt220", force_styling=True)
+            assert not term.is_a_tty or False, 'Should have thrown exception'
+
+        except RuntimeWarning, err:
+            assert (err.args[0].startswith(
+                    'A terminal of kind "vt220" has been requested')
+                    ), err.args[0]
+            assert ('a terminal of kind "xterm-256color" will '
+                    'continue to be returned' in err.args[0]), err.args[0]
+
+    child()
