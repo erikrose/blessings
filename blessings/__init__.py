@@ -220,7 +220,7 @@ class Terminal(object):
         """Return a tuple of (terminal height, terminal width),
            using TIOCGWINSZ (Terminal I/O-Control: Get Window Size),
            falling back to environment variables (LINES, COLUMNS),
-           and 25 x 80 when otherwise unavailable."""
+           and 24 x 80 when otherwise unavailable."""
         # tigetnum('lines') and tigetnum('cols') update only if we call
         # setupterm() again.
         for descriptor in self._init_descriptor, sys.__stdout__:
