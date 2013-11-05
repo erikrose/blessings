@@ -118,8 +118,7 @@ def test_capability_without_tty():
 
 
 def test_capability_with_forced_tty():
-    """If we force styling, capabilities had better not (generally) be
-    empty."""
+    """force styling should return sequences even for non-ttys."""
     t = TestTerminal(stream=StringIO(), force_styling=True)
     eq_(t.save, unicode_cap('sc'))
 
@@ -130,7 +129,7 @@ def test_parametrization():
 
 
 def test_height_and_width():
-    """Assert that ``height_and_width()`` returns ints."""
+    """Assert that ``height_and_width()`` returns full integers."""
     t = TestTerminal()  # kind shouldn't matter.
     assert isinstance(t.height, int)
     assert isinstance(t.width, int)
@@ -185,11 +184,8 @@ def test_zero_location():
 
 
 def test_null_fileno():
-    """Make sure ``Terminal`` works when ``fileno`` is ``None``.
-
-    This simulates piping output to another program.
-
-    """
+    """Make sure ``Terminal`` works when ``fileno`` is ``None``."""
+    # This simulates piping output to another program.
     out = StringIO()
     out.fileno = None
     t = TestTerminal(stream=out)
@@ -310,21 +306,19 @@ def test_nice_formatting_errors():
 
 
 def test_init_descriptor_always_initted():
-    """We should be able to get a height and width even on no-tty Terminals."""
+    """We should be able to get a height and width on no-tty Terminals."""
     t = Terminal(stream=StringIO())
     eq_(type(t.height), int)
 
 
 def test_force_styling_none():
-    """If ``force_styling=None`` is passed to the constructor, don't ever do
-    styling."""
+    """If ``force_styling=None`` is used, don't ever do styling."""
     t = TestTerminal(force_styling=None)
     eq_(t.save, '')
 
 
 def test_null_callable_string():
-    """Make sure NullCallableString tolerates all numbers and kinds of args it
-    might receive."""
+    """Make sure NullCallableString tolerates all kinds of args."""
     t = TestTerminal(stream=StringIO())
     eq_(t.clear, '')
     eq_(t.move(1, 2), '')
