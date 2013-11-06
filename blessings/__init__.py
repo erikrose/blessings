@@ -217,7 +217,13 @@ class Terminal(object):
         return self._height_and_width()[1]
 
     def _height_and_width(self):
-        """Return a tuple of (terminal height, terminal width)."""
+        """Return a tuple of (terminal height, terminal width).
+
+        Start by trying TIOCGWINSZ (Terminal I/O-Control: Get Window Size),
+        falling back to environment variables (LINES, COLUMNS), and returning
+        (None, None) if those are unavailable or invalid.
+
+        """
         # tigetnum('lines') and tigetnum('cols') update only if we call
         # setupterm() again.
         for descriptor in self._init_descriptor, sys.__stdout__:
@@ -225,8 +231,14 @@ class Terminal(object):
                 return struct.unpack(
                         'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
+                # when the output stream or init descriptor is not a tty, such
+                # as when when stdout is piped to another program, fe. tee(1),
+                # these ioctls will raise IOError
                 pass
-        return None, None  # Should never get here
+        try:
+            return int(environ.get('LINES')), int(environ.get('COLUMNS'))
+        except TypeError:
+            return None, None
 
     @contextmanager
     def location(self, x=None, y=None):
