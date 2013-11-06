@@ -13,12 +13,19 @@ except ImportError:
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2"""
 
-from os import isatty, environ
+from os import isatty, environ, read
 from platform import python_version_tuple
 import struct
 import sys
-from termios import TIOCGWINSZ
+from termios import TIOCGWINSZ, tcgetattr, TCSAFLUSH, TCSANOW, tcsetattr
+import warnings
+import codecs
+import select
+import time
+from tty import setcbreak
 
+from .sequences import SequenceTextWrapper, Sequence, init_sequence_patterns
+from .keyboard import init_keyboard_consts, init_keyboard_sequences, Keystroke
 
 __all__ = ['Terminal']
 
@@ -28,6 +35,26 @@ if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
+
+# From libcurses/doc/ncurses-intro.html (ESR, Thomas Dickey, et. al):
+#
+#   "After the call to setupterm(), the global variable cur_term is set to
+#    point to the current structure of terminal capabilities. By calling
+#    setupterm() for each terminal, and saving and restoring cur_term, it
+#    is possible for a program to use two or more terminals at once."
+#
+# However, if you study Python's ./Modules/_cursesmodule.c, you'll find:
+#
+#   if (!initialised_setupterm && setupterm(termstr,fd,&err) == ERR) {
+#
+# Python - perhaps wrongly - will not allow a re-initialisation of new
+# terminals through setupterm(), so the value of cur_term cannot be changed
+# once set: subsequent calls to setupterm() have no effect.
+#
+# Therefore, the ``kind`` of each Terminal() is, in essence, a singleton.
+# This global variable reflects that, and a warning is emitted if somebody
+# expects otherwise.
+_CUR_TERM = None
 
 
 class Terminal(object):
@@ -45,7 +72,6 @@ class Terminal(object):
         around with the terminal; it's almost always needed when the terminal
         is and saves sticking lots of extra args on client functions in
         practice.
-
     """
     def __init__(self, kind=None, stream=None, force_styling=False):
         """Initialize the terminal.
@@ -75,6 +101,7 @@ class Terminal(object):
             ``force_styling=None``.
 
         """
+        global _CUR_TERM
         if stream is None:
             stream = sys.__stdout__
         try:
@@ -89,6 +116,9 @@ class Terminal(object):
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
+        # keyboard input only valid when stream is sys.stdout
+        self.stream_kb = stream is sys.__stdout__ and sys.__stdin__
+
         # The desciptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
         # is redirected.
@@ -101,8 +131,30 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
-                      self._init_descriptor)
+            cur_term = kind or environ.get('TERM', 'unknown')
+            setupterm(cur_term, self._init_descriptor)
+
+            if _CUR_TERM is None or cur_term == _CUR_TERM:
+                _CUR_TERM = cur_term
+            else:
+                warnings.warn('A terminal of kind "%s" has been requested; '
+                              'due to an internal python curses bug, terminal '
+                              'capabilities for a terminal of kind "%s" will '
+                              'continue to be returned for the remainder of '
+                              'this process. see: '
+                              'https://github.com/erikrose/blessings/issues/33'
+                              % (cur_term, _CUR_TERM,), RuntimeWarning)
+
+        if self.does_styling:
+            init_sequence_patterns(self)
+
+        # build lookup constants attached as `term.KEY_NAME's
+        init_keyboard_consts(self)
+        # build database of _keyboard_mapper[sequence] <=> KEY_NAME
+        init_keyboard_sequences(self)
+
+        self._keyboard_buf = []
+        self._keyboard_decoder = codecs.getincrementaldecoder('utf8')()
 
         self.stream = stream
 
@@ -306,7 +358,8 @@ class Terminal(object):
         :arg num: The number, 0-15, of the color
 
         """
-        return ParametrizingString(self._foreground_color, self.normal)
+        return (ParametrizingString(self._foreground_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def on_color(self):
@@ -315,7 +368,8 @@ class Terminal(object):
         See ``color()``.
 
         """
-        return ParametrizingString(self._background_color, self.normal)
+        return (ParametrizingString(self._background_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def number_of_colors(self):
@@ -337,11 +391,11 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
-                                     # such cap.
+        # Returns -1 if no color support, -2 if no such capability.
+        colors = self.does_styling and tigetnum('colors') or -1
         #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
                                           # (Doesn't work.)
-        return colors if colors >= 0 else 0
+        return max(0, colors)
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
@@ -393,6 +447,8 @@ class Terminal(object):
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
+        if self.number_of_colors == 0:
+            return NullCallableString()
         return self._formatting_string(
             color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset))
 
@@ -408,6 +464,209 @@ class Terminal(object):
         """Return a new ``FormattingString`` which implicitly receives my
         notion of "normal"."""
         return FormattingString(formatting, self.normal)
+
+    def ljust(self, text, width=None, fillchar=u' '):
+        """T.ljust(text, [width], [fillchar]) -> string
+
+        Return string ``text``, left-justified by printable length ``width``.
+        Padding is done using the specified fill character (default is a
+        space).  Default width is the attached terminal's width. ``text`` is
+        escape-sequence safe."""
+        if width is None:
+            width = self.width
+        return Sequence(text, self).ljust(width, fillchar)
+
+    def rjust(self, text, width=None, fillchar=u' '):
+        """T.rjust(text, [width], [fillchar]) -> string
+
+        Return string ``text``, right-justified by printable length ``width``.
+        Padding is done using the specified fill character (default is a space)
+        Default width is the attached terminal's width. ``text`` is
+        escape-sequence safe."""
+        if width is None:
+            width = self.width
+        return Sequence(text, self).rjust(width, fillchar)
+
+    def center(self, text, width=None, fillchar=u' '):
+        """T.center(text, [width], [fillchar]) -> string
+
+        Return string ``text``, centered by printable length ``width``.
+        Padding is done using the specified fill character (default is a
+        space).  Default width is the attached terminal's width. ``text`` is
+        escape-sequence safe."""
+        if width is None:
+            width = self.width
+        return Sequence(text, self).center(width, fillchar)
+
+    def length(self, text):
+        """T.length(text) -> int
+
+        Return printable length of string ``text``, which may contain (some
+        kinds) of sequences. Strings containing sequences such as 'clear',
+        which repositions the cursor will not give accurate results.
+        """
+        return Sequence(text, self).length()
+
+    def wrap(self, text, width=None, **kwargs):
+        """
+        T.wrap(S, [width=None, indent=u'']) -> unicode
+
+        Wrap paragraphs containing escape sequences, ``S``, to the width of
+        terminal instance ``T``, wrapped by the virtual printable length,
+        irregardless of the escape sequences it may contain. Returns a list
+        of strings that may contain escape sequences. See textwrap.TextWrapper
+        class for available keyword args to customize wrapping behaviour.
+
+        Note that the keyword argument ``break_long_words`` may not be set,
+        it is not sequence-safe.
+        """
+        _blw = 'break_long_words'
+        assert (_blw not in kwargs or not kwargs[_blw]), (
+            "keyword argument `{}' is not sequence-safe".format(_blw))
+        lines = []
+        width = self.width if width is None else width
+        for line in text.splitlines():
+            if line.strip():
+                lines.extend([_linewrap for _linewrap in SequenceTextWrapper(
+                    width=width, term=self, **kwargs).wrap(text)])
+            else:
+                lines.append(u'')
+        return lines
+
+    def _resolve_keyboard_sequence(self, ucs):
+        """
+        T._resolve_keyboard_sequence(ucs) -> Keystroke()
+
+        Returns first Keystroke for sequence beginning at ucs.
+        """
+        for sequence in self._keyboard_sequences:
+            if ucs.startswith(sequence):
+                code = self._keyboard_mapper[sequence]
+                name = self._keyboard_seqnames[code]
+                return Keystroke(sequence, code=code, name=name)
+        return Keystroke(ucs and ucs[0] or '')
+
+    def kbhit(self, timeout=0):
+        """
+        T.kbhit([timeout=0]) -> bool
+
+        Returns True if a keypress has been detected on stdin. Non-blocking
+        (default) when ``timeout`` is 0, blocking until keypress when ``None``,
+        and blocking until keypress or ``timeout`` seconds have elapsed when
+        non-zero.
+        """
+        if not self.stream_kb:
+            return False
+        fd = self.stream_kb.fileno()
+        return [fd] == select.select([fd], [], [], timeout)[0]
+
+    @contextmanager
+    def key_at_a_time(self):
+        """
+        Return a context manager that enters 'cbreak' mode, disabling line
+        buffering, making characters typed by the user immediately available
+        to the program. This mode is also sometimes referred to as 'rare' mode.
+
+        In 'cbreak' mode, echo of input is also disabled: the application must
+        explicitly print any input received, if they so wish.
+
+        More information can be found in the manual page for curses.h,
+           http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak
+
+        The python manual for curses,
+           http://docs.python.org/2/library/curses.html
+
+        Note also that setcbreak sets VMIN = 1 and VTIME = 0,
+           http://www.unixwiz.net/techtips/termios-vmin-vtime.html
+        """
+        assert self.is_a_tty, u'stream is not a a tty.'
+        if self.stream_kb:
+            save_mode = tcgetattr(self.stream_kb.fileno())
+            setcbreak(self.stream_kb.fileno(), TCSANOW)
+        try:
+            yield
+        finally:
+            if self.stream_kb:
+                tcsetattr(self.stream_kb.fileno(), TCSAFLUSH, save_mode)
+
+    def keypress(self, timeout=None, esc_delay=0.35):
+        """
+        Recieve next keystroke from keyboard (stdin), blocking until a keypress
+        is recieved or ``timeout`` elapsed, if specified.
+
+        When used without the context manager ``key_at_a_time``, stdin remains
+        line-buffered, and this function will block until return is pressed.
+
+        The value returned is an instance of ``Keystroke``, with properties
+        ``is_sequence``, and, when True, non-None values for ``code`` and
+        ``name``. The value of ``code`` may be compared against attributes
+        of this terminal beginning with KEY, such as KEY_EXIT.
+
+        To distinguish between KEY_EXIT (escape), and sequences beginning with
+        escape, the ``esc_delay`` specifies the amount of time after receiving
+        the escape character ('\x1b') to seek for application keys.
+
+        """
+        # TODO(jquast): "meta sends escape", where alt+1 would send '\x1b1',
+        #               what do we do with that? Surely, something useful.
+        #               comparator to term.KEY_meta('x') ?
+        # TODO(jquast): Ctrl characters, KEY_CTRL_[A-Z], and the rest;
+        #               KEY_CTRL_\, KEY_CTRL_{, etc. are not legitimate
+        #               attributes. comparator to term.KEY_ctrl('z') ?
+        def _timeleft(stime, tmout):
+            """
+            Returns time-relative time remaining before ``tmout`` after
+            time elapsed since ``stime``.
+            """
+            return (None if tmout is None
+                    else tmout - (time.time() - stime) if tmout != 0
+                    else 0)
+
+        def _decode_next():
+            """
+            Read and decode next byte from stdin
+            """
+            return self._keyboard_decoder.decode(
+                read(self.stream_kb.fileno(), 1),
+                final=False)
+
+        stime = time.time()
+
+        # re-buffer previously received keystrokes,
+        ucs = u''
+        while self._keyboard_buf:
+            ucs += self._keyboard_buf.pop()
+
+        # recieve all immediately available bytes
+        while self.kbhit():
+            ucs += _decode_next()
+
+        # decode keystroke, if any
+        ks = self._resolve_keyboard_sequence(ucs)
+
+        # so long as the most immediately received or buffered keystroke is
+        # incomplete, (which may be a multibyte encoding), block until until
+        # one is received.
+        while not ks and self.kbhit(_timeleft(stime, timeout)):
+            ucs += _decode_next()
+            ks = self._resolve_keyboard_sequence(ucs)
+
+        # handle escape key (KEY_EXIT) vs. escape sequence (which begins
+        # with KEY_EXIT, \x1b[, \x1bO, or \x1b?), up to esc_delay when
+        # received. This is not optimal, but causes least delay when
+        # (currently unhandled, and rare) "meta sends escape" is used,
+        # or when an unsupported sequence is sent.
+        if ks.code is self.KEY_EXIT:
+            esctime = time.time()
+            while (ks.code is self.KEY_EXIT and
+                   (len(ucs) <= 1 or ucs[1] in u'[?O') and
+                   self.kbhit(_timeleft(esctime, esc_delay))):
+                ucs += _decode_next()
+                ks = self._resolve_keyboard_sequence(ucs)
+
+        for remaining in ucs[len(ks):]:
+            self._keyboard_buf.insert(0, remaining)
+        return ks
 
 
 def derivative_colors(colors):
@@ -457,12 +716,6 @@ class ParametrizingString(unicode):
             parametrized = tparm(self.encode('latin1'), *args).decode('latin1')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
-        except curses.error:
-            # Catch "must call (at least) setupterm() first" errors, as when
-            # running simply `nosetests` (without progressive) on nose-
-            # progressive. Perhaps the terminal has gone away between calling
-            # tigetstr and calling tparm.
-            return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -536,7 +789,12 @@ class NullCallableString(unicode):
             # determine which of 2 special-purpose classes,
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
-            return u''
+            # As a NullCallableString, even when provided with a parameter,
+            # such as t.color(5), we must also still be callable, fe:
+            # >>> t.color(5)('shmoo')
+            # is actually simplified result of NullCallable()(), so
+            # turtles all the way down: we return another instance.
+            return NullCallableString()
         return args[0]  # Should we force even strs in Python 2.x to be
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
