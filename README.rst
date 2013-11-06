@@ -388,6 +388,39 @@ and just stick to content, since you're apparently headed into a pipe::
             print 'Progress: [=======>   ]'
     print term.bold('Important stuff')
 
+Sequence Awareness
+------------------
+
+Blessings may measure the printable width of strings containing sequences,
+providing ``.center``, ``.ljust``, and ``.rjust``, using the terminal
+screen's width as the default ``width`` value::
+
+    from blessings import Terminal
+
+    term = Terminal()
+    print (''.join(term.move(term.height / 2),       # move-to vertical center
+                   term.center(term.bold('X'))       # horizontal ceneted
+                   term.move(terminal.height -1),))  # move-to vertical bottom
+
+Any string containing sequences may have its printable length measured using
+``.length``. Additionally, ``textwrap.wrap()`` is supplied on the Terminal class
+as method ``.wrap`` method that is also sequence-aware, so now you may word-wrap
+strings containing sequences.  The following example uses a width value of 25 to
+format a poem from Tao Te Ching::
+
+    from blessings import Terminal
+
+    t = Terminal()
+
+    poem = (term.bold_blue('Plan difficult tasks ')
+            + term.bold_black('through the simplest tasks'),
+            term.bold_cyan('Achieve large tasks ')
+            + term.cyan('through the smallest tasks'))
+    for line in poem:
+        print('\n'.join(term.wrap(line, width=25,
+                                  subsequent_indent=' '*4)))
+
+
 Shopping List
 =============
 
