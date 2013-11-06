@@ -439,6 +439,8 @@ Version History
   * Make ``is_a_tty`` a read-only property, like ``does_styling``. Writing to
     it never would have done anything constructive.
   * Add ``fullscreen()`` and ``hidden_cursor()`` to the auto-generated docs.
+  * Support terminal types, such as kermit and avatar, that use bytes 127-255
+    in their escape sequences. (jquast)
 
 1.5.1
   * Clean up fabfile, removing the redundant ``test`` command.
