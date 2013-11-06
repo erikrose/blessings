@@ -439,6 +439,8 @@ Version History
   * Make ``is_a_tty`` a read-only property, like ``does_styling``. Writing to
     it never would have done anything constructive.
   * Add ``fullscreen()`` and ``hidden_cursor()`` to the auto-generated docs.
+  * Fall back to ``LINES`` and ``COLUMNS`` environment vars to find height and
+    width. (jquast)
 
 1.5.1
   * Clean up fabfile, removing the redundant ``test`` command.
