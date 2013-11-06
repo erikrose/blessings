@@ -376,9 +376,7 @@ class Terminal(object):
         """
         code = tigetstr(self._sugar.get(atom, atom))
         if code:
-            # We can encode escape sequences as UTF-8 because they never
-            # contain chars > 127, and UTF-8 never changes anything within that
-            # range..
+            # See the comment in ParametrizingString for why this is latin1.
             return code.decode('latin1')
         return u''
 
@@ -448,12 +446,13 @@ class ParametrizingString(unicode):
             # Re-encode the cap, because tparm() takes a bytestring in Python
             # 3. However, appear to be a plain Unicode string otherwise so
             # concats work.
-            # We use *latin1* encoding so that bytes emitted by tparam are
+            #
+            # We use *latin1* encoding so that bytes emitted by tparm are
             # encoded to their native value: some terminal kinds, such as
             # 'avatar' or 'kermit', emit 8-bit bytes in range 0x7f to 0xff.
             # latin1 leaves these values unmodified in their conversion to
-            # unicode byte values. The terminal emulator will 'catch' and
-            # handle these values, even if emitting utf8 encoded text, where
+            # unicode byte values. The terminal emulator will "catch" and
+            # handle these values, even if emitting utf8-encoded text, where
             # these bytes would otherwise be illegal utf8 start bytes.
             parametrized = tparm(self.encode('latin1'), *args).decode('latin1')
             return (parametrized if self._normal is None else
