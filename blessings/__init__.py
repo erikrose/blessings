@@ -18,7 +18,9 @@ from platform import python_version_tuple
 import struct
 import sys
 from termios import TIOCGWINSZ
+import warnings
 
+from .sequences import SequenceTextWrapper, Sequence, init_sequence_patterns
 
 __all__ = ['Terminal']
 
@@ -28,6 +30,26 @@ if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
+
+# From libcurses/doc/ncurses-intro.html (ESR, Thomas Dickey, et. al):
+#
+#   "After the call to setupterm(), the global variable cur_term is set to
+#    point to the current structure of terminal capabilities. By calling
+#    setupterm() for each terminal, and saving and restoring cur_term, it
+#    is possible for a program to use two or more terminals at once."
+#
+# However, if you study Python's ./Modules/_cursesmodule.c, you'll find:
+#
+#   if (!initialised_setupterm && setupterm(termstr,fd,&err) == ERR) {
+#
+# Python - perhaps wrongly - will not allow a re-initialisation of new
+# terminals through setupterm(), so the value of cur_term cannot be changed
+# once set: subsequent calls to setupterm() have no effect.
+#
+# Therefore, the ``kind`` of each Terminal() is, in essence, a singleton.
+# This global variable reflects that, and a warning is emitted if somebody
+# expects otherwise.
+_CUR_TERM = None
 
 
 class Terminal(object):
@@ -75,6 +97,7 @@ class Terminal(object):
             ``force_styling=None``.
 
         """
+        global _CUR_TERM
         if stream is None:
             stream = sys.__stdout__
         try:
@@ -101,8 +124,23 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
-                      self._init_descriptor)
+            cur_term = kind or environ.get('TERM', 'unknown')
+            setupterm(cur_term, self._init_descriptor)
+
+            if _CUR_TERM is None or cur_term == _CUR_TERM:
+                _CUR_TERM = cur_term
+            else:
+                warnings.warn('A terminal of kind "%s" has been requested; '
+                              'due to an internal python curses bug, terminal '
+                              'capabilities for a terminal of kind "%s" will '
+                              'continue to be returned for the remainder of '
+                              'this process. see: '
+                              'https://github.com/erikrose/blessings/issues/33'
+                              % (cur_term, _CUR_TERM,), RuntimeWarning)
+
+
+        if self.does_styling:
+            init_sequence_patterns(self)
 
         self.stream = stream
 
@@ -217,7 +255,13 @@ class Terminal(object):
         return self._height_and_width()[1]
 
     def _height_and_width(self):
-        """Return a tuple of (terminal height, terminal width)."""
+        """Return a tuple of (terminal height, terminal width).
+
+        Start by trying TIOCGWINSZ (Terminal I/O-Control: Get Window Size),
+        falling back to environment variables (LINES, COLUMNS), and returning
+        (None, None) if those are unavailable or invalid.
+
+        """
         # tigetnum('lines') and tigetnum('cols') update only if we call
         # setupterm() again.
         for descriptor in self._init_descriptor, sys.__stdout__:
@@ -225,8 +269,14 @@ class Terminal(object):
                 return struct.unpack(
                         'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
+                # when the output stream or init descriptor is not a tty, such
+                # as when when stdout is piped to another program, fe. tee(1),
+                # these ioctls will raise IOError
                 pass
-        return None, None  # Should never get here
+        try:
+            return int(environ.get('LINES')), int(environ.get('COLUMNS'))
+        except TypeError:
+            return None, None
 
     @contextmanager
     def location(self, x=None, y=None):
@@ -294,7 +344,8 @@ class Terminal(object):
         :arg num: The number, 0-15, of the color
 
         """
-        return ParametrizingString(self._foreground_color, self.normal)
+        return (ParametrizingString(self._foreground_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def on_color(self):
@@ -303,7 +354,8 @@ class Terminal(object):
         See ``color()``.
 
         """
-        return ParametrizingString(self._background_color, self.normal)
+        return (ParametrizingString(self._background_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def number_of_colors(self):
@@ -325,11 +377,11 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
-                                     # such cap.
+        # Returns -1 if no color support, -2 if no such capability.
+        colors = self.does_styling and tigetnum('colors') or -1
         #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
                                           # (Doesn't work.)
-        return colors if colors >= 0 else 0
+        return max(0, colors)
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
@@ -364,10 +416,8 @@ class Terminal(object):
         """
         code = tigetstr(self._sugar.get(atom, atom))
         if code:
-            # We can encode escape sequences as UTF-8 because they never
-            # contain chars > 127, and UTF-8 never changes anything within that
-            # range..
-            return code.decode('utf-8')
+            # See the comment in ParametrizingString for why this is latin1.
+            return code.decode('latin1')
         return u''
 
     def _resolve_color(self, color):
@@ -383,6 +433,8 @@ class Terminal(object):
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
+        if self.number_of_colors == 0:
+            return NullCallableString()
         return self._formatting_string(
             color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset))
 
@@ -398,6 +450,74 @@ class Terminal(object):
         """Return a new ``FormattingString`` which implicitly receives my
         notion of "normal"."""
         return FormattingString(formatting, self.normal)
+
+    def ljust(self, text, width=None, fillchar=u' '):
+        """T.ljust(text, [width], [fillchar]) -> string
+
+        Return string ``text``, left-justified by printable length ``width``.
+        Padding is done using the specified fill character (default is a
+        space).  Default width is the attached terminal's width. ``text`` is
+        escape-sequence safe."""
+        if width is None:
+            width = self.width
+        return Sequence(text, self).ljust(width, fillchar)
+
+    def rjust(self, text, width=None, fillchar=u' '):
+        """T.rjust(text, [width], [fillchar]) -> string
+
+        Return string ``text``, right-justified by printable length ``width``.
+        Padding is done using the specified fill character (default is a space)
+        Default width is the attached terminal's width. ``text`` is
+        escape-sequence safe."""
+        if width is None:
+            width = self.width
+        return Sequence(text, self).rjust(width, fillchar)
+
+    def center(self, text, width=None, fillchar=u' '):
+        """T.center(text, [width], [fillchar]) -> string
+
+        Return string ``text``, centered by printable length ``width``.
+        Padding is done using the specified fill character (default is a
+        space).  Default width is the attached terminal's width. ``text`` is
+        escape-sequence safe."""
+        if width is None:
+            width = self.width
+        return Sequence(text, self).center(width, fillchar)
+
+    def length(self, text):
+        """T.length(text) -> int
+
+        Return printable length of string ``text``, which may contain (some
+        kinds) of sequences. Strings containing sequences such as 'clear',
+        which repositions the cursor will not give accurate results.
+        """
+        return Sequence(text, self).length()
+
+    def wrap(self, text, width=None, **kwargs):
+        """
+        T.wrap(S, [width=None, indent=u'']) -> unicode
+
+        Wrap paragraphs containing escape sequences, ``S``, to the width of
+        terminal instance ``T``, wrapped by the virtual printable length,
+        irregardless of the escape sequences it may contain. Returns a list
+        of strings that may contain escape sequences. See textwrap.TextWrapper
+        class for available keyword args to customize wrapping behaviour.
+
+        Note that the keyword argument ``break_long_words`` may not be set,
+        it is not sequence-safe.
+        """
+        _blw = 'break_long_words'
+        assert (_blw not in kwargs or not kwargs[_blw]), (
+            "keyword argument `{}' is not sequence-safe".format(_blw))
+        lines = []
+        width = self.width if width is None else width
+        for line in text.splitlines():
+            if line.strip():
+                lines.extend([_linewrap for _linewrap in SequenceTextWrapper(
+                    width=width, term=self, **kwargs).wrap(text)])
+            else:
+                lines.append(u'')
+        return lines
 
 
 def derivative_colors(colors):
@@ -436,15 +556,17 @@ class ParametrizingString(unicode):
             # Re-encode the cap, because tparm() takes a bytestring in Python
             # 3. However, appear to be a plain Unicode string otherwise so
             # concats work.
-            parametrized = tparm(self.encode('utf-8'), *args).decode('utf-8')
+            #
+            # We use *latin1* encoding so that bytes emitted by tparm are
+            # encoded to their native value: some terminal kinds, such as
+            # 'avatar' or 'kermit', emit 8-bit bytes in range 0x7f to 0xff.
+            # latin1 leaves these values unmodified in their conversion to
+            # unicode byte values. The terminal emulator will "catch" and
+            # handle these values, even if emitting utf8-encoded text, where
+            # these bytes would otherwise be illegal utf8 start bytes.
+            parametrized = tparm(self.encode('latin1'), *args).decode('latin1')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
-        except curses.error:
-            # Catch "must call (at least) setupterm() first" errors, as when
-            # running simply `nosetests` (without progressive) on nose-
-            # progressive. Perhaps the terminal has gone away between calling
-            # tigetstr and calling tparm.
-            return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -518,7 +640,12 @@ class NullCallableString(unicode):
             # determine which of 2 special-purpose classes,
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
-            return u''
+            # As a NullCallableString, even when provided with a parameter,
+            # such as t.color(5), we must also still be callable, fe:
+            # >>> t.color(5)('shmoo')
+            # is actually simplified result of NullCallable()(), so
+            # turtles all the way down: we return another instance.
+            return NullCallableString()
         return args[0]  # Should we force even strs in Python 2.x to be
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
