@@ -26,11 +26,11 @@ def init_sequence_patterns(term):
               not cause the cursor to move (such as term.bold).
             ``_re_cuf``: regular expression that matches term.cuf(N)
               (move N characters forward).
-            ``cuf1``: term.cuf1 sequence (cursor forward 1 character)
+            ``_cuf1``: term.cuf1 sequence (cursor forward 1 character)
               as a static value.
             ``_re_cub``: regular expression that matches term.cub(N)
               (move N characters backward).
-            ``cub1``: term.cuf1 sequence (cursor backward 1 character)
+            ``_cub1``: term.cuf1 sequence (cursor backward 1 character)
               as a static value.
 
         These attribtues make it possible to perform introspection on
@@ -364,8 +364,8 @@ def measure_length(ucs, term):
     as a *next* pointer to skip past sequences. If string ``S`` is not a
     sequence, 0 is returned.
 
-    A sequence may be a typical terminal sequence beginning with Escape (\x1f),
-    especially a Control Sequence Initiator ("CSI", '\x1f[' ... ), or those of
+    A sequence may be a typical terminal sequence beginning with Escape (\x1b),
+    especially a Control Sequence Initiator ("CSI", '\x1b[' ... ), or those of
     '\a', '\b', '\r', '\n', '\xe0' (shift in), '\x0f' (shift out). They do not
     necessarily have to begin with CSI, they need only match the capabilities
     of attributes ``_re_will_move`` and ``_re_wont_move`` of terminal ``term``.
