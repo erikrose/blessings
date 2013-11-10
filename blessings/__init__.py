@@ -148,10 +148,10 @@ class Terminal(object):
         if self.does_styling:
             init_sequence_patterns(self)
 
-        # build lookup constants attached as `term.KEY_NAME's
-        init_keyboard_consts(self)
-        # build database of _keyboard_mapper[sequence] <=> KEY_NAME
-        init_keyboard_sequences(self)
+            # build lookup constants attached as `term.KEY_NAME's
+            init_keyboard_consts(self)
+            # build database of _keyboard_mapper[sequence] <=> KEY_NAME
+            init_keyboard_sequences(self)
 
         self._keyboard_buf = []
         self._keyboard_decoder = codecs.getincrementaldecoder('utf8')()
