@@ -553,9 +553,11 @@ class Terminal(object):
     @contextmanager
     def key_at_a_time(self):
         """
-        Return a context manager that enters 'cbreak' mode, disabling line
-        buffering, making characters typed by the user immediately available
-        to the program. This mode is also sometimes referred to as 'rare' mode.
+        Return a context manager that enters 'cbreak' mode: disabling line
+        buffering of keyboard input, making characters typed by the user
+        immediately available to the program.  Also referred to as 'rare'
+        mode, this is the opposite of 'cooked' mode, the default for most
+        shells.
 
         In 'cbreak' mode, echo of input is also disabled: the application must
         explicitly print any input received, if they so wish.
