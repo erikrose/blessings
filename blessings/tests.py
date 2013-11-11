@@ -29,7 +29,7 @@ from blessings import *
 TestTerminal = partial(Terminal, kind='xterm-256color')
 
 
-class as_subprocess:
+class as_subprocess(object):
     """ This helper executes test cases in a child process,
         avoiding a python-internal bug of _curses: setupterm()
         may not be called more than once per process.
