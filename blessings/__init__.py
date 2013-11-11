@@ -609,7 +609,7 @@ class Terminal(object):
             time elapsed since ``stime``.
             """
             return (None if tmout is None
-                    else tmout - (time.time() - stime) if tmout != 0
+                    else max(0, tmout - (time.time() - stime)) if tmout != 0
                     else 0)
 
         def _decode_next():
