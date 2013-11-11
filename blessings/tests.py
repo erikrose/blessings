@@ -17,6 +17,10 @@ import os
 import sys
 import pty
 import traceback
+import time
+import math
+import termios
+import codecs
 
 from nose.tools import eq_
 
@@ -723,3 +727,233 @@ def test_sequence_length():
     child('cons25')
     child('linux')
     child('ansi')
+
+
+def test_inkey_0s_noinput():
+    """ 0-second inkey without input; '' should be returned """
+    @as_subprocess
+    def child():
+        term = TestTerminal()
+        with term.key_at_a_time():
+            stime = time.time()
+            inp = term.keypress(timeout=0)
+            eq_(inp, u'')
+            eq_(math.floor(time.time() - stime), 0.0)
+    child()
+
+
+def test_inkey_1s_noinput():
+    """ 1-second inkey without input; '' should be returned after ~1 second.
+    """
+    @as_subprocess
+    def child():
+        term = TestTerminal()
+        with term.key_at_a_time():
+            stime = time.time()
+            inp = term.keypress(timeout=1)
+            eq_(inp, u'')
+            eq_(math.floor(time.time() - stime), 1.0)
+    child()
+
+
+def test_inkey_0s_input():
+    """ 0-second inkey with input; keypress should be immediately returned."""
+    pid, master_fd = pty.fork()
+    if pid is 0:  # child
+        term = TestTerminal()
+        with term.key_at_a_time():
+            inp = term.keypress(timeout=0)
+            sys.stdout.write(inp)
+        os._exit(0)
+    exc_output = unicode()
+    stime = time.time()
+    os.write(master_fd, b'x')
+    while True:
+        try:
+            _exc = os.read(master_fd, 65534)
+        except OSError:  # linux EOF
+            break
+        if not _exc:  # bsd EOF
+            break
+        exc_output += _exc.decode('utf-8')
+    pid, status = os.waitpid(pid, 0)
+    eq_(os.WEXITSTATUS(status), 0)
+    eq_(exc_output, u'x')
+    eq_(math.floor(time.time() - stime), 0.0)
+
+
+def test_inkey_0s_multibyte_utf8():
+    """ 0-second inkey with multibte utf-8 input; should decode immediately."""
+    pid, master_fd = pty.fork()
+    if pid is 0:  # child
+        term = TestTerminal()
+        with term.key_at_a_time():
+            inp = term.keypress(timeout=0)
+            os.write(sys.__stdout__.fileno(), inp.encode('utf-8'))
+            sys.stdout.flush()
+        os._exit(0)
+
+    attrs = termios.tcgetattr(master_fd)
+    attrs[3] = attrs[3] & ~termios.ECHO
+    termios.tcsetattr(master_fd, termios.TCSANOW, attrs)
+    # LATIN CAPITAL LETTER UPSILON
+    os.write(master_fd, u'\u01b1'.encode('utf-8'))
+    attrs[3] = attrs[3] | termios.ECHO
+    termios.tcsetattr(master_fd, termios.TCSANOW, attrs)
+
+    stime = time.time()
+    exc_output = unicode()
+    decoder = codecs.getincrementaldecoder('utf8')()
+    while True:
+        try:
+            _exc = os.read(master_fd, 65534)
+        except OSError:  # linux EOF
+            break
+        if not _exc:  # bsd EOF
+            break
+        exc_output += decoder.decode(_exc, final=False)
+    pid, status = os.waitpid(pid, 0)
+    eq_(exc_output, u'Ʊ')
+    eq_(os.WEXITSTATUS(status), 0)
+    eq_(math.floor(time.time() - stime), 0.0)
+
+
+def test_inkey_0s_sequence():
+    """ 0-second inkey with multibte sequence; should decode immediately."""
+    pid, master_fd = pty.fork()
+    if pid is 0:  # child
+        term = TestTerminal()
+        with term.key_at_a_time():
+            inp = term.keypress(timeout=0)
+            os.write(sys.__stdout__.fileno(), ('%s' % (inp.name,)))
+            sys.stdout.flush()
+        os._exit(0)
+
+    attrs = termios.tcgetattr(master_fd)
+    attrs[3] = attrs[3] & ~termios.ECHO
+    termios.tcsetattr(master_fd, termios.TCSANOW, attrs)
+    os.write(master_fd, b'\x1b[D')
+    attrs[3] = attrs[3] | termios.ECHO
+    termios.tcsetattr(master_fd, termios.TCSANOW, attrs)
+
+    stime = time.time()
+    exc_output = unicode()
+    while True:
+        try:
+            _exc = os.read(master_fd, 65534)
+        except OSError:  # linux EOF
+            break
+        if not _exc:  # bsd EOF
+            break
+        exc_output += _exc.decode('utf-8')
+    pid, status = os.waitpid(pid, 0)
+    eq_(exc_output, u'KEY_LEFT')
+    eq_(os.WEXITSTATUS(status), 0)
+    eq_(math.floor(time.time() - stime), 0.0)
+
+
+def test_inkey_1s_input():
+    """ 1-second inkey with multibte sequence; should return after ~1 second."""
+    pid, master_fd = pty.fork()
+    if pid is 0:  # child
+        term = TestTerminal()
+        with term.key_at_a_time():
+            inp = term.keypress(timeout=5)
+            os.write(sys.__stdout__.fileno(), ('%s' % (inp.name,)))
+            sys.stdout.flush()
+        os._exit(0)
+
+    stime = time.time()
+    time.sleep(1)
+    attrs = termios.tcgetattr(master_fd)
+    attrs[3] = attrs[3] & ~termios.ECHO
+    termios.tcsetattr(master_fd, termios.TCSANOW, attrs)
+    os.write(master_fd, b'\x1b[C')
+    attrs[3] = attrs[3] | termios.ECHO
+    termios.tcsetattr(master_fd, termios.TCSANOW, attrs)
+
+    exc_output = unicode()
+    while True:
+        try:
+            _exc = os.read(master_fd, 65534)
+        except OSError:  # linux EOF
+            break
+        if not _exc:  # bsd EOF
+            break
+        exc_output += _exc.decode('utf-8')
+    pid, status = os.waitpid(pid, 0)
+    eq_(exc_output, u'KEY_RIGHT')
+    eq_(os.WEXITSTATUS(status), 0)
+    eq_(math.floor(time.time() - stime), 1.0)
+
+
+def test_esc_delay_035():
+    """ esc_delay will cause a single ESC (\\x1b) to delay for 0.35. """
+    pid, master_fd = pty.fork()
+    if pid is 0:  # child
+        term = TestTerminal()
+        with term.key_at_a_time():
+            stime = time.time()
+            inp = term.keypress(timeout=5)
+            os.write(sys.__stdout__.fileno(), ('%s,%i' % (
+                inp.name, (time.time() - stime) * 100,)))
+            sys.stdout.flush()
+        os._exit(0)
+
+    attrs = termios.tcgetattr(master_fd)
+    attrs[3] = attrs[3] & ~termios.ECHO
+    termios.tcsetattr(master_fd, termios.TCSANOW, attrs)
+    os.write(master_fd, b'\x1b')
+    attrs[3] = attrs[3] | termios.ECHO
+    termios.tcsetattr(master_fd, termios.TCSANOW, attrs)
+
+    exc_output = unicode()
+    while True:
+        try:
+            _exc = os.read(master_fd, 65534)
+        except OSError:  # linux EOF
+            break
+        if not _exc:  # bsd EOF
+            break
+        exc_output += _exc.decode('utf-8')
+    pid, status = os.waitpid(pid, 0)
+    key_name, duration = exc_output.split(',')
+    eq_(key_name, u'KEY_EXIT')
+    eq_(os.WEXITSTATUS(status), 0)
+    assert 35 <= int(duration) <= 45
+
+
+def test_esc_delay_135():
+    """ esc_delay=1.35 will cause a single ESC (\\x1b) to delay for 1.35. """
+    pid, master_fd = pty.fork()
+    if pid is 0:  # child
+        term = TestTerminal()
+        with term.key_at_a_time():
+            stime = time.time()
+            inp = term.keypress(timeout=5, esc_delay=1.35)
+            os.write(sys.__stdout__.fileno(), ('%s,%i' % (
+                inp.name, (time.time() - stime) * 100,)))
+            sys.stdout.flush()
+        os._exit(0)
+
+    attrs = termios.tcgetattr(master_fd)
+    attrs[3] = attrs[3] & ~termios.ECHO
+    termios.tcsetattr(master_fd, termios.TCSANOW, attrs)
+    os.write(master_fd, b'\x1b')
+    attrs[3] = attrs[3] | termios.ECHO
+    termios.tcsetattr(master_fd, termios.TCSANOW, attrs)
+
+    exc_output = unicode()
+    while True:
+        try:
+            _exc = os.read(master_fd, 65534)
+        except OSError:  # linux EOF
+            break
+        if not _exc:  # bsd EOF
+            break
+        exc_output += _exc.decode('utf-8')
+    pid, status = os.waitpid(pid, 0)
+    key_name, duration = exc_output.split(',')
+    eq_(key_name, u'KEY_EXIT')
+    eq_(os.WEXITSTATUS(status), 0)
+    assert 135 <= int(duration) <= 145, int(duration)
