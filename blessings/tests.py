@@ -17,8 +17,8 @@ import os
 import sys
 import pty
 import traceback
+import codecs
 
-from nose import SkipTest
 from nose.tools import eq_
 
 # This tests that __all__ is correct, since we use below everything that should
@@ -35,6 +35,7 @@ class as_subprocess(object):
         may not be called more than once per process.
     """
     _CHILD_PID = 0
+    encoding = 'utf8'
 
     def __init__(self, func):
         self.func = func
@@ -52,9 +53,9 @@ class as_subprocess(object):
                 e_type, e_value, e_tb = sys.exc_info()
                 o_err = list()
                 for line in traceback.format_tb(e_tb):
-                    o_err.append(line.rstrip().encode('utf-8'))
-                o_err.append(('-=' * 20).encode('ascii'))
-                o_err.extend([_exc.rstrip().encode('utf-8') for _exc in
+                    o_err.append(line.rstrip().encode(self.encoding))
+                o_err.append(('-=' * 20).encode(self.encoding))
+                o_err.extend([_exc.rstrip().encode(self.encoding) for _exc in
                               traceback.format_exception_only(
                                   e_type, e_value)])
                 os.write(sys.__stdout__.fileno(), '\n'.join(o_err))
@@ -63,6 +64,7 @@ class as_subprocess(object):
                 os._exit(0)
 
         exc_output = unicode()
+        decoder = codecs.getincrementaldecoder(self.encoding)()
         while True:
             try:
                 _exc = os.read(master_fd, 65534)
@@ -72,7 +74,7 @@ class as_subprocess(object):
             if not _exc:
                 # bsd EOF
                 break
-            exc_output += _exc.decode('utf-8')
+            exc_output += decoder.decode(_exc)
 
         # parent process asserts exit code is 0, causing test
         # to fail if child process raised an exception/assertion
