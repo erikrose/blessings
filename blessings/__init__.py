@@ -13,12 +13,18 @@ except ImportError:
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2"""
 
-from os import isatty, environ
+from os import isatty, environ, read
 from platform import python_version_tuple
 import struct
 import sys
-from termios import TIOCGWINSZ
+from termios import TIOCGWINSZ, tcgetattr, TCSAFLUSH, TCSANOW, tcsetattr
+import codecs
+import select
+import time
+from tty import setcbreak
+import locale
 
+from .keyboard import init_keyboard_consts, init_keyboard_sequences, Keystroke
 
 __all__ = ['Terminal']
 
@@ -89,6 +95,9 @@ class Terminal(object):
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
+        # keyboard input only valid when stream is sys.stdout
+        self.stream_kb = stream is sys.__stdout__ and sys.__stdin__
+
         # The desciptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
         # is redirected.
@@ -103,6 +112,16 @@ class Terminal(object):
             # somewhere.
             setupterm(kind or environ.get('TERM', 'unknown'),
                       self._init_descriptor)
+        if self.does_styling:
+            # build lookup constants attached as `term.KEY_NAME's
+            init_keyboard_consts(self)
+            # build database of _keyboard_mapper[sequence] <=> KEY_NAME
+            init_keyboard_sequences(self)
+
+        self._keyboard_buf = []
+        locale.setlocale(locale.LC_ALL, '')
+        self._encoding = locale.getpreferredencoding()
+        self._keyboard_decoder = codecs.getincrementaldecoder(self._encoding)()
 
         self.stream = stream
 
@@ -408,6 +427,143 @@ class Terminal(object):
         """Return a new ``FormattingString`` which implicitly receives my
         notion of "normal"."""
         return FormattingString(formatting, self.normal)
+
+    def _resolve_keyboard_sequence(self, ucs):
+        """
+        T._resolve_keyboard_sequence(ucs) -> Keystroke()
+
+        Returns first Keystroke for sequence beginning at ucs.
+        """
+        for sequence in self._keyboard_sequences:
+            if ucs.startswith(sequence):
+                code = self._keyboard_mapper[sequence]
+                name = self._keyboard_seqnames[code]
+                return Keystroke(sequence, code=code, name=name)
+        return Keystroke(ucs and ucs[0] or '')
+
+    def kbhit(self, timeout=0):
+        """
+        T.kbhit([timeout=0]) -> bool
+
+        Returns True if a keypress has been detected on stdin. Non-blocking
+        (default) when ``timeout`` is 0, blocking until keypress when ``None``,
+        and blocking until keypress or ``timeout`` seconds have elapsed when
+        non-zero.
+        """
+        if not self.stream_kb:
+            return False
+        fd = self.stream_kb.fileno()
+        return [fd] == select.select([fd], [], [], timeout)[0]
+
+    @contextmanager
+    def key_at_a_time(self):
+        """
+        Return a context manager that enters 'cbreak' mode: disabling line
+        buffering of keyboard input, making characters typed by the user
+        immediately available to the program.  Also referred to as 'rare'
+        mode, this is the opposite of 'cooked' mode, the default for most
+        shells.
+
+        In 'cbreak' mode, echo of input is also disabled: the application must
+        explicitly print any input received, if they so wish.
+
+        More information can be found in the manual page for curses.h,
+           http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak
+
+        The python manual for curses,
+           http://docs.python.org/2/library/curses.html
+
+        Note also that setcbreak sets VMIN = 1 and VTIME = 0,
+           http://www.unixwiz.net/techtips/termios-vmin-vtime.html
+        """
+        assert self.is_a_tty, u'stream is not a a tty.'
+        if self.stream_kb:
+            save_mode = tcgetattr(self.stream_kb.fileno())
+            setcbreak(self.stream_kb.fileno(), TCSANOW)
+        try:
+            yield
+        finally:
+            if self.stream_kb:
+                tcsetattr(self.stream_kb.fileno(), TCSAFLUSH, save_mode)
+
+    def keypress(self, timeout=None, esc_delay=0.35):
+        """
+        Recieve next keystroke from keyboard (stdin), blocking until a keypress
+        is recieved or ``timeout`` elapsed, if specified.
+
+        When used without the context manager ``key_at_a_time``, stdin remains
+        line-buffered, and this function will block until return is pressed.
+
+        The value returned is an instance of ``Keystroke``, with properties
+        ``is_sequence``, and, when True, non-None values for ``code`` and
+        ``name``. The value of ``code`` may be compared against attributes
+        of this terminal beginning with KEY, such as KEY_EXIT.
+
+        To distinguish between KEY_EXIT (escape), and sequences beginning with
+        escape, the ``esc_delay`` specifies the amount of time after receiving
+        the escape character ('\x1b') to seek for application keys.
+
+        """
+        # TODO(jquast): "meta sends escape", where alt+1 would send '\x1b1',
+        #               what do we do with that? Surely, something useful.
+        #               comparator to term.KEY_meta('x') ?
+        # TODO(jquast): Ctrl characters, KEY_CTRL_[A-Z], and the rest;
+        #               KEY_CTRL_\, KEY_CTRL_{, etc. are not legitimate
+        #               attributes. comparator to term.KEY_ctrl('z') ?
+        def _timeleft(stime, tmout):
+            """
+            Returns time-relative time remaining before ``tmout`` after
+            time elapsed since ``stime``.
+            """
+            return (None if tmout is None
+                    else max(0, tmout - (time.time() - stime)) if tmout != 0
+                    else 0)
+
+        def _decode_next():
+            """
+            Read and decode next byte from stdin
+            """
+            return self._keyboard_decoder.decode(
+                read(self.stream_kb.fileno(), 1),
+                final=False)
+
+        stime = time.time()
+
+        # re-buffer previously received keystrokes,
+        ucs = u''
+        while self._keyboard_buf:
+            ucs += self._keyboard_buf.pop()
+
+        # recieve all immediately available bytes
+        while self.kbhit():
+            ucs += _decode_next()
+
+        # decode keystroke, if any
+        ks = self._resolve_keyboard_sequence(ucs)
+
+        # so long as the most immediately received or buffered keystroke is
+        # incomplete, (which may be a multibyte encoding), block until until
+        # one is received.
+        while not ks and self.kbhit(_timeleft(stime, timeout)):
+            ucs += _decode_next()
+            ks = self._resolve_keyboard_sequence(ucs)
+
+        # handle escape key (KEY_EXIT) vs. escape sequence (which begins
+        # with KEY_EXIT, \x1b[, \x1bO, or \x1b?), up to esc_delay when
+        # received. This is not optimal, but causes least delay when
+        # (currently unhandled, and rare) "meta sends escape" is used,
+        # or when an unsupported sequence is sent.
+        if ks.code is self.KEY_EXIT:
+            esctime = time.time()
+            while (ks.code is self.KEY_EXIT and
+                   (len(ucs) <= 1 or ucs[1] in u'[?O') and
+                   self.kbhit(_timeleft(esctime, esc_delay))):
+                ucs += _decode_next()
+                ks = self._resolve_keyboard_sequence(ucs)
+
+        for remaining in ucs[len(ks):]:
+            self._keyboard_buf.insert(0, remaining)
+        return ks
 
 
 def derivative_colors(colors):
