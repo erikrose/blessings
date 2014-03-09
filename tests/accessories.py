@@ -30,6 +30,10 @@ if os.environ.get('TRAVIS', None) is None:
 all_standard_terms_params = (set(all_terms_params) -
                              set(binpacked_terminal_params))
 
+# workaround for missing unicode object (str is unicode)
+if sys.version_info >= (3,):
+    unicode = str
+
 
 class as_subprocess(object):
     """This helper executes test cases in a child process,
