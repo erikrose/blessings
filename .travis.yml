@@ -1,13 +1,13 @@
 language: python
 
 python:
-  - 2.5
+  #  - 2.5
   - 2.6
   - 2.7
   - 3.2
   - 3.3
-  - 3.4
-  - 3.5
+  # - 3.4
+  # - 3.5
   - pypy
 
 matrix:
@@ -20,4 +20,5 @@ script:
   - python setup.py test
 
 install:
+  if [[ $TRAVIS_PYTHON_VERSION == 2.5 ]]; then pip install --use-mirrors ordereddict; fi
   if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install --use-mirrors ordereddict; fi
