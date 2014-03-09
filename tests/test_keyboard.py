@@ -75,7 +75,7 @@ def test_inkey_0s_input():
 
 
 def test_inkey_0s_multibyte_utf8():
-    """0-second inkey with multibte utf-8 input; should decode immediately."""
+    """0-second inkey with multibyte utf-8 input; should decode immediately."""
     # utf-8 bytes represent "latin capital letter upsilon".
     pid, master_fd = pty.fork()
     if pid is 0:  # child
@@ -100,7 +100,7 @@ def test_inkey_0s_multibyte_utf8():
 
 
 def test_inkey_0s_sequence():
-    """0-second inkey with multibte sequence; should decode immediately."""
+    """0-second inkey with multibyte sequence; should decode immediately."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
         term = TestTerminal()
@@ -123,7 +123,7 @@ def test_inkey_0s_sequence():
 
 
 def test_inkey_1s_input():
-    """1-second inkey w/multibte sequence; should return after ~1 second."""
+    """1-second inkey w/multibyte sequence; should return after ~1 second."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
         term = TestTerminal()

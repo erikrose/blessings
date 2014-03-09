@@ -114,8 +114,8 @@ def read_until_semaphore(fd, semaphore=RECV_SEMAPHORE,
     # continuous integration servers such as Travis.
     outp = unicode()
     decoder = codecs.getincrementaldecoder(encoding)()
-
-    while not outp.startswith(semaphore):
+    semaphore = semaphore.decode('ascii')
+    while not outp.startswith():
         try:
             _exc = os.read(fd, 1)
         except OSError:  # linux EOF
@@ -125,7 +125,7 @@ def read_until_semaphore(fd, semaphore=RECV_SEMAPHORE,
         outp += decoder.decode(_exc, final=False)
     assert outp.startswith(semaphore), (
         'Semaphore not recv before EOF '
-        '(expected %r, got %r)' % (semaphore, outp,))
+        '(expected: %r, got: %r)' % (semaphore, outp,))
     return outp[len(semaphore):]
 
 
