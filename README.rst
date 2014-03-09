@@ -14,8 +14,8 @@ Coding with Blessed looks like this... ::
     with t.location(0, t.height - 1):
         print t.center(t.blink('press any key to continue.'))
 
-    with t.key_at_a_time():
-        t.keypress()
+    with t.cbreak():
+        t.inkey()
 
 Or, for byte-level control, you can drop down and play with raw terminal
 capabilities::
