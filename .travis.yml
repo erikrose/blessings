@@ -13,6 +13,5 @@ matrix:
     - python: pypy  # PyPy doesn't have _curses.
 
 script:
-  - pip install -q --use-mirrors nose
-  - python setup.py install
-  - nosetests -w /tmp blessings.tests
+  - python setup.py develop
+  - python setup.py test
