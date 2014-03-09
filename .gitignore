@@ -1,3 +1,5 @@
+.coverage
+.cache
 .tox
 *.egg-info
 *.egg
@@ -5,3 +7,4 @@
 build
 dist
 docs/_build
+htmlcov

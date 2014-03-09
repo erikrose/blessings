@@ -1,30 +1,37 @@
-"""A thin, practical wrapper around terminal coloring, styling, and
-positioning"""
+"""A thin, practical wrapper around curses terminal capabilities."""
 
-from contextlib import contextmanager
+# standard modules
+import collections
+import contextlib
+import platform
+import warnings
+import termios
+import codecs
 import curses
-from curses import setupterm, tigetnum, tigetstr, tparm
-from fcntl import ioctl
+import locale
+import select
+import struct
+import fcntl
+import time
+import tty
+import sys
+import os
+
+# local imports
+import sequences
+import keyboard
+
+__all__ = ['Terminal']
 
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
     class IOUnsupportedOperation(Exception):
         """A dummy exception to take the place of Python 3's
-        ``io.UnsupportedOperation`` in Python 2"""
+        ``io.UnsupportedOperation`` in Python 2.5"""
 
-from os import isatty, environ
-from platform import python_version_tuple
-import struct
-import sys
-from termios import TIOCGWINSZ
-
-
-__all__ = ['Terminal']
-
-
-if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
-                                                                  # 3.2.10
+if ('3', '0', '0') <= platform.python_version_tuple() < ('3', '2', '2+'):
+    # Good till 3.2.10
     # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
     raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
                       'support due to http://bugs.python.org/issue10570.')
@@ -45,7 +52,6 @@ class Terminal(object):
         around with the terminal; it's almost always needed when the terminal
         is and saves sticking lots of extra args on client functions in
         practice.
-
     """
     def __init__(self, kind=None, stream=None, force_styling=False):
         """Initialize the terminal.
@@ -75,8 +81,11 @@ class Terminal(object):
             ``force_styling=None``.
 
         """
+        global _CUR_TERM
         if stream is None:
             stream = sys.__stdout__
+            self.stream_kb = sys.__stdin__.fileno()
+
         try:
             stream_descriptor = (stream.fileno() if hasattr(stream, 'fileno')
                                  and callable(stream.fileno)
@@ -85,9 +94,11 @@ class Terminal(object):
             stream_descriptor = None
 
         self._is_a_tty = (stream_descriptor is not None and
-                         isatty(stream_descriptor))
+                          os.isatty(stream_descriptor))
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
+
+        # keyboard input only valid when stream is sys.stdout
 
         # The desciptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
@@ -95,14 +106,48 @@ class Terminal(object):
         self._init_descriptor = (sys.__stdout__.fileno()
                                  if stream_descriptor is None
                                  else stream_descriptor)
+        self._kind = kind or os.environ.get('TERM', 'unknown')
         if self.does_styling:
             # Make things like tigetstr() work. Explicit args make setupterm()
             # work even when -s is passed to nosetests. Lean toward sending
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
-                      self._init_descriptor)
+            try:
+                curses.setupterm(self._kind, self._init_descriptor)
+            except curses.error:
+                warnings.warn('Failed to setupterm(kind=%s)' % (self._kind,))
+                self._kind = None
+                self._does_styling = False
+            else:
+                if _CUR_TERM is None or self._kind == _CUR_TERM:
+                    _CUR_TERM = self._kind
+                else:
+                    warnings.warn(
+                        'A terminal of kind "%s" has been requested; due to an'
+                        ' internal python curses bug,  terminal capabilities'
+                        ' for a terminal of kind "%s" will continue to be'
+                        ' returned for the remainder of this process. see:'
+                        ' https://github.com/erikrose/blessings/issues/33' % (
+                            self._kind, _CUR_TERM,))
+
+        if self.does_styling:
+            sequences.init_sequence_patterns(self)
+
+            # build database of int code <=> KEY_NAME
+            self._keycodes = keyboard.get_keyboard_codes()
+
+            # store attributes as: self.KEY_NAME = code
+            for key_code, key_name in self._keycodes.items():
+                setattr(self, key_name, key_code)
+
+            # build database of sequence <=> KEY_NAME
+            self._keymap = keyboard.get_keyboard_sequences(self)
+
+        self._keyboard_buf = []
+        locale.setlocale(locale.LC_ALL, '')
+        self._encoding = locale.getpreferredencoding()
+        self._keyboard_decoder = codecs.getincrementaldecoder(self._encoding)()
 
         self.stream = stream
 
@@ -194,53 +239,65 @@ class Terminal(object):
 
     @property
     def height(self):
-        """The height of the terminal in characters
+        """T.height -> int
 
-        If no stream or a stream not representing a terminal was passed in at
-        construction, return the dimension of the controlling terminal so
-        piping to things that eventually display on the terminal (like ``less
-        -R``) work. If a stream representing a terminal was passed in, return
-        the dimensions of that terminal. If there somehow is no controlling
-        terminal, return ``None``. (Thus, you should check that the property
-        ``is_a_tty`` is true before doing any math on the result.)
+        The height of the terminal in characters.
 
-        """
-        return self._height_and_width()[0]
+        If an alternative ``stream`` is chosen, the size of that stream
+        is returned if it is a connected to a terminal such as a pty.
+        Otherwise, the size of the controlling terminal is returned.
 
-    @property
-    def width(self):
-        """The width of the terminal in characters
+        If neither of these streams are terminals, such as when stdout is piped
+        to less(1), the values of the environment variable LINES and COLS are
+        returned.
 
-        See ``height()`` for some corner cases.
-
+        None may be returned if no suitable size is discovered.
         """
         return self._height_and_width()[1]
 
+    @property
+    def width(self):
+        """T.width -> int
+
+        The width of the terminal in characters.
+
+        None may be returned if no suitable size is discovered.
+        """
+        return self._height_and_width()[0]
+
+    @staticmethod
+    def _winsize(fd):
+        """T._winsize -> WINSZ(ws_row, ws_col, ws_xpixel, ws_ypixel)
+
+        The tty connected by file desriptor fd is queried for its window size,
+        and returned as a collections.namedtuple instance WINSZ.
+
+        May raise exception IOError.
+        """
+        data = fcntl.ioctl(fd, termios.TIOCGWINSZ, WINSZ._BUF)
+        return WINSZ(*struct.unpack(WINSZ._FMT, data))
+
     def _height_and_width(self):
         """Return a tuple of (terminal height, terminal width).
-
-        Start by trying TIOCGWINSZ (Terminal I/O-Control: Get Window Size),
-        falling back to environment variables (LINES, COLUMNS), and returning
-        (None, None) if those are unavailable or invalid.
-
         """
-        # tigetnum('lines') and tigetnum('cols') update only if we call
-        # setupterm() again.
+        # TODO(jquast): hey kids, even if stdout is redirected to a file,
+        # we can still query sys.__stdin__.fileno() for our terminal size.
+        # -- of course, if both are redirected, we have no use for this fd.
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                return struct.unpack(
-                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                winsize = self._winsize(descriptor)
+                return winsize.ws_row, winsize.ws_col
             except IOError:
-                # when the output stream or init descriptor is not a tty, such
-                # as when when stdout is piped to another program, fe. tee(1),
-                # these ioctls will raise IOError
                 pass
-        try:
-            return int(environ.get('LINES')), int(environ.get('COLUMNS'))
-        except TypeError:
-            return None, None
 
-    @contextmanager
+        lines, cols = None, None
+        if os.environ.get('LINES', None) is not None:
+            lines = int(os.environ['LINES'])
+        if os.environ.get('COLUMNS', None) is not None:
+            cols = int(os.environ['COLUMNS'])
+        return lines, cols
+
+    @contextlib.contextmanager
     def location(self, x=None, y=None):
         """Return a context manager for temporarily moving the cursor.
 
@@ -274,7 +331,7 @@ class Terminal(object):
             # Restore original cursor position:
             self.stream.write(self.restore)
 
-    @contextmanager
+    @contextlib.contextmanager
     def fullscreen(self):
         """Return a context manager that enters fullscreen mode while inside it
         and restores normal mode on leaving."""
@@ -284,7 +341,7 @@ class Terminal(object):
         finally:
             self.stream.write(self.exit_fullscreen)
 
-    @contextmanager
+    @contextlib.contextmanager
     def hidden_cursor(self):
         """Return a context manager that hides the cursor while inside it and
         makes it visible on leaving."""
@@ -306,7 +363,8 @@ class Terminal(object):
         :arg num: The number, 0-15, of the color
 
         """
-        return ParametrizingString(self._foreground_color, self.normal)
+        return (ParametrizingString(self._foreground_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def on_color(self):
@@ -315,7 +373,8 @@ class Terminal(object):
         See ``color()``.
 
         """
-        return ParametrizingString(self._background_color, self.normal)
+        return (ParametrizingString(self._background_color, self.normal)
+                if self.does_styling else NullCallableString())
 
     @property
     def number_of_colors(self):
@@ -337,11 +396,11 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
-        colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
-                                     # such cap.
+        # Returns -1 if no color support, -2 if no such capability.
+        colors = self.does_styling and curses.tigetnum('colors') or -1
         #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
                                           # (Doesn't work.)
-        return colors if colors >= 0 else 0
+        return max(0, colors)
 
     def _resolve_formatter(self, attr):
         """Resolve a sugary or plain capability name, color, or compound
@@ -374,9 +433,9 @@ class Terminal(object):
         (especially in Python 3) to concatenate with real (Unicode) strings.
 
         """
-        code = tigetstr(self._sugar.get(atom, atom))
+        code = curses.tigetstr(self._sugar.get(atom, atom))
         if code:
-            # See the comment in ParametrizingString for why this is latin1.
+            # Decode sequences as latin1, as they are always 8-bit bytes.
             return code.decode('latin1')
         return u''
 
@@ -393,6 +452,8 @@ class Terminal(object):
         # bright colors at 8-15:
         offset = 8 if 'bright_' in color else 0
         base_color = color.rsplit('_', 1)[-1]
+        if self.number_of_colors == 0:
+            return NullCallableString()
         return self._formatting_string(
             color_cap(getattr(curses, 'COLOR_' + base_color.upper()) + offset))
 
@@ -408,6 +469,219 @@ class Terminal(object):
         """Return a new ``FormattingString`` which implicitly receives my
         notion of "normal"."""
         return FormattingString(formatting, self.normal)
+
+    def ljust(self, text, width=None, fillchar=u' '):
+        """T.ljust(text, [width], [fillchar]) -> string
+
+        Return string ``text``, left-justified by printable length ``width``.
+        Padding is done using the specified fill character (default is a
+        space).  Default width is the attached terminal's width. ``text`` is
+        escape-sequence safe."""
+        if width is None:
+            width = self.width
+        return sequences.Sequence(text, self).ljust(width, fillchar)
+
+    def rjust(self, text, width=None, fillchar=u' '):
+        """T.rjust(text, [width], [fillchar]) -> string
+
+        Return string ``text``, right-justified by printable length ``width``.
+        Padding is done using the specified fill character (default is a space)
+        Default width is the attached terminal's width. ``text`` is
+        escape-sequence safe."""
+        if width is None:
+            width = self.width
+        return sequences.Sequence(text, self).rjust(width, fillchar)
+
+    def center(self, text, width=None, fillchar=u' '):
+        """T.center(text, [width], [fillchar]) -> string
+
+        Return string ``text``, centered by printable length ``width``.
+        Padding is done using the specified fill character (default is a
+        space).  Default width is the attached terminal's width. ``text`` is
+        escape-sequence safe."""
+        if width is None:
+            width = self.width
+        return sequences.Sequence(text, self).center(width, fillchar)
+
+    def length(self, text):
+        """T.length(text) -> int
+
+        Return printable length of string ``text``, which may contain (some
+        kinds) of sequences. Strings containing sequences such as 'clear',
+        which repositions the cursor will not give accurate results.
+        """
+        return sequences.Sequence(text, self).length()
+
+    def wrap(self, text, width=None, **kwargs):
+        """T.wrap(text, [width=None, indent=u'', ...]) -> unicode
+
+        Wrap paragraphs containing escape sequences, ``text``, to the full
+        width of Terminal instance T, unless width is specified, wrapped by
+        the virtual printable length, irregardless of the video attribute
+        sequences it may contain.
+
+        Returns a list of strings that may contain escape sequences. See
+        textwrap.TextWrapper class for available additional kwargs to
+        customize wrapping behavior.
+
+        Note that the keyword argument ``break_long_words`` may not be set,
+        it is not sequence-safe.
+        """
+
+        _blw = 'break_long_words'
+        assert (_blw not in kwargs or not kwargs[_blw]), (
+            "keyword argument, '{}' is not sequence-safe".format(_blw))
+
+        width = width is None and self.width or width
+        lines = []
+        for line in text.splitlines():
+            lines.extend(
+                (_linewrap for _linewrap in sequences.SequenceTextWrapper(
+                    width=width, term=self, **kwargs).wrap(text))
+                if line.strip() else (u'',))
+
+        return lines
+
+    def kbhit(self, timeout=0):
+        """T.kbhit([timeout=0]) -> bool
+
+        Returns True if a keypress has been detected on keyboard.
+
+        When ``timeout`` is 0, this call is non-blocking(default), or blocking
+        indefinitely until keypress when ``None``, and blocking until keypress
+        or time elapsed when ``timeout`` is non-zero.
+
+        If input is not a terminal, False is always returned.
+        """
+        if self.keyboard_fd is None:
+            return False
+
+        check_r, check_w, check_x = [self.stream_kb], [], []
+        ready_r, ready_w, ready_x = select.select(
+            check_r, check_w, check_x, timeout)
+
+        return check_r == ready_r
+
+    @contextlib.contextmanager
+    def cbreak(self):
+        """Return a context manager that enters 'cbreak' mode: disabling line
+        buffering of keyboard input, making characters typed by the user
+        immediately available to the program.  Also referred to as 'rare'
+        mode, this is the opposite of 'cooked' mode, the default for most
+        shells.
+
+        In 'cbreak' mode, echo of input is also disabled: the application must
+        explicitly print any input received, if they so wish.
+
+        More information can be found in the manual page for curses.h,
+           http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak
+
+        The python manual for curses,
+           http://docs.python.org/2/library/curses.html
+
+        Note also that setcbreak sets VMIN = 1 and VTIME = 0,
+           http://www.unixwiz.net/techtips/termios-vmin-vtime.html
+        """
+        assert self.is_a_tty, u'stream is not a a tty.'
+        if self.stream_kb is not None:
+            # save current terminal mode,
+            save_mode = termios.tcgetattr(self.stream_kb)
+            tty.setcbreak(self.stream_kb, termios.TCSANOW)
+            try:
+                yield
+            finally:
+                # restore prior mode,
+                termios.tcsetattr(self.stream_kb, termios.TCSAFLUSH, save_mode)
+        else:
+            yield
+
+    def inkey(self, timeout=None, esc_delay=0.35):
+        """T.inkey(timeout=None, esc_delay=0.35) -> Keypress()
+
+        Receive next keystroke from keyboard (stdin), blocking until a
+        keypress is received or ``timeout`` elapsed, if specified.
+
+        When used without the context manager ``cbreak``, stdin remains
+        line-buffered, and this function will block until return is pressed.
+
+        The value returned is an instance of ``Keystroke``, with properties
+        ``is_sequence``, and, when True, non-None values for ``code`` and
+        ``name``. The value of ``code`` may be compared against attributes
+        of this terminal beginning with KEY, such as KEY_ESCAPE.
+
+        To distinguish between KEY_ESCAPE, and sequences beginning with
+        escape, the ``esc_delay`` specifies the amount of time after receiving
+        the escape character ('\x1b') to seek for application keys.
+
+        """
+        # TODO(jquast): "meta sends escape", where alt+1 would send '\x1b1',
+        #               what do we do with that? Surely, something useful.
+        #               comparator to term.KEY_meta('x') ?
+        # TODO(jquast): Ctrl characters, KEY_CTRL_[A-Z], and the rest;
+        #               KEY_CTRL_\, KEY_CTRL_{, etc. are not legitimate
+        #               attributes. comparator to term.KEY_ctrl('z') ?
+        def _timeleft(stime, timeout):
+            """_timeleft(stime, timeout) -> float
+
+            Returns time-relative time remaining before ``timeout`` after time
+            elapsed since ``stime``.
+            """
+            if timeout is not None:
+                if timeout is 0:
+                    return 0
+                return max(0, timeout - (time.time() - stime))
+
+        def _decode_next():
+            """Read and decode next byte from stdin."""
+            byte = os.read(self.stream_kb, 1)
+            return self._keyboard_decoder.decode(byte, final=False)
+
+        def _resolve(text):
+            return keyboard.resolve_sequence(text=text,
+                                             mapper=self._keymap,
+                                             codes=self._keycodes)
+
+        stime = time.time()
+
+        # re-buffer previously received keystrokes,
+        ucs = u''
+        while self._keyboard_buf:
+            ucs += self._keyboard_buf.pop()
+
+        # receive all immediately available bytes
+        while self.kbhit():
+            ucs += _decode_next()
+
+        # decode keystroke, if any
+        ks = _resolve(ucs)
+
+        # so long as the most immediately received or buffered keystroke is
+        # incomplete, (which may be a multibyte encoding), block until until
+        # one is received.
+        while not ks and self.kbhit(_timeleft(stime, timeout)):
+            ucs += _decode_next()
+            ks = _resolve(ucs)
+
+        # handle escape key (KEY_ESCAPE) vs. escape sequence (which begins
+        # with KEY_ESCAPE, \x1b[, \x1bO, or \x1b?), up to esc_delay when
+        # received. This is not optimal, but causes least delay when
+        # (currently unhandled, and rare) "meta sends escape" is used,
+        # or when an unsupported sequence is sent.
+
+        if ks.code is self.KEY_ESCAPE:
+            esctime = time.time()
+            while (ks.code is self.KEY_ESCAPE and
+                   # XXX specially handle [?O sequence,
+                   # which may soon become [?O{A,B,C,D}, as there
+                   # is also an [?O in some terminal types
+                   (len(ucs) <= 1 or ucs[1] in u'[?O') and
+                   self.kbhit(_timeleft(esctime, esc_delay))):
+                ucs += _decode_next()
+                ks = _resolve(ucs)
+
+        for remaining in ucs[len(ks):]:
+            self._keyboard_buf.insert(0, remaining)
+        return ks
 
 
 def derivative_colors(colors):
@@ -446,23 +720,10 @@ class ParametrizingString(unicode):
             # Re-encode the cap, because tparm() takes a bytestring in Python
             # 3. However, appear to be a plain Unicode string otherwise so
             # concats work.
-            #
-            # We use *latin1* encoding so that bytes emitted by tparm are
-            # encoded to their native value: some terminal kinds, such as
-            # 'avatar' or 'kermit', emit 8-bit bytes in range 0x7f to 0xff.
-            # latin1 leaves these values unmodified in their conversion to
-            # unicode byte values. The terminal emulator will "catch" and
-            # handle these values, even if emitting utf8-encoded text, where
-            # these bytes would otherwise be illegal utf8 start bytes.
-            parametrized = tparm(self.encode('latin1'), *args).decode('latin1')
+            parametrized = curses.tparm(
+                self.encode('latin1'), *args).decode('latin1')
             return (parametrized if self._normal is None else
                     FormattingString(parametrized, self._normal))
-        except curses.error:
-            # Catch "must call (at least) setupterm() first" errors, as when
-            # running simply `nosetests` (without progressive) on nose-
-            # progressive. Perhaps the terminal has gone away between calling
-            # tigetstr and calling tparm.
-            return u''
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -536,10 +797,26 @@ class NullCallableString(unicode):
             # determine which of 2 special-purpose classes,
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
-            return u''
+            # As a NullCallableString, even when provided with a parameter,
+            # such as t.color(5), we must also still be callable, fe:
+            # >>> t.color(5)('shmoo')
+            # is actually simplified result of NullCallable()(), so
+            # turtles all the way down: we return another instance.
+            return NullCallableString()
         return args[0]  # Should we force even strs in Python 2.x to be
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
+
+WINSZ = collections.namedtuple('WINSZ', (
+    'ws_row',     # /* rows, in characters */
+    'ws_col',     # /* columns, in characters */
+    'ws_xpixel',  # /* horizontal size, pixels */
+    'ws_ypixel',  # /* vertical size, pixels */
+))
+#: format of termios structure
+WINSZ._FMT = 'hhhh'
+#: buffer of termios structure appropriate for ioctl argument
+WINSZ._BUF = '\x00' * struct.calcsize(WINSZ._FMT)
 
 
 def split_into_formatters(compound):
@@ -558,3 +835,24 @@ def split_into_formatters(compound):
         else:
             merged_segs.append(s)
     return merged_segs
+
+# From libcurses/doc/ncurses-intro.html (ESR, Thomas Dickey, et. al):
+#
+#   "After the call to setupterm(), the global variable cur_term is set to
+#    point to the current structure of terminal capabilities. By calling
+#    setupterm() for each terminal, and saving and restoring cur_term, it
+#    is possible for a program to use two or more terminals at once."
+#
+# However, if you study Python's ./Modules/_cursesmodule.c, you'll find:
+#
+#   if (!initialised_setupterm && setupterm(termstr,fd,&err) == ERR) {
+#
+# Python - perhaps wrongly - will not allow a re-initialisation of new
+# terminals through setupterm(), so the value of cur_term cannot be changed
+# once set: subsequent calls to setupterm() have no effect.
+#
+# Therefore, the ``kind`` of each Terminal() is, in essence, a singleton.
+# This global variable reflects that, and a warning is emitted if somebody
+# expects otherwise.
+
+_CUR_TERM = None

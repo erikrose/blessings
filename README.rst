@@ -1,18 +1,21 @@
-=========
-Blessings
-=========
+=======
+Blessed
+=======
 
-Coding with Blessings looks like this... ::
+Coding with Blessed looks like this... ::
 
-    from blessings import Terminal
+from blessed import Terminal
 
-    t = Terminal()
+t = Terminal()
 
-    print t.bold('Hi there!')
-    print t.bold_red_on_bright_green('It hurts my eyes!')
+print t.bold('Hi there!')
+print t.bold_red_on_bright_green('It hurts my eyes!')
 
-    with t.location(0, t.height - 1):
-        print 'This is at the bottom.'
+with t.location(0, t.height - 1):
+    print t.center(t.blink('press any key to continue.'))
+
+with t.key_at_a_time():
+    t.keypress()
 
 Or, for byte-level control, you can drop down and play with raw terminal
 capabilities::
@@ -23,7 +26,7 @@ capabilities::
 The Pitch
 =========
 
-Blessings lifts several of curses_' limiting assumptions, and it makes your
+Blessed lifts several of curses_' limiting assumptions, and it makes your
 code pretty, too:
 
 * Use styles, color, and maybe a little positioning without necessarily
@@ -41,7 +44,7 @@ code pretty, too:
 Before And After
 ----------------
 
-Without Blessings, this is how you'd print some underlined text at the bottom
+Without Blessed, this is how you'd print some underlined text at the bottom
 of the screen::
 
     from curses import tigetstr, setupterm, tparm
@@ -72,9 +75,9 @@ of the screen::
     print rc  # Restore cursor position.
 
 That was long and full of incomprehensible trash! Let's try it again, this time
-with Blessings::
+with Blessed::
 
-    from blessings import Terminal
+    from blessed import Terminal
 
     term = Terminal()
     with term.location(0, term.height - 1):
@@ -85,7 +88,7 @@ Much better.
 What It Provides
 ================
 
-Blessings provides just one top-level object: ``Terminal``. Instantiating a
+Blessed provides just one top-level object: ``Terminal``. Instantiating a
 ``Terminal`` figures out whether you're on a terminal at all and, if so, does
 any necessary terminal setup. After that, you can proceed to ask it all sorts
 of things about the terminal. Terminal terminal terminal.
@@ -96,7 +99,7 @@ Simple Formatting
 Lots of handy formatting codes ("capabilities" in low-level parlance) are
 available as attributes on a ``Terminal``. For example::
 
-    from blessings import Terminal
+    from blessed import Terminal
 
     term = Terminal()
     print 'I am ' + term.bold + 'bold' + term.normal + '!'
@@ -150,7 +153,7 @@ Color
 16 colors, both foreground and background, are available as easy-to-remember
 attributes::
 
-    from blessings import Terminal
+    from blessed import Terminal
 
     term = Terminal()
     print term.red + term.on_green + 'Red on green? Ick!' + term.normal
@@ -192,7 +195,7 @@ no effect: the foreground and background colors will stay as they were. You can
 get fancy and do different things depending on the supported colors by checking
 `number_of_colors`_.
 
-.. _`number_of_colors`: http://packages.python.org/blessings/#blessings.Terminal.number_of_colors
+.. _`number_of_colors`: http://packages.python.org/blessed/#blessed.Terminal.number_of_colors
 
 Compound Formatting
 -------------------
@@ -200,7 +203,7 @@ Compound Formatting
 If you want to do lots of crazy formatting all at once, you can just mash it
 all together::
 
-    from blessings import Terminal
+    from blessed import Terminal
 
     term = Terminal()
     print term.bold_underline_green_on_yellow + 'Woo' + term.normal
@@ -233,7 +236,7 @@ Most often, you'll need to flit to a certain location, print something, and
 then return: for example, when updating a progress bar at the bottom of the
 screen. ``Terminal`` provides a context manager for doing this concisely::
 
-    from blessings import Terminal
+    from blessed import Terminal
 
     term = Terminal()
     with term.location(0, term.height - 1):
@@ -265,7 +268,7 @@ Moving Permanently
 If you just want to move and aren't worried about returning, do something like
 this::
 
-    from blessings import Terminal
+    from blessed import Terminal
 
     term = Terminal()
     print term.move(10, 1) + 'Hi, mom!'
@@ -310,7 +313,7 @@ Height And Width
 
 It's simple to get the height and width of the terminal, in characters::
 
-    from blessings import Terminal
+    from blessed import Terminal
 
     term = Terminal()
     height = term.height
@@ -322,7 +325,7 @@ SIGWINCH handlers.
 Clearing The Screen
 -------------------
 
-Blessings provides syntactic sugar over some screen-clearing capabilities:
+Blessed provides syntactic sugar over some screen-clearing capabilities:
 
 ``clear``
   Clear the whole screen.
@@ -339,7 +342,7 @@ Full-Screen Mode
 Perhaps you have seen a full-screen program, such as an editor, restore the
 exact previous state of the terminal upon exiting, including, for example, the
 command-line prompt from which it was launched. Curses pretty much forces you
-into this behavior, but Blessings makes it optional. If you want to do the
+into this behavior, but Blessed makes it optional. If you want to do the
 state-restoration thing, use these capabilities:
 
 ``enter_fullscreen``
@@ -354,7 +357,7 @@ reserve it for when you don't want to leave anything behind in the scrollback.
 
 There's also a context manager you can use as a shortcut::
 
-    from blessings import Terminal
+    from blessed import Terminal
 
     term = Terminal()
     with term.fullscreen():
@@ -380,7 +383,7 @@ you see whether your capabilities will return actual, working formatting codes.
 If it's false, you should refrain from drawing progress bars and other frippery
 and just stick to content, since you're apparently headed into a pipe::
 
-    from blessings import Terminal
+    from blessed import Terminal
 
     term = Terminal()
     if term.does_styling:
@@ -388,12 +391,45 @@ and just stick to content, since you're apparently headed into a pipe::
             print 'Progress: [=======>   ]'
     print term.bold('Important stuff')
 
+Sequence Awareness
+------------------
+
+Blessed may measure the printable width of strings containing sequences,
+providing ``.center``, ``.ljust``, and ``.rjust``, using the terminal
+screen's width as the default ``width`` value::
+
+    from blessed import Terminal
+
+    term = Terminal()
+    print (''.join(term.move(term.height / 2),       # move-to vertical center
+                   term.center(term.bold('X'))       # horizontal ceneted
+                   term.move(terminal.height -1),))  # move-to vertical bottom
+
+Any string containing sequences may have its printable length measured using
+``.length``. Additionally, ``textwrap.wrap()`` is supplied on the Terminal class
+as method ``.wrap`` method that is also sequence-aware, so now you may word-wrap
+strings containing sequences.  The following example uses a width value of 25 to
+format a poem from Tao Te Ching::
+
+    from blessed import Terminal
+
+    t = Terminal()
+
+    poem = (term.bold_blue('Plan difficult tasks ')
+            + term.bold_black('through the simplest tasks'),
+            term.bold_cyan('Achieve large tasks ')
+            + term.cyan('through the smallest tasks'))
+    for line in poem:
+        print('\n'.join(term.wrap(line, width=25,
+                                  subsequent_indent=' '*4)))
+
+
 Shopping List
 =============
 
 There are decades of legacy tied up in terminal interaction, so attention to
 detail and behavior in edge cases make a difference. Here are some ways
-Blessings has your back:
+Blessed has your back:
 
 * Uses the terminfo database so it works with any terminal type
 * Provides up-to-the-moment terminal height and width, so you can respond to
@@ -408,7 +444,7 @@ Blessings has your back:
 * Keeps a minimum of internal state, so you can feel free to mix and match with
   calls to curses or whatever other terminal libraries you like
 
-Blessings does not provide...
+Blessed does not provide...
 
 * Native color support on the Windows command prompt. However, it should work
   when used in concert with colorama_.
@@ -420,18 +456,48 @@ Bugs
 
 Bugs or suggestions? Visit the `issue tracker`_.
 
-.. _`issue tracker`: https://github.com/erikrose/blessings/issues/
+.. _`issue tracker`: https://github.com/jquast/blessed/issues/
 
-.. image:: https://secure.travis-ci.org/erikrose/blessings.png
+.. image:: https://secure.travis-ci.org/jquast/blessed.png
 
 
 License
 =======
 
-Blessings is under the MIT License. See the LICENSE file.
+Blessed is derived from Blessings, which is under the MIT License, and
+shares the same. See the LICENSE file.
 
 Version History
 ===============
+
+1.7, Forked 'erikrose/blessings' to 'jquast/blessed'.
+Includes the following changes, (jquast):
+  * Created ``python setup.py develop`` for developer environment.
+  * Converted nosetests to pytest, use ``python setup.py test``.
+  * introduced ``@as_subprocess`` to discover and resolve various issues.
+  * cannot call ``setupterm()`` more than once per process.
+  * ``number_of_colors`` fails when ``does_styling`` is ``False``.
+  * pokemon ``curses.error`` exception removed.
+  * warning emitted and ``does_styling`` set ``False`` when TERM is unset
+    or unknown.
+  * allow ``term.color(7)('string')`` to behave when ``does_styling`` is
+    ``False``.
+  * attributes that should be read-only have now raise exception when
+    re-assigned (properties).
+  * introduced ``term.center()``, ``term.rjust()``, and ``term.ljust()``,
+    allows text containing sequences to be aligned to screen or argument
+    ``width``.
+  * introduced ``term.wrap()``, allows text containing sequences to be
+    word-wrapped without breaking mid-sequence and honoring their printable
+    width.
+  * introduced context manager ``cbreak`` which is equivalent to ``tty.cbreak``,
+    placing the terminal in 'cooked' mode, allowing input from stdin to be read
+    as each key is pressed (line-buffering disabled).
+  * introduced method ``inkey()``, which will return 1 or more characters as
+    a unicode sequence, with attributes ``.code`` and ``.name`` non-None when
+    a multibyte sequence is received, allowing arrow keys and such to be
+    detected. Optional value ``timeout`` allows timed polling or blocking.
+
 
 1.6
   * Add ``does_styling`` property. This takes ``force_styling`` into account
@@ -439,10 +505,6 @@ Version History
   * Make ``is_a_tty`` a read-only property, like ``does_styling``. Writing to
     it never would have done anything constructive.
   * Add ``fullscreen()`` and ``hidden_cursor()`` to the auto-generated docs.
-  * Fall back to ``LINES`` and ``COLUMNS`` environment vars to find height and
-    width. (jquast)
-  * Support terminal types, such as kermit and avatar, that use bytes 127-255
-    in their escape sequences. (jquast)
 
 1.5.1
   * Clean up fabfile, removing the redundant ``test`` command.
