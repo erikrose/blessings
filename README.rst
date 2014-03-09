@@ -4,18 +4,18 @@ Blessed
 
 Coding with Blessed looks like this... ::
 
-from blessed import Terminal
+    from blessed import Terminal
 
-t = Terminal()
+    t = Terminal()
 
-print t.bold('Hi there!')
-print t.bold_red_on_bright_green('It hurts my eyes!')
+    print t.bold('Hi there!')
+    print t.bold_red_on_bright_green('It hurts my eyes!')
 
-with t.location(0, t.height - 1):
-    print t.center(t.blink('press any key to continue.'))
+    with t.location(0, t.height - 1):
+        print t.center(t.blink('press any key to continue.'))
 
-with t.key_at_a_time():
-    t.keypress()
+    with t.key_at_a_time():
+        t.keypress()
 
 Or, for byte-level control, you can drop down and play with raw terminal
 capabilities::
