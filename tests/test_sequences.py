@@ -2,6 +2,7 @@
 """Tests for Terminal() sequences and sequence-awareness."""
 import StringIO
 import sys
+import os
 
 from accessories import (
     unsupported_sequence_terminals,
