@@ -136,7 +136,7 @@ def test_setupterm_singleton_issue33():
             assert not term.is_a_tty or False, 'Should have thrown exception'
 
         except UserWarning:
-            eerr = sys.exc_info()[1]
+            err = sys.exc_info()[1]
             assert (err.args[0].startswith(
                     'A terminal of kind "vt220" has been requested')
                     ), err.args[0]
