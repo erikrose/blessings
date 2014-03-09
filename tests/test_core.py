@@ -135,7 +135,8 @@ def test_setupterm_singleton_issue33():
             term = TestTerminal(kind="vt220", force_styling=True)
             assert not term.is_a_tty or False, 'Should have thrown exception'
 
-        except UserWarning, err:
+        except UserWarning:
+            eerr = sys.exc_info()[1]
             assert (err.args[0].startswith(
                     'A terminal of kind "vt220" has been requested')
                     ), err.args[0]
@@ -163,7 +164,8 @@ def test_setupterm_invalid_issue39():
             assert not term.is_a_tty and not term.does_styling, (
                 'Should have thrown exception')
             assert (term.number_of_colors == 0)
-        except UserWarning, err:
+        except UserWarning:
+            err = sys.exc_info()[1]
             assert err.args[0] == 'Failed to setupterm(kind=unknown)'
         finally:
             del warnings
