@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """Tests for Terminal() sequences and sequence-awareness."""
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 import sys
 import os
 
@@ -36,7 +39,7 @@ def test_capability_without_tty():
     """Assert capability templates are '' when stream is not a tty."""
     @as_subprocess
     def child():
-        t = TestTerminal(stream=StringIO.StringIO())
+        t = TestTerminal(stream=StringIO())
         assert t.save == u''
         assert t.red == u''
 
@@ -47,7 +50,7 @@ def test_capability_with_forced_tty():
     """force styling should return sequences even for non-ttys."""
     @as_subprocess
     def child():
-        t = TestTerminal(stream=StringIO.StringIO(), force_styling=True)
+        t = TestTerminal(stream=StringIO(), force_styling=True)
         assert t.save == unicode_cap('sc')
 
     child()
@@ -120,7 +123,7 @@ def test_location():
     """Make sure ``location()`` does what it claims."""
     @as_subprocess
     def child_with_styling():
-        t = TestTerminal(stream=StringIO.StringIO(), force_styling=True)
+        t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location(3, 4):
             t.stream.write(u'hi')
         expected_output = u''.join((unicode_cap('sc'),
@@ -133,7 +136,7 @@ def test_location():
     @as_subprocess
     def child_without_styling():
         """No side effect for location as a context manager without styling."""
-        t = TestTerminal(stream=StringIO.StringIO(), force_styling=None)
+        t = TestTerminal(stream=StringIO(), force_styling=None)
 
         with t.location(3, 4):
             t.stream.write(u'hi')
@@ -148,7 +151,7 @@ def test_horizontal_location():
     """Make sure we can move the cursor horizontally without changing rows."""
     @as_subprocess
     def child():
-        t = TestTerminal(stream=StringIO.StringIO(), force_styling=True)
+        t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location(x=5):
             pass
         expected_output = u''.join((unicode_cap('sc'),
@@ -163,7 +166,7 @@ def test_zero_location():
     """Make sure ``location()`` pays attention to 0-valued args."""
     @as_subprocess
     def child():
-        t = TestTerminal(stream=StringIO.StringIO(), force_styling=True)
+        t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location(0, 0):
             pass
         expected_output = u''.join((unicode_cap('sc'),
@@ -215,7 +218,7 @@ def test_null_callable_numeric_colors(all_terms):
     """``color(n)`` should be a no-op on null terminals."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal(stream=StringIO.StringIO())
+        t = TestTerminal(stream=StringIO())
         assert (t.color(5)('smoo') == 'smoo')
         assert (t.on_color(6)('smoo') == 'smoo')
 
@@ -262,7 +265,7 @@ def test_formatting_functions_without_tty(all_terms):
     """Test crazy-ass formatting wrappers when there's no tty."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal(kind=kind, stream=StringIO.StringIO())
+        t = TestTerminal(kind=kind, stream=StringIO())
         assert (t.bold(u'hi') == u'hi')
         assert (t.green('hi') == u'hi')
         # Test non-ASCII chars, no longer really necessary:
@@ -312,7 +315,7 @@ def test_null_callable_string(all_terms):
     """Make sure NullCallableString tolerates all kinds of args."""
     @as_subprocess
     def child(kind='xterm-256color'):
-        t = TestTerminal(stream=StringIO.StringIO())
+        t = TestTerminal(stream=StringIO())
         assert (t.clear == '')
         assert (t.move(1 == 2) == '')
         assert (t.move_x(1) == '')

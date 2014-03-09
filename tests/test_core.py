@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """Core blessed Terminal() tests."""
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 import sys
 
 from accessories import (
@@ -21,7 +24,7 @@ def test_null_location(all_terms):
     """Make sure ``location()`` with no args just does position restoration."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal(stream=StringIO.StringIO(), force_styling=True)
+        t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location():
             pass
         expected_output = u''.join((unicode_cap('sc'),
@@ -36,7 +39,7 @@ def test_null_fileno():
     @as_subprocess
     def child():
         # This simulates piping output to another program.
-        out = StringIO.StringIO()
+        out = StringIO()
         out.fileno = None
         t = TestTerminal(stream=out)
         assert (t.save == u'')
@@ -48,23 +51,23 @@ def test_number_of_colors_without_tty():
     """``number_of_colors`` should return 0 when there's no tty."""
     @as_subprocess
     def child_256_nostyle():
-        t = TestTerminal(stream=StringIO.StringIO())
+        t = TestTerminal(stream=StringIO())
         assert (t.number_of_colors == 0)
 
     @as_subprocess
     def child_256_forcestyle():
-        t = TestTerminal(stream=StringIO.StringIO(), force_styling=True)
+        t = TestTerminal(stream=StringIO(), force_styling=True)
         assert (t.number_of_colors == 256)
 
     @as_subprocess
     def child_8_forcestyle():
-        t = TestTerminal(kind='ansi', stream=StringIO.StringIO(),
+        t = TestTerminal(kind='ansi', stream=StringIO(),
                          force_styling=True)
         assert (t.number_of_colors == 8)
 
     @as_subprocess
     def child_0_forcestyle():
-        t = TestTerminal(kind='vt220', stream=StringIO.StringIO(),
+        t = TestTerminal(kind='vt220', stream=StringIO(),
                          force_styling=True)
         assert (t.number_of_colors == 0)
 
@@ -100,7 +103,7 @@ def test_init_descriptor_always_initted(all_terms):
     """Test height and width with non-tty Terminals."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal(kind=kind, stream=StringIO.StringIO())
+        t = TestTerminal(kind=kind, stream=StringIO())
         assert t._init_descriptor == sys.__stdout__.fileno()
         assert (isinstance(t.height, int))
         assert (isinstance(t.width, int))
