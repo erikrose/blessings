@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for Terminal() sequences and sequence-awareness."""
 import StringIO
-import termios
-import struct
-import fcntl
 import sys
 
 from accessories import (
@@ -16,6 +13,8 @@ from accessories import (
     many_lines,
     all_terms,
 )
+
+import pytest
 
 
 def test_capability():
