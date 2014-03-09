@@ -470,8 +470,9 @@ shares the same. See the LICENSE file.
 Version History
 ===============
 
-1.7, Forked 'erikrose/blessings' to 'jquast/blessed'.
-Includes the following changes, (jquast):
+1.7,
+  * Forked github project 'erikrose/blessings' to 'jquast/blessed', this
+    project was previously known as 'blessings' version 1.6 and prior.
   * Created ``python setup.py develop`` for developer environment.
   * Converted nosetests to pytest, use ``python setup.py test``.
   * introduced ``@as_subprocess`` to discover and resolve various issues.
