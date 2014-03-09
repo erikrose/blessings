@@ -470,7 +470,7 @@ shares the same. See the LICENSE file.
 Version History
 ===============
 
-1.7,
+1.7
   * Forked github project 'erikrose/blessings' to 'jquast/blessed', this
     project was previously known as 'blessings' version 1.6 and prior.
   * Created ``python setup.py develop`` for developer environment.
