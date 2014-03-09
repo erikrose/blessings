@@ -82,6 +82,8 @@ def test_stream_attr():
     child()
 
 
+@pytest.mark.skipif(os.environ.get('TRAVIS', None) is not None,
+                    reason="travis-ci does not have binary-packed terminals.")
 def test_emit_warnings_about_binpacked(unsupported_sequence_terminals):
     """Test known binary-packed terminals (kermit, avatar) emit a warning."""
     @as_subprocess

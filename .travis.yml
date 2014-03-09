@@ -15,3 +15,6 @@ matrix:
 script:
   - python setup.py develop
   - python setup.py test
+
+install:
+  if [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install --use-mirrors ordereddict; fi
