@@ -475,13 +475,15 @@ Includes the following changes, (jquast):
   * Created ``python setup.py develop`` for developer environment.
   * Converted nosetests to pytest, use ``python setup.py test``.
   * introduced ``@as_subprocess`` to discover and resolve various issues.
-  * cannot call ``setupterm()`` more than once per process.
-  * ``number_of_colors`` fails when ``does_styling`` is ``False``.
-  * pokemon ``curses.error`` exception removed.
-  * warning emitted and ``does_styling`` set ``False`` when TERM is unset
-    or unknown.
-  * allow ``term.color(7)('string')`` to behave when ``does_styling`` is
-    ``False``.
+  * cannot call ``setupterm()`` more than once per process -- issue a
+    warning about what terminal kind subsequent calls will use.
+  * resolved issue ``number_of_colors`` fails when ``does_styling`` is
+    ``False``. resolves piping tests output to stdout.
+  * removed pokemon ``curses.error`` exceptions.
+  * warn and set ``does_styling`` set ``False`` when TERM is unset or unknown.
+  * allow unsupported terminal capabilities to be callable just as supported
+    capabilities, so that the return value of ``term.color(n)`` may be called
+    on terminals without color capabilities.
   * attributes that should be read-only have now raise exception when
     re-assigned (properties).
   * introduced ``term.center()``, ``term.rjust()``, and ``term.ljust()``,
@@ -497,7 +499,6 @@ Includes the following changes, (jquast):
     a unicode sequence, with attributes ``.code`` and ``.name`` non-None when
     a multibyte sequence is received, allowing arrow keys and such to be
     detected. Optional value ``timeout`` allows timed polling or blocking.
-
 
 1.6
   * Add ``does_styling`` property. This takes ``force_styling`` into account
