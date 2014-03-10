@@ -126,9 +126,10 @@ def test_location():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location(3, 4):
             t.stream.write(u'hi')
-        expected_output = u''.join((unicode_cap('sc'),
-                                    unicode_parm('cup', 4, 3),
-                                    u'hi', unicode_cap('rc')))
+        expected_output = u''.join(
+            (unicode_cap('sc'),
+             unicode_parm('cup', 4, 3),
+             u'hi', unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
     child_with_styling()
@@ -154,9 +155,10 @@ def test_horizontal_location():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location(x=5):
             pass
-        expected_output = u''.join((unicode_cap('sc'),
-                                    unicode_parm('hpa', 5),
-                                    unicode_cap('rc')))
+        expected_output = u''.join(
+            (unicode_cap('sc'),
+             unicode_parm('hpa', 5),
+             unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
     child()
@@ -169,9 +171,10 @@ def test_zero_location():
         t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location(0, 0):
             pass
-        expected_output = u''.join((unicode_cap('sc'),
-                                    unicode_parm('cup', 0, 0),
-                                    unicode_cap('rc')))
+        expected_output = u''.join(
+            (unicode_cap('sc'),
+             unicode_parm('cup', 0, 0),
+             unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
     child()
@@ -249,12 +252,13 @@ def test_formatting_functions(all_terms):
         # Test some non-ASCII chars, probably not necessary:
         expected_output = u''.join((t.bold, t.green, u'boö', t.normal))
         assert (t.bold_green(u'boö') == expected_output)
-        expected_output = u''.join((t.bold, t.underline, t.green, t.on_red,
-                                    u'boo', t.normal))
+        expected_output = u''.join(
+            (t.bold, t.underline, t.green, t.on_red, u'boo', t.normal))
         assert (t.bold_underline_green_on_red('boo') == expected_output)
         # Very compounded strings
-        expected_output = u''.join((t.on_bright_red, t.bold, t.bright_green,
-                                    t.underline, u'meh', t.normal))
+        expected_output = u''.join(
+            (t.on_bright_red, t.bold, t.bright_green,
+             t.underline, u'meh', t.normal))
         assert (t.on_bright_red_bold_bright_green_underline('meh')
                 == expected_output)
 

@@ -27,8 +27,8 @@ def test_null_location(all_terms):
         t = TestTerminal(stream=StringIO(), force_styling=True)
         with t.location():
             pass
-        expected_output = u''.join((unicode_cap('sc'),
-                                    unicode_cap('rc')))
+        expected_output = u''.join(
+            (unicode_cap('sc'), unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
     child(all_terms)

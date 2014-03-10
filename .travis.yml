@@ -1,22 +1,23 @@
 language: python
 
-python:
-  #- 2.5
-  - 2.6
-  - 2.7
-  - 3.2
-  - 3.3
-  #- 3.4
-  #- 3.5
-  - pypy
+env:
+  - TOXENV=py26
+  - TOXENV=py27
+  - TOXENV=py33
+    # not supported ..
+  - TOXNENV=py25  # missing
+  - TOXNENV=py32  # will fail
+  - TOXNENV=py34  # missing
+  - TOXNENV=pypy  # will fail
 
 matrix:
   allow_failures:
-    # bugs, u'literals'
-    - python: 3.2
+    - python: 3.2 # bugs, no u'literals'
+    - pypy        # a few (minor) bugs ??
 
 script:
-  - python setup.py develop test
+  - tox
 
 install:
-  if [[ $TRAVIS_PYTHON_VERSION == 2.5 ]] || [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install --use-mirrors ordereddict; fi
+  # travis wants requirements.txt; we don't, use only 'requires=' in setup.py.
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.5 ]] || [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install --use-mirrors ordereddict; fi

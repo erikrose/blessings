@@ -16,15 +16,17 @@ _BINTERM_UNSUPPORTED = ('kermit', 'avatar')
 _BINTERM_UNSUPPORTED_MSG = ('sequence-awareness for terminals emitting '
                             'binary-packed capabilities are not supported.')
 
+
 def _merge_sequences(inp):
     """Merge a list of input sequence patterns for use in a regular expression.
-    Order by lengthyness (full sequence set precident over subset),
+    Order by lengthyness (full sequence set precedent over subset),
     and exclude any empty (u'') sequences.
     """
     return sorted(list(filter(None, inp)), key=len, reverse=True)
 
 
-def _build_numeric_capability(term, cap, optional=False, base_num=99, nparams=1):
+def _build_numeric_capability(term, cap, optional=False,
+                              base_num=99, nparams=1):
     """ Build regexp from capabilities having matching numeric
         parameter contained within termcap value: n->(\d+).
     """
@@ -59,7 +61,7 @@ def _build_any_numeric_capability(term, cap, num=99, nparams=1):
 def init_sequence_patterns(term):
     """ Given a Terminal instance, ``term``, this function processes
         and parses several known terminal capabilities, and builds a
-        database of regular expressions and attatches them to ``term``
+        database of regular expressions and attaches them to ``term``
         as attributes:
             ``_re_will_move``: any sequence matching this pattern will
               cause the terminal cursor to move (such as term.home).

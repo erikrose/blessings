@@ -8,12 +8,11 @@ from accessories import (
     as_subprocess,
     TestTerminal,
     many_columns,
-    many_lines,
     all_terms,
 )
 
 
-def test_SequenceWrapper(all_terms, many_lines, many_columns):
+def test_SequenceWrapper(all_terms, many_columns):
     """Test that text wrapping accounts for sequences correctly."""
     @as_subprocess
     def child(kind, lines=25, cols=80):
@@ -23,8 +22,10 @@ def test_SequenceWrapper(all_terms, many_lines, many_columns):
 
         # build a test paragraph, along with a very colorful version
         t = TestTerminal(kind=kind)
-        pgraph = 'pony express, all aboard, choo, choo! ' + (
-            ('whugga ' * 10) + ('choo, choooOOOOOOOooooOOooOooOoo! ')) * 10
+        pgraph = u''.join(
+            ('a', 'ab', 'abc', 'abcd', 'abcde', 'abcdef', 'abcdefgh',
+             'abcdefghi', 'abcdefghij', 'abcdefghijk', 'abcdefghijkl',
+             'abcdefghijklm', 'abcdefghijklmn', 'abcdefghijklmno',) * 4)
         pgraph_colored = u''.join([
             t.color(n % 7) + t.bold + ch
             for n, ch in enumerate(pgraph)])
@@ -59,4 +60,4 @@ def test_SequenceWrapper(all_terms, many_lines, many_columns):
         assert (len(internal_wrapped) == len(my_wrapped_colored))
         assert (len(internal_wrapped[-1]) == t.length(my_wrapped_colored[-1]))
 
-    child(all_terms, many_lines, many_columns)
+    child(kind=all_terms, lines=25, cols=many_columns)

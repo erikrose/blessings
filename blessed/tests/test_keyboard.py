@@ -58,7 +58,7 @@ def test_inkey_0s_input():
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
             inp = term.inkey(timeout=0)
-            os.write(sys.__stdout__.fileno(), inp)
+            os.write(sys.__stdout__.fileno(), inp.encode('utf-8'))
         os._exit(0)
 
     with echo_off(master_fd):
@@ -107,7 +107,7 @@ def test_inkey_0s_sequence():
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
             inp = term.inkey(timeout=0)
-            os.write(sys.__stdout__.fileno(), ('%s' % (inp.name,)))
+            os.write(sys.__stdout__.fileno(), inp.name.encode('ascii'))
             sys.stdout.flush()
         os._exit(0)
 
@@ -130,7 +130,7 @@ def test_inkey_1s_input():
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
             inp = term.inkey(timeout=3)
-            os.write(sys.__stdout__.fileno(), ('%s' % (inp.name,)))
+            os.write(sys.__stdout__.fileno(), inp.name.encode('utf-8'))
             sys.stdout.flush()
         os._exit(0)
 
@@ -156,8 +156,9 @@ def test_esc_delay_035():
         with term.cbreak():
             stime = time.time()
             inp = term.inkey(timeout=5)
-            os.write(sys.__stdout__.fileno(), ('%s %i' % (
-                inp.name, (time.time() - stime) * 100,)))
+            measured_time = (time.time() - stime) * 100
+            os.write(sys.__stdout__.fileno(), (
+                '%s %i' % (inp.name, measured_time,)).encode('ascii'))
             sys.stdout.flush()
         os._exit(0)
 
@@ -183,8 +184,9 @@ def test_esc_delay_135():
         with term.cbreak():
             stime = time.time()
             inp = term.inkey(timeout=5, esc_delay=1.35)
-            os.write(sys.__stdout__.fileno(), ('%s %i' % (
-                inp.name, (time.time() - stime) * 100,)))
+            measured_time = (time.time() - stime) * 100
+            os.write(sys.__stdout__.fileno(), (
+                '%s %i' % (inp.name, measured_time,)).encode('ascii'))
             sys.stdout.flush()
         os._exit(0)
 
@@ -210,8 +212,9 @@ def test_esc_delay_timout_0():
         with term.cbreak():
             stime = time.time()
             inp = term.inkey(timeout=0)
-            os.write(sys.__stdout__.fileno(), ('%s %i' % (
-                inp.name, (time.time() - stime) * 100,)))
+            measured_time = (time.time() - stime) * 100
+            os.write(sys.__stdout__.fileno(), (
+                '%s %i' % (inp.name, measured_time,)).encode('ascii'))
             sys.stdout.flush()
         os._exit(0)
 
@@ -238,7 +241,8 @@ def test_no_keystroke():
     assert ks.code == ks._code
     assert u'x' == u'x' + ks
     assert ks.is_sequence is False
-    assert repr(ks) == "u''"
+    assert repr(ks) in ("u''",  # py26, 27
+                        "''",)  # py33
 
 
 def test_a_keystroke():
@@ -344,39 +348,40 @@ def test_resolve_sequence():
     assert ks.name is None
     assert ks.code is None
     assert ks.is_sequence is False
-    assert repr(ks) == u"u''"
+    assert repr(ks) in ("u''",  # py26, 27
+                        "''",)  # py33
 
     ks = resolve_sequence(u'notfound', mapper=mapper, codes=codes)
     assert ks == u'n'
     assert ks.name is None
     assert ks.code is None
     assert ks.is_sequence is False
-    assert repr(ks) == u"u'n'"
+    assert repr(ks) in (u"u'n'", "'n'",)
 
     ks = resolve_sequence(u'SEQ1', mapper, codes)
     assert ks == u'SEQ1'
     assert ks.name == u'KEY_SEQ1'
     assert ks.code is 1
     assert ks.is_sequence is True
-    assert repr(ks) == u"KEY_SEQ1"
+    assert repr(ks) in (u"KEY_SEQ1", "KEY_SEQ1")
 
     ks = resolve_sequence(u'LONGSEQ_longer', mapper, codes)
     assert ks == u'LONGSEQ'
     assert ks.name == u'KEY_LONGSEQ'
     assert ks.code is 4
     assert ks.is_sequence is True
-    assert repr(ks) == u"KEY_LONGSEQ"
+    assert repr(ks) in (u"KEY_LONGSEQ", "KEY_LONGSEQ")
 
     ks = resolve_sequence(u'LONGSEQ', mapper, codes)
     assert ks == u'LONGSEQ'
     assert ks.name == u'KEY_LONGSEQ'
     assert ks.code is 4
     assert ks.is_sequence is True
-    assert repr(ks) == u"KEY_LONGSEQ"
+    assert repr(ks) in (u"KEY_LONGSEQ", "KEY_LONGSEQ")
 
     ks = resolve_sequence(u'Lxxxxx', mapper, codes)
     assert ks == u'L'
     assert ks.name == u'KEY_L'
     assert ks.code is 6
     assert ks.is_sequence is True
-    assert repr(ks) == u"KEY_L"
+    assert repr(ks) in (u"KEY_L", "KEY_L")

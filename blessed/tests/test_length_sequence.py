@@ -8,7 +8,6 @@ from accessories import (
     all_standard_terms,
     as_subprocess,
     TestTerminal,
-    many_columns,
     many_lines,
     all_terms,
 )
@@ -90,19 +89,24 @@ def test_sequence_length(all_terms):
     child(all_terms)
 
 
-def test_Sequence_alignment(all_terms, many_lines, many_columns):
+def test_Sequence_alignment(all_terms, many_lines):
     """Tests methods related to Sequence class, namely ljust, rjust, center."""
     @as_subprocess
     def child(kind, lines=25, cols=80):
         # set the pty's virtual window size
         val = struct.pack('HHHH', lines, cols, 0, 0)
+#        try:
         fcntl.ioctl(sys.__stdout__.fileno(), termios.TIOCSWINSZ, val)
+#        except IOError:
+#            # unable to set screen size of tty, skip
+#            return
 
         t = TestTerminal(kind=kind)
         pony_msg = 'pony express, all aboard, choo, choo!'
         pony_len = len(pony_msg)
-        pony_colored = u''.join(['%s%s' % (t.color(n % 7), ch,)
-                                 for n, ch in enumerate(pony_msg)])
+        pony_colored = u''.join(
+            ['%s%s' % (t.color(n % 7), ch,)
+             for n, ch in enumerate(pony_msg)])
         pony_colored += t.normal
         ladjusted = t.ljust(pony_colored)
         radjusted = t.rjust(pony_colored)
@@ -115,7 +119,7 @@ def test_Sequence_alignment(all_terms, many_lines, many_columns):
         assert (t.length(radjusted.strip()) == pony_len)
         assert (t.length(radjusted) == len(pony_msg.rjust(t.width)))
 
-    child(all_terms, many_lines, many_columns)
+    child(kind=all_terms, lines=many_lines)
 
 
 def test_sequence_is_movement_false(all_terms):

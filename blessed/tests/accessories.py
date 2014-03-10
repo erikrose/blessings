@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Accessories for automated tests."""
+"""Accessories for automated py.test runner."""
 from __future__ import with_statement
 import contextlib
 import functools
@@ -16,23 +16,19 @@ from blessed import Terminal
 import pytest
 
 TestTerminal = functools.partial(Terminal, kind='xterm-256color')
-SEND_SEMAPHORE = SEMAPHORE = u'SEMAPHORE\n'.encode('ascii')
-RECV_SEMAPHORE = u'%s\r\n' % (SEMAPHORE.rstrip(),)
+SEND_SEMAPHORE = SEMAPHORE = b'SEMAPHORE\n'
+RECV_SEMAPHORE = b'SEMAPHORE\r\n'
 all_xterms_params = ['xterm', 'xterm-256color']
 all_terms_params = ['screen', 'vt220', 'rxvt', 'cons25', 'linux', 'ansi']
 binpacked_terminal_params = ['avatar', 'kermit']
 many_lines_params = [30, 100]
-many_columns_params = [5, 30, 150, 500]
+many_columns_params = [10, 30, 100]
 if os.environ.get('TRAVIS', None) is None:
     # TRAVIS-CI has a limited type of terminals, the others ...
     all_terms_params.extend(['avatar', 'kermit', 'dtterm', 'wyse520',
                              'minix', 'eterm', 'aixterm', 'putty'])
 all_standard_terms_params = (set(all_terms_params) -
                              set(binpacked_terminal_params))
-
-# workaround for missing unicode object (str is unicode)
-if sys.version_info >= (3,):
-    unicode = str
 
 
 class as_subprocess(object):
@@ -102,25 +98,26 @@ class as_subprocess(object):
 
 def read_until_semaphore(fd, semaphore=RECV_SEMAPHORE,
                          encoding='utf8', timeout=10):
-    """Read file descriptor ``fd`` until ``semaphore`` is found."""
+    """Read file descriptor ``fd`` until ``semaphore`` is found.
+
+    Used to ensure the child process is awake and ready. For timing
+    tests; without a semaphore, the time to fork() would be (incorrectly)
+    included in the duration of the test, which can be very length on
+    continuous integration servers (such as Travis-CI).
+    """
     # note that when a child process writes xyz\\n, the parent
-    # process will ready xyz\\r\\n -- this is how pseudo terminals
+    # process will read xyz\\r\\n -- this is how pseudo terminals
     # behave; a virtual terminal requires both carriage return and
     # line feed, it is only for convenience that \\n does both.
-    #
-    # used to ensure the child process is awake and ready, for timing
-    # tests; without a semaphore, the time to fork() would be (incorrectly)
-    # included in the duration of the test, which can be very length on
-    # continuous integration servers such as Travis.
     outp = unicode()
     decoder = codecs.getincrementaldecoder(encoding)()
     semaphore = semaphore.decode('ascii')
-    while not outp.startswith():
+    while not outp.startswith(semaphore):
         try:
             _exc = os.read(fd, 1)
-        except OSError:  # linux EOF
+        except OSError:  # Linux EOF
             break
-        if not _exc:  # bsd EOF
+        if not _exc:     # BSD EOF
             break
         outp += decoder.decode(_exc, final=False)
     assert outp.startswith(semaphore), (
