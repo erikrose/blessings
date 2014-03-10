@@ -4,11 +4,11 @@ env:
   - TOXENV=py26
   - TOXENV=py27
   - TOXENV=py33
-    # not supported ..
-  - TOXNENV=py25  # missing
-  - TOXNENV=py32  # will fail
-  - TOXNENV=py34  # missing
   - TOXNENV=pypy  # will fail
+#    # not supported ..
+#  - TOXNENV=py25  # missing
+#  - TOXNENV=py32  # will fail
+#  - TOXNENV=py34  # missing
 
 matrix:
   allow_failures:
