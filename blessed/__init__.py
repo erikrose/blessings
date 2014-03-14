@@ -253,7 +253,7 @@ class Terminal(object):
 
         None may be returned if no suitable size is discovered.
         """
-        return self._height_and_width()[1]
+        return self._height_and_width().ws_row
 
     @property
     def width(self):
@@ -263,7 +263,7 @@ class Terminal(object):
 
         None may be returned if no suitable size is discovered.
         """
-        return self._height_and_width()[0]
+        return self._height_and_width().ws_col
 
     @staticmethod
     def _winsize(fd):
@@ -285,17 +285,15 @@ class Terminal(object):
         # -- of course, if both are redirected, we have no use for this fd.
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
-                winsize = self._winsize(descriptor)
-                return winsize.ws_row, winsize.ws_col
+                return self._winsize(descriptor)
             except IOError:
                 pass
 
-        lines, cols = None, None
-        if os.environ.get('LINES', None) is not None:
-            lines = int(os.environ['LINES'])
-        if os.environ.get('COLUMNS', None) is not None:
-            cols = int(os.environ['COLUMNS'])
-        return lines, cols
+        return WINSZ(ws_row=(os.environ.get('LINES', None) is not None
+                             and int(os.environ['LINES']) or None),
+                     ws_col=(os.environ.get('COLUMNS', None) is not None
+                             and int(os.environ['COLUMNS']) or None),
+                     ws_xpixel=None, ws_ypixel=None)
 
     @contextlib.contextmanager
     def location(self, x=None, y=None):
