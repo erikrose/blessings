@@ -8,6 +8,7 @@ from accessories import (
     all_standard_terms,
     as_subprocess,
     TestTerminal,
+    many_columns,
     many_lines,
     all_terms,
 )
@@ -89,19 +90,32 @@ def test_sequence_length(all_terms):
     child(all_terms)
 
 
+def test_winsize(many_lines, many_columns):
+    """Test height and width is appropriately queried in a pty."""
+    @as_subprocess
+    def child(lines=25, cols=80):
+        # set the pty's virtual window size
+        val = struct.pack('HHHH', lines, cols, 0, 0)
+        fcntl.ioctl(sys.__stdout__.fileno(), termios.TIOCSWINSZ, val)
+        t = TestTerminal()
+        winsize = t._height_and_width()
+        assert t.width == cols
+        assert t.height == lines
+        assert winsize.ws_col == cols
+        assert winsize.ws_row == lines
+
+    child(lines=many_lines, cols=many_columns)
+
+
 def test_Sequence_alignment(all_terms, many_lines):
     """Tests methods related to Sequence class, namely ljust, rjust, center."""
     @as_subprocess
     def child(kind, lines=25, cols=80):
         # set the pty's virtual window size
         val = struct.pack('HHHH', lines, cols, 0, 0)
-#        try:
         fcntl.ioctl(sys.__stdout__.fileno(), termios.TIOCSWINSZ, val)
-#        except IOError:
-#            # unable to set screen size of tty, skip
-#            return
+        t = TestTerminal()
 
-        t = TestTerminal(kind=kind)
         pony_msg = 'pony express, all aboard, choo, choo!'
         pony_len = len(pony_msg)
         pony_colored = u''.join(
