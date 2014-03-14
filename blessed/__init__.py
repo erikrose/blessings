@@ -144,7 +144,7 @@ class Terminal(object):
             # build database of sequence <=> KEY_NAME
             self._keymap = keyboard.get_keyboard_sequences(self)
 
-        self._keyboard_buf = []
+        self._keyboard_buf = collections.deque()
         locale.setlocale(locale.LC_ALL, '')
         self._encoding = locale.getpreferredencoding()
         self._keyboard_decoder = codecs.getincrementaldecoder(self._encoding)()
@@ -677,8 +677,7 @@ class Terminal(object):
                 ucs += _decode_next()
                 ks = _resolve(ucs)
 
-        for remaining in ucs[len(ks):]:
-            self._keyboard_buf.insert(0, remaining)
+        self._keyboard_buf.extendleft(ucs[len(ks):])
         return ks
 
 
