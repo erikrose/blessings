@@ -107,6 +107,8 @@ def test_init_descriptor_always_initted(all_terms):
         assert t._init_descriptor == sys.__stdout__.fileno()
         assert (isinstance(t.height, int))
         assert (isinstance(t.width, int))
+        assert t.height == t._height_and_width()[0]
+        assert t.width == t._height_and_width()[1]
 
     child(all_terms)
 
