@@ -1,14 +1,16 @@
 #!/usr/bin/env python
-import blessings
+from blessed import Terminal
 import sys
 
+#    _keymap
+#    _keycodes
 
 def main():
     """
     Displays all known key capabilities that may match the terminal.
     As each key is pressed on input, it is lit up and points are scored.
     """
-    term = blessings.Terminal()
+    term = Terminal()
     score = level = hit_highbit = hit_unicode = 0
     dirty = True
 
@@ -18,7 +20,7 @@ def main():
         if level_color == 0:
             level_color = 4
         bottom = 0
-        for keycode, attr in board.iteritems():
+        for keycode, attr in board.items():
             sys.stdout.write(u''.join((
                 term.move(attr['row'], attr['column']),
                 term.color(level_color),
@@ -47,7 +49,7 @@ def main():
         column, row = 0, 0
         board = dict()
         spacing = 2
-        for keycode in sorted(term._keyboard_seqnames.values()):
+        for keycode in sorted(term._keycodes.values()):
             if (keycode.startswith('KEY_F')
                     and keycode[-1].isdigit()
                     and int(keycode[len('KEY_F'):]) > 24):
@@ -72,13 +74,13 @@ def main():
     gb = build_gameboard(term)
     inps = []
 
-    with term.key_at_a_time():
-        inp = term.keypress(timeout=0)
+    with term.cbreak():
+        inp = term.inkey(timeout=0)
         while inp.upper() != 'Q':
             if dirty:
                 refresh(term, gb, level, score, inps)
                 dirty = False
-            inp = term.keypress(timeout=5.0)
+            inp = term.inkey(timeout=5.0)
             dirty = True
             if (inp.is_sequence and
                     inp.name in gb and
@@ -116,7 +118,7 @@ def main():
             u'press any key',
             term.clear_eol,))
         )
-        term.keypress()
+        term.inkey()
 
 if __name__ == '__main__':
     main()
