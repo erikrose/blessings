@@ -3,6 +3,11 @@ import termios
 import struct
 import fcntl
 import sys
+import os
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from accessories import (
     all_standard_terms,
@@ -89,6 +94,30 @@ def test_sequence_length(all_terms):
 
     child(all_terms)
 
+
+def test_env_winsize():
+    """Test height and width is appropriately queried in a pty."""
+    @as_subprocess
+    def child():
+        # set the pty's virtual window size
+        os.environ['COLUMNS'] = '99'
+        os.environ['LINES'] = '11'
+        t = TestTerminal(stream=StringIO())
+        save_init = t._init_descriptor
+        save_stdout = sys.__stdout__
+        try:
+            t._init_descriptor = None
+            sys.__stdout__ = None
+            winsize = t._height_and_width()
+            width = t.width
+            height = t.height
+        finally:
+            t._init_descriptor = save_init
+            sys.__stdout__ = save_stdout
+        assert winsize.ws_col == width == 99
+        assert winsize.ws_row == height == 11
+
+    child()
 
 def test_winsize(many_lines, many_columns):
     """Test height and width is appropriately queried in a pty."""
