@@ -19,7 +19,7 @@ def derivative_colors(colors):
 COLORS.update(derivative_colors(COLORS))
 
 
-class ParametrizingString(unicode):
+class ParameterizingString(unicode):
     """A Unicode string which can be called to parametrize it as a terminal
     capability"""
 
@@ -78,7 +78,7 @@ class FormattingString(unicode):
 
 class NullCallableString(unicode):
     """A dummy callable Unicode to stand in for ``FormattingString`` and
-    ``ParametrizingString`` for terminals that cannot perform styling.
+    ``ParameterizingString`` for terminals that cannot perform styling.
     """
     def __new__(cls):
         new = unicode.__new__(cls, u'')
@@ -89,7 +89,7 @@ class NullCallableString(unicode):
         (hopefully a string of some kind).
 
         When called with an int as the first arg, return an empty Unicode. An
-        int is a good hint that I am a ``ParametrizingString``, as there are
+        int is a good hint that I am a ``ParameterizingString``, as there are
         only about half a dozen string-returning capabilities listed in
         terminfo(5) which accept non-int arguments, they are seldom used.
 
@@ -98,7 +98,7 @@ class NullCallableString(unicode):
         any attributes.
         """
         if len(args) != 1 or isinstance(args[0], int):
-            # I am acting as a ParametrizingString.
+            # I am acting as a ParameterizingString.
 
             # tparm can take not only ints but also (at least) strings as its
             # 2nd...nth argument. But we don't support callable parameterizing
@@ -106,7 +106,7 @@ class NullCallableString(unicode):
             #
             # TODO(erikrose): Go through enough of the motions in the
             # capability resolvers to determine which of 2 special-purpose
-            # classes, NullParametrizableString or NullFormattingString,
+            # classes, NullParameterizableString or NullFormattingString,
             # to return, and retire this one.
             #
             # As a NullCallableString, even when provided with a parameter,
@@ -157,7 +157,7 @@ def resolve_capability(term, attr):
 def resolve_attribute(term, attr):
     """Resolve a sugary or plain capability name, color, or compound
     formatting function name into a *callable* unicode string
-    capability, ``ParametrizingString`` or ``FormattingString``.
+    capability, ``ParameterizingString`` or ``FormattingString``.
     """
     if attr in COLORS:
         return resolve_color(term, attr)
@@ -180,7 +180,7 @@ def resolve_attribute(term, attr):
         else:
             return NullCallableString()
 
-    return ParametrizingString(resolve_capability(term, attr))
+    return ParameterizingString(resolve_capability(term, attr))
 
 
 def resolve_color(term, color):
