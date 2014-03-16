@@ -60,7 +60,7 @@ class as_subprocess(object):
                 o_err.extend([_exc.rstrip().encode('utf-8') for _exc in
                               traceback.format_exception_only(
                                   e_type, e_value)])
-                os.write(sys.__stdout__.fileno(), '\n'.join(o_err))
+                os.write(sys.__stdout__.fileno(), b'\n'.join(o_err))
                 os.close(sys.__stdout__.fileno())
                 os.close(sys.__stderr__.fileno())
                 os.close(sys.__stdin__.fileno())
