@@ -404,23 +404,98 @@ screen's width as the default ``width`` value::
     with term.location(y=term.height / 2):
         print (term.center(term.bold('X'))
 
-Any string containing sequences may have its printable length measured using
-``.length``. Additionally, ``textwrap.wrap()`` is supplied on the Terminal class
-as method ``.wrap`` method that is also sequence-aware, so now you may word-wrap
-strings containing sequences.  The following example uses a width value of 25 to
-format a poem from Tao Te Ching::
+Any string containing sequences may have its printable length measured using the
+``.length`` method. Additionally, ``textwrap.wrap()`` is supplied on the Terminal
+class as method ``.wrap`` method that is also sequence-aware, so now you may
+word-wrap strings containing sequences.  The following example displays a poem
+from Tao Te Ching, word-wrapped to 25 columns::
 
     from blessed import Terminal
 
     t = Terminal()
 
-    poem = (term.bold_blue('Plan difficult tasks ')
-            + term.bold_black('through the simplest tasks'),
-            term.bold_cyan('Achieve large tasks ')
-            + term.cyan('through the smallest tasks'))
+    poem = u''.join((term.bold_blue('Plan difficult tasks '),
+                     term.bold_black('through the simplest tasks'),
+                     term.bold_cyan('Achieve large tasks '),
+                     term.cyan('through the smallest tasks'))
     for line in poem:
         print('\n'.join(term.wrap(line, width=25,
-                                  subsequent_indent=' '*4)))
+                                  subsequent_indent=' ' * 4)))
+
+Keyboard Input
+--------------
+
+You may have noticed that the built-in python ``raw_input`` doesn't return
+until the return key is pressed (line buffering). Special `termios(4)`_ routines
+are required to enter Non-canonical, known in curses as `cbreak(3)_`.
+
+You may also have noticed that special keys, such as arrow keys, actually
+input several byte characters, and different terminals send different strings.
+
+Finally, you may have noticed characters such as ä from ``raw_input`` are also
+several byte characters in a sequence ('\xc3\xa4') that must be decoded.
+
+Handling all of these possibilities can be quite difficult, but Blessed has
+you covered!
+
+cbreak
+~~~~~~
+
+The context manager ``cbreak`` can be used to enter key-at-a-time mode.
+Any keypress by the user is immediately value::
+
+    from blessed import Terminal
+    import sys
+
+    t = Terminal()
+
+    with t.cbreak():
+        # blocks until any key is pressed.
+        sys.stdin.read(1)
+
+inkey
+~~~~~
+
+The method ``inkey`` resolves many issues with terminal input by returning
+a unicode-derived ``Keypress`` instance. Although its return value may be
+printed, joined with, or compared to other unicode strings, it also provides
+the special attributes ``is_sequence`` (bool), ``code`` (int),
+and ``name`` (str)::
+
+    from blessed import Terminal
+
+    t = Terminal()
+
+    print("press 'q' to quit.")
+    with t.cbreak():
+        val = None
+        while val not in (u'q', u'Q',):
+            val = t.inkey(timeout=5)
+            if not val:
+               # timeout
+               print("It sure is quiet in here ...")
+            elif val.is_sequence:
+               print("got sequence: {}.".format((str(val), val.name, val.code)))
+            elif val:
+               print("got {}.".format(val))
+        print('bye!')
+
+Its output might appear as::
+
+    got sequence: ('\x1b[A', 'KEY_UP', 259).
+    got sequence: ('\x1b[1;2A', 'KEY_SUP', 337).
+    got sequence: ('\x1b[17~', 'KEY_F6', 270).
+    got sequence: ('\x1b', 'KEY_ESCAPE', 361).
+    got sequence: ('\n', 'KEY_ENTER', 343).
+    got /.
+    It sure is quiet in here ...
+    got sequence: ('\x1bOP', 'KEY_F1', 265).
+    It sure is quiet in here ...
+    got q.
+    bye!
+
+.. _`cbreak(3)`: www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
+.. _`termios(4)`: www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4
 
 
 Shopping List
