@@ -1,4 +1,5 @@
 import itertools
+import platform
 import termios
 import struct
 import fcntl
@@ -17,6 +18,8 @@ from accessories import (
     many_lines,
     all_terms,
 )
+
+import pytest
 
 
 def test_sequence_length(all_terms):
@@ -119,6 +122,9 @@ def test_env_winsize():
 
     child()
 
+
+@pytest.mark.skipif(platform.python_implementation() == 'PyPy',
+                    reason='PyPy fails TIOCSWINSZ')
 def test_winsize(many_lines, many_columns):
     """Test height and width is appropriately queried in a pty."""
     @as_subprocess
@@ -136,6 +142,8 @@ def test_winsize(many_lines, many_columns):
     child(lines=many_lines, cols=many_columns)
 
 
+@pytest.mark.skipif(platform.python_implementation() == 'PyPy',
+                    reason='PyPy fails TIOCSWINSZ')
 def test_Sequence_alignment(all_terms, many_lines):
     """Tests methods related to Sequence class, namely ljust, rjust, center."""
     @as_subprocess
