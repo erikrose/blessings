@@ -88,6 +88,7 @@ class Terminal(object):
         self._is_a_tty = stream_fd is not None and os.isatty(stream_fd)
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
+        self._normal = None  # cache normal attr, preventing recursive lookups
 
         # keyboard input only valid when stream is sys.stdout
 
@@ -198,8 +199,7 @@ class Terminal(object):
             return formatters.NullCallableString()
         val = formatters.resolve_attribute(self, attr)
         # Cache capability codes.
-        if not attr in dir(self):
-            setattr(self, attr, val)
+        setattr(self, attr, val)
         return val
 
     @property
@@ -363,7 +363,7 @@ class Terminal(object):
     def normal(self):
         """Return capability that resets video attribute.
         """
-        if '_normal' in dir(self):
+        if self._normal:
             return self._normal
         self._normal = formatters.resolve_capability(self, 'normal')
         return self._normal
