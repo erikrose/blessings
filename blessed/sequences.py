@@ -40,7 +40,7 @@ def _build_numeric_capability(term, cap, optional=False,
                 # modify & return n to matching digit expression
                 cap_re = cap_re.replace(str(num), r'(\d+)%s' % (opt,))
                 return cap_re
-        warnings.warn('Unknown parameter in %r, %r' % (cap, cap_re))
+        warnings.warn('Unknown parameter in %r (%r, %r)' % (cap, _cap, cap_re))
     return None  # no such capability
 
 
