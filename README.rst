@@ -565,18 +565,18 @@ Version History
 1.7
   * Forked github project `erikrose/blessings`_ to `jquast/blessed`_, this
     project was previously known as **blessings** version 1.6 and prior.
-  * introduced context manager ``cbreak``, which is equivalent to ``tty.cbreak``,
-    placing the terminal in 'cooked' mode, allowing input from stdin to be read
-    as each key is pressed (line-buffering disabled).
+  * introduced context manager ``cbreak`` and ``raw``, which is equivalent
+    to ``tty.setcbreak`` and ``tty.setraw``, allowing input from stdin to be
+    read as each key is pressed.
+  * introduced ``inkey()``, which will return 1 or more characters as
+    a unicode sequence, with attributes ``.code`` and ``.name`` non-None when
+    a multibyte sequence is received, allowing arrow keys and such to be
+    detected. Optional value ``timeout`` allows timed polling or blocking.
   * introduced ``center()``, ``rjust()``, and ``ljust()`` methods, allows text
     containing sequences to be aligned to screen, or ``width`` specified.
   * introduced ``wrap()``, allows text containing sequences to be
     word-wrapped without breaking mid-sequence and honoring their printable
     width.
-  * introduced ``inkey()``, which will return 1 or more characters as
-    a unicode sequence, with attributes ``.code`` and ``.name`` non-None when
-    a multibyte sequence is received, allowing arrow keys and such to be
-    detected. Optional value ``timeout`` allows timed polling or blocking.
   * bugfix: cannot call ``setupterm()`` more than once per process -- issue a
     warning about what terminal kind subsequent calls will use.
   * bugfix: resolved issue where ``number_of_colors`` fails when ``does_styling``
@@ -585,9 +585,8 @@ Version History
   * bugfix: allow unsupported terminal capabilities to be callable just as
     supported capabilities, so that the return value of ``term.color(n)`` may
     be called on terminals without color capabilities.
-  * bugfix: for terminals without underline, such as vt220,
-    ``term.underline('xyz')`` would be ``(u'xyz' + term.normal)``, now it is only
-    ``u'xyz'``.
+  * bugfix: for terminals without underline, such as vt220, ``term.underline('x')``
+    would be ``u'x' + term.normal``, now it is only ``u'x'``.
   * attributes that should be read-only have now raise exception when
     re-assigned (properties).
   * enhancement: pypy is not a supported platform implementation.
@@ -612,7 +611,7 @@ Version History
   * Work around a tox parsing bug in its config file.
   * Make context managers clean up after themselves even if there's an
     exception. (Vitja Makarov)
-  * Parametrizing a capability no longer crashes when there is no tty. (Vitja
+  * Parameterizing a capability no longer crashes when there is no tty. (Vitja
     Makarov)
 
 1.5
