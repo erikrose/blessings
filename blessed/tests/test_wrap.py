@@ -103,7 +103,7 @@ def test_SequenceWrapper_27(all_terms):
         # ensure our colored textwrap is the same line length
         assert (len(internal_wrapped) == len(my_wrapped_colored))
         # test subsequent_indent=
-        internal_wrapped = textwrap.wrap(pgraph, width, break_long_words=False,
+        internal_wrapped = textwrap.wrap(pgraph, WIDTH, break_long_words=False,
                                          subsequent_indent=' '*4)
         my_wrapped = t.wrap(pgraph, subsequent_indent=' '*4)
         my_wrapped_colored = t.wrap(pgraph_colored, subsequent_indent=' '*4)
