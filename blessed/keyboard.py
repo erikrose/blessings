@@ -81,6 +81,8 @@ def get_keyboard_codes():
         * KEY_PGUP in place of KEY_PPAGE
         * KEY_PGDOWN in place of KEY_NPAGE
         * KEY_ESCAPE in place of KEY_EXIT
+        * KEY_SUP in place of KEY_SR
+        * KEY_SDOWN in place of KEY_SF
     """
     keycodes = OrderedDict(get_curses_keycodes())
     keycodes.update(CURSES_KEYCODE_OVERRIDE_MIXIN)
@@ -170,6 +172,8 @@ CURSES_KEYCODE_OVERRIDE_MIXIN = (
     ('KEY_PGUP', curses.KEY_PPAGE),
     ('KEY_PGDOWN', curses.KEY_NPAGE),
     ('KEY_ESCAPE', curses.KEY_EXIT),
+    ('KEY_SUP', curses.KEY_SR),
+    ('KEY_SDOWN', curses.KEY_SF),
 )
 
 # In a perfect world, terminal emulators would always send exactly what the
