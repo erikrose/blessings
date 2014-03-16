@@ -181,8 +181,8 @@ class Terminal(object):
         """Return a terminal capability as Unicode string.
 
         For example, ``term.bold`` is a unicode string that may be prepended
-        to text to set the video attribute for bold, which subsequently may
-        also be terminated with the pairing ``term.normal``.
+        to text to set the video attribute for bold, which should also be
+        terminated with the pairing ``term.normal``.
 
         This capability is also callable, so you can use ``term.bold("hi")``
         which results in the joining of (term.bold, "hi", term.normal).
@@ -196,11 +196,10 @@ class Terminal(object):
         """
         if not self.does_styling:
             return formatters.NullCallableString()
-
         val = formatters.resolve_attribute(self, attr)
-
         # Cache capability codes.
-        setattr(self, attr, val)
+        if not attr in dir(self):
+            setattr(self, attr, val)
         return val
 
     @property
@@ -335,7 +334,7 @@ class Terminal(object):
     def color(self):
         """Return a capability that sets the foreground color.
 
-        The capability is unparametrized until called and passed a number
+        The capability is unparameterized until called and passed a number
         (0-15), at which point it returns another string which represents a
         specific color change. This second string can further be called to
         color a piece of text and set everything back to normal afterward.
@@ -345,7 +344,7 @@ class Terminal(object):
         """
         if not self.does_styling:
             return formatters.NullCallableString()
-        return formatters.ParametrizingString(
+        return formatters.ParameterizingString(
             self._foreground_color, self.normal)
 
     @property
@@ -357,8 +356,17 @@ class Terminal(object):
         """
         if not self.does_styling:
             return formatters.NullCallableString()
-        return formatters.ParametrizingString(
+        return formatters.ParameterizingString(
             self._background_color, self.normal)
+
+    @property
+    def normal(self):
+        """Return capability that resets video attribute.
+        """
+        if '_normal' in dir(self):
+            return self._normal
+        self._normal = formatters.resolve_capability(self, 'normal')
+        return self._normal
 
     @property
     def number_of_colors(self):
