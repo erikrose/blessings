@@ -29,10 +29,9 @@ Blessed lifts several of curses_' limiting assumptions, and it makes your
 code pretty, too:
 
 * Use styles, color, and maybe a little positioning without necessarily
-  clearing the whole
-  screen first.
+  clearing the whole screen first.
 * Leave more than one screenful of scrollback in the buffer after your program
-  exits, like a well-behaved command-line app should.
+  exits, like a well-behaved command-line application should.
 * Get rid of all those noisy, C-like calls to ``tigetstr`` and ``tparm``, so
   your code doesn't get crowded out by terminal bookkeeping.
 * Act intelligently when somebody redirects your output to a file, omitting the
@@ -95,22 +94,20 @@ of things about the terminal. Terminal terminal terminal.
 Simple Formatting
 -----------------
 
-Lots of handy formatting codes ("capabilities" in low-level parlance) are
-available as attributes on a ``Terminal``. For example::
+Lots of handy formatting codes (capabilities, `terminfo(5)`_) are available
+as attributes on a ``Terminal``. For example::
 
     from blessed import Terminal
 
     term = Terminal()
     print('I am ' + term.bold + 'bold' + term.normal + '!')
 
-Though they are strings at heart, you can also use them as callable wrappers so
-you don't have to say ``normal`` afterward::
+Though they are strings at heart, you can also use them as callable wrappers,
+which automatically ends each string with ``normal`` attributes::
 
     print('I am', term.bold('bold') + '!')
 
-Or, if you want fine-grained control while maintaining some semblance of
-brevity, you can combine it with Python's string formatting, which makes
-attributes easy to access::
+You may also use Python's string ``.format`` method::
 
     print('All your {t.red}base {t.underline}are belong to us{t.normal}'
           .format(t=term))
@@ -119,14 +116,14 @@ Simple capabilities of interest include...
 
 * ``bold``
 * ``reverse``
-* ``underline``
-* ``no_underline`` (which turns off underlining)
 * ``blink``
 * ``normal`` (which turns off everything, even colors)
 
 Here are a few more which are less likely to work on all terminals:
 
 * ``dim``
+* ``underline``
+* ``no_underline`` (which turns off underlining)
 * ``italic`` and ``no_italic``
 * ``shadow`` and ``no_shadow``
 * ``standout`` and ``no_standout``
@@ -142,10 +139,10 @@ undo certain pieces of formatting, even at the lowest level.
 You might also notice that the above aren't the typical incomprehensible
 terminfo capability names; we alias a few of the harder-to-remember ones for
 readability. However, you aren't limited to these: you can reference any
-string-returning capability listed on the `terminfo man page`_ by the name
-under the "Cap-name" column: for example, ``term.rum``.
+string-returning capability listed on the `terminfo(5)`_ manual page, by the name
+under the **Cap-name** column: for example, ``term.rum`` (End reverse character).
 
-.. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
+.. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
 
 Color
 -----
@@ -206,11 +203,6 @@ all together::
     from blessed import Terminal
 
     term = Terminal()
-    print term.bold_underline_green_on_yellow + 'Woo' + term.normal
-
-Or you can use your newly coined attribute as a wrapper, which implicitly sets
-everything back to normal afterward::
-
     print(term.bold_underline_green_on_yellow('Woo'))
 
 This compound notation comes in handy if you want to allow users to customize
@@ -232,9 +224,9 @@ a few choices.
 Moving Temporarily
 ~~~~~~~~~~~~~~~~~~
 
-Most often, you'll need to flit to a certain location, print something, and
-then return: for example, when updating a progress bar at the bottom of the
-screen. ``Terminal`` provides a context manager for doing this concisely::
+Most often, moving to a screen position is only temporary. A contest manager,
+``location`` is provided to move to a screen position and restore the previous
+position upon exit::
 
     from blessed import Terminal
 
@@ -291,7 +283,8 @@ parametrized if you pass params to them as if they were functions.
 Consequently, you can also reference any other string-returning capability
 listed on the `terminfo man page`_ by its name under the "Cap-name" column.
 
-.. _`terminfo man page`: http://www.manpagez.com/man/5/terminfo/
+
+.. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
 
 One-Notch Movement
 ~~~~~~~~~~~~~~~~~~
@@ -339,21 +332,14 @@ Blessed provides syntactic sugar over some screen-clearing capabilities:
 Full-Screen Mode
 ----------------
 
-Perhaps you have seen a full-screen program, such as an editor, restore the
-exact previous state of the terminal upon exiting, including, for example, the
-command-line prompt from which it was launched. Curses pretty much forces you
-into this behavior, but Blessed makes it optional. If you want to do the
-state-restoration thing, use these capabilities:
+If you've ever noticed a program, such as an editor, restores the previous
+screen state (Your shell prompt) after exiting, you're seeing the
+``enter_fullscreen`` and ``exit_fullscreen`` attributes in effect.
 
 ``enter_fullscreen``
-    Switch to the terminal mode where full-screen output is sanctioned. Print
-    this before you do any output.
+    Switch to alternate screen, previous screen is stored by terminal driver.
 ``exit_fullscreen``
-    Switch back to normal mode, restoring the exact state from before
-    ``enter_fullscreen`` was used.
-
-Using ``exit_fullscreen`` will wipe away any trace of your program's output, so
-reserve it for when you don't want to leave anything behind in the scrollback.
+    Switch back to standard screen, restoring the same termnal state.
 
 There's also a context manager you can use as a shortcut::
 
@@ -361,27 +347,25 @@ There's also a context manager you can use as a shortcut::
 
     term = Terminal()
     with term.fullscreen():
-        # Print some stuff.
-
-Besides brevity, another advantage is that it switches back to normal mode even
-if an exception is raised in the ``with`` block.
+        print(term.move_y(term.height/2) +
+              term.center('press any key'))
+        term.inkey()
 
 Pipe Savvy
 ----------
 
-If your program isn't attached to a terminal, like if it's being piped to
-another command or redirected to a file, all the capability attributes on
+If your program isn't attached to a terminal, such as piped to a program
+like ``less(1)`` or redirected to a file, all the capability attributes on
 ``Terminal`` will return empty strings. You'll get a nice-looking file without
 any formatting codes gumming up the works.
 
-If you want to override this--like if you anticipate your program being piped
-through ``less -r``, which handles terminal escapes just fine--pass
+If you want to override this, such as using ``less -r``, pass argument
 ``force_styling=True`` to the ``Terminal`` constructor.
 
 In any case, there is a ``does_styling`` attribute on ``Terminal`` that lets
-you see whether your capabilities will return actual, working formatting codes.
-If it's false, you should refrain from drawing progress bars and other frippery
-and just stick to content, since you're apparently headed into a pipe::
+you see whether the terminal attached to the output stream is capable of
+formatting.  If it is ``False``, you may refrain from drawing progress
+bars and other frippery and just stick to content::
 
     from blessed import Terminal
 
@@ -395,8 +379,8 @@ Sequence Awareness
 ------------------
 
 Blessed may measure the printable width of strings containing sequences,
-providing ``.center``, ``.ljust``, and ``.rjust``, using the terminal
-screen's width as the default ``width`` value::
+providing ``.center``, ``.ljust``, and ``.rjust`` methods, using the
+terminal screen's width as the default ``width`` value::
 
     from blessed import Terminal
 
@@ -505,16 +489,15 @@ There are decades of legacy tied up in terminal interaction, so attention to
 detail and behavior in edge cases make a difference. Here are some ways
 Blessed has your back:
 
-* Uses the terminfo database so it works with any terminal type
+* Uses the `terminfo(5)`_ database so it works with any terminal type
 * Provides up-to-the-moment terminal height and width, so you can respond to
   terminal size changes (SIGWINCH signals). (Most other libraries query the
   ``COLUMNS`` and ``LINES`` environment variables or the ``cols`` or ``lines``
   terminal capabilities, which don't update promptly, if at all.)
-* Avoids making a mess if the output gets piped to a non-terminal
-* Works great with standard Python string templating
-* Provides convenient access to all terminal capabilities, not just a sugared
-  few
-* Outputs to any file-like object, not just stdout
+* Avoids making a mess if the output gets piped to a non-terminal.
+* Works great with standard Python string formatting.
+* Provides convenient access to **all** terminal capabilities.
+* Outputs to any file-like object (StringIO, file), not just stdout.
 * Keeps a minimum of internal state, so you can feel free to mix and match with
   calls to curses or whatever other terminal libraries you like
 
@@ -545,6 +528,10 @@ Version History
 ===============
 
 1.7
+  * introduced context manager ``cbreak`` which is equivalent to ``tty.cbreak``,
+    placing the terminal in 'cooked' mode, allowing input from stdin to be read
+    as each key is pressed (line-buffering disabled).
+
   * Forked github project 'erikrose/blessings' to 'jquast/blessed', this
     project was previously known as 'blessings' version 1.6 and prior.
   * Created ``python setup.py develop`` for developer environment.
@@ -567,9 +554,6 @@ Version History
   * introduced ``term.wrap()``, allows text containing sequences to be
     word-wrapped without breaking mid-sequence and honoring their printable
     width.
-  * introduced context manager ``cbreak`` which is equivalent to ``tty.cbreak``,
-    placing the terminal in 'cooked' mode, allowing input from stdin to be read
-    as each key is pressed (line-buffering disabled).
   * introduced method ``inkey()``, which will return 1 or more characters as
     a unicode sequence, with attributes ``.code`` and ``.name`` non-None when
     a multibyte sequence is received, allowing arrow keys and such to be
