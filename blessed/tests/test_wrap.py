@@ -87,8 +87,8 @@ def test_SequenceWrapper_27(all_terms):
 
         internal_wrapped = textwrap.wrap(pgraph, width=WIDTH,
                                          break_long_words=False)
-        my_wrapped = t.wrap(pgraph)
-        my_wrapped_colored = t.wrap(pgraph_colored)
+        my_wrapped = t.wrap(pgraph, width=WIDTH)
+        my_wrapped_colored = t.wrap(pgraph_colored, width=WIDTH)
 
         # ensure we textwrap ascii the same as python
         assert (internal_wrapped == my_wrapped)
@@ -107,8 +107,10 @@ def test_SequenceWrapper_27(all_terms):
         # test subsequent_indent=
         internal_wrapped = textwrap.wrap(pgraph, WIDTH, break_long_words=False,
                                          subsequent_indent=' '*4)
-        my_wrapped = t.wrap(pgraph, subsequent_indent=' '*4)
-        my_wrapped_colored = t.wrap(pgraph_colored, subsequent_indent=' '*4)
+        my_wrapped = t.wrap(pgraph, width=WIDTH,
+                            subsequent_indent=' '*4)
+        my_wrapped_colored = t.wrap(pgraph_colored, width=WIDTH,
+                                    subsequent_indent=' '*4)
 
         assert (internal_wrapped == my_wrapped)
         assert (len(internal_wrapped) == len(my_wrapped_colored))
