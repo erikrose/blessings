@@ -14,6 +14,7 @@ from accessories import (
 
 import pytest
 
+
 @pytest.mark.skipif(platform.python_implementation() == 'PyPy',
                     reason='PyPy fails TIOCSWINSZ')
 def test_SequenceWrapper(all_terms, many_columns):
@@ -70,6 +71,7 @@ def test_SequenceWrapper(all_terms, many_columns):
 def test_SequenceWrapper_27(all_terms):
     """Test that text wrapping accounts for sequences correctly."""
     WIDTH = 27
+
     @as_subprocess
     def child(kind):
         # build a test paragraph, along with a very colorful version
