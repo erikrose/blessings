@@ -23,7 +23,7 @@ class ParameterizingString(unicode):
     """A Unicode string which can be called to parametrize it as a terminal
     capability"""
 
-    def __new__(cls, attr, normal=None):
+    def __new__(cls, attr, normal):
         """Instantiate.
 
         :arg normal: If non-None, indicates that, once parametrized, this can
@@ -41,9 +41,7 @@ class ParameterizingString(unicode):
             # 3. However, appear to be a plain Unicode string otherwise so
             # concats work.
             attr = curses.tparm(self.encode('latin1'), *args).decode('latin1')
-            if self._normal:
-                return FormattingString(attr=attr, normal=self._normal)
-            return attr
+            return FormattingString(attr=attr, normal=self._normal)
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -51,7 +49,7 @@ class ParameterizingString(unicode):
                 raise TypeError(
                     'A native or nonexistent capability template received '
                     '%r when it was expecting ints. You probably misspelled a '
-                    'formatting call like bright_red_on_white(...).' % args)
+                    'formatting call like bright_red_on_white(...).' % (args,))
             # Somebody passed a non-string; I don't feel confident
             # guessing what they were trying to do.
             raise
@@ -73,7 +71,9 @@ class FormattingString(unicode):
         """Return string ``text``, joined by specified video attribute,
         (self), and followed by reset attribute sequence (term.normal).
         """
-        return u''.join((self, text, self._normal))
+        if len(self):
+            return u''.join((self, text, self._normal))
+        return text
 
 
 class NullCallableString(unicode):
@@ -165,22 +165,17 @@ def resolve_attribute(term, attr):
     # Bold, underline, or something that takes no parameters
     if attr in COMPOUNDABLES:
         fmt_attr = resolve_capability(term, attr)
-        if fmt_attr:
-            return FormattingString(fmt_attr, term.normal)
-        else:
-            return NullCallableString()
+        return FormattingString(fmt_attr, term.normal)
 
     # A compound formatter, like "bold_green_on_red", recurse
     # into self, joining all returned compound attribute values.
     if all(fmt in COMPOUNDABLES for fmt in split_compound(attr)):
         fmt_attr = u''.join(resolve_attribute(term, ucs)  # RECURSIVE
                             for ucs in split_compound(attr))
-        if fmt_attr:
-            return FormattingString(fmt_attr, term.normal)
-        else:
-            return NullCallableString()
+        return FormattingString(fmt_attr, term.normal)
 
-    return ParameterizingString(resolve_capability(term, attr))
+    fmt_attr = resolve_capability(term, attr)
+    return ParameterizingString(fmt_attr, term.normal)
 
 
 def resolve_color(term, color):
