@@ -4,18 +4,19 @@ try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
+import platform
 import sys
 import os
 
 from accessories import (
     unsupported_sequence_terminals,
+    all_standard_terms,
     as_subprocess,
     TestTerminal,
     unicode_parm,
     many_columns,
     unicode_cap,
     many_lines,
-    all_terms,
 )
 
 import pytest
@@ -180,7 +181,7 @@ def test_zero_location():
     child()
 
 
-def test_mnemonic_colors(all_terms):
+def test_mnemonic_colors(all_standard_terms):
     """Make sure color shortcuts work."""
     @as_subprocess
     def child(kind):
@@ -202,74 +203,102 @@ def test_mnemonic_colors(all_terms):
         assert (t.on_bright_black == on_color(t, 8))
         assert (t.on_bright_green == on_color(t, 10))
 
-    child(all_terms)
+    child(all_standard_terms)
 
 
-def test_callable_numeric_colors(all_terms):
+def test_callable_numeric_colors(all_standard_terms):
     """``color(n)`` should return a formatting wrapper."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal()
+        t = TestTerminal(kind=kind)
         assert (t.color(5)('smoo') == t.magenta + 'smoo' + t.normal)
         assert (t.color(5)('smoo') == t.color(5) + 'smoo' + t.normal)
         assert (t.on_color(2)('smoo') == t.on_green + 'smoo' + t.normal)
         assert (t.on_color(2)('smoo') == t.on_color(2) + 'smoo' + t.normal)
-    child(all_terms)
+    child(all_standard_terms)
 
 
-def test_null_callable_numeric_colors(all_terms):
+def test_null_callable_numeric_colors(all_standard_terms):
     """``color(n)`` should be a no-op on null terminals."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal(stream=StringIO())
+        t = TestTerminal(stream=StringIO(), kind=kind)
         assert (t.color(5)('smoo') == 'smoo')
         assert (t.on_color(6)('smoo') == 'smoo')
 
-    child(all_terms)
+    child(all_standard_terms)
 
 
-def test_naked_color_cap(all_terms):
+def test_naked_color_cap(all_standard_terms):
     """``term.color`` should return a stringlike capability."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal()
+        t = TestTerminal(kind=kind)
         assert (t.color + '' == t.setaf + '')
 
-    child(all_terms)
+    child(all_standard_terms)
 
 
-def test_formatting_functions(all_terms):
+def test_formatting_functions(all_standard_terms):
     """Test simple and compound formatting wrappers."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal()
+        t = TestTerminal(kind=kind)
         # test simple sugar,
-        expected_output = t.bold + u'hi' + t.normal
-        assert (t.bold(u'hi') == expected_output)
+        if t.bold:
+            expected_output = u''.join((t.bold, u'hi', t.normal))
+        else:
+            expected_output = u'hi'
+        assert t.bold(u'hi') == expected_output
         # Plain strs for Python 2.x
-        expected_output = t.green + 'hi' + t.normal
-        assert (t.green('hi') == expected_output)
-        # Test some non-ASCII chars, probably not necessary:
-        expected_output = u''.join((t.bold, t.green, u'boö', t.normal))
-        assert (t.bold_green(u'boö') == expected_output)
-        expected_output = u''.join(
-            (t.bold, t.underline, t.green, t.on_red, u'boo', t.normal))
-        assert (t.bold_underline_green_on_red('boo') == expected_output)
-        # Very compounded strings
-        expected_output = u''.join(
-            (t.on_bright_red, t.bold, t.bright_green,
-             t.underline, u'meh', t.normal))
+        if t.green:
+            expected_output = u''.join((t.green, 'hi', t.normal))
+        else:
+            expected_output = u'hi'
+        assert t.green('hi') == expected_output
+        # Test unicode
+        if t.underline:
+            expected_output = u''.join((t.underline, u'boö', t.normal))
+        else:
+            expected_output = u'boö'
+        assert (t.underline(u'boö') == expected_output)
+
+        if t.subscript:
+            expected_output = u''.join((t.subscript, u'[1]', t.normal))
+        else:
+            expected_output = u'[1]'
+
+        assert (t.subscript(u'[1]') == expected_output)
+
+    child(all_standard_terms)
+
+
+def test_compound_formatting(all_standard_terms):
+    """Test simple and compound formatting wrappers."""
+    @as_subprocess
+    def child(kind):
+        t = TestTerminal(kind=kind)
+        if any((t.bold, t.green)):
+            expected_output = u''.join((t.bold, t.green, u'boö', t.normal))
+        else:
+            expected_output = u'boö'
+        assert t.bold_green(u'boö') == expected_output
+
+        if any((t.on_bright_red, t.bold, t.bright_green, t.underline)):
+            expected_output = u''.join(
+                (t.on_bright_red, t.bold, t.bright_green, t.underline, u'meh',
+                 t.normal))
+        else:
+            expected_output = u'meh'
         assert (t.on_bright_red_bold_bright_green_underline('meh')
                 == expected_output)
 
-    child(all_terms)
 
-
-def test_formatting_functions_without_tty(all_terms):
+def test_formatting_functions_without_tty(all_standard_terms):
     """Test crazy-ass formatting wrappers when there's no tty."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal(kind=kind, stream=StringIO())
+        t = TestTerminal(kind=kind, stream=StringIO(), force_styling=False)
         assert (t.bold(u'hi') == u'hi')
         assert (t.green('hi') == u'hi')
         # Test non-ASCII chars, no longer really necessary:
@@ -277,14 +306,14 @@ def test_formatting_functions_without_tty(all_terms):
         assert (t.bold_underline_green_on_red('loo') == u'loo')
         assert (t.on_bright_red_bold_bright_green_underline('meh') == u'meh')
 
-    child(all_terms)
+    child(all_standard_terms)
 
 
-def test_nice_formatting_errors(all_terms):
+def test_nice_formatting_errors(all_standard_terms):
     """Make sure you get nice hints if you misspell a formatting wrapper."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal()
+        t = TestTerminal(kind=kind)
         try:
             t.bold_misspelled('hey')
             assert not t.is_a_tty or False, 'Should have thrown exception'
@@ -305,21 +334,23 @@ def test_nice_formatting_errors(all_terms):
             e = sys.exc_info()[1]
             assert 'probably misspelled' not in e.args[0]
 
-        try:
-            t.bold_misspelled('a', 'b')  # >1 string arg
-            assert not t.is_a_tty or False, 'Should have thrown exception'
-        except TypeError:
-            e = sys.exc_info()[1]
-            assert 'probably misspelled' not in e.args[0]
+        if platform.python_implementation() != 'PyPy':
+            # PyPy fails to toss an exception?
+            try:
+                t.bold_misspelled('a', 'b')  # >1 string arg
+                assert not t.is_a_tty or False, 'Should have thrown exception'
+            except TypeError:
+                e = sys.exc_info()[1]
+                assert 'probably misspelled' not in e.args[0]
 
-    child(all_terms)
+    child(all_standard_terms)
 
 
-def test_null_callable_string(all_terms):
+def test_null_callable_string(all_standard_terms):
     """Make sure NullCallableString tolerates all kinds of args."""
     @as_subprocess
-    def child(kind='xterm-256color'):
-        t = TestTerminal(stream=StringIO())
+    def child(kind):
+        t = TestTerminal(stream=StringIO(), kind=kind)
         assert (t.clear == '')
         assert (t.move(1 == 2) == '')
         assert (t.move_x(1) == '')
@@ -329,4 +360,4 @@ def test_null_callable_string(all_terms):
         assert (t.uhh(9876) == '')
         assert (t.clear('x') == 'x')
 
-    child(all_terms)
+    child(all_standard_terms)
