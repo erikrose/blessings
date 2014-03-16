@@ -211,10 +211,31 @@ def test_callable_numeric_colors(all_standard_terms):
     @as_subprocess
     def child(kind):
         t = TestTerminal(kind=kind)
-        assert (t.color(5)('smoo') == t.magenta + 'smoo' + t.normal)
-        assert (t.color(5)('smoo') == t.color(5) + 'smoo' + t.normal)
-        assert (t.on_color(2)('smoo') == t.on_green + 'smoo' + t.normal)
-        assert (t.on_color(2)('smoo') == t.on_color(2) + 'smoo' + t.normal)
+        if t.magenta:
+            assert t.color(5)('smoo') == t.magenta + 'smoo' + t.normal
+        else:
+            assert t.color(5)('smoo') == 'smoo'
+
+        if t.on_magenta:
+            assert t.on_color(5)('smoo') == t.on_magenta + 'smoo' + t.normal
+        else:
+            assert t.color(5)(u'smoo') == 'smoo'
+
+        if t.color(4):
+            assert t.color(4)(u'smoo') == t.color(4) + u'smoo' + t.normal
+        else:
+            assert t.color(4)(u'smoo') == 'smoo'
+
+        if t.on_green:
+            assert t.on_color(2)('smoo') == t.on_green + u'smoo' + t.normal
+        else:
+            assert t.on_color(2)('smoo') == 'smoo'
+
+        if t.on_color(6):
+            assert t.on_color(6)('smoo') == t.on_color(6) + u'smoo' + t.normal
+        else:
+            assert t.on_color(6)('smoo') == 'smoo'
+
     child(all_standard_terms)
 
 
