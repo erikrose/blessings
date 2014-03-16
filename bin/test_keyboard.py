@@ -2,9 +2,6 @@
 from blessed import Terminal
 import sys
 
-#    _keymap
-#    _keycodes
-
 def main():
     """
     Displays all known key capabilities that may match the terminal.
@@ -74,7 +71,7 @@ def main():
     gb = build_gameboard(term)
     inps = []
 
-    with term.cbreak():
+    with term.raw():
         inp = term.inkey(timeout=0)
         while inp.upper() != 'Q':
             if dirty:
@@ -97,6 +94,7 @@ def main():
                     score, level = add_score(score, 100, level)
             inps.append(inp)
 
+    with term.cbreak():
         sys.stdout.write(u''.join((
             term.move(term.height),
             term.clear_eol,
