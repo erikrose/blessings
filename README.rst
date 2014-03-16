@@ -437,6 +437,14 @@ Any keypress by the user is immediately value::
         # blocks until any key is pressed.
         sys.stdin.read(1)
 
+raw
+~~~
+
+The context manager ``raw`` is the same as ``cbreak``, except interrupt (^C),
+quit (^\), suspend (^Z), and flow control (^S, ^Q) characters are not trapped
+by signal handlers, but instead sent directly. This is necessary if you
+actually want to handle the receipt of Ctrl+C
+
 inkey
 ~~~~~
 
@@ -481,6 +489,33 @@ Its output might appear as::
 .. _`cbreak(3)`: www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
 .. _`termios(4)`: www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4
 
+
+codes
+~~~~~
+
+The return value of ``inkey`` can be inspected for property ``is_sequence``.
+When ``True``, the ``code`` property (int) may be compared with any of the
+following attributes available on the associated Terminal, which are equivalent
+to the same available in curs_getch(3X), with the following exceptions
+ * use ``KEY_DELETE`` instead of ``KEY_DC`` (chr(127))
+ * use ``KEY_INSERT`` instead of ``KEY_IC``
+ * use ``KEY_PGUP`` instead of ``KEY_PPAGE``
+ * use ``KEY_PGDOWN`` instead of ``KEY_NPAGE``
+ * use ``KEY_ESCAPE`` instead of ``KEY_EXIT``
+ * use ``KEY_SUP`` instead of ``KEY_SR`` (shift + up)
+ * use ``KEY_SDOWN`` instead of ``KEY_SF`` (shift + down)
+
+Additionally, use any of the following common attributes:
+
+ * ``KEY_BACKSPACE`` (chr(8)).
+ * ``KEY_TAB`` (chr(9)).
+ * ``KEY_DOWN``, ``KEY_UP``, ``KEY_LEFT``, ``KEY_RIGHT``.
+ * ``KEY_SLEFT`` (shift + left).
+ * ``KEY_SRIGHT``  (shift + right).
+ * ``KEY_HOME``, ``KEY_END``.
+ * ``KEY_F1`` through ``KEY_F22``.
+
+And much more. All attributes begin with prefix ``KEY_``.
 
 Shopping List
 =============
@@ -528,36 +563,40 @@ Version History
 ===============
 
 1.7
-  * introduced context manager ``cbreak`` which is equivalent to ``tty.cbreak``,
+  * Forked github project `erikrose/blessings`_ to `jquast/blessed`_, this
+    project was previously known as **blessings** version 1.6 and prior.
+  * introduced context manager ``cbreak``, which is equivalent to ``tty.cbreak``,
     placing the terminal in 'cooked' mode, allowing input from stdin to be read
     as each key is pressed (line-buffering disabled).
-
-  * Forked github project 'erikrose/blessings' to 'jquast/blessed', this
-    project was previously known as 'blessings' version 1.6 and prior.
-  * Created ``python setup.py develop`` for developer environment.
-  * Converted nosetests to pytest, use ``python setup.py test``.
-  * introduced ``@as_subprocess`` to discover and resolve various issues.
-  * cannot call ``setupterm()`` more than once per process -- issue a
-    warning about what terminal kind subsequent calls will use.
-  * resolved issue ``number_of_colors`` fails when ``does_styling`` is
-    ``False``. resolves piping tests output to stdout.
-  * removed pokemon ``curses.error`` exceptions.
-  * warn and set ``does_styling`` set ``False`` when TERM is unset or unknown.
-  * allow unsupported terminal capabilities to be callable just as supported
-    capabilities, so that the return value of ``term.color(n)`` may be called
-    on terminals without color capabilities.
-  * attributes that should be read-only have now raise exception when
-    re-assigned (properties).
-  * introduced ``term.center()``, ``term.rjust()``, and ``term.ljust()``,
-    allows text containing sequences to be aligned to screen or argument
-    ``width``.
-  * introduced ``term.wrap()``, allows text containing sequences to be
+  * introduced ``center()``, ``rjust()``, and ``ljust()`` methods, allows text
+    containing sequences to be aligned to screen, or ``width`` specified.
+  * introduced ``wrap()``, allows text containing sequences to be
     word-wrapped without breaking mid-sequence and honoring their printable
     width.
-  * introduced method ``inkey()``, which will return 1 or more characters as
+  * introduced ``inkey()``, which will return 1 or more characters as
     a unicode sequence, with attributes ``.code`` and ``.name`` non-None when
     a multibyte sequence is received, allowing arrow keys and such to be
     detected. Optional value ``timeout`` allows timed polling or blocking.
+  * bugfix: cannot call ``setupterm()`` more than once per process -- issue a
+    warning about what terminal kind subsequent calls will use.
+  * bugfix: resolved issue where ``number_of_colors`` fails when ``does_styling``
+    is ``False``. resolves issue where piping tests output to stdout would fail.
+  * bugfix: warn and set ``does_styling`` to ``False`` when TERM is unknown.
+  * bugfix: allow unsupported terminal capabilities to be callable just as
+    supported capabilities, so that the return value of ``term.color(n)`` may
+    be called on terminals without color capabilities.
+  * bugfix: for terminals without underline, such as vt220,
+    ``term.underline('xyz')`` would be ``(u'xyz' + term.normal)``, now it is only
+    ``u'xyz'``.
+  * attributes that should be read-only have now raise exception when
+    re-assigned (properties).
+  * enhancement: pypy is not a supported platform implementation.
+  * enhancement: removed pokemon ``curses.error`` exceptions.
+  * enhancement: converted nosetests to pytest, install and use ``tox`` for testing.
+  * enhancement: pytext fixtures, paired with a new ``@as_subprocess`` decorator
+    are used to test a multitude of terminal types.
+  * introduced ``@as_subprocess`` to discover and resolve various issues.
+  * deprecation: python2.5 is no longer supported (as tox does not supported).
 
 1.6
   * Add ``does_styling`` property. This takes ``force_styling`` into account
@@ -636,3 +675,5 @@ Version History
     tootin' functionality.
 
 .. _`progress-bar-having, traceback-shortcutting, rootin', tootin' testrunner`: http://pypi.python.org/pypi/nose-progressive/
+.. _`erikrose/blessings`: https://github.com/erikrose/blessings
+.. _`jquast/blessed`: https://github.com/jquast/blessed
