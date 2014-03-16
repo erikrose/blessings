@@ -143,7 +143,7 @@ def test_Sequence_alignment(all_terms, many_lines):
         # set the pty's virtual window size
         val = struct.pack('HHHH', lines, cols, 0, 0)
         fcntl.ioctl(sys.__stdout__.fileno(), termios.TIOCSWINSZ, val)
-        t = TestTerminal()
+        t = TestTerminal(kind=kind)
 
         pony_msg = 'pony express, all aboard, choo, choo!'
         pony_len = len(pony_msg)
@@ -168,7 +168,7 @@ def test_Sequence_alignment(all_terms, many_lines):
 def test_sequence_is_movement_false(all_terms):
     """Test parser about sequences that do not move the cursor."""
     @as_subprocess
-    def child_mnemonics_wontmove(kind='xterm-256color'):
+    def child_mnemonics_wontmove(kind):
         from blessed.sequences import measure_length
         t = TestTerminal(kind=kind)
         assert (0 == measure_length(u'', t))
@@ -205,7 +205,7 @@ def test_sequence_is_movement_false(all_terms):
 def test_sequence_is_movement_true(all_standard_terms):
     """Test parsers about sequences that move the cursor."""
     @as_subprocess
-    def child_mnemonics_willmove(kind='xterm-256color'):
+    def child_mnemonics_willmove(kind):
         from blessed.sequences import measure_length
         t = TestTerminal(kind=kind)
         # movements
