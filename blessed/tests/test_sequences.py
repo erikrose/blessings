@@ -314,6 +314,8 @@ def test_compound_formatting(all_standard_terms):
         assert (t.on_bright_red_bold_bright_green_underline('meh')
                 == expected_output)
 
+    child(all_standard_terms)
+
 
 def test_formatting_functions_without_tty(all_standard_terms):
     """Test crazy-ass formatting wrappers when there's no tty."""
