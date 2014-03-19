@@ -344,8 +344,9 @@ class Terminal(object):
         """
         if not self.does_styling:
             return formatters.NullCallableString()
-        return formatters.ParameterizingString(
-            self._foreground_color, self.normal)
+        return formatters.ParameterizingString(name='color',
+                                               attr=self._foreground_color,
+                                               normal=self.normal)
 
     @property
     def on_color(self):
@@ -356,8 +357,9 @@ class Terminal(object):
         """
         if not self.does_styling:
             return formatters.NullCallableString()
-        return formatters.ParameterizingString(
-            self._background_color, self.normal)
+        return formatters.ParameterizingString(name='on_color',
+                                               attr=self._background_color,
+                                               normal=self.normal)
 
     @property
     def normal(self):

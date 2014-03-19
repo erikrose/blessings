@@ -1,29 +1,23 @@
-import collections
 import curses
-import struct
 
+_derivitives = ('on', 'bright', 'on_bright',)
 
-COLORS = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
-              'white'])
-COMPOUNDABLES = (COLORS |
-                 set(['bold', 'underline', 'reverse', 'blink', 'dim', 'italic',
-                      'shadow', 'standout', 'subscript', 'superscript']))
+_colors = set('black red green yellow blue magenta cyan white'.split())
+_compoundables = set('bold underline reverse blink dim italic shadow '
+                     'standout subscript superscript'.split())
 
+COLORS = set(['_'.join((derivitive, color))
+              for derivitive in _derivitives
+              for color in _colors]) | _colors
 
-def derivative_colors(colors):
-    """Return the names of valid color variants, given the base colors."""
-    return set([('on_' + c) for c in colors] +
-               [('bright_' + c) for c in colors] +
-               [('on_bright_' + c) for c in colors])
-
-COLORS.update(derivative_colors(COLORS))
+COMPOUNDABLES = (COLORS | _compoundables)
 
 
 class ParameterizingString(unicode):
     """A Unicode string which can be called to parametrize it as a terminal
     capability"""
 
-    def __new__(cls, attr, normal):
+    def __new__(cls, name, attr, normal):
         """Instantiate.
 
         :arg normal: If non-None, indicates that, once parametrized, this can
@@ -32,6 +26,7 @@ class ParameterizingString(unicode):
 
         """
         new = unicode.__new__(cls, attr)
+        new._name = name
         new._normal = normal
         return new
 
@@ -42,14 +37,15 @@ class ParameterizingString(unicode):
             # concats work.
             attr = curses.tparm(self.encode('latin1'), *args).decode('latin1')
             return FormattingString(attr=attr, normal=self._normal)
-        except TypeError:
+        except TypeError, err:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
-            if len(args) == 1 and isinstance(args[0], basestring):
+            if len(args) and isinstance(args[0], basestring):
                 raise TypeError(
-                    'A native or nonexistent capability template received '
-                    '%r when it was expecting ints. You probably misspelled a '
-                    'formatting call like bright_red_on_white(...).' % (args,))
+                    "A native or nonexistent capability template, %r received"
+                    " invalid argument %r: %s. You probably misspelled a"
+                    " formatting call like `bright_red'" % (
+                        self._name, args, err))
             # Somebody passed a non-string; I don't feel confident
             # guessing what they were trying to do.
             raise
@@ -140,18 +136,13 @@ def split_compound(compound):
 
 
 def resolve_capability(term, attr):
-    """Return a Unicode string containing terminal sequence for
-    capability (or term_sugar alias) ``attr`` of Terminal instance
-    ``term`` by querying curses.tigetstr.
-
-    If the terminal does not have any value for the capability, an empty
-    Unicode string is returned.
+    """Return a Unicode string for the terminal capability ``attr``,
+    or an empty string if not found.
     """
-    code = curses.tigetstr(term._sugar.get(attr, attr))
-    if code:
-        # Decode sequences as latin1, as they are always 8-bit bytes.
-        return code.decode('latin1')
-    return u''
+    # Decode sequences as latin1, as they are always 8-bit bytes, so when
+    # b'\xff' is returned, this must be decoded to u'\xff'.
+    val = curses.tigetstr(term._sugar.get(attr, attr))
+    return u'' if val is None else val.decode('latin1')
 
 
 def resolve_attribute(term, attr):
@@ -159,23 +150,26 @@ def resolve_attribute(term, attr):
     formatting function name into a *callable* unicode string
     capability, ``ParameterizingString`` or ``FormattingString``.
     """
+    # A simple color, such as `red' or `blue'.
     if attr in COLORS:
         return resolve_color(term, attr)
 
-    # Bold, underline, or something that takes no parameters
+    # A direct compoundable, such as `bold' or `on_red'.
     if attr in COMPOUNDABLES:
-        fmt_attr = resolve_capability(term, attr)
-        return FormattingString(fmt_attr, term.normal)
+        return FormattingString(resolve_capability(term, attr),
+                                term.normal)
 
-    # A compound formatter, like "bold_green_on_red", recurse
-    # into self, joining all returned compound attribute values.
-    if all(fmt in COMPOUNDABLES for fmt in split_compound(attr)):
-        fmt_attr = u''.join(resolve_attribute(term, ucs)  # RECURSIVE
-                            for ucs in split_compound(attr))
-        return FormattingString(fmt_attr, term.normal)
-
-    fmt_attr = resolve_capability(term, attr)
-    return ParameterizingString(fmt_attr, term.normal)
+    # Given `bold_on_red', resolve to ('bold', 'on_red'), RECURSIVE
+    # call for each compounding section, joined and returned as
+    # a completed completed FormattingString.
+    formatters = split_compound(attr)
+    if all(fmt in COMPOUNDABLES for fmt in formatters):
+        resolution = (resolve_attribute(term, fmt) for fmt in formatters)
+        return FormattingString(u''.join(resolution), term.normal)
+    else:
+        return ParameterizingString(name=attr,
+                                    attr=resolve_capability(term, attr),
+                                    normal=term.normal)
 
 
 def resolve_color(term, color):
