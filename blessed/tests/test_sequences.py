@@ -357,14 +357,14 @@ def test_nice_formatting_errors(all_standard_terms):
             e = sys.exc_info()[1]
             assert 'probably misspelled' not in e.args[0]
 
-        if platform.python_implementation() != 'PyPy':
-            # PyPy fails to toss an exception?
-            try:
-                t.bold_misspelled('a', 'b')  # >1 string arg
-                assert not t.is_a_tty or False, 'Should have thrown exception'
-            except TypeError:
-                e = sys.exc_info()[1]
-                assert 'probably misspelled' not in e.args[0]
+        #if platform.python_implementation() != 'PyPy':
+        # PyPy fails to toss an exception?
+        try:
+            t.bold_misspelled('a', 'b')  # >1 string arg
+            assert not t.is_a_tty or False, 'Should have thrown exception'
+        except TypeError:
+            e = sys.exc_info()[1]
+            assert 'probably misspelled' in e.args[0], e.args
 
     child(all_standard_terms)
 
