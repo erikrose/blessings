@@ -3,6 +3,7 @@ from __future__ import division
 from collections import namedtuple
 from random import randrange
 from functools import partial
+from itertools import takewhile, count
 from blessed import Terminal
 
 term = Terminal()
@@ -69,29 +70,18 @@ new_nibble = lambda t, v: Nibble(
 # within list `segments' -- such as a list composing a worm.
 hit_any = lambda loc, segments: loc in segments
 
-# returns True if segments are same position
+# returns True if segments are same position (hit detection)
 hit = lambda src, dst: src.x == dst.x and src.y == dst.y
 
-# returns a new Nibble if the current one is hit,
-def next_nibble(term, nibble, head):
-    return (new_nibble(term, nibble.value)
-            if hit(head, nibble.location) else
-            nibble)
-
 # returns new worm_length if current nibble is hit,
-def next_wormlength(nibble, head, worm_length):
-    return (worm_length + nibble.value
-            if hit(head, nibble.location) else
-            worm_length)
+next_wormlength = lambda nibble, head, worm_length: (
+    worm_length + nibble.value if hit(head, nibble.location)
+    else worm_length)
 
-def next_speed(nibble, head, speed, modifier):
-    return (speed * modifier
-            if hit(head, nibble.location) else
-            speed)
-
-
-#nibble = next_nibble(nibble, head, worm_length)
-#worm_length = next_wormlength(nibble, head)
+# returns new speed if current nibble is hit,
+next_speed = lambda nibble, head, speed, modifier: (
+    speed * modifier if hit(head, nibble.location)
+    else speed)
 
 
 def main():
@@ -99,15 +89,17 @@ def main():
     worm_length = 2
     bearing = Direction(0, -1)
     nibble = Nibble(location=worm[0], value=0)
-    color_nibble = term.bright_red
-    color_worm = term.bright_yellow
+    color_nibble = term.black_on_green
+    color_worm = term.bright_yellow_on_blue
+    color_head = term.bright_red_on_blue
     color_bg = term.on_blue
     echo(term.move(1, 1))
     echo(color_bg(term.clear))
     speed = 0.1
     modifier = 0.95
+    direction = next_bearing(None, bearing)
 
-    with term.hidden_cursor(), term.cbreak():
+    with term.hidden_cursor(), term.raw():
         inp = None
         while inp not in (u'q', u'Q'):
 
@@ -121,20 +113,42 @@ def main():
                 break
 
             # check for nibble hit (new Nibble returned).
-            n_nibble = next_nibble(term, nibble, head)
+            n_nibble = (new_nibble(term, nibble.value)
+                        if hit(head, nibble.location) else nibble)
+
+            # ensure new nibble is regenerated outside of worm
+            while hit_any(n_nibble, worm):
+                n_nibble = next_nibble(term, nibble, head, worm)
 
             # new worm_length & speed, if hit.
             worm_length = next_wormlength(nibble, head, worm_length)
             speed = next_speed(nibble, head, speed, modifier)
 
-            # display next nibble, if hit
+            # display next nibble if a new one was generated,
+            # and erase the old one
             if n_nibble != nibble:
                 echo(term.move(*n_nibble.location))
                 echo(color_nibble('{0}'.format(n_nibble.value)))
+                # erase '7' from nibble '17', using ' ' for empty space,
+                # or the worm body parts for a worm chunk
+                for offset in range(1, 1 + len(str(nibble.value)) - 1):
+                    x = nibble.location.x + offset
+                    y = nibble.location.y
+                    echo(term.move(y, x))
+                    if hit_any((y, x), worm):
+                        echo(color_worm(u'\u2689'))
+                    else:
+                        echo(color_bg(u' '))
+
 
             # display new worm head each turn, regardless.
             echo(term.move(*head))
-            echo(color_worm(u'\u2588'))
+            echo(color_head(u'\u263a'))
+
+            if worm:
+                # and its old head (now, a body piece)
+                echo(term.move(*worm[-1]))
+                echo(color_worm(u'\u2689'))
 
             # wait for keyboard input, which may indicate
             # a new direction (up/down/left/right)
