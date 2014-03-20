@@ -2,7 +2,7 @@
 Blessed
 =======
 
-Coding with Blessed looks like this... ::
+Coding with *Blessed* looks like this... ::
 
     from blessed import Terminal
 
@@ -22,28 +22,26 @@ capabilities::
 
     print('{t.bold}All your {t.red}bold and red base{t.normal}'.format(t=t))
 
+
 The Pitch
 =========
 
-Blessed lifts several of curses_' limiting assumptions, and it makes your
-code pretty, too:
+*Blessed* is a more simplified wrapper around curses_, providing :
 
-* Use styles, color, and maybe a little positioning without necessarily
+* Styles, color, and maybe a little positioning without necessarily
   clearing the whole screen first.
 * Leave more than one screenful of scrollback in the buffer after your program
   exits, like a well-behaved command-line application should.
-* Get rid of all those noisy, C-like calls to ``tigetstr`` and ``tparm``, so
-  your code doesn't get crowded out by terminal bookkeeping.
-* Act intelligently when somebody redirects your output to a file, omitting the
-  terminal control codes the user doesn't want to see (optional).
+* No more C-like calls to ``tigetstr`` and ``tparm``.
+* Act intelligently when somebody redirects your output to a file, omitting
+  all of the terminal sequences such as styling, colors, or positioning.
 
-.. _curses: http://docs.python.org/library/curses.html
 
 Before And After
 ----------------
 
-Without Blessed, this is how you'd print some underlined text at the bottom
-of the screen::
+With the built-in curses_ module, this is how you would typically
+print some underlined text at the bottom of the screen::
 
     from curses import tigetstr, setupterm, tparm
     from fcntl import ioctl
@@ -72,8 +70,7 @@ of the screen::
                                                       normal=normal))
     print(rc)  # Restore cursor position.
 
-That was long and full of incomprehensible trash! Let's try it again, this time
-with Blessed::
+The same program with *Blessed* is simply:: 
 
     from blessed import Terminal
 
@@ -81,88 +78,72 @@ with Blessed::
     with term.location(0, term.height - 1):
         print('This is', term.underline('pretty!'))
 
-Much better.
 
 What It Provides
 ================
 
-Blessed provides just one top-level object: ``Terminal``. Instantiating a
-``Terminal`` figures out whether you're on a terminal at all and, if so, does
+Blessed provides just **one** top-level object: *Terminal*. Instantiating a
+*Terminal* figures out whether you're on a terminal at all and, if so, does
 any necessary terminal setup. After that, you can proceed to ask it all sorts
-of things about the terminal. Terminal terminal terminal.
+of things about the terminal.
+
 
 Simple Formatting
 -----------------
 
-Lots of handy formatting codes (capabilities, `terminfo(5)`_) are available
-as attributes on a ``Terminal``. For example::
+Lots of handy formatting codes `terminfo(5)`_ are available as attributes
+on a *Terminal* class instance. For example::
 
     from blessed import Terminal
 
     term = Terminal()
     print('I am ' + term.bold + 'bold' + term.normal + '!')
 
-Though they are strings at heart, you can also use them as callable wrappers,
-which automatically ends each string with ``normal`` attributes::
+These capabilities (bold, normal) are translated to their sequences, which
+when displayed simply change the video attributes.
 
-    print('I am', term.bold('bold') + '!')
+And, when used as a callable, automatically wraps the given string with this
+sequence, and terminates it with *normal*. The same can be written as::
 
-You may also use Python's string ``.format`` method::
+    print('I am' + term.bold('bold') + '!')
 
-    print('All your {t.red}base {t.underline}are belong to us{t.normal}'
-          .format(t=term))
+You may also use the *Terminal* instance as an argument for ``.format`` string
+method, so that capabilities can be displayed inline for more complex strings::
 
-Simple capabilities of interest include...
+    print('{t.red_on_yellow}Candy corn{t.normal} for everyone!'.format(t=term))
 
-* ``bold``
-* ``reverse``
-* ``blink``
-* ``normal`` (which turns off everything, even colors)
+The basic capabilities supported by most terminals are:
 
-Here are a few more which are less likely to work on all terminals:
+* ``bold``: Turn on 'extra bright' mode.
+* ``reverse``: Switch fore and background attributes.
+* ``blink``: Turn on blinking.
+* ``normal``: Reset attributes to default.
 
-* ``dim``
-* ``underline``
-* ``no_underline`` (which turns off underlining)
-* ``italic`` and ``no_italic``
-* ``shadow`` and ``no_shadow``
-* ``standout`` and ``no_standout``
-* ``subscript`` and ``no_subscript``
-* ``superscript`` and ``no_superscript``
-* ``flash`` (which flashes the screen once)
+The less commonly supported capabilities:
+
+* ``dim``: Turn on 'half-bright' mode.
+* ``underline`` and ``no_underline``.
+* ``italic`` and ``no_italic``.
+* ``shadow`` and ``no_shadow``.
+* ``standout`` and ``no_standout``.
+* ``subscript`` and ``no_subscript``.
+* ``superscript`` and ``no_superscript``.
+* ``flash``: Visual bell, which flashes the screen.
 
 Note that, while the inverse of ``underline`` is ``no_underline``, the only way
 to turn off ``bold`` or ``reverse`` is ``normal``, which also cancels any
-custom colors. This is because there's no portable way to tell the terminal to
-undo certain pieces of formatting, even at the lowest level.
+custom colors.
 
-You might also notice that the above aren't the typical incomprehensible
-terminfo capability names; we alias a few of the harder-to-remember ones for
-readability. However, you aren't limited to these: you can reference any
-string-returning capability listed on the `terminfo(5)`_ manual page, by the name
-under the **Cap-name** column: for example, ``term.rum`` (End reverse character).
+Many of these are aliases, their true capability names (such as ``smul`` for
+*begin underline mode*) may still be used. Any capability in the `terminfo(5)_`
+manual, under column **Cap-name**, may be used as an attribute to a *Terminal*
+instance. If it is not a supported capability, an empty string is returned.
 
-.. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
 
 Color
 -----
 
-16 colors, both foreground and background, are available as easy-to-remember
-attributes::
-
-    from blessed import Terminal
-
-    term = Terminal()
-    print(term.red + term.on_green + 'Red on green? Ick!' + term.normal)
-    print(term.bright_red + term.on_bright_blue + 'This is even worse!' + term.normal)
-
-You can also call them as wrappers, which sets everything back to normal at the
-end::
-
-    print(term.red_on_green('Red on green? Ick!'))
-    print(term.yellow('I can barely see it.'))
-
-The available colors are...
+Color terminals are capable of at least 8 basic colors.
 
 * ``black``
 * ``red``
@@ -173,26 +154,57 @@ The available colors are...
 * ``cyan``
 * ``white``
 
-You can set the background color instead of the foreground by prepending
-``on_``, as in ``on_blue``. There is also a ``bright`` version of each color:
-for example, ``on_bright_blue``.
+The same colors, prefixed with ``bright_`` (synonymous with ``bold_``),
+such as ``bright_blue``, providing 16 colors in total (if you count black
+as a color). On most terminals, ``bright_black`` is actually a very dim
+gray!
 
+The same colors, prefixed with ``on_`` sets the background color, some
+terminals also provide an additional 8 high-intensity versions using
+``on_bright``, some example compound formats::
+
+    from blessed import Terminal
+
+    term = Terminal()
+
+    print(term.on_bright_blue('Blue skies!'))
+    print(term.bright_red_on_bright_yellow('Pepperoni Pizza!'))
+    
 There is also a numerical interface to colors, which takes an integer from
-0-15::
+0-15.::
 
-    term.color(5) + 'Hello' + term.normal
-    term.on_color(3) + 'Hello' + term.normal
+    from blessed import Terminal
 
-    term.color(5)('Hello')
-    term.on_color(3)('Hello')
+    term = Terminal()
 
-If some color is unsupported (for instance, if only the normal colors are
-available, not the bright ones), trying to use it will, on most terminals, have
-no effect: the foreground and background colors will stay as they were. You can
-get fancy and do different things depending on the supported colors by checking
-`number_of_colors`_.
+    for n in range(16):
+        print(term.color(n)('Color {}'.format(n)))
 
-.. _`number_of_colors`: http://packages.python.org/blessed/#blessed.Terminal.number_of_colors
+If the terminal defined by the **TERM** environment variable does not support
+colors, these simply return empty strings, or the string passed as an argument
+when used as a callable, without any video attributes. If the **TERM** defines
+a terminal that does support colors, but actually does not, they are usually
+harmless.
+
+Colorless terminals, such as the amber or monochrome *vt220*, do not support
+colors but do support reverse video. For this reason, it may be desirable in
+some applications, such as a selection bar, to simply select a foreground
+color, followed by reverse video to achieve the desired background color
+effect::
+
+    from blessed import Terminal
+
+    term = Terminal()
+
+    print('terminals {standout} more than others'.format(
+        standout=term.green_reverse('standout')))
+
+Which appears as *bright white on green* on color terminals, or *black text
+on amber or green* on monochrome terminals.  You can check whether the terminal
+definition used supports colors, and how many, using the ``number_of_colors``
+property, which returns any of *0* *8* or *256* for terminal types
+such as *vt220*, *ansi*, and *xterm-256color*, respectively.
+
 
 Compound Formatting
 -------------------
@@ -203,30 +215,49 @@ all together::
     from blessed import Terminal
 
     term = Terminal()
+
     print(term.bold_underline_green_on_yellow('Woo'))
 
-This compound notation comes in handy if you want to allow users to customize
-the formatting of your app: just have them pass in a format specifier like
-"bold_green" on the command line, and do a quick ``getattr(term,
-that_option)('Your text')`` when you do your formatting.
-
 I'd be remiss if I didn't credit couleur_, where I probably got the idea for
-all this mashing.
+all this mashing.  This compound notation comes in handy if you want to allow
+users to customize the formatting of your app: just have them pass in a format
+specifier like **bold_green** as a command line argument or configuration item::
 
-.. _couleur: http://pypi.python.org/pypi/couleur
+    #!/usr/bin/env python
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description='displays argument as specified style')
+    parser.add_argument('style', type=str, help='style formatter')
+    parser.add_argument('text', type=str, nargs='+')
+
+    from blessed import Terminal
+
+    term = Terminal()
+    args = parser.parse_args()
+
+    style = getattr(term, args.style)
+
+    print(style(' '.join(args.text)))
+
+Saved as **tprint.py**, this could be called simply::
+
+    $ ./tprint.py bright_blue_reverse Blue Skies
+
 
 Moving The Cursor
 -----------------
 
-When you want to move the cursor to output text at a specific spot, you have
-a few choices.
+When you want to move the cursor, you have a few choices, the
+``location(y=None, x=None)`` context manager, ``move(y, x)``, ``move_y``,
+ and ``move_x`` attributes.
+
 
 Moving Temporarily
 ~~~~~~~~~~~~~~~~~~
 
-Most often, moving to a screen position is only temporary. A contest manager,
-``location`` is provided to move to a screen position and restore the previous
-position upon exit::
+A context manager, ``location`` is provided to move the cursor to a *(x, y)*
+screen position and restore the previous position upon exit::
 
     from blessed import Terminal
 
@@ -235,24 +266,19 @@ position upon exit::
         print('Here is the bottom.')
     print('This is back where I came from.')
 
-Parameters to ``location()`` are ``x`` and then ``y``, but you can also pass
-just one of them, leaving the other alone. For example... ::
+Parameters to ``location()`` are **optional** ``x`` and/or ``y``::
 
     with term.location(y=10):
         print('We changed just the row.')
 
-If you're doing a series of ``move`` calls (see below) and want to return the
-cursor to its original position afterward, call ``location()`` with no
-arguments, and it will do only the position restoring::
+When omitted, it saves the cursor position and restore it upon exit::
 
     with term.location():
         print(term.move(1, 1) + 'Hi')
         print(term.move(9, 9) + 'Mom')
 
-Note that, since ``location()`` uses the terminal's built-in
-position-remembering machinery, you can't usefully nest multiple calls. Use
-``location()`` at the outermost spot, and use simpler things like ``move``
-inside.
+*NOTE*: ``location`` may not be nested, as only one location may be saved.
+
 
 Moving Permanently
 ~~~~~~~~~~~~~~~~~~
@@ -266,25 +292,18 @@ this::
     print(term.move(10, 1) + 'Hi, mom!')
 
 ``move``
-  Position the cursor elsewhere. Parameters are y coordinate, then x
-  coordinate.
+  Position the cursor, parameter in form of *(y, x)*
 ``move_x``
-  Move the cursor to the given column.
+  Position the cursor at given horizontal column.
 ``move_y``
-  Move the cursor to the given row.
+  Position the cursor at given vertical column.
 
-How does all this work? These are simply more terminal capabilities, wrapped to
-give them nicer names. The added wrinkle--that they take parameters--is also
-given a pleasant treatment: rather than making you dig up ``tparm()`` all the
-time, we simply make these capabilities into callable strings. You'd get the
-raw capability strings if you were to just print them, but they're fully
-parametrized if you pass params to them as if they were functions.
+*NOTE*: The ``location`` method receives arguments in form of *(x, y)*,
+where the ``move`` argument receives arguments in form of *(y, x)*.
 
-Consequently, you can also reference any other string-returning capability
-listed on the `terminfo man page`_ by its name under the "Cap-name" column.
+This is a flaw in the original `erikrose/blessings`_ implementation, kept
+for compatibility.
 
-
-.. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
 
 One-Notch Movement
 ~~~~~~~~~~~~~~~~~~
@@ -297,9 +316,8 @@ cursor one character in various directions:
 * ``move_up``
 * ``move_down``
 
-For example... ::
-
-    print(term.move_up + 'Howdy!')
+**NOTE**: ``move_down`` is often valued as *\\n*, which returns the
+carriage to column (0).
 
 Height And Width
 ----------------
@@ -309,11 +327,25 @@ It's simple to get the height and width of the terminal, in characters::
     from blessed import Terminal
 
     term = Terminal()
-    height = term.height
-    width = term.width
+    height, width = term.height, term.width
+    with term.location(x=term.width / 3, y=term.height / 3):
+        print('1/3 ways in!')
 
-These are newly updated each time you ask for them, so they're safe to use from
-SIGWINCH handlers.
+These are always current, so a callback that refreshes the screen accordingly
+as it is resized is possible::
+
+        import signal
+        from blessed import Terminal
+
+        term = Terminal()
+
+        def on_resize(sig, action):
+            print('height={t.height}, width={t.width}'.format(t=term))
+
+        signal.signal(signal.SIGWINCH, on_resize)
+
+        term.inkey()
+
 
 Clearing The Screen
 -------------------
@@ -333,13 +365,13 @@ Full-Screen Mode
 ----------------
 
 If you've ever noticed a program, such as an editor, restores the previous
-screen state (Your shell prompt) after exiting, you're seeing the
+screen (such as your shell prompt) after exiting, you're seeing the
 ``enter_fullscreen`` and ``exit_fullscreen`` attributes in effect.
 
 ``enter_fullscreen``
     Switch to alternate screen, previous screen is stored by terminal driver.
 ``exit_fullscreen``
-    Switch back to standard screen, restoring the same termnal state.
+    Switch back to standard screen, restoring the same terminal state.
 
 There's also a context manager you can use as a shortcut::
 
@@ -356,13 +388,13 @@ Pipe Savvy
 
 If your program isn't attached to a terminal, such as piped to a program
 like ``less(1)`` or redirected to a file, all the capability attributes on
-``Terminal`` will return empty strings. You'll get a nice-looking file without
+*Terminal* will return empty strings. You'll get a nice-looking file without
 any formatting codes gumming up the works.
 
 If you want to override this, such as using ``less -r``, pass argument
-``force_styling=True`` to the ``Terminal`` constructor.
+``force_styling=True`` to the *Terminal* constructor.
 
-In any case, there is a ``does_styling`` attribute on ``Terminal`` that lets
+In any case, there is a ``does_styling`` attribute on *Terminal* that lets
 you see whether the terminal attached to the output stream is capable of
 formatting.  If it is ``False``, you may refrain from drawing progress
 bars and other frippery and just stick to content::
@@ -417,7 +449,7 @@ You may also have noticed that special keys, such as arrow keys, actually
 input several byte characters, and different terminals send different strings.
 
 Finally, you may have noticed characters such as ä from ``raw_input`` are also
-several byte characters in a sequence ('\xc3\xa4') that must be decoded.
+several byte characters in a sequence ('\\xc3\\xa4') that must be decoded.
 
 Handling all of these possibilities can be quite difficult, but Blessed has
 you covered!
@@ -441,7 +473,7 @@ raw
 ~~~
 
 The context manager ``raw`` is the same as ``cbreak``, except interrupt (^C),
-quit (^\), suspend (^Z), and flow control (^S, ^Q) characters are not trapped
+quit (^\\), suspend (^Z), and flow control (^S, ^Q) characters are not trapped
 by signal handlers, but instead sent directly. This is necessary if you
 actually want to handle the receipt of Ctrl+C
 
@@ -486,17 +518,17 @@ Its output might appear as::
     got q.
     bye!
 
-.. _`cbreak(3)`: www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
-.. _`termios(4)`: www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4
+keyboard codes
+~~~~~~~~~~~~~~
 
+The return value of the *Terminal* method ``inkey`` may be inspected for ts property
+``is_sequence``.  When ``True``, it means the value is a *multibyte sequence*,
+representing an application key of your terminal.
 
-codes
-~~~~~
+The ``code`` property (int) may then be compared with any of the following
+attributes of the *Terminal* instance, which are equivalent to the same
+available in `curs_getch(3)_`, with the following exceptions:
 
-The return value of ``inkey`` can be inspected for property ``is_sequence``.
-When ``True``, the ``code`` property (int) may be compared with any of the
-following attributes available on the associated Terminal, which are equivalent
-to the same available in curs_getch(3X), with the following exceptions
  * use ``KEY_DELETE`` instead of ``KEY_DC`` (chr(127))
  * use ``KEY_INSERT`` instead of ``KEY_IC``
  * use ``KEY_PGUP`` instead of ``KEY_PPAGE``
@@ -515,33 +547,36 @@ Additionally, use any of the following common attributes:
  * ``KEY_HOME``, ``KEY_END``.
  * ``KEY_F1`` through ``KEY_F22``.
 
-And much more. All attributes begin with prefix ``KEY_``.
 
 Shopping List
 =============
 
 There are decades of legacy tied up in terminal interaction, so attention to
 detail and behavior in edge cases make a difference. Here are some ways
-Blessed has your back:
+*Blessed* has your back:
 
 * Uses the `terminfo(5)`_ database so it works with any terminal type
 * Provides up-to-the-moment terminal height and width, so you can respond to
-  terminal size changes (SIGWINCH signals). (Most other libraries query the
+  terminal size changes (*SIGWINCH* signals). (Most other libraries query the
   ``COLUMNS`` and ``LINES`` environment variables or the ``cols`` or ``lines``
   terminal capabilities, which don't update promptly, if at all.)
 * Avoids making a mess if the output gets piped to a non-terminal.
 * Works great with standard Python string formatting.
 * Provides convenient access to **all** terminal capabilities.
-* Outputs to any file-like object (StringIO, file), not just stdout.
+* Outputs to any file-like object (*StringIO*, file), not just *stdout*.
 * Keeps a minimum of internal state, so you can feel free to mix and match with
   calls to curses or whatever other terminal libraries you like
+* Safely decodes internationalization keyboard input to their unicode equivalents.
+* Safely decodes multibyte sequences for application/arrow keys.
+* Allows the printable length of strings containing sequences to be determined.
+* Provides plenty of context managers to safely express various terminal modes,
+  restoring to a safe state upon exit.
 
 Blessed does not provide...
 
 * Native color support on the Windows command prompt. However, it should work
-  when used in concert with colorama_.
+  when used in concert with colorama_. Patches welcome!
 
-.. _colorama: http://pypi.python.org/pypi/colorama/0.2.4
 
 Bugs
 ====
@@ -552,6 +587,9 @@ Bugs or suggestions? Visit the `issue tracker`_.
 
 .. image:: https://secure.travis-ci.org/jquast/blessed.png
 
+For patches, please construct a test case if possible. To test,
+install and execute python package command ``tox``.
+
 
 License
 =======
@@ -559,42 +597,51 @@ License
 Blessed is derived from Blessings, which is under the MIT License, and
 shares the same. See the LICENSE file.
 
+
 Version History
 ===============
 
 1.7
   * Forked github project `erikrose/blessings`_ to `jquast/blessed`_, this
     project was previously known as **blessings** version 1.6 and prior.
-  * introduced context manager ``cbreak`` and ``raw``, which is equivalent
+  * introduced: context manager ``cbreak`` and ``raw``, which is equivalent
     to ``tty.setcbreak`` and ``tty.setraw``, allowing input from stdin to be
     read as each key is pressed.
-  * introduced ``inkey()``, which will return 1 or more characters as
+  * introduced: ``inkey()``, which will return 1 or more characters as
     a unicode sequence, with attributes ``.code`` and ``.name`` non-None when
     a multibyte sequence is received, allowing arrow keys and such to be
     detected. Optional value ``timeout`` allows timed polling or blocking.
-  * introduced ``center()``, ``rjust()``, and ``ljust()`` methods, allows text
+  * introduced: ``center()``, ``rjust()``, and ``ljust()`` methods, allows text
     containing sequences to be aligned to screen, or ``width`` specified.
-  * introduced ``wrap()``, allows text containing sequences to be
+  * introduced: ``wrap()``, allows text containing sequences to be
     word-wrapped without breaking mid-sequence and honoring their printable
     width.
+
   * bugfix: cannot call ``setupterm()`` more than once per process -- issue a
     warning about what terminal kind subsequent calls will use.
-  * bugfix: resolved issue where ``number_of_colors`` fails when ``does_styling``
-    is ``False``. resolves issue where piping tests output to stdout would fail.
+  * bugfix: resolved issue where ``number_of_colors`` fails when
+    ``does_styling`` is ``False``. resolves issue where piping tests
+    output would fail.
   * bugfix: warn and set ``does_styling`` to ``False`` when TERM is unknown.
   * bugfix: allow unsupported terminal capabilities to be callable just as
     supported capabilities, so that the return value of ``term.color(n)`` may
     be called on terminals without color capabilities.
-  * bugfix: for terminals without underline, such as vt220, ``term.underline('x')``
-    would be ``u'x' + term.normal``, now it is only ``u'x'``.
-  * attributes that should be read-only have now raise exception when
-    re-assigned (properties).
-  * enhancement: pypy is not a supported platform implementation.
+  * bugfix: for terminals without underline, such as vt220,
+    ``term.underline('text')``. would be ``u'text' + term.normal``, now is
+    only ``u'text'``.
+
+  * enhancement: move_x and move_y now work inside screen(1) or tmux(1).
+  * enhancement: some attributes are now properties, raise exceptions when
+    assigned.
+  * enhancement: pypy is not a supported python platform implementation.
   * enhancement: removed pokemon ``curses.error`` exceptions.
-  * enhancement: converted nosetests to pytest, install and use ``tox`` for testing.
-  * enhancement: pytext fixtures, paired with a new ``@as_subprocess`` decorator
+  * enhancement: converted nose tests to pytest, merged travis and tox.
+  * enhancement: pytest fixtures, paired with a new ``@as_subprocess``
+    decorator
     are used to test a multitude of terminal types.
-  * introduced ``@as_subprocess`` to discover and resolve various issues.
+  * enhancement: test accessories ``@as_subprocess`` resolves various issues
+    with different terminal types that previously went untested.
+
   * deprecation: python2.5 is no longer supported (as tox does not supported).
 
 1.6
@@ -618,7 +665,7 @@ Version History
   * Add syntactic sugar and documentation for ``enter_fullscreen`` and
     ``exit_fullscreen``.
   * Add context managers ``fullscreen()`` and ``hidden_cursor()``.
-  * Now you can force a ``Terminal`` never to emit styles by passing
+  * Now you can force a *Terminal* never to emit styles by passing
     ``force_styling=None``.
 
 1.4
@@ -676,3 +723,10 @@ Version History
 .. _`progress-bar-having, traceback-shortcutting, rootin', tootin' testrunner`: http://pypi.python.org/pypi/nose-progressive/
 .. _`erikrose/blessings`: https://github.com/erikrose/blessings
 .. _`jquast/blessed`: https://github.com/jquast/blessed
+.. _curses: http://docs.python.org/library/curses.html
+.. _couleur: http://pypi.python.org/pypi/couleur
+.. _`cbreak(3)`: www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
+.. _`curs_getch(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=curs_getch&apropos=0&sektion=3
+.. _`termios(4)`: http://www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4
+.. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
+.. _colorama: http://pypi.python.org/pypi/colorama/0.2.4
