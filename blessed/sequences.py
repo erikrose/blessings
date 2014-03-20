@@ -33,7 +33,8 @@ def _build_numeric_capability(term, cap, optional=False,
     _cap = getattr(term, cap)
     opt = '?' if optional else ''
     if _cap:
-        cap_re = re.escape(_cap(*((base_num,) * nparams)))
+        args = (base_num,) * nparams
+        cap_re = re.escape(_cap(*args))
         for num in range(base_num-1, base_num+2):
             # search for matching ascii, n-1 through n+2
             if str(num) in cap_re:
@@ -87,15 +88,19 @@ def init_sequence_patterns(term):
     if term._kind in _BINTERM_UNSUPPORTED:
         warnings.warn(_BINTERM_UNSUPPORTED_MSG)
 
-    # for some reason, 'screen' does not offer hpa and vpa,
-    # although they function perfectly fine !
-    if term._kind == 'screen' and not term.hpa:
-        term.hpa = lambda col: u'\x1b[{}G'.format(col + 1)
-    if term._kind == 'screen' and not term.vpa:
-        term.vpa = lambda col: u'\x1b[{}d'.format(col + 1)
+#    # for some reason, 'screen' does not offer hpa and vpa,
+#    # although they function perfectly fine !
+#    if term._kind == 'screen' and term.hpa == u'':
+#        def screen_hpa(*args):
+#            return u'\x1b[{}G'.format(len(args) and args[0] + 1 or 1)
+#        term.hpa = screen_hpa
+#    if term._kind == 'screen' and term.vpa == u'':
+#        def screen_vpa(*args):
+#            return u'\x1b[{}d'.format(len(args) and args[0] + 1 or 1)
+#        term.vpa = screen_vpa
 
-    bnc = functools.partial(_build_numeric_capability, term=term)
-    bna = functools.partial(_build_any_numeric_capability, term=term)
+    bnc = functools.partial(_build_numeric_capability, term)
+    bna = functools.partial(_build_any_numeric_capability, term)
     # Build will_move, a list of terminal capabilities that have
     # indeterminate effects on the terminal cursor position.
     will_move_seqs = set([

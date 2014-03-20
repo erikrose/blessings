@@ -117,6 +117,7 @@ class NullCallableString(unicode):
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
 
+
 def split_compound(compound):
     """Split a possibly compound format string into segments.
 

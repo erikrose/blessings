@@ -120,11 +120,11 @@ def test_merge_sequences():
     assert (_merge_sequences(input_list) == output_expected)
 
 
-def test_location():
+def test_location(all_standard_terms):
     """Make sure ``location()`` does what it claims."""
     @as_subprocess
     def child_with_styling():
-        t = TestTerminal(stream=StringIO(), force_styling=True)
+        t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
         with t.location(3, 4):
             t.stream.write(u'hi')
         expected_output = u''.join(
@@ -133,7 +133,7 @@ def test_location():
              u'hi', unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
-    child_with_styling()
+    child_with_styling(all_standard_terms)
 
     @as_subprocess
     def child_without_styling():
@@ -149,11 +149,11 @@ def test_location():
     child_without_styling()
 
 
-def test_horizontal_location():
+def test_horizontal_location(all_standard_terms):
     """Make sure we can move the cursor horizontally without changing rows."""
     @as_subprocess
-    def child():
-        t = TestTerminal(stream=StringIO(), force_styling=True)
+    def child(kind):
+        t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
         with t.location(x=5):
             pass
         expected_output = u''.join(
@@ -162,7 +162,7 @@ def test_horizontal_location():
              unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
-    child()
+    child(all_standard_terms)
 
 
 def test_inject_move_x_for_screen():
@@ -173,10 +173,9 @@ def test_inject_move_x_for_screen():
         with t.location(x=5):
             pass
         expected_output = u''.join(
-            (unicode_cap('sc'),
-             unicode_parm('hpa', 5),
+            (unicode_cap('sc'), t.hpa(5),
              unicode_cap('rc')))
-        assert (t.stream.getvalue() == expected_output == t.move_x(5))
+        assert (t.stream.getvalue() == expected_output)
 
     child('screen')
 
@@ -189,15 +188,14 @@ def test_inject_move_y_for_screen():
         with t.location(y=5):
             pass
         expected_output = u''.join(
-            (unicode_cap('sc'),
-             unicode_parm('vpa', 5),
+            (unicode_cap('sc'), t.vpa(5),
              unicode_cap('rc')))
-        assert (t.stream.getvalue() == expected_output == t.move_y(5))
+        assert (t.stream.getvalue() == expected_output)
 
     child('screen')
 
 
-def test_zero_location():
+def test_zero_location(all_standard_terms):
     """Make sure ``location()`` pays attention to 0-valued args."""
     @as_subprocess
     def child():
@@ -210,7 +208,7 @@ def test_zero_location():
              unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
-    child()
+    child(all_standard_terms)
 
 
 def test_mnemonic_colors(all_standard_terms):

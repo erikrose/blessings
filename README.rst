@@ -630,7 +630,6 @@ Version History
     ``term.underline('text')``. would be ``u'text' + term.normal``, now is
     only ``u'text'``.
 
-  * enhancement: move_x and move_y now work inside screen(1) or tmux(1).
   * enhancement: some attributes are now properties, raise exceptions when
     assigned.
   * enhancement: pypy is not a supported python platform implementation.
