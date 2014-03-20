@@ -17,11 +17,6 @@ Coding with *Blessed* looks like this... ::
     with t.cbreak():
         t.inkey()
 
-Or, for byte-level control, you can drop down and play with raw terminal
-capabilities::
-
-    print('{t.bold}All your {t.red}bold and red base{t.normal}'.format(t=t))
-
 
 The Pitch
 =========
