@@ -27,7 +27,7 @@ The Pitch
   clearing the whole screen first.
 * Leave more than one screenful of scrollback in the buffer after your program
   exits, like a well-behaved command-line application should.
-* No more C-like calls to ``tigetstr`` and ``tparm``.
+* No more C-like calls to tigetstr_ and `tparm`_.
 * Act intelligently when somebody redirects your output to a file, omitting
   all of the terminal sequences such as styling, colors, or positioning.
 
@@ -79,8 +79,11 @@ What It Provides
 
 Blessed provides just **one** top-level object: *Terminal*. Instantiating a
 *Terminal* figures out whether you're on a terminal at all and, if so, does
-any necessary terminal setup. After that, you can proceed to ask it all sorts
-of things about the terminal.
+any necessary setup. After that, you can proceed to ask it all sorts of things
+about the terminal, such as its size and color support, and use its styling
+to construct strings containing color and styling. Also, the special sequences
+inserted with application keys (arrow and function keys) are understood and
+decoded, as well as your locale-specific encoded multibyte input.
 
 
 Simple Formatting
@@ -94,16 +97,17 @@ on a *Terminal* class instance. For example::
     term = Terminal()
     print('I am ' + term.bold + 'bold' + term.normal + '!')
 
-These capabilities (bold, normal) are translated to their sequences, which
-when displayed simply change the video attributes.
+These capabilities (*bold*, *normal*) are translated to their sequences, which
+when displayed simply change the video attributes.  And, when used as a callable,
+automatically wraps the given string with this sequence, and terminates it with
+*normal*.
 
-And, when used as a callable, automatically wraps the given string with this
-sequence, and terminates it with *normal*. The same can be written as::
+The same can be written as::
 
     print('I am' + term.bold('bold') + '!')
 
 You may also use the *Terminal* instance as an argument for ``.format`` string
-method, so that capabilities can be displayed inline for more complex strings::
+method, so that capabilities can be displayed in-line for more complex strings::
 
     print('{t.red_on_yellow}Candy corn{t.normal} for everyone!'.format(t=term))
 
@@ -116,7 +120,7 @@ The basic capabilities supported by most terminals are:
 
 The less commonly supported capabilities:
 
-* ``dim``: Turn on 'half-bright' mode.
+* ``dim``: Turn on *half-bright* mode.
 * ``underline`` and ``no_underline``.
 * ``italic`` and ``no_italic``.
 * ``shadow`` and ``no_shadow``.
@@ -125,14 +129,15 @@ The less commonly supported capabilities:
 * ``superscript`` and ``no_superscript``.
 * ``flash``: Visual bell, which flashes the screen.
 
-Note that, while the inverse of ``underline`` is ``no_underline``, the only way
-to turn off ``bold`` or ``reverse`` is ``normal``, which also cancels any
-custom colors.
+Note that, while the inverse of *underline* is *no_underline*, the only way
+to turn off *bold* or *reverse* is *normal*, which also cancels any custom
+colors.
 
-Many of these are aliases, their true capability names (such as ``smul`` for
-*begin underline mode*) may still be used. Any capability in the `terminfo(5)_`
+Many of these are aliases, their true capability names (such as *smul* for
+*begin underline mode*) may still be used. Any capability in the `terminfo(5)`_
 manual, under column **Cap-name**, may be used as an attribute to a *Terminal*
-instance. If it is not a supported capability, an empty string is returned.
+instance. If it is not a supported capability, or a non-tty is used as an
+output stream, an empty string is returned.
 
 
 Color
@@ -149,14 +154,12 @@ Color terminals are capable of at least 8 basic colors.
 * ``cyan``
 * ``white``
 
-The same colors, prefixed with ``bright_`` (synonymous with ``bold_``),
-such as ``bright_blue``, providing 16 colors in total (if you count black
-as a color). On most terminals, ``bright_black`` is actually a very dim
-gray!
+The same colors, prefixed with *bright_* (synonymous with *bold_*),
+such as *bright_blue*, provides 16 colors in total.
 
-The same colors, prefixed with ``on_`` sets the background color, some
+The same colors, prefixed with *on_* sets the background color, some
 terminals also provide an additional 8 high-intensity versions using
-``on_bright``, some example compound formats::
+*on_bright*, some example compound formats::
 
     from blessed import Terminal
 
@@ -191,7 +194,7 @@ effect::
 
     term = Terminal()
 
-    print('terminals {standout} more than others'.format(
+    print('some terminals {standout} more than others'.format(
         standout=term.green_reverse('standout')))
 
 Which appears as *bright white on green* on color terminals, or *black text
@@ -200,6 +203,8 @@ definition used supports colors, and how many, using the ``number_of_colors``
 property, which returns any of *0* *8* or *256* for terminal types
 such as *vt220*, *ansi*, and *xterm-256color*, respectively.
 
+**NOTE**: On most color terminals, *bright_black* is actually a very dark
+shade of gray!
 
 Compound Formatting
 -------------------
@@ -215,8 +220,8 @@ all together::
 
 I'd be remiss if I didn't credit couleur_, where I probably got the idea for
 all this mashing.  This compound notation comes in handy if you want to allow
-users to customize the formatting of your app: just have them pass in a format
-specifier like **bold_green** as a command line argument or configuration item::
+users to customize formatting, just allow compound formatters, like *bold_green*,
+as a command line argument or configuration item::
 
     #!/usr/bin/env python
     import argparse
@@ -244,8 +249,8 @@ Moving The Cursor
 -----------------
 
 When you want to move the cursor, you have a few choices, the
-``location(y=None, x=None)`` context manager, ``move(y, x)``, ``move_y``,
- and ``move_x`` attributes.
+``location(y=None, x=None)`` context manager, ``move(y, x)``, ``move_y(row)``,
+ and ``move_x(col)`` attributes.
 
 
 Moving Temporarily
@@ -261,7 +266,7 @@ screen position and restore the previous position upon exit::
         print('Here is the bottom.')
     print('This is back where I came from.')
 
-Parameters to ``location()`` are **optional** ``x`` and/or ``y``::
+Parameters to *location()* are **optional** *x* and/or *y*::
 
     with term.location(y=10):
         print('We changed just the row.')
@@ -272,7 +277,7 @@ When omitted, it saves the cursor position and restore it upon exit::
         print(term.move(1, 1) + 'Hi')
         print(term.move(9, 9) + 'Mom')
 
-*NOTE*: ``location`` may not be nested, as only one location may be saved.
+*NOTE*: calls to *location* may not be nested, as only one location may be saved.
 
 
 Moving Permanently
@@ -293,11 +298,10 @@ this::
 ``move_y``
   Position the cursor at given vertical column.
 
-*NOTE*: The ``location`` method receives arguments in form of *(x, y)*,
-where the ``move`` argument receives arguments in form of *(y, x)*.
-
-This is a flaw in the original `erikrose/blessings`_ implementation, kept
-for compatibility.
+*NOTE*: The *location* method receives arguments in form of *(x, y)*,
+where the *move* argument receives arguments in form of *(y, x)*.  This is a
+flaw in the original `erikrose/blessings`_ implementation, kept for
+compatibility.
 
 
 One-Notch Movement
@@ -311,13 +315,14 @@ cursor one character in various directions:
 * ``move_up``
 * ``move_down``
 
-**NOTE**: ``move_down`` is often valued as *\\n*, which returns the
-carriage to column (0).
+**NOTE**: *move_down* is often valued as *\\n*, which additionally returns
+the carriage to column 0, depending on your terminal emulator.
+
 
 Height And Width
 ----------------
 
-It's simple to get the height and width of the terminal, in characters::
+Use the *height* and *width* properties of the *Terminal* class instance::
 
     from blessed import Terminal
 
@@ -326,9 +331,7 @@ It's simple to get the height and width of the terminal, in characters::
     with term.location(x=term.width / 3, y=term.height / 3):
         print('1/3 ways in!')
 
-These are always current, so a callback that refreshes the screen accordingly
-as it is resized is possible::
-
+These are always current, so they may be used with a callback from SIGWINCH_ signals.:: 
         import signal
         from blessed import Terminal
 
@@ -356,12 +359,13 @@ Blessed provides syntactic sugar over some screen-clearing capabilities:
 ``clear_eos``
   Clear to the end of screen.
 
+
 Full-Screen Mode
 ----------------
 
 If you've ever noticed a program, such as an editor, restores the previous
 screen (such as your shell prompt) after exiting, you're seeing the
-``enter_fullscreen`` and ``exit_fullscreen`` attributes in effect.
+*enter_fullscreen* and *exit_fullscreen* attributes in effect.
 
 ``enter_fullscreen``
     Switch to alternate screen, previous screen is stored by terminal driver.
@@ -382,16 +386,16 @@ Pipe Savvy
 ----------
 
 If your program isn't attached to a terminal, such as piped to a program
-like ``less(1)`` or redirected to a file, all the capability attributes on
+like *less(1)* or redirected to a file, all the capability attributes on
 *Terminal* will return empty strings. You'll get a nice-looking file without
 any formatting codes gumming up the works.
 
-If you want to override this, such as using ``less -r``, pass argument
-``force_styling=True`` to the *Terminal* constructor.
+If you want to override this, such as when piping output to ``less -r``, pass
+argument ``force_styling=True`` to the *Terminal* constructor.
 
-In any case, there is a ``does_styling`` attribute on *Terminal* that lets
+In any case, there is a *does_styling* attribute on *Terminal* that lets
 you see whether the terminal attached to the output stream is capable of
-formatting.  If it is ``False``, you may refrain from drawing progress
+formatting.  If it is *False*, you may refrain from drawing progress
 bars and other frippery and just stick to content::
 
     from blessed import Terminal
@@ -407,7 +411,7 @@ Sequence Awareness
 
 Blessed may measure the printable width of strings containing sequences,
 providing ``.center``, ``.ljust``, and ``.rjust`` methods, using the
-terminal screen's width as the default ``width`` value::
+terminal screen's width as the default *width* value::
 
     from blessed import Terminal
 
@@ -452,8 +456,8 @@ you covered!
 cbreak
 ~~~~~~
 
-The context manager ``cbreak`` can be used to enter key-at-a-time mode.
-Any keypress by the user is immediately value::
+The context manager ``cbreak`` can be used to enter *key-at-a-time* mode: Any
+keypress by the user is immediately consumed by read calls::
 
     from blessed import Terminal
     import sys
@@ -476,7 +480,7 @@ inkey
 ~~~~~
 
 The method ``inkey`` resolves many issues with terminal input by returning
-a unicode-derived ``Keypress`` instance. Although its return value may be
+a unicode-derived *Keypress* instance. Although its return value may be
 printed, joined with, or compared to other unicode strings, it also provides
 the special attributes ``is_sequence`` (bool), ``code`` (int),
 and ``name`` (str)::
@@ -517,10 +521,10 @@ keyboard codes
 ~~~~~~~~~~~~~~
 
 The return value of the *Terminal* method ``inkey`` may be inspected for ts property
-``is_sequence``.  When ``True``, it means the value is a *multibyte sequence*,
+*is_sequence*.  When *True*, it means the value is a *multibyte sequence*,
 representing an application key of your terminal.
 
-The ``code`` property (int) may then be compared with any of the following
+The *code* property (int) may then be compared with any of the following
 attributes of the *Terminal* instance, which are equivalent to the same
 available in `curs_getch(3)_`, with the following exceptions:
 
@@ -724,3 +728,6 @@ Version History
 .. _`termios(4)`: http://www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4
 .. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
 .. _colorama: http://pypi.python.org/pypi/colorama/0.2.4
+.. _tigetstr: http://www.openbsd.org/cgi-bin/man.cgi?query=tigetstr&sektion=3
+.. _tparm: http://www.openbsd.org/cgi-bin/man.cgi?query=tparm&sektion=3
+.. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH#SIGWINCH
