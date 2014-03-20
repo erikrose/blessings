@@ -165,6 +165,38 @@ def test_horizontal_location():
     child()
 
 
+def test_inject_move_x_for_screen():
+    """Test injection of hpa attribute for screen (issue #55)."""
+    @as_subprocess
+    def child(kind):
+        t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
+        with t.location(x=5):
+            pass
+        expected_output = u''.join(
+            (unicode_cap('sc'),
+             unicode_parm('hpa', 5),
+             unicode_cap('rc')))
+        assert (t.stream.getvalue() == expected_output == t.move_x(5))
+
+    child('screen')
+
+
+def test_inject_move_y_for_screen():
+    """Test injection of vpa attribute for screen (issue #55)."""
+    @as_subprocess
+    def child(kind):
+        t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
+        with t.location(y=5):
+            pass
+        expected_output = u''.join(
+            (unicode_cap('sc'),
+             unicode_parm('vpa', 5),
+             unicode_cap('rc')))
+        assert (t.stream.getvalue() == expected_output == t.move_y(5))
+
+    child('screen')
+
+
 def test_zero_location():
     """Make sure ``location()`` pays attention to 0-valued args."""
     @as_subprocess
