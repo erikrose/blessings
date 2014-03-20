@@ -156,12 +156,20 @@ def echo_off(fd):
 
 def unicode_cap(cap):
     """Return the result of ``tigetstr`` except as Unicode."""
-    return curses.tigetstr(cap).decode('latin1')
+    val = curses.tigetstr(cap)
+    if val:
+        return val.decode('latin1')
+    return u''
 
 
 def unicode_parm(cap, *parms):
     """Return the result of ``tparm(tigetstr())`` except as Unicode."""
-    return curses.tparm(curses.tigetstr(cap), *parms).decode('latin1')
+    cap = curses.tigetstr(cap)
+    if cap:
+        val = curses.tparm(cap, *parms)
+        if val:
+            return val.decode('latin1')
+    return u''
 
 
 @pytest.fixture(params=binpacked_terminal_params)

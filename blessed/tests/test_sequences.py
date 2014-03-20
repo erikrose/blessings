@@ -120,10 +120,10 @@ def test_merge_sequences():
     assert (_merge_sequences(input_list) == output_expected)
 
 
-def test_location(all_standard_terms):
-    """Make sure ``location()`` does what it claims."""
+def test_location_with_styling(all_standard_terms):
+    """Make sure ``location()`` works on all terminals."""
     @as_subprocess
-    def child_with_styling():
+    def child_with_styling(kind):
         t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
         with t.location(3, 4):
             t.stream.write(u'hi')
@@ -135,6 +135,9 @@ def test_location(all_standard_terms):
 
     child_with_styling(all_standard_terms)
 
+
+def test_location_without_styling():
+    """Make sure ``location()`` silently passes without styling."""
     @as_subprocess
     def child_without_styling():
         """No side effect for location as a context manager without styling."""
@@ -145,7 +148,6 @@ def test_location(all_standard_terms):
 
         assert t.stream.getvalue() == u'hi'
 
-    child_with_styling()
     child_without_styling()
 
 
@@ -198,8 +200,8 @@ def test_inject_move_y_for_screen():
 def test_zero_location(all_standard_terms):
     """Make sure ``location()`` pays attention to 0-valued args."""
     @as_subprocess
-    def child():
-        t = TestTerminal(stream=StringIO(), force_styling=True)
+    def child(kind):
+        t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
         with t.location(0, 0):
             pass
         expected_output = u''.join(
