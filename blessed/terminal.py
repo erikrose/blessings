@@ -22,6 +22,13 @@ except ImportError:
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2.5"""
 
+try:
+    _ = InterruptedError
+    del _
+except NameError:
+    # alias py2 exception to py3
+    InterruptedError = select.error
+
 # local imports
 import formatters
 import sequences
@@ -73,11 +80,12 @@ class Terminal(object):
 
         """
         global _CUR_TERM
+        self.stream_kb = None
+
+        # default stream is stdout, keyboard only valid as stdin with stdout.
         if stream is None:
             stream = sys.__stdout__
             self.stream_kb = sys.__stdin__.fileno()
-        else:
-            self.stream_kb = None
 
         try:
             stream_fd = (stream.fileno() if hasattr(stream, 'fileno')
@@ -90,14 +98,13 @@ class Terminal(object):
                               force_styling is not None)
         self._normal = None  # cache normal attr, preventing recursive lookups
 
-        # keyboard input only valid when stream is sys.stdout
-
-        # The desciptor to direct terminal initialization sequences to.
+        # The descriptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
         # is redirected.
         self._init_descriptor = (stream_fd is None and sys.__stdout__.fileno()
                                  or stream_fd)
         self._kind = kind or os.environ.get('TERM', 'unknown')
+
         if self.does_styling:
             # Make things like tigetstr() work. Explicit args make setupterm()
             # work even when -s is passed to nosetests. Lean toward sending
@@ -489,9 +496,32 @@ class Terminal(object):
         if self.keyboard_fd is None:
             return False
 
+        # Special care is taken to handle a custom SIGWINCH handler, which
+        # causes select() to be interrupted with errno 4 -- it is ignored,
+        # and a new timeout value is derived from the previous, unless timeout
+        # becomes negative, because signal handler has blocked beyond timeout,
+        # then False is returned. Otherwise, when timeout is 0, we continue to
+        # block indefinitely (default).
+        stime = time.time()
         check_r, check_w, check_x = [self.stream_kb], [], []
-        ready_r, ready_w, ready_x = select.select(
-            check_r, check_w, check_x, timeout)
+
+        while True:
+            try:
+                ready_r, ready_w, ready_x = select.select(
+                    check_r, check_w, check_x, timeout)
+            except InterruptedError as exc:
+                if 4 == (hasattr(exc, 'errno') and exc.errno or  # py2
+                         hasattr(exc, 'args') and exc.args[0]):  # py3
+                    if timeout != 0:
+                        timeout = time.time() - stime
+                        if timeout > 0:
+                            continue
+                        else:
+                            ready_r = False
+                            break
+                raise
+            else:
+                break
 
         return check_r == ready_r
 
