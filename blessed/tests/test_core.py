@@ -38,12 +38,12 @@ def test_flipped_location_move(all_terms):
     """``location()`` and ``move()`` receive counter-example arguments."""
     @as_subprocess
     def child(kind):
-        buffer = StringIO()
+        buf = StringIO()
         t = TestTerminal(stream=buf, force_styling=True)
         y, x = 10, 20
-        with term.location(y, x)
+        with t.location(y, x):
             xy_val = t.move(x, y)
-            yx_val = buf.getvalue()[len(term.sc):]
+            yx_val = buf.getvalue()[len(t.sc):]
             assert xy_val == yx_val
 
     child(all_terms)
