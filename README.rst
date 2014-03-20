@@ -190,9 +190,7 @@ If some color is unsupported (for instance, if only the normal colors are
 available, not the bright ones), trying to use it will, on most terminals, have
 no effect: the foreground and background colors will stay as they were. You can
 get fancy and do different things depending on the supported colors by checking
-`number_of_colors`_.
-
-.. _`number_of_colors`: http://packages.python.org/blessings/#blessings.Terminal.number_of_colors
+Terminal property ``number_of_colors``.
 
 Compound Formatting
 -------------------
