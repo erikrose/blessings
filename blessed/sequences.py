@@ -87,6 +87,13 @@ def init_sequence_patterns(term):
     if term._kind in _BINTERM_UNSUPPORTED:
         warnings.warn(_BINTERM_UNSUPPORTED_MSG)
 
+    # for some reason, 'screen' does not offer hpa and vpa,
+    # although they function perfectly fine !
+    if term._kind == 'screen' and not self.hpa:
+        term.hpa = lambda col: u'\x1b[{}G'.format(col + 1)
+    if term._kind == 'screen' and not self.vpa:
+        term.vpa = lambda col: u'\x1b[{}d'.format(col + 1)
+
     bnc = functools.partial(_build_numeric_capability, term=term)
     bna = functools.partial(_build_any_numeric_capability, term=term)
     # Build will_move, a list of terminal capabilities that have
