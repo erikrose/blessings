@@ -89,7 +89,7 @@ class Terminal(object):
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
-        # The desciptor to direct terminal initialization sequences to.
+        # The descriptor to direct terminal initialization sequences to.
         # sys.__stdout__ seems to always have a descriptor of 1, even if output
         # is redirected.
         self._init_descriptor = (sys.__stdout__.fileno()
