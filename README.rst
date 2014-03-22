@@ -440,18 +440,13 @@ from Tao Te Ching, word-wrapped to 25 columns::
 Keyboard Input
 --------------
 
-You may have noticed that the built-in python ``raw_input`` doesn't return
-until the return key is pressed (line buffering). Special `termios(4)`_ routines
-are required to enter Non-canonical, known in curses as `cbreak(3)_`.
+The built-in python *raw_input* function does not return a value until the return
+key is pressed, and is not suitable for detecting each individual keypress, much
+less arrow or function keys that emit multibyte sequences.  Special `termios(4)`_
+routines are required to enter Non-canonical, known in curses as `cbreak(3)_`.
+These functions also receive bytes, which must be incrementally decoded to unicode.
 
-You may also have noticed that special keys, such as arrow keys, actually
-input several byte characters, and different terminals send different strings.
-
-Finally, you may have noticed characters such as ä from ``raw_input`` are also
-several byte characters in a sequence ('\\xc3\\xa4') that must be decoded.
-
-Handling all of these possibilities can be quite difficult, but Blessed has
-you covered!
+Blessed handles all of these special keyboarding purposes!
 
 cbreak
 ~~~~~~
@@ -584,10 +579,11 @@ Bugs or suggestions? Visit the `issue tracker`_.
 
 .. _`issue tracker`: https://github.com/jquast/blessed/issues/
 
-.. image:: https://secure.travis-ci.org/jquast/blessed.png
+.. image:: https://secure.travis-ci.org/jquast/blessed.png :target: https://travis-ci.org/jquast/blessed
+.. image:: http://coveralls.io/repos/jquast/blessed/badge.png :target: http://coveralls.io/r/jquast/blessed
 
 For patches, please construct a test case if possible. To test,
-install and execute python package command ``tox``.
+install and execute python package command *tox*.
 
 
 License

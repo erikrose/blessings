@@ -6,10 +6,24 @@ env:
   - TOXENV=py33
   - TOXENV=pypy
 
+install:
+  # travis wants requirements.txt; we don't,
+  # use only 'requires=' in setup.py, which is dynamic;
+  # for python versions <26, we must install ordereddict
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.5 ]] || [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install --use-mirrors ordereddict; fi
+  - pip install -q --use-mirrors tox
+
 script:
+  - cd .tox
+  - coverage erase --rcfile=$TRAVIS_BUILD_DIR/.coveragerc
+  - cd $TRAVIS_BUILD_DIR
   - tox
 
-install:
-  # travis wants requirements.txt; we don't, use only 'requires=' in setup.py.
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.5 ]] || [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install --use-mirrors ordereddict; fi
-  - pip install --use-mirrors tox
+after_success:
+  - cd .tox
+  - coverage combine --rcfile=$TRAVIS_BUILD_DIR/.coveragerc
+  - coveralls --rcfile=$TRAVIS_BUILD_DIR/.coveragerc
+
+notifications:
+  email:
+    - contact@jeffquast.com

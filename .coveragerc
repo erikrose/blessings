@@ -1,0 +1,8 @@
+[run]
+branch = True
+source = blessed
+
+[report]
+omit = */tests/*
+include = '*/site-packages/blessed/*'
+omit = '*/site-packages/blessed/tests/*'
