@@ -11,7 +11,7 @@ install:
   # use only 'requires=' in setup.py, which is dynamic;
   # for python versions <26, we must install ordereddict
   - if [[ $TRAVIS_PYTHON_VERSION == 2.5 ]] || [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install --use-mirrors ordereddict; fi
-  - pip install -q --use-mirrors tox coverage
+  - pip install -q tox coverage coveralls
 
 script:
   - mkdir -p .tox
