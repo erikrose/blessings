@@ -17,7 +17,7 @@ script:
   - mkdir -p .tox
   - cd .tox
   - coverage erase --rcfile=$TRAVIS_BUILD_DIR/.coveragerc
-  - cd $OLD_PWD
+  - cd $TRAVIS_BUILD_DIR
   - tox
 
 after_success:
