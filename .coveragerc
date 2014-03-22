@@ -4,5 +4,5 @@ source = blessed
 
 [report]
 omit = */tests/*
-include = '*/site-packages/blessed/*'
-omit = '*/site-packages/blessed/tests/*'
+include = */site-packages/blessed/*
+omit = */site-packages/blessed/tests/*
