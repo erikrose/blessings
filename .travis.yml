@@ -28,7 +28,7 @@ script:
 
 after_success:
   - if [[ $TOXENV == "py27" ]]; then
-        coveralls
+        coveralls;
     fi
 
 notifications:
