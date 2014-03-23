@@ -45,12 +45,15 @@ class as_subprocess(object):
     def __call__(self, *args, **kwargs):
         pid, master_fd = pty.fork()
         if pid is self._CHILD_PID:
-            cov = __import__('cov_core_init').init()
             # child process executes function, raises exception
             # if failed, causing a non-zero exit code, using the
             # protected _exit() function of ``os``; to prevent the
             # 'SystemExit' exception from being thrown.
             try:
+                try:
+                    cov = __import__('cov_core_init').init()
+                except ImportError:
+                    cov = None
                 self.func(*args, **kwargs)
             except Exception:
                 e_type, e_value, e_tb = sys.exc_info()
@@ -67,8 +70,9 @@ class as_subprocess(object):
                 os.close(sys.__stdin__.fileno())
                 os._exit(1)
             else:
-                cov.stop()
-                cov.save()
+                if cov is not None:
+                    cov.stop()
+                    cov.save()
                 os._exit(0)
 
         exc_output = unicode()
