@@ -11,13 +11,13 @@ install:
   # mimicking the same dynamically generated 'requires='
   # in setup.py
   - if [[ $TOXENV == "py25" ]] || [[ $TOXENV == "py26" ]]; then
-        pip install -q ordereddict
+        pip install -q ordereddict;
     fi
 
   # for python version =27, cinstall and overage, coveralls.
   # coverage is only measured and published for one version.
   - if [[ $TOXENV == "py27" ]]; then
-        pip install -q coverage coveralls
+        pip install -q coverage coveralls;
     fi
 
 script:
