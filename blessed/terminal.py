@@ -524,7 +524,7 @@ class Terminal(object):
             try:
                 ready_r, ready_w, ready_x = select.select(
                     check_r, check_w, check_x, timeout)
-            except InterruptedError as exc:
+            except InterruptedError:
                 if timeout != 0:
                     # subtract time already elapsed,
                     timeout -= time.time() - stime
