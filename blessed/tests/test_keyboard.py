@@ -332,11 +332,13 @@ def test_get_keyboard_sequence(monkeypatch):
     import blessed.keyboard
 
     (KEY_SMALL, KEY_LARGE, KEY_MIXIN) = range(3)
-    (CAP_SMALL, CAP_LARGE) = ('cap-small cap-large'.split())
-    (SEQ_SMALL, SEQ_LARGE, SEQ_MIXIN,
-     SEQ_ALT_CUF1, SEQ_ALT_CUB1
-     ) = ('seq-small-a seq-large-abcdefg seq-mixin '
-          'seq-alt-cuf1 seq-alt-cub1_'.split())
+    (CAP_SMALL, CAP_LARGE) = 'cap-small cap-large'.split()
+    (SEQ_SMALL, SEQ_LARGE, SEQ_MIXIN, SEQ_ALT_CUF1, SEQ_ALT_CUB1) = (
+        b'seq-small-a',
+        b'seq-large-abcdefg',
+        b'seq-mixin',
+        b'seq-alt-cuf1',
+        b'seq-alt-cub1_')
 
     # patch curses functions
     monkeypatch.setattr(curses, 'tigetstr',
@@ -350,20 +352,20 @@ def test_get_keyboard_sequence(monkeypatch):
     # patch global sequence mix-in
     monkeypatch.setattr(blessed.keyboard,
                         'DEFAULT_SEQUENCE_MIXIN', (
-                            (SEQ_MIXIN, KEY_MIXIN),))
+                            (SEQ_MIXIN.decode('latin1'), KEY_MIXIN),))
 
     # patch for _alternative_left_right
     term = mock.Mock()
-    term._cuf1 = SEQ_ALT_CUF1
-    term._cub1 = SEQ_ALT_CUB1
+    term._cuf1 = SEQ_ALT_CUF1.decode('latin1')
+    term._cub1 = SEQ_ALT_CUB1.decode('latin1')
     keymap = blessed.keyboard.get_keyboard_sequences(term)
 
     assert keymap.items() == [
-        (SEQ_LARGE, KEY_LARGE),
-        (SEQ_ALT_CUB1, curses.KEY_LEFT),
-        (SEQ_ALT_CUF1, curses.KEY_RIGHT),
-        (SEQ_SMALL, KEY_SMALL),
-        (SEQ_MIXIN, KEY_MIXIN)]
+        (SEQ_LARGE.decode('latin1'), KEY_LARGE),
+        (SEQ_ALT_CUB1.decode('latin1'), curses.KEY_LEFT),
+        (SEQ_ALT_CUF1.decode('latin1'), curses.KEY_RIGHT),
+        (SEQ_SMALL.decode('latin1'), KEY_SMALL),
+        (SEQ_MIXIN.decode('latin1'), KEY_MIXIN)]
 
 
 def test_resolve_sequence():
