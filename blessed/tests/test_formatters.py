@@ -6,8 +6,7 @@ import mock
 
 def test_parameterizing_string_args(monkeypatch):
     """Test basic formatters.ParameterizingString."""
-    from blessed.formatters import (ParameterizingString,
-                                    FormattingString)
+    from blessed.formatters import ParameterizingString, FormattingString
 
     # first argument to tparm() is the sequence name, returned as-is;
     # subsequent arguments are usually Integers.
@@ -40,7 +39,7 @@ def test_parameterizing_string_args(monkeypatch):
 
 def test_parameterizing_string_type_error(monkeypatch):
     """Test formatters.ParameterizingString raising TypeError"""
-    from blessed.formatters import (ParameterizingString)
+    from blessed.formatters import ParameterizingString
 
     def tparm_raises_TypeError(*args):
         raise TypeError('custom_err')
@@ -139,3 +138,136 @@ def test_resolve_capability(monkeypatch):
 
     # excersize,
     assert resolve_capability(term, 'natural') == u''
+
+
+def test_resolve_color(monkeypatch):
+    """Test formatters.resolve_color."""
+    from blessed.formatters import (resolve_color,
+                                    FormattingString,
+                                    NullCallableString)
+
+    color_cap = lambda digit: 'seq-%s' % (digit,)
+    monkeypatch.setattr(curses, 'COLOR_RED', 1984)
+
+    # given, terminal with color capabilities
+    term = mock.Mock()
+    term._background_color = color_cap
+    term._foreground_color = color_cap
+    term.number_of_colors = -1
+    term.normal = 'seq-normal'
+
+    # excersize,
+    red = resolve_color(term, 'red')
+    assert type(red) == FormattingString
+    assert red == u'seq-1984'
+    assert red('text') == u'seq-1984textseq-normal'
+
+    # excersize bold, +8
+    bright_red = resolve_color(term, 'bright_red')
+    assert type(bright_red) == FormattingString
+    assert bright_red == u'seq-1992'
+    assert bright_red('text') == u'seq-1992textseq-normal'
+
+    # given, terminal without color
+    term.number_of_colors = 0
+
+    # excersize,
+    red = resolve_color(term, 'red')
+    assert type(red) == NullCallableString
+    assert red == u''
+    assert red('text') == u'text'
+
+    # excesize bold,
+    bright_red = resolve_color(term, 'bright_red')
+    assert type(bright_red) == NullCallableString
+    assert bright_red == u''
+    assert bright_red('text') == u'text'
+
+
+def test_resolve_attribute_as_color(monkeypatch):
+    """ Test simple resolve_attribte() given color name. """
+    import blessed
+    from blessed.formatters import resolve_attribute
+
+    resolve_color = lambda term, digit: 'seq-%s' % (digit,)
+    COLORS = set(['COLORX', 'COLORY'])
+    COMPOUNDABLES = set(['JOINT', 'COMPOUND'])
+    monkeypatch.setattr(blessed.formatters, 'resolve_color', resolve_color)
+    monkeypatch.setattr(blessed.formatters, 'COLORS', COLORS)
+    monkeypatch.setattr(blessed.formatters, 'COMPOUNDABLES', COMPOUNDABLES)
+    term = mock.Mock()
+    assert resolve_attribute(term, 'COLORX') == u'seq-COLORX'
+
+
+def test_resolve_attribute_as_compoundable(monkeypatch):
+    """ Test simple resolve_attribte() given a compoundable. """
+    import blessed
+    from blessed.formatters import resolve_attribute, FormattingString
+
+    resolve_cap = lambda term, digit: 'seq-%s' % (digit,)
+    COMPOUNDABLES = set(['JOINT', 'COMPOUND'])
+    monkeypatch.setattr(blessed.formatters, 'resolve_capability', resolve_cap)
+    monkeypatch.setattr(blessed.formatters, 'COMPOUNDABLES', COMPOUNDABLES)
+    term = mock.Mock()
+    term.normal = 'seq-normal'
+
+    compound = resolve_attribute(term, 'JOINT')
+    assert type(compound) is FormattingString
+    assert str(compound) == u'seq-JOINT'
+    assert compound('text') == u'seq-JOINTtextseq-normal'
+
+
+def test_resolve_attribute_non_compoundables(monkeypatch):
+    """ Test recursive compounding of resolve_attribute(). """
+    import blessed
+    from blessed.formatters import resolve_attribute, ParameterizingString
+    uncompoundables = lambda attr: ['split', 'compound']
+    resolve_cap = lambda term, digit: 'seq-%s' % (digit,)
+    monkeypatch.setattr(blessed.formatters, 'split_compound', uncompoundables)
+    monkeypatch.setattr(blessed.formatters, 'resolve_capability', resolve_cap)
+    tparm = lambda *args: u'~'.join(
+        arg.decode('latin1') if not num else '%s' % (arg,)
+        for num, arg in enumerate(args)).encode('latin1')
+    monkeypatch.setattr(curses, 'tparm', tparm)
+
+    term = mock.Mock()
+    term.normal = 'seq-normal'
+
+    # given
+    pstr = resolve_attribute(term, 'not-a-compoundable')
+    assert type(pstr) == ParameterizingString
+    assert str(pstr) == u'seq-not-a-compoundable'
+    # this is like calling term.move_x(3)
+    assert pstr(3) == u'seq-not-a-compoundable~3'
+    # this is like calling term.move_x(3)('text')
+    assert pstr(3)('text') == u'seq-not-a-compoundable~3textseq-normal'
+
+
+def test_resolve_attribute_recursive_compoundables(monkeypatch):
+    """ Test recursive compounding of resolve_attribute(). """
+    import blessed
+    from blessed.formatters import resolve_attribute, FormattingString
+
+    # patch,
+    resolve_cap = lambda term, digit: 'seq-%s' % (digit,)
+    monkeypatch.setattr(blessed.formatters, 'resolve_capability', resolve_cap)
+    tparm = lambda *args: u'~'.join(
+        arg.decode('latin1') if not num else '%s' % (arg,)
+        for num, arg in enumerate(args)).encode('latin1')
+    monkeypatch.setattr(curses, 'tparm', tparm)
+    monkeypatch.setattr(curses, 'COLOR_RED', 6502)
+    monkeypatch.setattr(curses, 'COLOR_BLUE', 6800)
+
+    color_cap = lambda digit: 'seq-%s' % (digit,)
+    term = mock.Mock()
+    term._background_color = color_cap
+    term._foreground_color = color_cap
+    term.normal = 'seq-normal'
+
+    # given,
+    pstr = resolve_attribute(term, 'bright_blue_on_red')
+
+    # excersize,
+    assert type(pstr) == FormattingString
+    assert str(pstr) == 'seq-6808seq-6502'
+    assert pstr('text') == 'seq-6808seq-6502textseq-normal'

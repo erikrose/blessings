@@ -146,6 +146,29 @@ def resolve_capability(term, attr):
     return u'' if val is None else val.decode('latin1')
 
 
+def resolve_color(term, color):
+    """Resolve a color, to callable capability, valid ``color`` capabilities
+    are format ``red``, or ``on_right_green``.
+    """
+    # NOTE(erikrose): Does curses automatically exchange red and blue and cyan
+    # and yellow when a terminal supports setf/setb rather than setaf/setab?
+    # I'll be blasted if I can find any documentation. The following
+    # assumes it does.
+    color_cap = (term._background_color if 'on_' in color else
+                 term._foreground_color)
+
+    # curses constants go up to only 7, so add an offset to get at the
+    # bright colors at 8-15:
+    offset = 8 if 'bright_' in color else 0
+    base_color = color.rsplit('_', 1)[-1]
+    if term.number_of_colors == 0:
+        return NullCallableString()
+
+    attr = 'COLOR_%s' % (base_color.upper(),)
+    fmt_attr = color_cap(getattr(curses, attr) + offset)
+    return FormattingString(fmt_attr, term.normal)
+
+
 def resolve_attribute(term, attr):
     """Resolve a sugary or plain capability name, color, or compound
     formatting function name into a *callable* unicode string
@@ -171,26 +194,3 @@ def resolve_attribute(term, attr):
         return ParameterizingString(name=attr,
                                     attr=resolve_capability(term, attr),
                                     normal=term.normal)
-
-
-def resolve_color(term, color):
-    """Resolve a color, to callable capability, valid ``color`` capabilities
-    are format ``red``, or ``on_right_green``.
-    """
-    # NOTE(erikrose): Does curses automatically exchange red and blue and cyan
-    # and yellow when a terminal supports setf/setb rather than setaf/setab?
-    # I'll be blasted if I can find any documentation. The following
-    # assumes it does.
-    color_cap = (term._background_color if 'on_' in color else
-                 term._foreground_color)
-
-    # curses constants go up to only 7, so add an offset to get at the
-    # bright colors at 8-15:
-    offset = 8 if 'bright_' in color else 0
-    base_color = color.rsplit('_', 1)[-1]
-    if term.number_of_colors == 0:
-        return NullCallableString()
-
-    attr = 'COLOR_%s' % (base_color.upper(),)
-    fmt_attr = color_cap(getattr(curses, attr) + offset)
-    return FormattingString(fmt_attr, term.normal)
