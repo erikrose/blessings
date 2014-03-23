@@ -11,8 +11,8 @@ def test_parameterizing_string_args(monkeypatch):
     # first argument to tparm() is the sequence name, returned as-is;
     # subsequent arguments are usually Integers.
     tparm = lambda *args: u'~'.join(
-        ('%s' % (arg,) for arg in args)
-    ).encode('latin1')
+        arg.decode('latin1') if not num else '%s' % (arg,)
+        for num, arg in enumerate(args)).encode('latin1')
 
     monkeypatch.setattr(curses, 'tparm', tparm)
 
@@ -54,17 +54,23 @@ def test_parameterizing_string_type_error(monkeypatch):
         pstr('XYZ')
         assert False, "previous call should have raised TypeError"
     except TypeError, err:
-        assert err[0] == ("A native or nonexistent capability template, "
-                          "u'cap' received invalid argument ('XYZ',): "
-                          "custom_err. You probably misspelled a "
-                          "formatting call like `bright_red'")
+        assert (err.args[0] == (  # py3x
+            "A native or nonexistent capability template, "
+            "'cap' received invalid argument ('XYZ',): "
+            "custom_err. You probably misspelled a "
+            "formatting call like `bright_red'") or
+            err.args[0] == (  # py2x
+            "A native or nonexistent capability template, "
+            "u'cap' received invalid argument ('XYZ',): "
+            "custom_err. You probably misspelled a "
+            "formatting call like `bright_red'")
 
     # ensure TypeError when given an integer raises its natural exception
     try:
         pstr(0)
         assert False, "previous call should have raised TypeError"
     except TypeError, err:
-        assert err[0] == "custom_err"
+        assert err.args[0] == "custom_err"
 
 
 def test_formattingstring(monkeypatch):
