@@ -91,6 +91,10 @@ def test_inkey_0s_cbreak_input():
     """0-second inkey with input; Keypress should be immediately returned."""
     pid, master_fd = pty.fork()
     if pid is 0:
+        try:
+            cov = __import__('cov_core_init').init()
+        except ImportError:
+            cov = None
         # child pauses, writes semaphore and begins awaiting input
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
@@ -98,6 +102,9 @@ def test_inkey_0s_cbreak_input():
         with term.cbreak():
             inp = term.inkey(timeout=0)
             os.write(sys.__stdout__.fileno(), inp.encode('utf-8'))
+        if cov is not None:
+            cov.stop()
+            cov.save()
         os._exit(0)
 
     with echo_off(master_fd):
@@ -117,6 +124,10 @@ def test_inkey_cbreak_input_slowly():
     """0-second inkey with input; Keypress should be immediately returned."""
     pid, master_fd = pty.fork()
     if pid is 0:
+        try:
+            cov = __import__('cov_core_init').init()
+        except ImportError:
+            cov = None
         # child pauses, writes semaphore and begins awaiting input
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
@@ -127,6 +138,9 @@ def test_inkey_cbreak_input_slowly():
                 os.write(sys.__stdout__.fileno(), inp.encode('utf-8'))
                 if inp == 'X':
                     break
+        if cov is not None:
+            cov.stop()
+            cov.save()
         os._exit(0)
 
     with echo_off(master_fd):
@@ -135,7 +149,7 @@ def test_inkey_cbreak_input_slowly():
         time.sleep(0.1)
         os.write(master_fd, u'b'.encode('ascii'))
         time.sleep(0.1)
-        os.write(master_fd, u'c'.encode('ascii'))
+        os.write(master_fd, u'cdefgh'.encode('ascii'))
         time.sleep(0.1)
         os.write(master_fd, u'X'.encode('ascii'))
         read_until_semaphore(master_fd)
@@ -143,7 +157,7 @@ def test_inkey_cbreak_input_slowly():
         output = read_until_eof(master_fd)
 
     pid, status = os.waitpid(pid, 0)
-    assert (output == u'abcX')
+    assert (output == u'abcdefghX')
     assert (os.WEXITSTATUS(status) == 0)
     assert (math.floor(time.time() - stime) == 0.0)
 
@@ -153,12 +167,19 @@ def test_inkey_0s_cbreak_multibyte_utf8():
     # utf-8 bytes represent "latin capital letter upsilon".
     pid, master_fd = pty.fork()
     if pid is 0:  # child
+        try:
+            cov = __import__('cov_core_init').init()
+        except ImportError:
+            cov = None
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
             inp = term.inkey(timeout=0)
             os.write(sys.__stdout__.fileno(), inp.encode('utf-8'))
+        if cov is not None:
+            cov.stop()
+            cov.save()
         os._exit(0)
 
     with echo_off(master_fd):
@@ -177,12 +198,19 @@ def test_inkey_0s_raw_ctrl_c():
     """0-second inkey with raw allows receiving ^C."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
+        try:
+            cov = __import__('cov_core_init').init()
+        except ImportError:
+            cov = None
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         with term.raw():
             os.write(sys.__stdout__.fileno(), RECV_SEMAPHORE)
             inp = term.inkey(timeout=0)
             os.write(sys.__stdout__.fileno(), inp.encode('latin1'))
+        if cov is not None:
+            cov.stop()
+            cov.save()
         os._exit(0)
 
     with echo_off(master_fd):
@@ -206,12 +234,19 @@ def test_inkey_0s_cbreak_sequence():
     """0-second inkey with multibyte sequence; should decode immediately."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
+        try:
+            cov = __import__('cov_core_init').init()
+        except ImportError:
+            cov = None
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
             inp = term.inkey(timeout=0)
             os.write(sys.__stdout__.fileno(), inp.name.encode('ascii'))
             sys.stdout.flush()
+        if cov is not None:
+            cov.stop()
+            cov.save()
         os._exit(0)
 
     with echo_off(master_fd):
@@ -229,12 +264,19 @@ def test_inkey_1s_cbreak_input():
     """1-second inkey w/multibyte sequence; should return after ~1 second."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
+        try:
+            cov = __import__('cov_core_init').init()
+        except ImportError:
+            cov = None
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
             inp = term.inkey(timeout=3)
             os.write(sys.__stdout__.fileno(), inp.name.encode('utf-8'))
             sys.stdout.flush()
+        if cov is not None:
+            cov.stop()
+            cov.save()
         os._exit(0)
 
     with echo_off(master_fd):
@@ -254,6 +296,10 @@ def test_esc_delay_cbreak_035():
     """esc_delay will cause a single ESC (\\x1b) to delay for 0.35."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
+        try:
+            cov = __import__('cov_core_init').init()
+        except ImportError:
+            cov = None
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
@@ -263,6 +309,9 @@ def test_esc_delay_cbreak_035():
             os.write(sys.__stdout__.fileno(), (
                 '%s %i' % (inp.name, measured_time,)).encode('ascii'))
             sys.stdout.flush()
+        if cov is not None:
+            cov.stop()
+            cov.save()
         os._exit(0)
 
     with echo_off(master_fd):
@@ -282,6 +331,10 @@ def test_esc_delay_cbreak_135():
     """esc_delay=1.35 will cause a single ESC (\\x1b) to delay for 1.35."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
+        try:
+            cov = __import__('cov_core_init').init()
+        except ImportError:
+            cov = None
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
@@ -291,6 +344,9 @@ def test_esc_delay_cbreak_135():
             os.write(sys.__stdout__.fileno(), (
                 '%s %i' % (inp.name, measured_time,)).encode('ascii'))
             sys.stdout.flush()
+        if cov is not None:
+            cov.stop()
+            cov.save()
         os._exit(0)
 
     with echo_off(master_fd):
@@ -310,6 +366,10 @@ def test_esc_delay_cbreak_timout_0():
     """esc_delay still in effect with timeout of 0 ("nonblocking")."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
+        try:
+            cov = __import__('cov_core_init').init()
+        except ImportError:
+            cov = None
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
@@ -319,6 +379,9 @@ def test_esc_delay_cbreak_timout_0():
             os.write(sys.__stdout__.fileno(), (
                 '%s %i' % (inp.name, measured_time,)).encode('ascii'))
             sys.stdout.flush()
+        if cov is not None:
+            cov.stop()
+            cov.save()
         os._exit(0)
 
     with echo_off(master_fd):
