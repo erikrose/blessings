@@ -68,6 +68,9 @@ class as_subprocess(object):
                 os.close(sys.__stdout__.fileno())
                 os.close(sys.__stderr__.fileno())
                 os.close(sys.__stdin__.fileno())
+                if cov is not None:
+                    cov.stop()
+                    cov.save()
                 os._exit(1)
             else:
                 if cov is not None:
