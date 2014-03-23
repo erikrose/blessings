@@ -20,6 +20,7 @@ from accessories import (
 )
 
 import pytest
+import mock
 
 
 def test_capability():
@@ -106,10 +107,28 @@ def test_emit_warnings_about_binpacked(unsupported_sequence_terminals):
                     ), err
         else:
             assert 'warnings should have been emitted.'
-        finally:
-            del warnings
+        warnings.resetwarnings()
 
     child(unsupported_sequence_terminals)
+
+
+def test_unit_binpacked_unittest(unsupported_sequence_terminals):
+    """Unit Test known binary-packed terminals emit a warning (travis-safe)."""
+    import warnings
+    from blessed.sequences import (_BINTERM_UNSUPPORTED_MSG,
+                                   init_sequence_patterns)
+    warnings.filterwarnings("error", category=UserWarning)
+    term = mock.Mock()
+    term._kind = unsupported_sequence_terminals
+
+    try:
+        init_sequence_patterns(term)
+    except UserWarning:
+        err = sys.exc_info()[1]
+        assert err.args[0] == _BINTERM_UNSUPPORTED_MSG
+    else:
+        assert False, 'Previous stmt should have raised exception.'
+    warnings.resetwarnings()
 
 
 def test_merge_sequences():
