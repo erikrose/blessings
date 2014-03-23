@@ -3,7 +3,7 @@
 #
 # "Why wont python let me read memory
 #  from screen like assembler? That's dumb." -hellbeard
-from __future__ import division
+from __future__ import division, print_function
 import collections
 import functools
 from blessed import Terminal

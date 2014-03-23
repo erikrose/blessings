@@ -16,4 +16,3 @@ args = parser.parse_args()
 style = getattr(term, args.style)
 
 print(style(' '.join(args.text)))
-

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-from __future__ import division
+from __future__ import division, print_function
 from collections import namedtuple
 from random import randrange
 from functools import partial
-from itertools import takewhile, count
 from blessed import Terminal
 
 term = Terminal()
@@ -118,7 +117,7 @@ def main():
 
             # ensure new nibble is regenerated outside of worm
             while hit_any(n_nibble, worm):
-                n_nibble = next_nibble(term, nibble, head, worm)
+                n_nibble = new_nibble(term, nibble, head, worm)
 
             # new worm_length & speed, if hit.
             worm_length = next_wormlength(nibble, head, worm_length)
@@ -139,7 +138,6 @@ def main():
                         echo(color_worm(u'\u2689'))
                     else:
                         echo(color_bg(u' '))
-
 
             # display new worm head each turn, regardless.
             echo(term.move(*head))

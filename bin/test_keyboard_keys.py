@@ -2,6 +2,7 @@
 from blessed import Terminal
 import sys
 
+
 def main():
     """
     Displays all known key capabilities that may match the terminal.
