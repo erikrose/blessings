@@ -45,6 +45,7 @@ class as_subprocess(object):
     def __call__(self, *args, **kwargs):
         pid, master_fd = pty.fork()
         if pid is self._CHILD_PID:
+            cov = __import__('cov_core_init').init()
             # child process executes function, raises exception
             # if failed, causing a non-zero exit code, using the
             # protected _exit() function of ``os``; to prevent the
@@ -66,6 +67,8 @@ class as_subprocess(object):
                 os.close(sys.__stdin__.fileno())
                 os._exit(1)
             else:
+                cov.stop()
+                cov.save()
                 os._exit(0)
 
         exc_output = unicode()
