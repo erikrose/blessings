@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Tests string formatting functions."""
 import curses
+import mock
 
 
 def test_parameterizing_string_args(monkeypatch):
-    """Test ParameterizingString as a callable """
+    """Test basic formatters.ParameterizingString."""
     from blessed.formatters import (ParameterizingString,
                                     FormattingString)
 
@@ -38,7 +39,7 @@ def test_parameterizing_string_args(monkeypatch):
 
 
 def test_parameterizing_string_type_error(monkeypatch):
-    """Test ParameterizingString TypeError"""
+    """Test formatters.ParameterizingString raising TypeError"""
     from blessed.formatters import (ParameterizingString)
 
     def tparm_raises_TypeError(*args):
@@ -74,7 +75,7 @@ def test_parameterizing_string_type_error(monkeypatch):
 
 
 def test_formattingstring(monkeypatch):
-    """Test FormattingString"""
+    """Test formatters.FormattingString"""
     from blessed.formatters import (FormattingString)
 
     # given, with arg
@@ -91,7 +92,7 @@ def test_formattingstring(monkeypatch):
 
 
 def test_nullcallablestring(monkeypatch):
-    """Test NullCallableString"""
+    """Test formatters.NullCallableString"""
     from blessed.formatters import (NullCallableString)
 
     # given, with arg
@@ -105,3 +106,36 @@ def test_nullcallablestring(monkeypatch):
     assert pstr(99, 1) == u''
     assert pstr() == u''
     assert pstr(0) == u''
+
+
+def test_split_compound():
+    """Test formatters.split_compound."""
+    from blessed.formatters import split_compound
+
+    assert split_compound(u'') == [u'']
+    assert split_compound(u'a_b_c') == [u'a', u'b', u'c']
+    assert split_compound(u'a_on_b_c') == [u'a', u'on_b', u'c']
+    assert split_compound(u'a_bright_b_c') == [u'a', u'bright_b', u'c']
+    assert split_compound(u'a_on_bright_b_c') == [u'a', u'on_bright_b', u'c']
+
+
+def test_resolve_capability(monkeypatch):
+    """Test formatters.resolve_capability and term sugaring """
+    from blessed.formatters import resolve_capability
+
+    # given, always returns a b'seq'
+    tigetstr = lambda attr: ('seq-%s' % (attr,)).encode('latin1')
+    monkeypatch.setattr(curses, 'tigetstr', tigetstr)
+    term = mock.Mock()
+    term._sugar = dict(mnemonic='xyz')
+
+    # excersize
+    assert resolve_capability(term, 'mnemonic') == u'seq-xyz'
+    assert resolve_capability(term, 'natural') == u'seq-natural'
+
+    # given, always returns None
+    tigetstr_none = lambda attr: None
+    monkeypatch.setattr(curses, 'tigetstr', tigetstr_none)
+
+    # excersize,
+    assert resolve_capability(term, 'natural') == u''
