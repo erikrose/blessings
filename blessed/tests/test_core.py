@@ -4,7 +4,11 @@ try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
+
+import collections
+import platform
 import sys
+import imp
 
 from accessories import (
     as_subprocess,
@@ -12,6 +16,9 @@ from accessories import (
     unicode_cap,
     all_terms
 )
+
+import mock
+import pytest
 
 
 def test_export_only_Terminal():
@@ -191,3 +198,47 @@ def test_setupterm_invalid_issue39():
             del warnings
 
     child()
+
+
+@pytest.mark.skipif(platform.python_implementation() == 'PyPy',
+                    reason='PyPy freezes')
+def test_missing_ordereddict_uses_module(monkeypatch):
+    """ordereddict module is imported when without collections.OrderedDict."""
+    import blessed.keyboard
+
+    if hasattr(collections, 'OrderedDict'):
+        monkeypatch.delattr('collections.OrderedDict')
+
+    try:
+        imp.reload(blessed.keyboard)
+        assert platform.python_version_tuple() < ('2', '7')  # reached by py2.6
+    except ImportError, err:
+        assert err.args[0] in ("No module named ordereddict",  # py2
+                               "No module named 'ordereddict'")  # py3
+        sys.modules['ordereddict'] = mock.Mock()
+        sys.modules['ordereddict'].OrderedDict = -1
+        imp.reload(blessed.keyboard)
+        assert blessed.keyboard.OrderedDict == -1
+        del sys.modules['ordereddict']
+        monkeypatch.undo()
+        imp.reload(blessed.keyboard)
+
+
+@pytest.mark.skipif(platform.python_implementation() == 'PyPy',
+                    reason='PyPy freezes')
+def test_python3_2_raises_exception(monkeypatch):
+    """ordereddict module is imported when without collections.OrderedDict."""
+    import blessed
+
+    monkeypatch.setattr('platform.python_version_tuple',
+                        lambda: ('3', '2', '2'))
+
+    try:
+        imp.reload(blessed)
+        assert False, 'Exception should have been raised'
+    except ImportError, err:
+        assert err.args[0] == (
+            'Blessed needs Python 3.2.3 or greater for Python 3 '
+            'support due to http://bugs.python.org/issue10570.')
+        monkeypatch.undo()
+        imp.reload(blessed)
