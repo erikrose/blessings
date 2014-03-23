@@ -7,6 +7,8 @@ env:
   - TOXENV=pypy
 
 install:
+  - pip installl -q tox 
+
   # for python versions <26, we must install ordereddict
   # mimicking the same dynamically generated 'requires='
   # in setup.py
@@ -19,6 +21,7 @@ install:
   - if [[ $TOXENV == "py27" ]]; then
         pip install -q coverage coveralls;
     fi
+
 
 script:
   - tox -e $TOXENV
