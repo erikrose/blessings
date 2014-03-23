@@ -75,7 +75,9 @@ def test_sequence_length(all_terms):
         # accounted for as a "length", as <x><move right 10><y>
         # will result in a printed column length of 12 (even
         # though columns 2-11 are non-destructive space
-        assert (t.length('\b') == -1)
+        assert (t.length(u'\b') == -1)
+        # XXX why are some terminals width of 9 here ??
+        assert (t.length(u'\t') in (8, 9))
         assert (t.length(t.move_left) == -1)
         if t.cub:
             assert (t.length(t.cub(10)) == -10)
