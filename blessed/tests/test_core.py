@@ -160,8 +160,6 @@ def test_setupterm_singleton_issue33():
         try:
             # a second instantiation raises UserWarning
             term = TestTerminal(kind="vt220", force_styling=True)
-            assert not term.is_a_tty or False, 'Should have thrown exception'
-
         except UserWarning:
             err = sys.exc_info()[1]
             assert (err.args[0].startswith(
@@ -169,8 +167,10 @@ def test_setupterm_singleton_issue33():
                     ), err.args[0]
             assert ('a terminal of kind "xterm-256color" will '
                     'continue to be returned' in err.args[0]), err.args[0]
-        finally:
-            del warnings
+        else:
+            # unless term is not a tty and setupterm() is not called
+            assert not term.is_a_tty or False, 'Should have thrown exception'
+        warnings.resetwarnings()
 
     child()
 
@@ -188,14 +188,14 @@ def test_setupterm_invalid_issue39():
 
         try:
             term = TestTerminal(kind='unknown', force_styling=True)
-            assert not term.is_a_tty and not term.does_styling, (
-                'Should have thrown exception')
-            assert (term.number_of_colors == 0)
         except UserWarning:
             err = sys.exc_info()[1]
             assert err.args[0] == 'Failed to setupterm(kind=unknown)'
-        finally:
-            del warnings
+        else:
+            assert not term.is_a_tty and not term.does_styling, (
+                'Should have thrown exception')
+            assert (term.number_of_colors == 0)
+        warnings.resetwarnings()
 
     child()
 
@@ -211,7 +211,6 @@ def test_missing_ordereddict_uses_module(monkeypatch):
 
     try:
         imp.reload(blessed.keyboard)
-        assert platform.python_version_tuple() < ('2', '7')  # reached by py2.6
     except ImportError, err:
         assert err.args[0] in ("No module named ordereddict",  # py2
                                "No module named 'ordereddict'")  # py3
@@ -222,6 +221,8 @@ def test_missing_ordereddict_uses_module(monkeypatch):
         del sys.modules['ordereddict']
         monkeypatch.undo()
         imp.reload(blessed.keyboard)
+    else:
+        assert platform.python_version_tuple() < ('2', '7')  # reached by py2.6
 
 
 @pytest.mark.skipif(platform.python_implementation() == 'PyPy',
@@ -235,10 +236,11 @@ def test_python3_2_raises_exception(monkeypatch):
 
     try:
         imp.reload(blessed)
-        assert False, 'Exception should have been raised'
     except ImportError, err:
         assert err.args[0] == (
             'Blessed needs Python 3.2.3 or greater for Python 3 '
             'support due to http://bugs.python.org/issue10570.')
         monkeypatch.undo()
         imp.reload(blessed)
+    else:
+        assert False, 'Exception should have been raised'
