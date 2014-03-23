@@ -115,9 +115,9 @@ def test_inkey_0s_cbreak_input():
         output = read_until_eof(master_fd)
 
     pid, status = os.waitpid(pid, 0)
-    assert (output == u'x')
-    assert (os.WEXITSTATUS(status) == 0)
-    assert (math.floor(time.time() - stime) == 0.0)
+    assert output == u'x'
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
 
 
 def test_inkey_cbreak_input_slowly():
@@ -157,9 +157,9 @@ def test_inkey_cbreak_input_slowly():
         output = read_until_eof(master_fd)
 
     pid, status = os.waitpid(pid, 0)
-    assert (output == u'abcdefghX')
-    assert (os.WEXITSTATUS(status) == 0)
-    assert (math.floor(time.time() - stime) == 0.0)
+    assert output == u'abcdefghX'
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
 
 
 def test_inkey_0s_cbreak_multibyte_utf8():
@@ -189,9 +189,9 @@ def test_inkey_0s_cbreak_multibyte_utf8():
         stime = time.time()
         output = read_until_eof(master_fd)
     pid, status = os.waitpid(pid, 0)
-    assert (output == u'Ʊ')
-    assert (os.WEXITSTATUS(status) == 0)
-    assert (math.floor(time.time() - stime) == 0.0)
+    assert output == u'Ʊ'
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
 
 
 def test_inkey_0s_raw_ctrl_c():
@@ -222,12 +222,15 @@ def test_inkey_0s_raw_ctrl_c():
         output = read_until_eof(master_fd)
     pid, status = os.waitpid(pid, 0)
     if os.environ.get('TRAVIS', None) is not None:
-        # XXX for some reason, setraw has no effect travis-ci
-        assert (output == u''), repr(output)
+        # For some reason, setraw has no effect travis-ci,
+        # is still accepts ^C, when causes system exit on
+        # py27, but exit 0 on py27 and p33 -- strangely, huh?
+        assert output == u'', repr(output)
+        assert os.WEXITSTATUS(status) in (0, 2)
     else:
-        assert (output == u'\x03'), repr(output)
-    assert (os.WEXITSTATUS(status) == 0)
-    assert (math.floor(time.time() - stime) == 0.0)
+        assert output == u'\x03', repr(output)
+        assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
 
 
 def test_inkey_0s_cbreak_sequence():
@@ -255,9 +258,9 @@ def test_inkey_0s_cbreak_sequence():
         stime = time.time()
         output = read_until_eof(master_fd)
     pid, status = os.waitpid(pid, 0)
-    assert (output == u'KEY_LEFT')
-    assert (os.WEXITSTATUS(status) == 0)
-    assert (math.floor(time.time() - stime) == 0.0)
+    assert output == u'KEY_LEFT'
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
 
 
 def test_inkey_1s_cbreak_input():
@@ -287,9 +290,9 @@ def test_inkey_1s_cbreak_input():
         output = read_until_eof(master_fd)
 
     pid, status = os.waitpid(pid, 0)
-    assert (output == u'KEY_RIGHT')
-    assert (os.WEXITSTATUS(status) == 0)
-    assert (math.floor(time.time() - stime) == 1.0)
+    assert output == u'KEY_RIGHT'
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 1.0
 
 
 def test_esc_delay_cbreak_035():
@@ -321,9 +324,9 @@ def test_esc_delay_cbreak_035():
         key_name, duration_ms = read_until_eof(master_fd).split()
 
     pid, status = os.waitpid(pid, 0)
-    assert (key_name == u'KEY_ESCAPE')
-    assert (os.WEXITSTATUS(status) == 0)
-    assert (math.floor(time.time() - stime) == 0.0)
+    assert key_name == u'KEY_ESCAPE'
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
     assert 35 <= int(duration_ms) <= 45, duration_ms
 
 
@@ -356,9 +359,9 @@ def test_esc_delay_cbreak_135():
         key_name, duration_ms = read_until_eof(master_fd).split()
 
     pid, status = os.waitpid(pid, 0)
-    assert (key_name == u'KEY_ESCAPE')
-    assert (os.WEXITSTATUS(status) == 0)
-    assert (math.floor(time.time() - stime) == 1.0)
+    assert key_name == u'KEY_ESCAPE'
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 1.0
     assert 135 <= int(duration_ms) <= 145, int(duration_ms)
 
 
@@ -391,9 +394,9 @@ def test_esc_delay_cbreak_timout_0():
         key_name, duration_ms = read_until_eof(master_fd).split()
 
     pid, status = os.waitpid(pid, 0)
-    assert (key_name == u'KEY_ESCAPE')
-    assert (os.WEXITSTATUS(status) == 0)
-    assert (math.floor(time.time() - stime) == 0.0)
+    assert key_name == u'KEY_ESCAPE'
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
     assert 35 <= int(duration_ms) <= 45, int(duration_ms)
 
 
