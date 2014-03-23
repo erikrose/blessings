@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages, Command
-from setuptools.command.develop import develop
-from setuptools.command.test import test
+from setuptools import setup
 import sys
 import os
 
