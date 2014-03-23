@@ -7,23 +7,26 @@ env:
   - TOXENV=pypy
 
 install:
-  # travis wants requirements.txt; we don't,
-  # use only 'requires=' in setup.py, which is dynamic;
   # for python versions <26, we must install ordereddict
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.5 ]] || [[ $TRAVIS_PYTHON_VERSION == 2.6 ]]; then pip install --use-mirrors ordereddict; fi
-  - pip install -q tox coverage coveralls
+  # mimicking the same dynamically generated 'requires='
+  # in setup.py
+  - if [[ $TOXENV == "py25" ]] || [[ $TOXENV == "py26" ]]; then
+        pip install -q ordereddict
+    fi
+
+  # for python version =27, cinstall and overage, coveralls.
+  # coverage is only measured and published for one version.
+  - if [[ $TOXENV == "py27" ]]; then
+        pip install -q coverage coveralls
+    fi
 
 script:
-  - mkdir -p .tox
-  - cd .tox
-  - coverage erase --rcfile=$TRAVIS_BUILD_DIR/.coveragerc
-  - cd $TRAVIS_BUILD_DIR
-  - tox
+  - tox -e $TOXENV
 
 after_success:
-  - cd .tox
-  - coverage combine --rcfile=$TRAVIS_BUILD_DIR/.coveragerc
-  - coveralls --rcfile=$TRAVIS_BUILD_DIR/.coveragerc
+  - if [[ $TOXENV == "py27" ]]; then
+        coveralls
+    fi
 
 notifications:
   email:
