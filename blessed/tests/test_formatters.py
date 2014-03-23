@@ -19,18 +19,18 @@ def test_parameterizing_string_args(monkeypatch):
     # given,
     pstr = ParameterizingString(name=u'cap', attr=u'seqname', normal=u'norm')
 
-    # excercise __new__
+    # excersize __new__
     assert pstr._name == u'cap'
     assert pstr._normal == u'norm'
     assert str(pstr) == u'seqname'
 
-    # excercise __call__
+    # excersize __call__
     zero = pstr(0)
     assert type(zero) is FormattingString
     assert zero == u'seqname~0'
     assert zero('text') == u'seqname~0textnorm'
 
-    # excercise __call__ with multiple args
+    # excersize __call__ with multiple args
     onetwo = pstr(1, 2)
     assert type(onetwo) is FormattingString
     assert onetwo == u'seqname~1~2'
@@ -80,7 +80,7 @@ def test_formattingstring(monkeypatch):
     # given, with arg
     pstr = FormattingString(attr=u'attr', normal=u'norm')
 
-    # excercise __call__,
+    # excersize __call__,
     assert pstr._normal == u'norm'
     assert str(pstr) == u'attr'
     assert pstr('text') == u'attrtextnorm'
@@ -88,3 +88,20 @@ def test_formattingstring(monkeypatch):
     # given, without arg
     pstr = FormattingString(attr=u'', normal=u'norm')
     assert pstr('text') == u'text'
+
+
+def test_nullcallablestring(monkeypatch):
+    """Test NullCallableString"""
+    from blessed.formatters import (NullCallableString)
+
+    # given, with arg
+    pstr = NullCallableString()
+
+    # excersize __call__,
+    assert str(pstr) == u''
+    assert pstr('text') == u'text'
+    assert pstr('text', 1) == u''
+    assert pstr('text', 'moretext') == u''
+    assert pstr(99, 1) == u''
+    assert pstr() == u''
+    assert pstr(0) == u''
