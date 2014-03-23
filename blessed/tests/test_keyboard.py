@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Tests for keyboard support."""
+import tempfile
 import StringIO
 import curses
 import time
 import math
+import tty
 import pty
 import sys
 import os
@@ -24,13 +26,37 @@ from accessories import (
 import mock
 
 
+def test_cbreak_no_kb():
+    """cbreak() should not call tty.setcbreak() without keyboard"""
+    @as_subprocess
+    def child():
+        with tempfile.NamedTemporaryFile() as stream:
+            term = TestTerminal(stream=stream)
+            with mock.patch("tty.setcbreak") as mock_setcbreak:
+                with term.cbreak():
+                    assert not mock_setcbreak.called
+    child()
+
+
+def test_raw_no_kb():
+    """raw() should not call tty.setraw() without keyboard"""
+    @as_subprocess
+    def child():
+        with tempfile.NamedTemporaryFile() as stream:
+            term = TestTerminal(stream=stream)
+            with mock.patch("tty.setraw") as mock_setraw:
+                with term.raw():
+                    assert not mock_setraw.called
+    child()
+
+
 def test_kbhit_no_kb():
     """kbhit() always immediately returns False without a keyboard."""
     @as_subprocess
     def child():
         term = TestTerminal(stream=StringIO.StringIO())
         stime = time.time()
-        assert term.kbhit(timeout=2.5) is False
+        assert term.kbhit(timeout=1.5) is False
         assert (math.floor(time.time() - stime) == 0.0)
     child()
 
@@ -87,6 +113,41 @@ def test_inkey_0s_cbreak_input():
     assert (math.floor(time.time() - stime) == 0.0)
 
 
+def test_inkey_cbreak_input_slowly():
+    """0-second inkey with input; Keypress should be immediately returned."""
+    pid, master_fd = pty.fork()
+    if pid is 0:
+        # child pauses, writes semaphore and begins awaiting input
+        term = TestTerminal()
+        read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
+        os.write(sys.__stdout__.fileno(), SEMAPHORE)
+        with term.cbreak():
+            while True:
+                inp = term.inkey(timeout=0.5)
+                os.write(sys.__stdout__.fileno(), inp.encode('utf-8'))
+                if inp == 'X':
+                    break
+        os._exit(0)
+
+    with echo_off(master_fd):
+        os.write(master_fd, SEND_SEMAPHORE)
+        os.write(master_fd, u'a'.encode('ascii'))
+        time.sleep(0.1)
+        os.write(master_fd, u'b'.encode('ascii'))
+        time.sleep(0.1)
+        os.write(master_fd, u'c'.encode('ascii'))
+        time.sleep(0.1)
+        os.write(master_fd, u'X'.encode('ascii'))
+        read_until_semaphore(master_fd)
+        stime = time.time()
+        output = read_until_eof(master_fd)
+
+    pid, status = os.waitpid(pid, 0)
+    assert (output == u'abcX')
+    assert (os.WEXITSTATUS(status) == 0)
+    assert (math.floor(time.time() - stime) == 0.0)
+
+
 def test_inkey_0s_cbreak_multibyte_utf8():
     """0-second inkey with multibyte utf-8 input; should decode immediately."""
     # utf-8 bytes represent "latin capital letter upsilon".
@@ -132,7 +193,7 @@ def test_inkey_0s_raw_ctrl_c():
         stime = time.time()
         output = read_until_eof(master_fd)
     pid, status = os.waitpid(pid, 0)
-    assert (output == u'\x03')
+    assert (output == u'\x03'), repr(output)
     assert (os.WEXITSTATUS(status) == 0)
     assert (math.floor(time.time() - stime) == 0.0)
 

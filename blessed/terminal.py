@@ -562,7 +562,6 @@ class Terminal(object):
         Note also that setcbreak sets VMIN = 1 and VTIME = 0,
            http://www.unixwiz.net/techtips/termios-vmin-vtime.html
         """
-        assert self.is_a_tty, 'stream is not a tty.'
         if self.keyboard_fd is not None:
             # save current terminal mode,
             save_mode = termios.tcgetattr(self.keyboard_fd)
@@ -585,7 +584,6 @@ class Terminal(object):
         interrupt, quit, suspend, and flow control characters are all passed
         through uninterpreted, instead of generating a signal.
         """
-        assert self.is_a_tty, 'stream is not a tty.'
         if self.keyboard_fd is not None:
             # save current terminal mode,
             save_mode = termios.tcgetattr(self.keyboard_fd)
