@@ -7,7 +7,7 @@ env:
   - TOXENV=pypy
 
 install:
-  - pip installl -q tox 
+  - pip install -q tox 
 
   # for python versions <26, we must install ordereddict
   # mimicking the same dynamically generated 'requires='
