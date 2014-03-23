@@ -292,6 +292,9 @@ class SequenceTextWrapper(textwrap.TextWrapper):
         if self.width <= 0 or not isinstance(self.width, int):
             raise ValueError("invalid width %r(%s) (must be integer > 0)" % (
                 self.width, type(self.width)))
+        term = self.term
+        drop_whitespace = not hasattr(self, 'drop_whitespace'
+                                      ) or self.drop_whitespace
         chunks.reverse()
         while chunks:
             cur_line = []
@@ -301,22 +304,20 @@ class SequenceTextWrapper(textwrap.TextWrapper):
             else:
                 indent = self.initial_indent
             width = self.width - len(indent)
-            if (not hasattr(self, 'drop_whitespace')
-                or self.drop_whitespace) and (
-                    chunks[-1].strip() == '' and lines):
+            if drop_whitespace and (
+                    Sequence(chunks[-1], term).strip() == '' and lines):
                 del chunks[-1]
             while chunks:
-                chunk_len = Sequence(chunks[-1], self.term).length()
+                chunk_len = Sequence(chunks[-1], term).length()
                 if cur_len + chunk_len <= width:
                     cur_line.append(chunks.pop())
                     cur_len += chunk_len
                 else:
                     break
-            if chunks and Sequence(chunks[-1], self.term).length() > width:
+            if chunks and Sequence(chunks[-1], term).length() > width:
                 self._handle_long_word(chunks, cur_line, cur_len, width)
-            if (not hasattr(self, 'drop_whitespace')
-                or self.drop_whitespace) and (
-                    cur_line and cur_line[-1].strip() == ''):
+            if drop_whitespace and (
+                    cur_line and Sequence(cur_line[-1], term).strip() == ''):
                 del cur_line[-1]
             if cur_line:
                 lines.append(indent + u''.join(cur_line))
@@ -353,29 +354,55 @@ class Sequence(unicode):
         (escape) sequences. Although accounted for, strings containing
         sequences such as 'clear' will not give accurate returns, it is
         considered un-lengthy (length of 0).
+
+        Strings contaning term.left or '\b' will cause "overstrike", but
+        a length less than 0 is not ever returned. So '_\b+' is a length of
+        1 ('+'), but '\b' is simply a length of 0.
+        """
+        # TODO(jquast): Should we implement the terminal printable
+        # width of 'East Asian Fullwidth' and 'East Asian Wide' characters,
+        # which can take 2 cells, see http://www.unicode.org/reports/tr11/
+        # and http://www.gossamer-threads.com/lists/python/bugs/972834
+        return len(self.strip_seqs())
+
+    def strip(self):
+        """ S.strip() -> str
+
+        Strips sequences and whitespaces of ``S`` and returns.
+        """
+        return self.strip_seqs().strip()
+
+    def strip_seqs(self):
+        """  S.strip_seqs() -> str
+
+        Return a string without sequences for a string that contains
+        (most types) of (escape) sequences for the Terminal with which
+        they were created.
         """
         # nxt: points to first character beyond current escape sequence.
         # width: currently estimated display length.
-        nxt = width = 0
+        outp = u''
+        nxt = 0
         for idx in range(0, unicode.__len__(self)):
             # account for width of sequences that contain padding (a sort of
             # SGR-equivalent cheat for the python equivalent of ' '*N, for
             # very large values of N that may xmit fewer bytes than many raw
             # spaces. It should be noted, however, that this is a
             # non-destructive space.
-            width += horizontal_distance(self[idx:], self._term)
+            width = horizontal_distance(self[idx:], self._term)
+            if width > 0:
+                outp += u' ' * horizontal_distance(self[idx:], self._term)
+            elif width < 0:
+                # \b causes the previous character to be trimmed
+                outp = outp[:width]
             if idx == nxt:
                 # point beyond this sequence
                 nxt = idx + measure_length(self[idx:], self._term)
             if nxt <= idx:
-                # TODO:
-                # 'East Asian Fullwidth' and 'East Asian Wide' characters
-                # can take 2 cells, see http://www.unicode.org/reports/tr11/
-                # and http://www.gossamer-threads.com/lists/python/bugs/972834
-                width += 1
+                outp += self[idx]
                 # point beyond next sequence, if any, otherwise next character
                 nxt = idx + measure_length(self[idx:], self._term) + 1
-        return width
+        return outp
 
 
 def measure_length(ucs, term):

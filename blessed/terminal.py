@@ -452,6 +452,23 @@ class Terminal(object):
         """
         return sequences.Sequence(text, self).length()
 
+    def strip(self, text):
+        """T.strip(text) -> int
+
+        Return string ``text`` stripped of its whitespace *and* sequences.
+        Text containing backspace or term.left will "overstrike", so that
+        the string u"_\\b" or u"__\\b\\b=" becomes u"x", not u"=" (as would
+        actually be printed).
+        """
+        return sequences.Sequence(text, self).strip()
+
+    def strip_seqs(self, text):
+        """T.strip_seqs(text) -> int
+
+        Return string ``text`` stripped only of its sequences.
+        """
+        return sequences.Sequence(text, self).strip_seqs()
+
     def wrap(self, text, width=None, **kwargs):
         """T.wrap(text, [width=None, indent=u'', ...]) -> unicode
 
