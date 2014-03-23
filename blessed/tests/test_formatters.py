@@ -59,11 +59,11 @@ def test_parameterizing_string_type_error(monkeypatch):
             "'cap' received invalid argument ('XYZ',): "
             "custom_err. You probably misspelled a "
             "formatting call like `bright_red'") or
-            err.args[0] == (  # py2x
-            "A native or nonexistent capability template, "
-            "u'cap' received invalid argument ('XYZ',): "
-            "custom_err. You probably misspelled a "
-            "formatting call like `bright_red'")
+            err.args[0] == (
+                "A native or nonexistent capability template, "
+                "u'cap' received invalid argument ('XYZ',): "
+                "custom_err. You probably misspelled a "
+                "formatting call like `bright_red'"))
 
     # ensure TypeError when given an integer raises its natural exception
     try:
