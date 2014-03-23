@@ -274,7 +274,7 @@ def test_get_keyboard_codes():
 
 
 def test_alternative_left_right():
-    """Test alternative_left_right behavior for space/backspace."""
+    """Test _alternative_left_right behavior for space/backspace."""
     from blessed.keyboard import _alternative_left_right
     term = mock.Mock()
     term._cuf1 = u''
@@ -283,11 +283,11 @@ def test_alternative_left_right():
     term._cuf1 = u' '
     term._cub1 = u'\b'
     assert not bool(_alternative_left_right(term))
-    term._cuf1 = u'x'
-    term._cub1 = u'y'
+    term._cuf1 = u'seq-right'
+    term._cub1 = u'seq-left'
     assert (_alternative_left_right(term) == {
-        u'x': curses.KEY_RIGHT,
-        u'y': curses.KEY_LEFT})
+        u'seq-right': curses.KEY_RIGHT,
+        u'seq-left': curses.KEY_LEFT})
 
 
 def test_cuf1_and_cub1_as_RIGHT_LEFT(all_terms):
@@ -313,6 +313,7 @@ def test_cuf1_and_cub1_as_RIGHT_LEFT(all_terms):
 
 
 def test_get_keyboard_sequences_sort_order(xterms):
+    """ordereddict ensures sequences are ordered longest-first."""
     @as_subprocess
     def child():
         term = TestTerminal(force_styling=True)
@@ -323,6 +324,51 @@ def test_get_keyboard_sequences_sort_order(xterms):
             assert sequence
             maxlen = len(sequence)
     child()
+
+
+def test_get_keyboard_sequence(monkeypatch):
+    """Test keyboard.get_keyboard_sequence. """
+
+    @as_subprocess
+    def child(monkeypatch):
+        import curses.has_key
+        import blessed.keyboard
+
+        (KEY_SMALL, KEY_LARGE, KEY_MIXIN) = range(3)
+        (CAP_SMALL, CAP_LARGE) = ('cap-small cap-large'.split())
+        (SEQ_SMALL, SEQ_LARGE, SEQ_MIXIN,
+         SEQ_ALT_CUF1, SEQ_ALT_CUB1
+         ) = ('seq-small-a seq-large-abcdefg seq-mixin '
+              'seq-alt-cuf1 seq-alt-cub1_'.split())
+
+        # patch curses functions
+        monkeypatch.setattr(curses, 'tigetstr',
+                            lambda cap: {CAP_SMALL: SEQ_SMALL,
+                                         CAP_LARGE: SEQ_LARGE}[cap])
+
+        monkeypatch.setattr(curses.has_key, '_capability_names',
+                            dict(((KEY_SMALL, CAP_SMALL,),
+                                  (KEY_LARGE, CAP_LARGE,))))
+
+        # patch global sequence mix-in
+        monkeypatch.setattr(blessed.keyboard,
+                            'DEFAULT_SEQUENCE_MIXIN', (
+                                (SEQ_MIXIN, KEY_MIXIN),))
+
+        # patch for _alternative_left_right
+        term = mock.Mock()
+        term._cuf1 = SEQ_ALT_CUF1
+        term._cub1 = SEQ_ALT_CUB1
+        keymap = blessed.keyboard.get_keyboard_sequences(term)
+
+        assert keymap.items() == [
+            (SEQ_LARGE, KEY_LARGE),
+            (SEQ_ALT_CUB1, curses.KEY_LEFT),
+            (SEQ_ALT_CUF1, curses.KEY_RIGHT),
+            (SEQ_SMALL, KEY_SMALL),
+            (SEQ_MIXIN, KEY_MIXIN)]
+
+    child(monkeypatch)
 
 
 def test_resolve_sequence():
