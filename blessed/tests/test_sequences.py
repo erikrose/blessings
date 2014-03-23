@@ -435,3 +435,47 @@ def test_null_callable_string(all_standard_terms):
         assert (t.clear('x') == 'x')
 
     child(all_standard_terms)
+
+
+def test_bnc_parameter_emits_warning():
+    """A fake capability without target digits emits a warning."""
+    import warnings
+    from blessed.sequences import _build_numeric_capability
+
+    # given,
+    warnings.filterwarnings("error", category=UserWarning)
+    term = mock.Mock()
+    fake_cap = lambda *args: u'NO-DIGIT'
+    term.fake_cap = fake_cap
+
+    # excersize,
+    try:
+        _build_numeric_capability(term, 'fake_cap', base_num=1984)
+    except UserWarning:
+        err = sys.exc_info()[1]
+        assert err.args[0].startswith('Unknown parameter in ')
+    else:
+        assert False, 'Previous stmt should have raised exception.'
+    warnings.resetwarnings()
+
+
+def test_bna_parameter_emits_warning():
+    """A fake capability without any digits emits a warning."""
+    import warnings
+    from blessed.sequences import _build_any_numeric_capability
+
+    # given,
+    warnings.filterwarnings("error", category=UserWarning)
+    term = mock.Mock()
+    fake_cap = lambda *args: 'NO-DIGIT'
+    term.fake_cap = fake_cap
+
+    # excersize,
+    try:
+        _build_any_numeric_capability(term, 'fake_cap')
+    except UserWarning:
+        err = sys.exc_info()[1]
+        assert err.args[0].startswith('Missing numerics in ')
+    else:
+        assert False, 'Previous stmt should have raised exception.'
+    warnings.resetwarnings()

@@ -17,20 +17,22 @@ import pytest
 
 def test_SequenceWrapper_invalid_width():
     """Test exception thrown from invalid width"""
-    WIDTH = 'XXX'
+    WIDTH = -3
 
     @as_subprocess
     def child():
         t = TestTerminal()
         try:
-            my_wrapped = t.wrap(u'', WIDTH)
+            my_wrapped = t.wrap(u'------- -------------', WIDTH)
         except ValueError, err:
             assert err.args[0] == (
                 "invalid width %r(%s) (must be integer > 0)" % (
                     WIDTH, type(WIDTH)))
         else:
             assert False, 'Previous stmt should have raised exception.'
-        del my_wrapped  # assigned but never used
+            del my_wrapped  # assigned but never used
+
+    child()
 
 
 def test_SequenceWrapper_drop_whitespace_subsequent_indent():
