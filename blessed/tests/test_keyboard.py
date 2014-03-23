@@ -2,6 +2,7 @@
 """Tests for keyboard support."""
 import tempfile
 import StringIO
+import signal
 import curses
 import time
 import math
@@ -24,6 +25,55 @@ from accessories import (
 )
 
 import mock
+
+
+def test_kbhit_interrupted():
+    """kbhit() should not be interrupted with a signal handler."""
+    pid, master_fd = pty.fork()
+    if pid is 0:
+        try:
+            cov = __import__('cov_core_init').init()
+        except ImportError:
+            cov = None
+
+        # child pauses, writes semaphore and begins awaiting input
+        global got_sigwinch
+        got_sigwinch = False
+
+        def on_resize(sig, action):
+            global got_sigwinch
+            got_sigwinch = True
+
+        term = TestTerminal()
+        signal.signal(signal.SIGWINCH, on_resize)
+        read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
+        os.write(sys.__stdout__.fileno(), SEMAPHORE)
+        with term.raw():
+            term.inkey(timeout=1.05)
+        os.write(sys.__stdout__.fileno(), b'complete')
+        assert got_sigwinch is True
+        if cov is not None:
+            cov.stop()
+            cov.save()
+        os._exit(0)
+
+    with echo_off(master_fd):
+        os.write(master_fd, SEND_SEMAPHORE)
+        read_until_semaphore(master_fd)
+        stime = time.time()
+        os.kill(pid, signal.SIGWINCH)
+        time.sleep(0.5)
+        os.kill(pid, signal.SIGWINCH)
+        time.sleep(0.5)
+        os.kill(pid, signal.SIGWINCH)
+        time.sleep(0.5)
+        os.kill(pid, signal.SIGWINCH)
+        output = read_until_eof(master_fd)
+
+    pid, status = os.waitpid(pid, 0)
+    assert output == u'complete'
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 1.0
 
 
 def test_cbreak_no_kb():
@@ -56,8 +106,9 @@ def test_kbhit_no_kb():
     def child():
         term = TestTerminal(stream=StringIO.StringIO())
         stime = time.time()
-        assert term.kbhit(timeout=1.5) is False
-        assert (math.floor(time.time() - stime) == 0.0)
+        assert term.keyboard_fd is None
+        assert term.kbhit(timeout=1.1) is False
+        assert (math.floor(time.time() - stime) == 1.0)
     child()
 
 

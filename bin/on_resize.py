@@ -10,4 +10,4 @@ def on_resize(sig, action):
 
 signal.signal(signal.SIGWINCH, on_resize)
 
-term.inkey()
+term.inkey(1)

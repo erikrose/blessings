@@ -510,37 +510,32 @@ class Terminal(object):
 
         If input is not a terminal, False is always returned.
         """
-        if self.keyboard_fd is None:
-            return False
-
         # Special care is taken to handle a custom SIGWINCH handler, which
-        # causes select() to be interrupted with errno 4 -- it is ignored,
-        # and a new timeout value is derived from the previous, unless timeout
-        # becomes negative, because signal handler has blocked beyond timeout,
-        # then False is returned. Otherwise, when timeout is 0, we continue to
-        # block indefinitely (default).
+        # causes select() to be interrupted with errno 4 (EAGAIN) --
+        # it is ignored, and a new timeout value is derived from the previous,
+        # unless timeout becomes negative, because signal handler has blocked
+        # beyond timeout, then False is returned. Otherwise, when timeout is 0,
+        # we continue to block indefinitely (default).
         stime = time.time()
-        check_r, check_w, check_x = [self.keyboard_fd], [], []
+        check_w, check_x = [], []
+        check_r = [self.keyboard_fd] if self.keyboard_fd is not None else []
 
         while True:
             try:
                 ready_r, ready_w, ready_x = select.select(
                     check_r, check_w, check_x, timeout)
             except InterruptedError as exc:
-                if 4 == (hasattr(exc, 'errno') and exc.errno or  # py2
-                         hasattr(exc, 'args') and exc.args[0]):  # py3
-                    if timeout != 0:
-                        timeout = time.time() - stime
-                        if timeout > 0:
-                            continue
-                        else:
-                            ready_r = False
-                            break
-                raise
+                if timeout != 0:
+                    # subtract time already elapsed,
+                    timeout -= time.time() - stime
+                    if timeout > 0:
+                        continue
+                    ready_r = False
+                    break
             else:
                 break
 
-        return check_r == ready_r
+        return False if self.keyboard_fd is None else check_r == ready_r
 
     @contextlib.contextmanager
     def cbreak(self):
