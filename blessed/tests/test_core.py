@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Core blessed Terminal() tests."""
+"Core blessed Terminal() tests."
 try:
     from StringIO import StringIO
 except ImportError:
@@ -9,6 +9,7 @@ import collections
 import platform
 import sys
 import imp
+import os
 
 from accessories import (
     as_subprocess,
@@ -22,13 +23,13 @@ import pytest
 
 
 def test_export_only_Terminal():
-    """Ensure only Terminal instance is exported for import * statements."""
+    "Ensure only Terminal instance is exported for import * statements."
     import blessed
     assert blessed.__all__ == ['Terminal']
 
 
 def test_null_location(all_terms):
-    """Make sure ``location()`` with no args just does position restoration."""
+    "Make sure ``location()`` with no args just does position restoration."
     @as_subprocess
     def child(kind):
         t = TestTerminal(stream=StringIO(), force_styling=True)
@@ -42,7 +43,7 @@ def test_null_location(all_terms):
 
 
 def test_flipped_location_move(all_terms):
-    """``location()`` and ``move()`` receive counter-example arguments."""
+    "``location()`` and ``move()`` receive counter-example arguments."
     @as_subprocess
     def child(kind):
         buf = StringIO()
@@ -57,7 +58,7 @@ def test_flipped_location_move(all_terms):
 
 
 def test_null_fileno():
-    """Make sure ``Terminal`` works when ``fileno`` is ``None``."""
+    "Make sure ``Terminal`` works when ``fileno`` is ``None``."
     @as_subprocess
     def child():
         # This simulates piping output to another program.
@@ -70,7 +71,7 @@ def test_null_fileno():
 
 
 def test_number_of_colors_without_tty():
-    """``number_of_colors`` should return 0 when there's no tty."""
+    "``number_of_colors`` should return 0 when there's no tty."
     @as_subprocess
     def child_256_nostyle():
         t = TestTerminal(stream=StringIO())
@@ -100,7 +101,7 @@ def test_number_of_colors_without_tty():
 
 
 def test_number_of_colors_with_tty():
-    """``number_of_colors`` should work."""
+    "test ``number_of_colors`` 0, 8, and 256."
     @as_subprocess
     def child_256():
         t = TestTerminal()
@@ -122,7 +123,7 @@ def test_number_of_colors_with_tty():
 
 
 def test_init_descriptor_always_initted(all_terms):
-    """Test height and width with non-tty Terminals."""
+    "Test height and width with non-tty Terminals."
     @as_subprocess
     def child(kind):
         t = TestTerminal(kind=kind, stream=StringIO())
@@ -136,7 +137,7 @@ def test_init_descriptor_always_initted(all_terms):
 
 
 def test_force_styling_none(all_terms):
-    """If ``force_styling=None`` is used, don't ever do styling."""
+    "If ``force_styling=None`` is used, don't ever do styling."
     @as_subprocess
     def child(kind):
         t = TestTerminal(kind=kind, force_styling=None)
@@ -148,7 +149,7 @@ def test_force_styling_none(all_terms):
 
 
 def test_setupterm_singleton_issue33():
-    """A warning is emitted if a new terminal ``kind`` is used per process."""
+    "A warning is emitted if a new terminal ``kind`` is used per process."
     @as_subprocess
     def child():
         import warnings
@@ -176,7 +177,7 @@ def test_setupterm_singleton_issue33():
 
 
 def test_setupterm_invalid_issue39():
-    """A warning is emitted if TERM is invalid."""
+    "A warning is emitted if TERM is invalid."
     # https://bugzilla.mozilla.org/show_bug.cgi?id=878089
 
     # if TERM is unset, defaults to 'unknown', which should
@@ -194,7 +195,26 @@ def test_setupterm_invalid_issue39():
         else:
             assert not term.is_a_tty and not term.does_styling, (
                 'Should have thrown exception')
-            assert (term.number_of_colors == 0)
+        warnings.resetwarnings()
+
+    child()
+
+
+def test_setupterm_invalid_has_no_styling():
+    "An unknown TERM type does not perform styling."
+    # https://bugzilla.mozilla.org/show_bug.cgi?id=878089
+
+    # if TERM is unset, defaults to 'unknown', which should
+    # fail to lookup and emit a warning, only.
+    @as_subprocess
+    def child():
+        import warnings
+        warnings.filterwarnings("ignore", category=UserWarning)
+
+        term = TestTerminal(kind='unknown', force_styling=True)
+        assert term._kind is None
+        assert term.does_styling is False
+        assert term.number_of_colors == 0
         warnings.resetwarnings()
 
     child()
@@ -203,7 +223,7 @@ def test_setupterm_invalid_issue39():
 @pytest.mark.skipif(platform.python_implementation() == 'PyPy',
                     reason='PyPy freezes')
 def test_missing_ordereddict_uses_module(monkeypatch):
-    """ordereddict module is imported when without collections.OrderedDict."""
+    "ordereddict module is imported when without collections.OrderedDict."
     import blessed.keyboard
 
     if hasattr(collections, 'OrderedDict'):
@@ -228,7 +248,7 @@ def test_missing_ordereddict_uses_module(monkeypatch):
 @pytest.mark.skipif(platform.python_implementation() == 'PyPy',
                     reason='PyPy freezes')
 def test_python3_2_raises_exception(monkeypatch):
-    """ordereddict module is imported when without collections.OrderedDict."""
+    "Test python version 3.0 through 3.2 raises an exception."
     import blessed
 
     monkeypatch.setattr('platform.python_version_tuple',
@@ -244,3 +264,90 @@ def test_python3_2_raises_exception(monkeypatch):
         imp.reload(blessed)
     else:
         assert False, 'Exception should have been raised'
+
+
+def test_IOUnsupportedOperation_dummy(monkeypatch):
+    "Ensure dummy exception is used when io is without UnsupportedOperation."
+    import blessed.terminal
+    import io
+    if hasattr(io, 'UnsupportedOperation'):
+        monkeypatch.delattr('io.UnsupportedOperation')
+
+    imp.reload(blessed.terminal)
+    assert blessed.terminal.IOUnsupportedOperation.__doc__.startswith(
+        "A dummy exception to take the place of")
+    monkeypatch.undo()
+    imp.reload(blessed.terminal)
+
+
+def test_without_dunder():
+    "Ensure dunder does not remain in module (py2x InterruptedError test."
+    import blessed.terminal
+    assert '_' not in dir(blessed.terminal)
+
+
+def test_IOUnsupportedOperation():
+    "Ensure stream that throws IOUnsupportedOperation results in non-tty."
+    @as_subprocess
+    def child():
+        import blessed.terminal
+
+        def side_effect():
+            raise blessed.terminal.IOUnsupportedOperation
+
+        mock_stream = mock.Mock()
+        mock_stream.fileno = side_effect
+
+        term = TestTerminal(stream=mock_stream)
+        assert term.stream == mock_stream
+        assert term.does_styling is False
+        assert term.is_a_tty is False
+        assert term.number_of_colors is 0
+
+    child()
+
+
+def test_winsize_IOError_returns_environ():
+    """When _winsize raises IOError, defaults from os.environ given."""
+    @as_subprocess
+    def child():
+        def side_effect(fd):
+            raise IOError
+
+        term = TestTerminal()
+        term._winsize = side_effect
+        os.environ['COLUMNS'] = '1984'
+        os.environ['LINES'] = '1888'
+        assert term._height_and_width() == (1888, 1984, None, None)
+
+    child()
+
+
+def test_yield_fullscreen(all_terms):
+    "Ensure ``fullscreen()`` writes enter_fullscreen and exit_fullscreen."
+    @as_subprocess
+    def child(kind):
+        t = TestTerminal(stream=StringIO(), force_styling=True)
+        t.enter_fullscreen = u'BEGIN'
+        t.exit_fullscreen = u'END'
+        with t.fullscreen():
+            pass
+        expected_output = u''.join((t.enter_fullscreen, t.exit_fullscreen))
+        assert (t.stream.getvalue() == expected_output)
+
+    child(all_terms)
+
+
+def test_yield_hidden_cursor(all_terms):
+    "Ensure ``hidden_cursor()`` writes hide_cursor and normal_cursor."
+    @as_subprocess
+    def child(kind):
+        t = TestTerminal(stream=StringIO(), force_styling=True)
+        t.hide_cursor = u'BEGIN'
+        t.normal_cursor = u'END'
+        with t.hidden_cursor():
+            pass
+        expected_output = u''.join((t.hide_cursor, t.normal_cursor))
+        assert (t.stream.getvalue() == expected_output)
+
+    child(all_terms)

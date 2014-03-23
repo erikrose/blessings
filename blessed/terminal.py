@@ -80,12 +80,12 @@ class Terminal(object):
 
         """
         global _CUR_TERM
-        self.stream_kb = None
+        self.keyboard_fd = None
 
         # default stream is stdout, keyboard only valid as stdin with stdout.
-        if stream is None:
+        if stream is None or stream == sys.__stdout__:
             stream = sys.__stdout__
-            self.stream_kb = sys.__stdin__.fileno()
+            self.keyboard_fd = sys.__stdin__.fileno()
 
         try:
             stream_fd = (stream.fileno() if hasattr(stream, 'fileno')
@@ -520,7 +520,7 @@ class Terminal(object):
         # then False is returned. Otherwise, when timeout is 0, we continue to
         # block indefinitely (default).
         stime = time.time()
-        check_r, check_w, check_x = [self.stream_kb], [], []
+        check_r, check_w, check_x = [self.keyboard_fd], [], []
 
         while True:
             try:
@@ -563,15 +563,17 @@ class Terminal(object):
            http://www.unixwiz.net/techtips/termios-vmin-vtime.html
         """
         assert self.is_a_tty, 'stream is not a tty.'
-        if self.stream_kb is not None:
+        if self.keyboard_fd is not None:
             # save current terminal mode,
-            save_mode = termios.tcgetattr(self.stream_kb)
-            tty.setcbreak(self.stream_kb, termios.TCSANOW)
+            save_mode = termios.tcgetattr(self.keyboard_fd)
+            tty.setcbreak(self.keyboard_fd, termios.TCSANOW)
             try:
                 yield
             finally:
                 # restore prior mode,
-                termios.tcsetattr(self.stream_kb, termios.TCSAFLUSH, save_mode)
+                termios.tcsetattr(self.keyboard_fd,
+                                  termios.TCSAFLUSH,
+                                  save_mode)
         else:
             yield
 
@@ -584,15 +586,17 @@ class Terminal(object):
         through uninterpreted, instead of generating a signal.
         """
         assert self.is_a_tty, 'stream is not a tty.'
-        if self.stream_kb is not None:
+        if self.keyboard_fd is not None:
             # save current terminal mode,
-            save_mode = termios.tcgetattr(self.stream_kb)
-            tty.setraw(self.stream_kb, termios.TCSANOW)
+            save_mode = termios.tcgetattr(self.keyboard_fd)
+            tty.setraw(self.keyboard_fd, termios.TCSANOW)
             try:
                 yield
             finally:
                 # restore prior mode,
-                termios.tcsetattr(self.stream_kb, termios.TCSAFLUSH, save_mode)
+                termios.tcsetattr(self.keyboard_fd,
+                                  termios.TCSAFLUSH,
+                                  save_mode)
         else:
             yield
 
@@ -634,7 +638,7 @@ class Terminal(object):
 
         def _decode_next():
             """Read and decode next byte from stdin."""
-            byte = os.read(self.stream_kb, 1)
+            byte = os.read(self.keyboard_fd, 1)
             return self._keyboard_decoder.decode(byte, final=False)
 
         resolve = functools.partial(keyboard.resolve_sequence,

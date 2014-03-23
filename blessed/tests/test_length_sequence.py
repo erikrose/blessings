@@ -41,47 +41,94 @@ def test_sequence_length(all_terms):
             assert (t.length(t.bold('x')) == 1)
             assert (t.length(t.bold_red) == 0)
             assert (t.length(t.bold_red('x')) == 1)
+            assert (t.strip(t.bold) == u'')
+            assert (t.strip(t.bold('  x  ')) == u'x')
+            assert (t.strip(t.bold_red) == u'')
+            assert (t.strip(t.bold_red('  x  ')) == u'x')
+            assert (t.strip_seqs(t.bold) == u'')
+            assert (t.strip_seqs(t.bold('  x  ')) == u'  x  ')
+            assert (t.strip_seqs(t.bold_red) == u'')
+            assert (t.strip_seqs(t.bold_red('  x  ')) == u'  x  ')
+
         if t.underline:
             assert (t.length(t.underline) == 0)
             assert (t.length(t.underline('x')) == 1)
             assert (t.length(t.underline_red) == 0)
             assert (t.length(t.underline_red('x')) == 1)
+            assert (t.strip(t.underline) == u'')
+            assert (t.strip(t.underline('  x  ')) == u'x')
+            assert (t.strip(t.underline_red) == u'')
+            assert (t.strip(t.underline_red('  x  ')) == u'x')
+            assert (t.strip_seqs(t.underline) == u'')
+            assert (t.strip_seqs(t.underline('  x  ')) == u'  x  ')
+            assert (t.strip_seqs(t.underline_red) == u'')
+            assert (t.strip_seqs(t.underline_red('  x  ')) == u'  x  ')
+
         if t.reverse:
             assert (t.length(t.reverse) == 0)
             assert (t.length(t.reverse('x')) == 1)
             assert (t.length(t.reverse_red) == 0)
             assert (t.length(t.reverse_red('x')) == 1)
+            assert (t.strip(t.reverse) == u'')
+            assert (t.strip(t.reverse('  x  ')) == u'x')
+            assert (t.strip(t.reverse_red) == u'')
+            assert (t.strip(t.reverse_red('  x  ')) == u'x')
+            assert (t.strip_seqs(t.reverse) == u'')
+            assert (t.strip_seqs(t.reverse('  x  ')) == u'  x  ')
+            assert (t.strip_seqs(t.reverse_red) == u'')
+            assert (t.strip_seqs(t.reverse_red('  x  ')) == u'  x  ')
+
         if t.blink:
             assert (t.length(t.blink) == 0)
             assert (t.length(t.blink('x')) == 1)
             assert (t.length(t.blink_red) == 0)
             assert (t.length(t.blink_red('x')) == 1)
+            assert (t.strip(t.blink) == u'')
+            assert (t.strip(t.blink('  x  ')) == u'x')
+            assert (t.strip(t.blink_red) == u'')
+            assert (t.strip(t.blink_red('  x  ')) == u'x')
+            assert (t.strip_seqs(t.blink) == u'')
+            assert (t.strip_seqs(t.blink('  x  ')) == u'  x  ')
+            assert (t.strip_seqs(t.blink_red) == u'')
+            assert (t.strip_seqs(t.blink_red('  x  ')) == u'  x  ')
+
         if t.home:
             assert (t.length(t.home) == 0)
+            assert (t.strip(t.home) == u'')
         if t.clear_eol:
             assert (t.length(t.clear_eol) == 0)
+            assert (t.strip(t.clear_eol) == u'')
         if t.enter_fullscreen:
             assert (t.length(t.enter_fullscreen) == 0)
+            assert (t.strip(t.enter_fullscreen) == u'')
         if t.exit_fullscreen:
             assert (t.length(t.exit_fullscreen) == 0)
+            assert (t.strip(t.exit_fullscreen) == u'')
 
         # horizontally, we decide move_down and move_up are 0,
         assert (t.length(t.move_down) == 0)
         assert (t.length(t.move_down(2)) == 0)
         assert (t.length(t.move_up) == 0)
         assert (t.length(t.move_up(2)) == 0)
+
         # other things aren't so simple, somewhat edge cases,
         # moving backwards and forwards horizontally must be
         # accounted for as a "length", as <x><move right 10><y>
         # will result in a printed column length of 12 (even
         # though columns 2-11 are non-destructive space
         assert (t.length(u'x\b') == 0)
+        assert (t.strip(u'x\b') == u'')
+
         # XXX why are some terminals width of 9 here ??
         assert (t.length(u'\t') in (8, 9))
+        assert (t.strip(u'\t') == u'')
         assert (t.length(u'_' + t.move_left) == 0)
+
         if t.cub:
             assert (t.length((u'_' * 10) + t.cub(10)) == 0)
+
         assert (t.length(t.move_right) == 1)
+
         if t.cuf:
             assert (t.length(t.cuf(10)) == 10)
 
@@ -90,6 +137,7 @@ def test_sequence_length(all_terms):
         assert (t.length(t.cuu(10)) == 0)
         assert (t.length(t.move_down) == 0)
         assert (t.length(t.cud(10)) == 0)
+
         # this is how manpages perform underlining, this is done
         # with the 'overstrike' capability of teletypes, and aparently
         # less(1), '123' -> '1\b_2\b_3\b_'

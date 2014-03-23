@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for keyboard support."""
+import StringIO
 import curses
 import time
 import math
@@ -11,6 +12,7 @@ from accessories import (
     read_until_eof,
     read_until_semaphore,
     SEND_SEMAPHORE,
+    RECV_SEMAPHORE,
     as_subprocess,
     TestTerminal,
     SEMAPHORE,
@@ -22,7 +24,18 @@ from accessories import (
 import mock
 
 
-def test_inkey_0s_noinput():
+def test_kbhit_no_kb():
+    """kbhit() always immediately returns False without a keyboard."""
+    @as_subprocess
+    def child():
+        term = TestTerminal(stream=StringIO.StringIO())
+        stime = time.time()
+        assert term.kbhit(timeout=2.5) is False
+        assert (math.floor(time.time() - stime) == 0.0)
+    child()
+
+
+def test_inkey_0s_cbreak_noinput():
     """0-second inkey without input; '' should be returned."""
     @as_subprocess
     def child():
@@ -35,7 +48,7 @@ def test_inkey_0s_noinput():
     child()
 
 
-def test_inkey_1s_noinput():
+def test_inkey_1s_cbreak_noinput():
     """1-second inkey without input; '' should be returned after ~1 second."""
     @as_subprocess
     def child():
@@ -48,7 +61,7 @@ def test_inkey_1s_noinput():
     child()
 
 
-def test_inkey_0s_input():
+def test_inkey_0s_cbreak_input():
     """0-second inkey with input; Keypress should be immediately returned."""
     pid, master_fd = pty.fork()
     if pid is 0:
@@ -74,7 +87,7 @@ def test_inkey_0s_input():
     assert (math.floor(time.time() - stime) == 0.0)
 
 
-def test_inkey_0s_multibyte_utf8():
+def test_inkey_0s_cbreak_multibyte_utf8():
     """0-second inkey with multibyte utf-8 input; should decode immediately."""
     # utf-8 bytes represent "latin capital letter upsilon".
     pid, master_fd = pty.fork()
@@ -99,7 +112,32 @@ def test_inkey_0s_multibyte_utf8():
     assert (math.floor(time.time() - stime) == 0.0)
 
 
-def test_inkey_0s_sequence():
+def test_inkey_0s_raw_ctrl_c():
+    """0-second inkey with raw allows receiving ^C."""
+    pid, master_fd = pty.fork()
+    if pid is 0:  # child
+        term = TestTerminal()
+        read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
+        with term.raw():
+            os.write(sys.__stdout__.fileno(), RECV_SEMAPHORE)
+            inp = term.inkey(timeout=0)
+            os.write(sys.__stdout__.fileno(), inp.encode('latin1'))
+        os._exit(0)
+
+    with echo_off(master_fd):
+        os.write(master_fd, SEND_SEMAPHORE)
+        # ensure child is in raw mode before sending ^C,
+        read_until_semaphore(master_fd)
+        os.write(master_fd, u'\x03'.encode('latin1'))
+        stime = time.time()
+        output = read_until_eof(master_fd)
+    pid, status = os.waitpid(pid, 0)
+    assert (output == u'\x03')
+    assert (os.WEXITSTATUS(status) == 0)
+    assert (math.floor(time.time() - stime) == 0.0)
+
+
+def test_inkey_0s_cbreak_sequence():
     """0-second inkey with multibyte sequence; should decode immediately."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
@@ -122,7 +160,7 @@ def test_inkey_0s_sequence():
     assert (math.floor(time.time() - stime) == 0.0)
 
 
-def test_inkey_1s_input():
+def test_inkey_1s_cbreak_input():
     """1-second inkey w/multibyte sequence; should return after ~1 second."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
@@ -147,7 +185,7 @@ def test_inkey_1s_input():
     assert (math.floor(time.time() - stime) == 1.0)
 
 
-def test_esc_delay_035():
+def test_esc_delay_cbreak_035():
     """esc_delay will cause a single ESC (\\x1b) to delay for 0.35."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
@@ -175,7 +213,7 @@ def test_esc_delay_035():
     assert 35 <= int(duration_ms) <= 45, duration_ms
 
 
-def test_esc_delay_135():
+def test_esc_delay_cbreak_135():
     """esc_delay=1.35 will cause a single ESC (\\x1b) to delay for 1.35."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
@@ -203,7 +241,7 @@ def test_esc_delay_135():
     assert 135 <= int(duration_ms) <= 145, int(duration_ms)
 
 
-def test_esc_delay_timout_0():
+def test_esc_delay_cbreak_timout_0():
     """esc_delay still in effect with timeout of 0 ("nonblocking")."""
     pid, master_fd = pty.fork()
     if pid is 0:  # child
