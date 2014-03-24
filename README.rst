@@ -1,3 +1,19 @@
+.. image:: https://secure.travis-ci.org/jquast/blessed.png
+   :target: https://travis-ci.org/jquast/blessed
+   :alt: travis continous integration
+.. image:: http://coveralls.io/repos/jquast/blessed/badge.png
+   :target: http://coveralls.io/r/jquast/blessed
+   :alt: coveralls code coveraage
+.. image:: https://pypip.in/d/blessed/badge.png
+   :target: https://pypi.python.org/pypi/blessed/
+   :alt: Downloads
+.. image:: https://pypip.in/v/blessed/badge.png
+   :target: https://pypi.python.org/pypi/blessed/
+   :alt: Latest Version
+.. image:: https://pypip.in/license/blessed/badge.png
+   :target: https://pypi.python.org/pypi/blessed/
+   :alt: License
+
 =======
 Blessed
 =======
@@ -582,13 +598,6 @@ Bugs
 Bugs or suggestions? Visit the `issue tracker`_.
 
 .. _`issue tracker`: https://github.com/jquast/blessed/issues/
-
-.. image:: https://secure.travis-ci.org/jquast/blessed.png
-   :target: https://travis-ci.org/jquast/blessed
-   :alt: travis continous integration
-.. image:: http://coveralls.io/repos/jquast/blessed/badge.png
-   :target: http://coveralls.io/r/jquast/blessed
-   :alt: coveralls code coveraage
 
 For patches, please construct a test case if possible. To test,
 install and execute python package command *tox*.
