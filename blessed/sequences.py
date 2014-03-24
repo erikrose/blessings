@@ -351,10 +351,10 @@ class Sequence(unicode):
         return new
 
     def ljust(self, width, fillchar=u' '):
-        """S.ljust(width, fillchar=u'') -> unicode
+        """S.ljust(width, fillchar) -> unicode
 
         Returns string derived from unicode string ``S``, left-adjusted
-        by trailing whitespace padding ``fillchar`."""
+        by trailing whitespace padding ``fillchar``."""
         rightside = fillchar * int((max(0.0, float(width - self.length())))
                                    / float(len(fillchar)))
         return u''.join((self, rightside))
