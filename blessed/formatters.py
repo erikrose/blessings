@@ -1,29 +1,35 @@
 "This sub-module provides formatting functions."
 import curses
 
-_derivitives = ('on', 'bright', 'on_bright',)
+_derivatives = ('on', 'bright', 'on_bright',)
 
 _colors = set('black red green yellow blue magenta cyan white'.split())
 _compoundables = set('bold underline reverse blink dim italic shadow '
                      'standout subscript superscript'.split())
 
+#: Valid colors and their background (on), bright, and bright-bg derivatives.
 COLORS = set(['_'.join((derivitive, color))
-              for derivitive in _derivitives
+              for derivitive in _derivatives
               for color in _colors]) | _colors
 
+#: All valid compoundable names.
 COMPOUNDABLES = (COLORS | _compoundables)
 
 
 class ParameterizingString(unicode):
-    "A Unicode string which can be called as a parameterizing termcap."
+    """A Unicode string which can be called as a parameterizing termcap.
 
-    def __new__(cls, name, attr, normal):
+    For example::
+
+        >> move = ParameterizingString('move')
+        >> move(0, 0)('text')
+    """
+
+    def __new__(cls, name, normal):
         """
         :arg name: name of terminal capability.
-        :arg attr: terminal capability name to receive arguments.
-        :arg normal: If non-None, indicates that, once parametrized, this can
-            be used as a ``FormattingString``. The value is used as the
-            "normal" capability.
+        :arg attr: terminal attribute sequence to receive arguments.
+        :arg normal: terminating sequence for this capability.
         """
         new = unicode.__new__(cls, attr)
         new._name = name
@@ -31,6 +37,12 @@ class ParameterizingString(unicode):
         return new
 
     def __call__(self, *args):
+        """P(*args) -> unicode
+
+        Return evaluated terminal capability (self), receiving arguments
+        ``*args``, followed by the terminating sequence (self.normal) into
+        a FormattingString capable of being called.
+        """
         try:
             # Re-encode the cap, because tparm() takes a bytestring in Python
             # 3. However, appear to be a plain Unicode string otherwise so
@@ -52,14 +64,19 @@ class ParameterizingString(unicode):
 
 
 class FormattingString(unicode):
-    """A Unicode string which can be called using ``text``, returning a
-    new string, ``attr`` + ``text`` + ``normal``::
+    """A Unicode string which can be called using ``text``,
+    returning a new string, ``attr`` + ``text`` + ``normal``::
 
-        style = FormattingString(term.bright_blue, term.normal)
-        style('Big Blue')
+        >> style = FormattingString(term.bright_blue, term.normal)
+        >> style('Big Blue')
         '\x1b[94mBig Blue\x1b(B\x1b[m'
     """
+
     def __new__(cls, attr, normal):
+        """
+        :arg attr: terminal attribute sequence.
+        :arg normal: terminating sequence for this attribute.
+        """
         new = unicode.__new__(cls, attr)
         new._normal = normal
         return new
@@ -148,9 +165,13 @@ def resolve_capability(term, attr):
 
 
 def resolve_color(term, color):
-    """Resolve a color, to callable capability, valid ``color`` capabilities
-    are simple colors such as ``red``, or compounded, such as
-    ``on_bright_green``.
+    """resolve_color(T, color) -> FormattingString()
+
+    Resolve a ``color`` name to callable capability, ``FormattingString``
+    unless ``term.number_of_colors`` is 0, then ``NullCallableString``.
+
+    Valid ``color`` capabilities names are any of the simple color
+    names, such as ``red``, or compounded, such as ``on_bright_green``.
     """
     # NOTE(erikrose): Does curses automatically exchange red and blue and cyan
     # and yellow when a terminal supports setf/setb rather than setaf/setab?
@@ -193,6 +214,4 @@ def resolve_attribute(term, attr):
         resolution = (resolve_attribute(term, fmt) for fmt in formatters)
         return FormattingString(u''.join(resolution), term.normal)
     else:
-        return ParameterizingString(name=attr,
-                                    attr=resolve_capability(term, attr),
-                                    normal=term.normal)
+        return ParameterizingString(name=attr, normal=term.normal)

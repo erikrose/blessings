@@ -31,13 +31,28 @@ except NameError:
     InterruptedError = select.error
 
 # local imports
-import formatters
-import sequences
-import keyboard
+from formatters import (
+    ParameterizingString,
+    NullCallableString,
+    resolve_capability,
+    resolve_attribute,
+)
+
+from sequences import (
+    get_keyboard_sequences,
+    init_sequence_patterns,
+    SequenceTextWrapper,
+    Sequence,
+)
+
+from keyboard import (
+    get_keyboard_codes,
+    resolve_sequence,
+)
 
 
 class Terminal(object):
-    """An abstraction around terminal capabilities
+    """A wrapper for curses and related terminfo(5) terminal capabilities.
 
     Instance attributes:
 
@@ -47,6 +62,43 @@ class Terminal(object):
         is and saves sticking lots of extra args on client functions in
         practice.
     """
+
+    #: Sugary names for commonly-used capabilities
+    _sugar = dict(
+        save='sc',
+        restore='rc',
+        # 'clear' clears the whole screen.
+        clear_eol='el',
+        clear_bol='el1',
+        clear_eos='ed',
+        position='cup',  # deprecated
+        enter_fullscreen='smcup',
+        exit_fullscreen='rmcup',
+        move='cup',
+        move_x='hpa',
+        move_y='vpa',
+        move_left='cub1',
+        move_right='cuf1',
+        move_up='cuu1',
+        move_down='cud1',
+        hide_cursor='civis',
+        normal_cursor='cnorm',
+        reset_colors='op',  # oc doesn't work on my OS X terminal.
+        normal='sgr0',
+        reverse='rev',
+        italic='sitm',
+        no_italic='ritm',
+        shadow='sshm',
+        no_shadow='rshm',
+        standout='smso',
+        no_standout='rmso',
+        subscript='ssubm',
+        no_subscript='rsubm',
+        superscript='ssupm',
+        no_superscript='rsupm',
+        underline='smul',
+        no_underline='rmul')
+
     def __init__(self, kind=None, stream=None, force_styling=False):
         """Initialize the terminal.
 
@@ -125,17 +177,17 @@ class Terminal(object):
                             self._kind, _CUR_TERM,))
 
         if self.does_styling:
-            sequences.init_sequence_patterns(self)
+            init_sequence_patterns(self)
 
             # build database of int code <=> KEY_NAME
-            self._keycodes = keyboard.get_keyboard_codes()
+            self._keycodes = get_keyboard_codes()
 
             # store attributes as: self.KEY_NAME = code
             for key_code, key_name in self._keycodes.items():
                 setattr(self, key_name, key_code)
 
             # build database of sequence <=> KEY_NAME
-            self._keymap = keyboard.get_keyboard_sequences(self)
+            self._keymap = get_keyboard_sequences(self)
 
         self._keyboard_buf = collections.deque()
         locale.setlocale(locale.LC_ALL, '')
@@ -143,42 +195,6 @@ class Terminal(object):
         self._keyboard_decoder = codecs.getincrementaldecoder(self._encoding)()
 
         self.stream = stream
-
-    #: Sugary names for commonly-used capabilities
-    _sugar = dict(
-        save='sc',
-        restore='rc',
-        # 'clear' clears the whole screen.
-        clear_eol='el',
-        clear_bol='el1',
-        clear_eos='ed',
-        position='cup',  # deprecated
-        enter_fullscreen='smcup',
-        exit_fullscreen='rmcup',
-        move='cup',
-        move_x='hpa',
-        move_y='vpa',
-        move_left='cub1',
-        move_right='cuf1',
-        move_up='cuu1',
-        move_down='cud1',
-        hide_cursor='civis',
-        normal_cursor='cnorm',
-        reset_colors='op',  # oc doesn't work on my OS X terminal.
-        normal='sgr0',
-        reverse='rev',
-        italic='sitm',
-        no_italic='ritm',
-        shadow='sshm',
-        no_shadow='rshm',
-        standout='smso',
-        no_standout='rmso',
-        subscript='ssubm',
-        no_subscript='rsubm',
-        superscript='ssupm',
-        no_superscript='rsupm',
-        underline='smul',
-        no_underline='rmul')
 
     def __getattr__(self, attr):
         """Return a terminal capability as Unicode string.
@@ -198,8 +214,8 @@ class Terminal(object):
         manual page terminfo(5) for a complete list of capabilities.
         """
         if not self.does_styling:
-            return formatters.NullCallableString()
-        val = formatters.resolve_attribute(self, attr)
+            return NullCallableString()
+        val = resolve_attribute(self, attr)
         # Cache capability codes.
         setattr(self, attr, val)
         return val
@@ -335,26 +351,22 @@ class Terminal(object):
 
         """
         if not self.does_styling:
-            return formatters.NullCallableString()
-        return formatters.ParameterizingString(name='color',
-                                               attr=self._foreground_color,
-                                               normal=self.normal)
+            return NullCallableString()
+        return ParameterizingString(name='color', normal=self.normal)
 
     @property
     def on_color(self):
         "Returns capability that sets the background color."
         if not self.does_styling:
-            return formatters.NullCallableString()
-        return formatters.ParameterizingString(name='on_color',
-                                               attr=self._background_color,
-                                               normal=self.normal)
+            return NullCallableString()
+        return ParameterizingString(name='on_color', normal=self.normal)
 
     @property
     def normal(self):
         "Returns sequence that resets video attribute."
         if self._normal:
             return self._normal
-        self._normal = formatters.resolve_capability(self, 'normal')
+        self._normal = resolve_capability(self, 'normal')
         return self._normal
 
     @property
@@ -387,7 +399,7 @@ class Terminal(object):
         may contain terminal sequences."""
         if width is None:
             width = self.width
-        return sequences.Sequence(text, self).ljust(width, fillchar)
+        return Sequence(text, self).ljust(width, fillchar)
 
     def rjust(self, text, width=None, fillchar=u' '):
         """T.rjust(text, [width], [fillchar]) -> unicode
@@ -398,7 +410,7 @@ class Terminal(object):
         may contain terminal sequences."""
         if width is None:
             width = self.width
-        return sequences.Sequence(text, self).rjust(width, fillchar)
+        return Sequence(text, self).rjust(width, fillchar)
 
     def center(self, text, width=None, fillchar=u' '):
         """T.center(text, [width], [fillchar]) -> unicode
@@ -409,7 +421,7 @@ class Terminal(object):
         may contain terminal sequences."""
         if width is None:
             width = self.width
-        return sequences.Sequence(text, self).center(width, fillchar)
+        return Sequence(text, self).center(width, fillchar)
 
     def length(self, text):
         """T.length(text) -> int
@@ -419,7 +431,7 @@ class Terminal(object):
         which repositions the cursor, does not give accurate results, and
         their printable length is evaluated *0*..
         """
-        return sequences.Sequence(text, self).length()
+        return Sequence(text, self).length()
 
     def strip(self, text):
         """T.strip(text) -> unicode
@@ -430,14 +442,14 @@ class Terminal(object):
         the string ``u"_\\b"`` or ``u"__\\b\\b="`` becomes ``u"x"``,
         not ``u"="`` (as would actually be printed on a terminal).
         """
-        return sequences.Sequence(text, self).strip()
+        return Sequence(text, self).strip()
 
     def strip_seqs(self, text):
         """T.strip_seqs(text) -> unicode
 
         Return string ``text`` stripped only of its sequences.
         """
-        return sequences.Sequence(text, self).strip_seqs()
+        return Sequence(text, self).strip_seqs()
 
     def wrap(self, text, width=None, **kwargs):
         """T.wrap(text, [width=None, indent=u'', ...]) -> unicode
@@ -463,7 +475,7 @@ class Terminal(object):
         lines = []
         for line in text.splitlines():
             lines.extend(
-                (_linewrap for _linewrap in sequences.SequenceTextWrapper(
+                (_linewrap for _linewrap in SequenceTextWrapper(
                     width=width, term=self, **kwargs).wrap(text))
                 if line.strip() else (u'',))
 
@@ -606,7 +618,7 @@ class Terminal(object):
             byte = os.read(self.keyboard_fd, 1)
             return self._keyboard_decoder.decode(byte, final=False)
 
-        resolve = functools.partial(keyboard.resolve_sequence,
+        resolve = functools.partial(resolve_sequence,
                                     mapper=self._keymap,
                                     codes=self._keycodes)
 
