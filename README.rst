@@ -290,7 +290,7 @@ Moving The Cursor
 
 When you want to move the cursor, you have a few choices, the
 ``location(y=None, x=None)`` context manager, ``move(y, x)``, ``move_y(row)``,
- and ``move_x(col)`` attributes.
+and ``move_x(col)`` attributes.
 
 
 Moving Temporarily
@@ -372,6 +372,7 @@ Use the *height* and *width* properties of the *Terminal* class instance::
         print('1/3 ways in!')
 
 These are always current, so they may be used with a callback from SIGWINCH_ signals.:: 
+
         import signal
         from blessed import Terminal
 
@@ -769,4 +770,4 @@ Version History
 .. _colorama: http://pypi.python.org/pypi/colorama/0.2.4
 .. _tigetstr: http://www.openbsd.org/cgi-bin/man.cgi?query=tigetstr&sektion=3
 .. _tparm: http://www.openbsd.org/cgi-bin/man.cgi?query=tparm&sektion=3
-.. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH#SIGWINCH
+.. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH
