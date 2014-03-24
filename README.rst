@@ -90,6 +90,30 @@ The same program with *Blessed* is simply::
         print('This is', term.underline('pretty!'))
 
 
+Screenshots
+===========
+
+.. image:: http://jeffquast.com/blessed-weather.png
+   :target: http://jeffquast.com/blessed-weather.png
+   :scale: 50 %
+   :alt: Weather forecast demo (by @jquast)
+
+.. image:: http://jeffquast.com/blessed-tetris.png
+   :target: http://jeffquast.com/blessed-tetris.png
+   :scale: 50 %
+   :alt: Tetris game demo (by @johannesl)
+
+.. image:: http://jeffquast.com/blessed-wall.png
+   :target: http://jeffquast.com/blessed-wall.png
+   :scale: 50 %
+   :alt: bbs-scene.org api oneliners demo (art by xzip!impure)
+
+.. image:: http://jeffquast.com/blessed-quick-logon.png
+   :target: http://jeffquast.com/blessed-quick-logon.png
+   :scale: 50 %
+   :alt: x/84 bbs quick logon screen (art by xzip!impure)
+
+
 What It Provides
 ================
 
