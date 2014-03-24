@@ -649,13 +649,15 @@ Blessed does not provide...
   when used in concert with colorama_. Patches welcome!
 
 
-Bugs
-====
+Devlopers, Bugs
+===============
 
 Bugs or suggestions? Visit the `issue tracker`_.
 
 For patches, please construct a test case if possible. To test,
 install and execute python package command *tox*.
+
+For the keenly interested, `API` Documentation is available.
 
 
 License
@@ -802,3 +804,4 @@ Version History
 .. _tparm: http://www.openbsd.org/cgi-bin/man.cgi?query=tparm&sektion=3
 .. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH
 .. _`issue tracker`: https://github.com/jquast/blessed/issues/
+.. _API: http://blessed.rtfd.org
