@@ -76,13 +76,13 @@ def get_keyboard_codes():
     values and their mnemonic name. Such as key 260, with the value of its
     identity, 'KEY_LEFT'.  These are derived from the attributes by the same
     of the curses module, with the following exceptions:
-        * KEY_DELETE in place of KEY_DC
-        * KEY_INSERT in place of KEY_IC
-        * KEY_PGUP in place of KEY_PPAGE
-        * KEY_PGDOWN in place of KEY_NPAGE
-        * KEY_ESCAPE in place of KEY_EXIT
-        * KEY_SUP in place of KEY_SR
-        * KEY_SDOWN in place of KEY_SF
+    * KEY_DELETE in place of KEY_DC
+    * KEY_INSERT in place of KEY_IC
+    * KEY_PGUP in place of KEY_PPAGE
+    * KEY_PGDOWN in place of KEY_NPAGE
+    * KEY_ESCAPE in place of KEY_EXIT
+    * KEY_SUP in place of KEY_SR
+    * KEY_SDOWN in place of KEY_SF
     """
     keycodes = OrderedDict(get_curses_keycodes())
     keycodes.update(CURSES_KEYCODE_OVERRIDE_MIXIN)

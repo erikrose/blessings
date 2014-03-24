@@ -54,6 +54,7 @@ class ParameterizingString(unicode):
 class FormattingString(unicode):
     """A Unicode string which can be called using ``text``, returning a
     new string, ``attr`` + ``text`` + ``normal``::
+
         style = FormattingString(term.bright_blue, term.normal)
         style('Big Blue')
         '\x1b[94mBig Blue\x1b(B\x1b[m'
