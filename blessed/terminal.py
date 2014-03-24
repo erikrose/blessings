@@ -39,13 +39,13 @@ from formatters import (
 )
 
 from sequences import (
-    get_keyboard_sequences,
     init_sequence_patterns,
     SequenceTextWrapper,
     Sequence,
 )
 
 from keyboard import (
+    get_keyboard_sequences,
     get_keyboard_codes,
     resolve_sequence,
 )
