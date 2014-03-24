@@ -21,8 +21,9 @@ class ParameterizingString(unicode):
 
     For example::
 
-        >> move = ParameterizingString('move')
-        >> move(0, 0)('text')
+        >>> c = ParameterizingString('color', term.color, term.normal)
+        >>> c(9)('color #9')
+        u'\x1b[91mcolor #9\x1b(B\x1b[m'
     """
 
     def __new__(cls, name, attr, normal):
@@ -67,9 +68,9 @@ class FormattingString(unicode):
     """A Unicode string which can be called using ``text``,
     returning a new string, ``attr`` + ``text`` + ``normal``::
 
-        >> style = FormattingString(term.bright_blue, term.normal)
-        >> style('Big Blue')
-        '\x1b[94mBig Blue\x1b(B\x1b[m'
+        >>> style = FormattingString(term.bright_blue, term.normal)
+        >>> style('Big Blue')
+        u'\x1b[94mBig Blue\x1b(B\x1b[m'
     """
 
     def __new__(cls, attr, normal):
