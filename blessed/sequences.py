@@ -364,7 +364,7 @@ class Sequence(unicode):
 
         Returns string derived from unicode string ``S``, right-adjusted
         by leading whitespace padding ``fillchar``."""
-        leftside = fillchar * int((max(0, float(width - self.length())))
+        leftside = fillchar * int((max(0.0, float(width - self.length())))
                                   / float(len(fillchar)))
         return u''.join((leftside, self))
 
@@ -374,9 +374,9 @@ class Sequence(unicode):
         Returns string derived from unicode string ``S``, centered
         and surrounded with whitespace padding ``fillchar``."""
         split = max(0.0, float(width) - self.length()) / 2
-        leftside = fillchar * int((max(0,0, math.floor(split)))
+        leftside = fillchar * int((max(0.0, math.floor(split)))
                                   / float(len(fillchar)))
-        rightside = fillchar * int((max(0,0, math.ceil(split)))
+        rightside = fillchar * int((max(0.0, math.ceil(split)))
                                    / float(len(fillchar)))
         return u''.join((leftside, self, rightside))
 
