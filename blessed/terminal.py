@@ -581,7 +581,7 @@ class Terminal(object):
 
         To distinguish between ``KEY_ESCAPE``, and sequences beginning with
         escape, the ``esc_delay`` specifies the amount of time after receiving
-        the escape character ('\\x1b', chr(27)) to seek for the completion
+        the escape character (chr(27)) to seek for the completion
         of other application keys before returning ``KEY_ESCAPE``.
         """
         # TODO(jquast): "meta sends escape", where alt+1 would send '\x1b1',

@@ -63,6 +63,7 @@ def init_sequence_patterns(term):
         and parses several known terminal capabilities, and builds a
         database of regular expressions and attaches them to ``term``
         as attributes:
+
         ``_re_will_move``
             any sequence matching this pattern will cause the terminal
             cursor to move (such as *term.home*).

@@ -149,7 +149,8 @@ def resolve_capability(term, attr):
 
 def resolve_color(term, color):
     """Resolve a color, to callable capability, valid ``color`` capabilities
-    are format ``red``, or ``on_right_green``.
+    are simple colors such as ``red``, or compounded, such as
+    ``on_bright_green``.
     """
     # NOTE(erikrose): Does curses automatically exchange red and blue and cyan
     # and yellow when a terminal supports setf/setb rather than setaf/setab?
@@ -172,8 +173,8 @@ def resolve_color(term, color):
 
 def resolve_attribute(term, attr):
     """Resolve a sugary or plain capability name, color, or compound
-    formatting function name into a *callable* unicode string
-    capability, ``ParameterizingString`` or ``FormattingString``.
+    formatting name into a *callable* unicode string capability,
+    ``ParameterizingString`` or ``FormattingString``.
     """
     # A simple color, such as `red' or `blue'.
     if attr in COLORS:

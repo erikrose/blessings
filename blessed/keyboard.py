@@ -28,11 +28,11 @@ if not hasattr(curses, 'KEY_TAB'):
 
 class Keystroke(unicode):
     """A unicode-derived class for describing keyboard input returned by
-    the ``keypress()`` method of ``Terminal``, which may, at times, be a
-    multibyte sequence, providing properties ``is_sequence`` as True when
-    the string is a known sequence, and ``code``, which returns an integer
-    value that may be compared against the terminal class attributes such
-    as ``KEY_LEFT``.
+    the ``inkey()`` method of ``Terminal``, which may, at times, be a
+    multibyte sequence, providing properties ``is_sequence`` as ``True``
+    when the string is a known sequence, and ``code``, which returns an
+    integer value that may be compared against the terminal class attributes
+    such as ``KEY_LEFT``.
     """
     def __new__(cls, ucs='', code=None, name=None):
         new = unicode.__new__(cls, ucs)
@@ -42,10 +42,7 @@ class Keystroke(unicode):
 
     @property
     def is_sequence(self):
-        """K.is_sequence -> bool
-
-        Returns True if value represents a multibyte sequence.
-        """
+        "Whether the value represents a multibyte sequence (bool)."
         return self._code is not None
 
     def __repr__(self):
@@ -54,18 +51,12 @@ class Keystroke(unicode):
 
     @property
     def name(self):
-        """K.name -> str
-
-        Returns string-name of key sequence, such as 'KEY_LEFT'
-        """
+        "String-name of key sequence, such as ``'KEY_LEFT'`` (str)."
         return self._name
 
     @property
     def code(self):
-        """K.code -> int
-
-        Returns integer keycode value of multibyte sequence.
-        """
+        "Integer keycode value of multibyte sequence (int)."
         return self._code
 
 
@@ -73,16 +64,17 @@ def get_keyboard_codes():
     """get_keyboard_codes() -> dict
 
     Returns dictionary of (code, name) pairs for curses keyboard constant
-    values and their mnemonic name. Such as key 260, with the value of its
-    identity, 'KEY_LEFT'.  These are derived from the attributes by the same
-    of the curses module, with the following exceptions:
-    * KEY_DELETE in place of KEY_DC
-    * KEY_INSERT in place of KEY_IC
-    * KEY_PGUP in place of KEY_PPAGE
-    * KEY_PGDOWN in place of KEY_NPAGE
-    * KEY_ESCAPE in place of KEY_EXIT
-    * KEY_SUP in place of KEY_SR
-    * KEY_SDOWN in place of KEY_SF
+    values and their mnemonic name. Such as key ``260``, with the value of
+    its identity, ``KEY_LEFT``.  These are derived from the attributes by the
+    same of the curses module, with the following exceptions:
+
+    * ``KEY_DELETE`` in place of ``KEY_DC``
+    * ``KEY_INSERT`` in place of ``KEY_IC``
+    * ``KEY_PGUP`` in place of ``KEY_PPAGE``
+    * ``KEY_PGDOWN`` in place of ``KEY_NPAGE``
+    * ``KEY_ESCAPE`` in place of ``KEY_EXIT``
+    * ``KEY_SUP`` in place of ``KEY_SR``
+    * ``KEY_SDOWN`` in place of ``KEY_SF``
     """
     keycodes = OrderedDict(get_curses_keycodes())
     keycodes.update(CURSES_KEYCODE_OVERRIDE_MIXIN)
@@ -93,12 +85,14 @@ def get_keyboard_codes():
 
 
 def _alternative_left_right(term):
-    """Return dict of sequence term._cuf1, _cub1 as values curses.KEY_RIGHT,
-    LEFT when appropriate.
+    """_alternative_left_right(T) -> dict
 
-    some terminals report a different value for kcuf1 than cuf1,
-    but actually send the value of cuf1 for right arrow key
-    (which is non-destructive space).
+    Return dict of sequences ``term._cuf1``, and ``term._cub1``,
+    valued as ``KEY_RIGHT``, ``KEY_LEFT`` when appropriate if available.
+
+    some terminals report a different value for *kcuf1* than *cuf1*, but
+    actually send the value of *cuf1* for right arrow key (which is
+    non-destructive space).
     """
     keymap = dict()
     if term._cuf1 and term._cuf1 != u' ':
@@ -109,7 +103,7 @@ def _alternative_left_right(term):
 
 
 def get_keyboard_sequences(term):
-    """init_keyboard_sequences(T) -> (OrderedDict)
+    """get_keyboard_sequences(T) -> (OrderedDict)
 
     Initialize and return a keyboard map and sequence lookup table,
     (sequence, constant) from blessed Terminal instance ``term``,
@@ -176,14 +170,13 @@ CURSES_KEYCODE_OVERRIDE_MIXIN = (
     ('KEY_SDOWN', curses.KEY_SF),
 )
 
-# In a perfect world, terminal emulators would always send exactly what the
-# terminfo(5) capability database plans for them, accordingly by the value
-# of the TERM name they declare.
-#
-# But this isn't a perfect world. Many vt220-derived terminals, such as
-# those declaring 'xterm', will continue to send vt220 codes instead of
-# their native-declared codes. This goes for many: rxvt, putty, iTerm.
-#
+"""In a perfect world, terminal emulators would always send exactly what
+the terminfo(5) capability database plans for them, accordingly by the
+value of the ``TERM`` name they declare.
+
+But this isn't a perfect world. Many vt220-derived terminals, such as
+those declaring 'xterm', will continue to send vt220 codes instead of
+their native-declared codes. This goes for many: rxvt, putty, iTerm."""
 DEFAULT_SEQUENCE_MIXIN = (
     # these common control characters (and 127, ctrl+'?') mapped to
     # an application key definition.
