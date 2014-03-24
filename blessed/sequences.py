@@ -351,21 +351,34 @@ class Sequence(unicode):
         return new
 
     def ljust(self, width, fillchar=u' '):
-        """S.ljust(width, fillchar=u'') -> unicode"""
-        return self + fillchar * (max(0, width - self.length()))
+        """S.ljust(width, fillchar=u'') -> unicode
+
+        Returns string derived from unicode string ``S``, left-adjusted
+        by trailing whitespace padding ``fillchar`."""
+        rightside = fillchar * ((max(0, width - self.length()))
+                                / len(fillchar))
+        return u''.join((self, rightside))
 
     def rjust(self, width, fillchar=u' '):
-        """S.rjust(width, fillchar=u'') -> unicode"""
-        return fillchar * (max(0, width - self.length())) + self
+        """S.rjust(width, fillchar=u'') -> unicode
+
+        Returns string derived from unicode string ``S``, right-adjusted
+        by leading whitespace padding ``fillchar``."""
+        leftside = fillchar * ((max(0, width - self.length()))
+                               / len(fillchar))
+        return u''.join((leftside, self))
 
     def center(self, width, fillchar=u' '):
         """S.center(width, fillchar=u'') -> unicode
 
-        Returns string derived from unicode string ``S`` stripped of whitespace
-        and terminal sequences."""
+        Returns string derived from unicode string ``S``, centered
+        and surrounded with whitespace padding ``fillchar``."""
         split = max(0.0, float(width) - self.length()) / 2
-        return (fillchar * (max(0, int(math.floor(split)))) + self
-                + fillchar * (max(0, int(math.ceil(split)))))
+        leftside = fillchar * ((max(0, int(math.floor(split))))
+                               / len(fillchar))
+        rightside = fillchar * ((max(0, int(math.ceil(split))))
+                                / len(fillchar))
+        return u''.join((leftside, self, rightside))
 
     def length(self):
         """S.length() -> int
