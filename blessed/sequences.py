@@ -338,23 +338,27 @@ class Sequence(unicode):
     """
 
     def __new__(cls, sequence_text, term):
+        "Sequence(sequence_text, term) -> unicode object"
         new = unicode.__new__(cls, sequence_text)
         new._term = term
         return new
 
     def ljust(self, width, fillchar=u' '):
+        "S.ljust(width, fillchar=u'') -> unicode"
         return self + fillchar * (max(0, width - self.length()))
 
     def rjust(self, width, fillchar=u' '):
+        "S.rjust(width, fillchar=u'') -> unicode"
         return fillchar * (max(0, width - self.length())) + self
 
     def center(self, width, fillchar=u' '):
+        "S.center(width, fillchar=u'') -> unicode"
         split = max(0.0, float(width) - self.length()) / 2
         return (fillchar * (max(0, int(math.floor(split)))) + self
                 + fillchar * (max(0, int(math.ceil(split)))))
 
     def length(self):
-        """  S.length() -> integer
+        """S.length() -> int
 
         Return the printable length of a string that contains (some types) of
         (escape) sequences. Although accounted for, strings containing
@@ -372,14 +376,14 @@ class Sequence(unicode):
         return len(self.strip_seqs())
 
     def strip(self):
-        """ S.strip() -> str
+        """S.strip() -> unicode
 
         Strips sequences and whitespaces of ``S`` and returns.
         """
         return self.strip_seqs().strip()
 
     def strip_seqs(self):
-        """  S.strip_seqs() -> str
+        """S.strip_seqs() -> unicode
 
         Return a string without sequences for a string that contains
         (most types) of (escape) sequences for the Terminal with which
@@ -412,8 +416,7 @@ class Sequence(unicode):
 
 
 def measure_length(ucs, term):
-    """
-    measure_length(S) -> integer
+    """measure_length(S, term) -> int
 
     Returns non-zero for string ``S`` that begins with a terminal sequence,
     that is: the width of the first unprintable sequence found in S.  For use
@@ -444,8 +447,37 @@ def measure_length(ucs, term):
     return 0
 
 
+def termcap_distance(ucs, cap, unit, term):
+    """termcap_distance(S, cap, unit, term) -> int
+
+    Match horizontal distance by simple ``cap`` capability name, ``cub1`` or
+    ``cuf1``, with string matching the sequences identified by Terminal
+    instance ``term`` and a distance of ``unit`` *1* or *-1*, for right and
+    left, respectively.
+
+    Otherwise, by regular expression (using dynamic regular expressions built
+    using ``cub(n)`` and ``cuf(n)``. Failing that, any of the standard SGR
+    sequences (``\033[C``, ``\033[D``, ``\033[nC``, ``\033[nD``).
+
+    Returns 0 if unmatched.
+    """
+    assert cap in ('cuf', 'cub')
+    # match cub1(left), cuf1(right)
+    one = getattr(term, '_%s1' % (cap,))
+    if one and ucs.startswith(one):
+        return unit
+
+    # match cub(n), cuf(n) using regular expressions
+    re_pattern = getattr(term, '_re_%s' % (cap,))
+    _dist = re_pattern and re_pattern.match(ucs)
+    if _dist:
+        return unit * int(_dist.group(1))
+
+    return 0
+
+
 def horizontal_distance(ucs, term):
-    """ horizontal_distance(S) -> integer
+    """horizontal_distance(S, term) -> int
 
     Returns Integer <n> in SGR sequence of form <ESC>[<n>C (T.move_right(nn)).
     Returns Integer -(n) in SGR sequence of form <ESC>[<n>D (T.move_left(nn)).
@@ -454,24 +486,6 @@ def horizontal_distance(ucs, term):
     Tabstop (\t) cannot be correctly calculated, as the relative column
     position cannot be determined: 8 is always (and, incorrectly) returned.
     """
-
-    def term_distance(cap, unit):
-        """ Match by simple cub1/cuf1 string matching (distance of 1)
-            Or, by regular expression (using dynamic regular expressions
-            built using cub(n) and cuf(n). Failing that, the standard
-            SGR sequences (\033[C, \033[D, \033[nC, \033[nD
-        """
-        assert cap in ('cuf', 'cub')
-        # match cub1(left), cuf1(right)
-        one = getattr(term, '_%s1' % (cap,))
-        if one and ucs.startswith(one):
-            return unit
-
-        # match cub(n), cuf(n) using regular expressions
-        re_pattern = getattr(term, '_re_%s' % (cap,))
-        _dist = re_pattern and re_pattern.match(ucs)
-        if _dist:
-            return unit * int(_dist.group(1))
 
     if ucs.startswith('\b'):
         return -1
@@ -486,4 +500,6 @@ def horizontal_distance(ucs, term):
         # \t would consume on the output device!
         return 8
 
-    return term_distance('cub', -1) or term_distance('cuf', 1) or 0
+    return (termcap_distance(ucs, 'cub', -1, term) or
+            termcap_distance(ucs, 'cuf', 1, term) or
+            0)
