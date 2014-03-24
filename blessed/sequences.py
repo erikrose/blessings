@@ -355,8 +355,8 @@ class Sequence(unicode):
 
         Returns string derived from unicode string ``S``, left-adjusted
         by trailing whitespace padding ``fillchar`."""
-        rightside = fillchar * ((max(0, width - self.length()))
-                                / len(fillchar))
+        rightside = fillchar * int((max(0.0, float(width - self.length())))
+                                   / float(len(fillchar)))
         return u''.join((self, rightside))
 
     def rjust(self, width, fillchar=u' '):
@@ -364,8 +364,8 @@ class Sequence(unicode):
 
         Returns string derived from unicode string ``S``, right-adjusted
         by leading whitespace padding ``fillchar``."""
-        leftside = fillchar * ((max(0, width - self.length()))
-                               / len(fillchar))
+        leftside = fillchar * int((max(0, float(width - self.length())))
+                                  / float(len(fillchar)))
         return u''.join((leftside, self))
 
     def center(self, width, fillchar=u' '):
@@ -374,10 +374,10 @@ class Sequence(unicode):
         Returns string derived from unicode string ``S``, centered
         and surrounded with whitespace padding ``fillchar``."""
         split = max(0.0, float(width) - self.length()) / 2
-        leftside = fillchar * ((max(0, int(math.floor(split))))
-                               / len(fillchar))
-        rightside = fillchar * ((max(0, int(math.ceil(split))))
-                                / len(fillchar))
+        leftside = fillchar * int((max(0,0, math.floor(split)))
+                                  / float(len(fillchar)))
+        rightside = fillchar * int((max(0,0, math.ceil(split)))
+                                   / float(len(fillchar)))
         return u''.join((leftside, self, rightside))
 
     def length(self):
