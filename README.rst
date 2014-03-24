@@ -1,15 +1,19 @@
 .. image:: https://secure.travis-ci.org/jquast/blessed.png
    :target: https://travis-ci.org/jquast/blessed
    :alt: travis continous integration
+
 .. image:: http://coveralls.io/repos/jquast/blessed/badge.png
    :target: http://coveralls.io/r/jquast/blessed
    :alt: coveralls code coveraage
+
 .. image:: https://pypip.in/v/blessed/badge.png
    :target: https://pypi.python.org/pypi/blessed/
    :alt: Latest Version
+
 .. image:: https://pypip.in/license/blessed/badge.png
    :target: https://pypi.python.org/pypi/blessed/
    :alt: License
+
 .. image:: https://pypip.in/d/blessed/badge.png
    :target: https://pypi.python.org/pypi/blessed/
    :alt: Downloads
@@ -81,7 +85,7 @@ print some underlined text at the bottom of the screen::
                                                       normal=normal))
     print(rc)  # Restore cursor position.
 
-The same program with *Blessed* is simply:: 
+The same program with *Blessed* is simply::
 
     from blessed import Terminal
 
@@ -151,23 +155,51 @@ method, so that capabilities can be displayed in-line for more complex strings::
 
     print('{t.red_on_yellow}Candy corn{t.normal} for everyone!'.format(t=term))
 
+
+Capabilities
+------------
+
 The basic capabilities supported by most terminals are:
 
-* ``bold``: Turn on 'extra bright' mode.
-* ``reverse``: Switch fore and background attributes.
-* ``blink``: Turn on blinking.
-* ``normal``: Reset attributes to default.
+``bold``
+  Turn on 'extra bright' mode.
+``reverse``
+  Switch fore and background attributes.
+``blink``
+  Turn on blinking.
+``normal``
+  Reset attributes to default.
 
 The less commonly supported capabilities:
 
-* ``dim``: Turn on *half-bright* mode.
-* ``underline`` and ``no_underline``.
-* ``italic`` and ``no_italic``.
-* ``shadow`` and ``no_shadow``.
-* ``standout`` and ``no_standout``.
-* ``subscript`` and ``no_subscript``.
-* ``superscript`` and ``no_superscript``.
-* ``flash``: Visual bell, which flashes the screen.
+``dim``
+  Enable half-bright mode.
+``underline``
+  Enable underline mode.
+``no_underline``
+  Exit underline mode.
+``italic``
+  Enable italicized text.
+``no_italic``
+  Exit italics.
+``shadow``
+  Enable shadow text mode (rare).
+``no_shadow``
+  Exit shadow text mode.
+``standout``
+  Enable standout mode (often, an alias for ``reverse``.).
+``no_standout``
+  Exit standout mode.
+``subscript``
+  Enable subscript mode.
+``no_subscript``
+  Exit subscript mode.
+``superscript``
+  Enable superscript mode.
+``no_superscript``
+  Exit superscript mode.
+``flash``
+  Visual bell, flashes the screen.
 
 Note that, while the inverse of *underline* is *no_underline*, the only way
 to turn off *bold* or *reverse* is *normal*, which also cancels any custom
@@ -180,8 +212,8 @@ instance. If it is not a supported capability, or a non-tty is used as an
 output stream, an empty string is returned.
 
 
-Color
------
+Colors
+------
 
 Color terminals are capable of at least 8 basic colors.
 
@@ -207,7 +239,7 @@ terminals also provide an additional 8 high-intensity versions using
 
     print(term.on_bright_blue('Blue skies!'))
     print(term.bright_red_on_bright_yellow('Pepperoni Pizza!'))
-    
+
 There is also a numerical interface to colors, which takes an integer from
 0-15.::
 
@@ -371,19 +403,19 @@ Use the *height* and *width* properties of the *Terminal* class instance::
     with term.location(x=term.width / 3, y=term.height / 3):
         print('1/3 ways in!')
 
-These are always current, so they may be used with a callback from SIGWINCH_ signals.:: 
+These are always current, so they may be used with a callback from SIGWINCH_ signals.::
 
-        import signal
-        from blessed import Terminal
+    import signal
+    from blessed import Terminal
 
-        term = Terminal()
+    term = Terminal()
 
-        def on_resize(sig, action):
-            print('height={t.height}, width={t.width}'.format(t=term))
+    def on_resize(sig, action):
+        print('height={t.height}, width={t.width}'.format(t=term))
 
-        signal.signal(signal.SIGWINCH, on_resize)
+    signal.signal(signal.SIGWINCH, on_resize)
 
-        term.inkey()
+    term.inkey()
 
 
 Clearing The Screen
@@ -484,7 +516,7 @@ Keyboard Input
 The built-in python *raw_input* function does not return a value until the return
 key is pressed, and is not suitable for detecting each individual keypress, much
 less arrow or function keys that emit multibyte sequences.  Special `termios(4)`_
-routines are required to enter Non-canonical, known in curses as `cbreak(3)_`.
+routines are required to enter Non-canonical, known in curses as `cbreak(3)`_.
 These functions also receive bytes, which must be incrementally decoded to unicode.
 
 Blessed handles all of these special cases with the following simple calls.
@@ -566,25 +598,25 @@ representing an application key of your terminal.
 
 The *code* property (int) may then be compared with any of the following
 attributes of the *Terminal* instance, which are equivalent to the same
-available in `curs_getch(3)_`, with the following exceptions:
+available in `curs_getch(3)`_, with the following exceptions:
 
- * use ``KEY_DELETE`` instead of ``KEY_DC`` (chr(127))
- * use ``KEY_INSERT`` instead of ``KEY_IC``
- * use ``KEY_PGUP`` instead of ``KEY_PPAGE``
- * use ``KEY_PGDOWN`` instead of ``KEY_NPAGE``
- * use ``KEY_ESCAPE`` instead of ``KEY_EXIT``
- * use ``KEY_SUP`` instead of ``KEY_SR`` (shift + up)
- * use ``KEY_SDOWN`` instead of ``KEY_SF`` (shift + down)
+* use ``KEY_DELETE`` instead of ``KEY_DC`` (chr(127))
+* use ``KEY_INSERT`` instead of ``KEY_IC``
+* use ``KEY_PGUP`` instead of ``KEY_PPAGE``
+* use ``KEY_PGDOWN`` instead of ``KEY_NPAGE``
+* use ``KEY_ESCAPE`` instead of ``KEY_EXIT``
+* use ``KEY_SUP`` instead of ``KEY_SR`` (shift + up)
+* use ``KEY_SDOWN`` instead of ``KEY_SF`` (shift + down)
 
 Additionally, use any of the following common attributes:
 
- * ``KEY_BACKSPACE`` (chr(8)).
- * ``KEY_TAB`` (chr(9)).
- * ``KEY_DOWN``, ``KEY_UP``, ``KEY_LEFT``, ``KEY_RIGHT``.
- * ``KEY_SLEFT`` (shift + left).
- * ``KEY_SRIGHT``  (shift + right).
- * ``KEY_HOME``, ``KEY_END``.
- * ``KEY_F1`` through ``KEY_F22``.
+* ``KEY_BACKSPACE`` (chr(8)).
+* ``KEY_TAB`` (chr(9)).
+* ``KEY_DOWN``, ``KEY_UP``, ``KEY_LEFT``, ``KEY_RIGHT``.
+* ``KEY_SLEFT`` (shift + left).
+* ``KEY_SRIGHT``  (shift + right).
+* ``KEY_HOME``, ``KEY_END``.
+* ``KEY_F1`` through ``KEY_F22``.
 
 
 Shopping List
@@ -621,8 +653,6 @@ Bugs
 ====
 
 Bugs or suggestions? Visit the `issue tracker`_.
-
-.. _`issue tracker`: https://github.com/jquast/blessed/issues/
 
 For patches, please construct a test case if possible. To test,
 install and execute python package command *tox*.
@@ -671,7 +701,7 @@ Version History
 
   * enhancement: some attributes are now properties, raise exceptions when
     assigned.
-  * enhancement: pypy is not a supported python platform implementation.
+  * enhancement: pypy is now a supported python platform implementation.
   * enhancement: removed pokemon ``curses.error`` exceptions.
   * enhancement: converted nose tests to pytest, merged travis and tox.
   * enhancement: pytest fixtures, paired with a new ``@as_subprocess``
@@ -763,7 +793,7 @@ Version History
 .. _`jquast/blessed`: https://github.com/jquast/blessed
 .. _curses: http://docs.python.org/library/curses.html
 .. _couleur: http://pypi.python.org/pypi/couleur
-.. _`cbreak(3)`: www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
+.. _`cbreak(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
 .. _`curs_getch(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=curs_getch&apropos=0&sektion=3
 .. _`termios(4)`: http://www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4
 .. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
@@ -771,3 +801,4 @@ Version History
 .. _tigetstr: http://www.openbsd.org/cgi-bin/man.cgi?query=tigetstr&sektion=3
 .. _tparm: http://www.openbsd.org/cgi-bin/man.cgi?query=tparm&sektion=3
 .. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH
+.. _`issue tracker`: https://github.com/jquast/blessed/issues/
