@@ -12,13 +12,16 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import blessed
-
-#import sys, os
+import sys
+import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+here = os.path.dirname(__file__)
+sys.path.insert(0, os.path.abspath(os.path.join(here, '..')))
+
+import blessed
+
 
 # -- General configuration ----------------------------------------------------
 
@@ -43,14 +46,15 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Blessed'
-copyright = u'2011 Erik Rose, 2014 Jeff Quast'
+copyright = u'2014 Jeff Quast, 2011 Erik Rose'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '1.6'
+version = '1.7'
+
 # The full version, including alpha/beta/rc tags.
 release = version
 

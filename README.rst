@@ -30,7 +30,7 @@ The Pitch
 * No more C-like calls to tigetstr_ and `tparm`_.
 * Act intelligently when somebody redirects your output to a file, omitting
   all of the terminal sequences such as styling, colors, or positioning.
-
+* Dead-simple keyboard handling, modeled after the Basic language's *INKEY$*
 
 Before And After
 ----------------
@@ -89,8 +89,8 @@ decoded, as well as your locale-specific encoded multibyte input.
 Simple Formatting
 -----------------
 
-Lots of handy formatting codes `terminfo(5)`_ are available as attributes
-on a *Terminal* class instance. For example::
+Lots of handy formatting codes are available as attributes on a *Terminal* class
+instance. For example::
 
     from blessed import Terminal
 
@@ -133,8 +133,8 @@ Note that, while the inverse of *underline* is *no_underline*, the only way
 to turn off *bold* or *reverse* is *normal*, which also cancels any custom
 colors.
 
-Many of these are aliases, their true capability names (such as *smul* for
-*begin underline mode*) may still be used. Any capability in the `terminfo(5)`_
+Many of these are aliases, their true capability names (such as 'smul' for
+'begin underline mode') may still be used. Any capability in the `terminfo(5)`_
 manual, under column **Cap-name**, may be used as an attribute to a *Terminal*
 instance. If it is not a supported capability, or a non-tty is used as an
 output stream, an empty string is returned.
@@ -446,7 +446,7 @@ less arrow or function keys that emit multibyte sequences.  Special `termios(4)`
 routines are required to enter Non-canonical, known in curses as `cbreak(3)_`.
 These functions also receive bytes, which must be incrementally decoded to unicode.
 
-Blessed handles all of these special keyboarding purposes!
+Blessed handles all of these special cases with the following simple calls.
 
 cbreak
 ~~~~~~
@@ -467,8 +467,8 @@ raw
 ~~~
 
 The context manager ``raw`` is the same as ``cbreak``, except interrupt (^C),
-quit (^\\), suspend (^Z), and flow control (^S, ^Q) characters are not trapped
-by signal handlers, but instead sent directly. This is necessary if you
+quit (^\\), suspend (^Z), and flow control (^S, ^Q) characters are not trapped,
+but instead sent directly as their natural character. This is necessary if you
 actually want to handle the receipt of Ctrl+C
 
 inkey
@@ -511,6 +511,10 @@ Its output might appear as::
     It sure is quiet in here ...
     got q.
     bye!
+
+A *timeout* value of None (default) will block forever. Any other value specifies
+the length of time to poll for input, if no input is received after such time
+has elapsed, an empty string is returned. A timeout value of 0 is nonblocking.
 
 keyboard codes
 ~~~~~~~~~~~~~~
@@ -603,16 +607,18 @@ Version History
 1.7
   * Forked github project `erikrose/blessings`_ to `jquast/blessed`_, this
     project was previously known as **blessings** version 1.6 and prior.
-  * introduced: context manager ``cbreak`` and ``raw``, which is equivalent
-    to ``tty.setcbreak`` and ``tty.setraw``, allowing input from stdin to be
+  * introduced: context manager ``cbreak()`` and ``raw()``, which is equivalent
+    to ``tty.setcbreak()`` and ``tty.setraw()``, allowing input from stdin to be
     read as each key is pressed.
-  * introduced: ``inkey()``, which will return 1 or more characters as
-    a unicode sequence, with attributes ``.code`` and ``.name`` non-None when
-    a multibyte sequence is received, allowing arrow keys and such to be
-    detected. Optional value ``timeout`` allows timed polling or blocking.
-  * introduced: ``center()``, ``rjust()``, and ``ljust()`` methods, allows text
-    containing sequences to be aligned to screen, or ``width`` specified.
-  * introduced: ``wrap()``, allows text containing sequences to be
+  * introduced: ``inkey()`` and ``kbhit()``, which will return 1 or more
+    characters as a unicode sequence, with attributes ``.code`` and ``.name``
+    non-None when a multibyte sequence is received, allowing arrow keys and
+    such to be detected. Optional value ``timeout`` allows timed polling or
+    blocking.
+  * introduced: ``center()``, ``rjust()``, ``ljust()``, ``strip()``, and
+    ``strip_seqs()`` methods.  Allows text containing sequences to be aligned
+    to screen, or ``width`` specified.
+  * introduced: ``wrap()`` method. allows text containing sequences to be
     word-wrapped without breaking mid-sequence and honoring their printable
     width.
 
