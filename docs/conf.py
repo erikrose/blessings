@@ -222,5 +222,7 @@ man_pages = [
     ('index', 'Blessed', u'Blessed Documentation',
      [u'Jeff Quast'], 1)
 ]
+autodoc_member_order = 'bysource'
+
 
 del blessed  # imported but unused

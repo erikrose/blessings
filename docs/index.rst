@@ -19,26 +19,30 @@ Then Read This If You Want
 
 Internal modules are as follows.
 
-terminal
---------
+blessed.terminal
+----------------
 
 .. automodule:: blessed.terminal
    :members:
+   :undoc-members:
 
-formatters
-----------
+blessed.formatters
+------------------
 
 .. automodule:: blessed.formatters
    :members:
+   :undoc-members:
 
-keyboard
---------
+blessed.keyboard
+----------------
 
 .. automodule:: blessed.keyboard
    :members:
+   :undoc-members:
 
-sequences
----------
+blessed.sequences
+-----------------
 
 .. automodule:: blessed.sequences
    :members:
+   :undoc-members:

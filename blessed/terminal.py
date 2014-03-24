@@ -39,11 +39,6 @@ import keyboard
 class Terminal(object):
     """An abstraction around terminal capabilities
 
-    Unlike curses, this doesn't require clearing the screen before doing
-    anything, and it's friendlier to use. It keeps the endless calls to
-    ``tigetstr()`` and ``tparm()`` out of your code, and it acts intelligently
-    when somebody pipes your output to a non-terminal.
-
     Instance attributes:
 
       ``stream``
@@ -211,18 +206,13 @@ class Terminal(object):
 
     @property
     def does_styling(self):
-        """Whether attempt to emit capabilities
-
-        This is influenced by the ``is_a_tty`` property and by the
-        ``force_styling`` argument to the constructor. You can examine
-        this value to decide whether to draw progress bars or other frippery.
-
-        """
+        """Whether this instance will emit terminal sequences (bool)."""
         return self._does_styling
 
     @property
     def is_a_tty(self):
-        """Whether my ``stream`` appears to be associated with a terminal"""
+        """Whether the ``stream`` associated with this instance is a terminal
+        (bool)."""
         return self._is_a_tty
 
     @property
@@ -230,16 +220,6 @@ class Terminal(object):
         """T.height -> int
 
         The height of the terminal in characters.
-
-        If an alternative ``stream`` is chosen, the size of that stream
-        is returned if it is a connected to a terminal such as a pty.
-        Otherwise, the size of the controlling terminal is returned.
-
-        If neither of these streams are terminals, such as when stdout is piped
-        to less(1), the values of the environment variable LINES and COLS are
-        returned.
-
-        None may be returned if no suitable size is discovered.
         """
         return self._height_and_width().ws_row
 
@@ -248,8 +228,6 @@ class Terminal(object):
         """T.width -> int
 
         The width of the terminal in characters.
-
-        None may be returned if no suitable size is discovered.
         """
         return self._height_and_width().ws_col
 
@@ -320,7 +298,14 @@ class Terminal(object):
     @contextlib.contextmanager
     def fullscreen(self):
         """Return a context manager that enters fullscreen mode while inside it
-        and restores normal mode on leaving."""
+        and restores normal mode on leaving. Fullscreen mode is characterized
+        by instructing the terminal emulator to store and save the current
+        screen state (all screen output), switch to "alternate screen". Upon
+        exiting, the previous screen state is returned.
+
+        This call may not be tested; only one screen state may be saved at a
+        time.
+        """
         self.stream.write(self.enter_fullscreen)
         try:
             yield
@@ -329,8 +314,8 @@ class Terminal(object):
 
     @contextlib.contextmanager
     def hidden_cursor(self):
-        """Return a context manager that hides the cursor while inside it and
-        makes it visible on leaving."""
+        """Return a context manager that hides the cursor upon entering,
+        and makes it visible again upon exiting."""
         self.stream.write(self.hide_cursor)
         try:
             yield
@@ -339,7 +324,7 @@ class Terminal(object):
 
     @property
     def color(self):
-        """Return a capability that sets the foreground color.
+        """Returns capability that sets the foreground color.
 
         The capability is unparameterized until called and passed a number
         (0-15), at which point it returns another string which represents a
@@ -357,11 +342,7 @@ class Terminal(object):
 
     @property
     def on_color(self):
-        """Return a capability that sets the background color.
-
-        See ``color()``.
-
-        """
+        "Returns capability that sets the background color."
         if not self.does_styling:
             return formatters.NullCallableString()
         return formatters.ParameterizingString(name='on_color',
@@ -370,8 +351,7 @@ class Terminal(object):
 
     @property
     def normal(self):
-        """Return capability that resets video attribute.
-        """
+        "Returns sequence that resets video attribute."
         if self._normal:
             return self._normal
         self._normal = formatters.resolve_capability(self, 'normal')
@@ -381,23 +361,11 @@ class Terminal(object):
     def number_of_colors(self):
         """Return the number of colors the terminal supports.
 
-        Common values are 0, 8, 16, 88, and 256.
-
-        Though the underlying capability returns -1 when there is no color
-        support, we return 0. This lets you test more Pythonically::
+        Common values are 0, 8, 16, 88, and 256. Most commonly
+        this may be used to test color capabilities at all::
 
             if term.number_of_colors:
-                ...
-
-        We also return 0 if the terminal won't tell us how many colors it
-        supports, which I think is rare.
-
-        """
-        # This is actually the only remotely useful numeric capability. We
-        # don't name it after the underlying capability, because we deviate
-        # slightly from its behavior, and we might someday wish to give direct
-        # access to it.
-        #
+                ..."""
         # trim value to 0, as tigetnum('colors') returns -1 if no support,
         # -2 if no such capability.
         return max(0, self.does_styling and curses.tigetnum('colors') or -1)
@@ -411,34 +379,34 @@ class Terminal(object):
         return self.setab or self.setb
 
     def ljust(self, text, width=None, fillchar=u' '):
-        """T.ljust(text, [width], [fillchar]) -> string
+        """T.ljust(text, [width], [fillchar]) -> unicode
 
         Return string ``text``, left-justified by printable length ``width``.
         Padding is done using the specified fill character (default is a
-        space).  Default width is the attached terminal's width. ``text`` is
-        escape-sequence safe."""
+        space).  Default ``width`` is the attached terminal's width. ``text``
+        may contain terminal sequences."""
         if width is None:
             width = self.width
         return sequences.Sequence(text, self).ljust(width, fillchar)
 
     def rjust(self, text, width=None, fillchar=u' '):
-        """T.rjust(text, [width], [fillchar]) -> string
+        """T.rjust(text, [width], [fillchar]) -> unicode
 
         Return string ``text``, right-justified by printable length ``width``.
-        Padding is done using the specified fill character (default is a space)
-        Default width is the attached terminal's width. ``text`` is
-        escape-sequence safe."""
+        Padding is done using the specified fill character (default is a
+        space).  Default ``width`` is the attached terminal's width. ``text``
+        may contain terminal sequences."""
         if width is None:
             width = self.width
         return sequences.Sequence(text, self).rjust(width, fillchar)
 
     def center(self, text, width=None, fillchar=u' '):
-        """T.center(text, [width], [fillchar]) -> string
+        """T.center(text, [width], [fillchar]) -> unicode
 
         Return string ``text``, centered by printable length ``width``.
         Padding is done using the specified fill character (default is a
-        space).  Default width is the attached terminal's width. ``text`` is
-        escape-sequence safe."""
+        space).  Default ``width`` is the attached terminal's width. ``text``
+        may contain terminal sequences."""
         if width is None:
             width = self.width
         return sequences.Sequence(text, self).center(width, fillchar)
@@ -446,24 +414,26 @@ class Terminal(object):
     def length(self, text):
         """T.length(text) -> int
 
-        Return printable length of string ``text``, which may contain (some
-        kinds) of sequences. Strings containing sequences such as 'clear',
-        which repositions the cursor will not give accurate results.
+        Return the printable length of string ``text``, which may contain
+        terminal sequences.  Strings containing sequences such as 'clear',
+        which repositions the cursor, does not give accurate results, and
+        their printable length is evaluated *0*..
         """
         return sequences.Sequence(text, self).length()
 
     def strip(self, text):
-        """T.strip(text) -> int
+        """T.strip(text) -> unicode
 
         Return string ``text`` stripped of its whitespace *and* sequences.
+
         Text containing backspace or term.left will "overstrike", so that
-        the string u"_\\b" or u"__\\b\\b=" becomes u"x", not u"=" (as would
-        actually be printed).
+        the string ``u"_\\b"`` or ``u"__\\b\\b="`` becomes ``u"x"``,
+        not ``u"="`` (as would actually be printed on a terminal).
         """
         return sequences.Sequence(text, self).strip()
 
     def strip_seqs(self, text):
-        """T.strip_seqs(text) -> int
+        """T.strip_seqs(text) -> unicode
 
         Return string ``text`` stripped only of its sequences.
         """
@@ -504,9 +474,9 @@ class Terminal(object):
 
         Returns True if a keypress has been detected on keyboard.
 
-        When ``timeout`` is 0, this call is non-blocking(default), or blocking
-        indefinitely until keypress when ``None``, and blocking until keypress
-        or time elapsed when ``timeout`` is non-zero.
+        When ``timeout`` is 0, this call is non-blocking(default).
+        Otherwise blocking until keypress is detected, returning
+        True, or False after ``timeout`` seconds have elapsed.
 
         If input is not a terminal, False is always returned.
         """
@@ -549,13 +519,13 @@ class Terminal(object):
         explicitly print any input received, if they so wish.
 
         More information can be found in the manual page for curses.h,
-           http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak
+        http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak
 
         The python manual for curses,
-           http://docs.python.org/2/library/curses.html
+        http://docs.python.org/2/library/curses.html
 
         Note also that setcbreak sets VMIN = 1 and VTIME = 0,
-           http://www.unixwiz.net/techtips/termios-vmin-vtime.html
+        http://www.unixwiz.net/techtips/termios-vmin-vtime.html
         """
         if self.keyboard_fd is not None:
             # save current terminal mode,
@@ -573,11 +543,11 @@ class Terminal(object):
 
     @contextlib.contextmanager
     def raw(self):
-        """Return a context manager that enters 'raw' mode. Raw mode is
-        similar to cbreak mode, in that characters typed are immediately passed
-        through to the user program. The differences are that in raw mode, the
-        interrupt, quit, suspend, and flow control characters are all passed
-        through uninterpreted, instead of generating a signal.
+        """Return a context manager that enters *raw* mode. Raw mode is
+        similar to *cbreak* mode, in that characters typed are immediately
+        available to ``inkey()`` with one exception: the interrupt, quit,
+        suspend, and flow control characters are all passed through as their
+        raw character values instead of generating a signal.
         """
         if self.keyboard_fd is not None:
             # save current terminal mode,
@@ -600,17 +570,19 @@ class Terminal(object):
         keypress is received or ``timeout`` elapsed, if specified.
 
         When used without the context manager ``cbreak``, stdin remains
-        line-buffered, and this function will block until return is pressed.
+        line-buffered, and this function will block until return is pressed,
+        even though only one unicode character is returned at a time..
 
         The value returned is an instance of ``Keystroke``, with properties
-        ``is_sequence``, and, when True, non-None values for ``code`` and
-        ``name``. The value of ``code`` may be compared against attributes
-        of this terminal beginning with KEY, such as KEY_ESCAPE.
+        ``is_sequence``, and, when True, non-None values for attributes
+        ``code`` and ``name``. The value of ``code`` may be compared against
+        attributes of this terminal beginning with *KEY*, such as
+        ``KEY_ESCAPE``.
 
-        To distinguish between KEY_ESCAPE, and sequences beginning with
+        To distinguish between ``KEY_ESCAPE``, and sequences beginning with
         escape, the ``esc_delay`` specifies the amount of time after receiving
-        the escape character ('\x1b') to seek for application keys.
-
+        the escape character ('\\x1b', chr(27)) to seek for the completion
+        of other application keys before returning ``KEY_ESCAPE``.
         """
         # TODO(jquast): "meta sends escape", where alt+1 would send '\x1b1',
         #               what do we do with that? Surely, something useful.
