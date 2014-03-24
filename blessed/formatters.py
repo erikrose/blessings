@@ -25,7 +25,7 @@ class ParameterizingString(unicode):
         >> move(0, 0)('text')
     """
 
-    def __new__(cls, name, normal):
+    def __new__(cls, name, attr, normal):
         """
         :arg name: name of terminal capability.
         :arg attr: terminal attribute sequence to receive arguments.
@@ -214,4 +214,6 @@ def resolve_attribute(term, attr):
         resolution = (resolve_attribute(term, fmt) for fmt in formatters)
         return FormattingString(u''.join(resolution), term.normal)
     else:
-        return ParameterizingString(name=attr, normal=term.normal)
+        return ParameterizingString(name=attr,
+                                    attr=resolve_capability(term, attr),
+                                    normal=term.normal)

@@ -352,14 +352,18 @@ class Terminal(object):
         """
         if not self.does_styling:
             return NullCallableString()
-        return ParameterizingString(name='color', normal=self.normal)
+        return ParameterizingString(name='color',
+                                    attr=self._foreground_color,
+                                    normal=self.normal)
 
     @property
     def on_color(self):
         "Returns capability that sets the background color."
         if not self.does_styling:
             return NullCallableString()
-        return ParameterizingString(name='on_color', normal=self.normal)
+        return ParameterizingString(name='on_color',
+                                    attr=self._background_color,
+                                    normal=self.normal)
 
     @property
     def normal(self):
