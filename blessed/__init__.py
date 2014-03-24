@@ -1,4 +1,4 @@
-"""A thin, practical wrapper around curses terminal capabilities."""
+"A thin, practical wrapper around curses terminal capabilities."
 
 # import as _platform to avoid tab-completion with IPython (thanks @kanzure)
 import platform as _platform

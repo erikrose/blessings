@@ -1,5 +1,4 @@
-""" This sub-module provides 'sequence awareness' for blessings.
-"""
+" This sub-module provides 'sequence awareness' for blessed."
 
 __author__ = 'Jeff Quast <contact@jeffquast.com>'
 __license__ = 'MIT'

@@ -1,3 +1,4 @@
+"This sub-module provides formatting functions."
 import curses
 
 _derivitives = ('on', 'bright', 'on_bright',)
@@ -14,16 +15,15 @@ COMPOUNDABLES = (COLORS | _compoundables)
 
 
 class ParameterizingString(unicode):
-    """A Unicode string which can be called to parametrize it as a terminal
-    capability"""
+    "A Unicode string which can be called as a parameterizing termcap."
 
     def __new__(cls, name, attr, normal):
-        """Instantiate.
-
+        """
+        :arg name: name of terminal capability.
+        :arg attr: terminal capability name to receive arguments.
         :arg normal: If non-None, indicates that, once parametrized, this can
             be used as a ``FormattingString``. The value is used as the
             "normal" capability.
-
         """
         new = unicode.__new__(cls, attr)
         new._name = name

@@ -1,4 +1,4 @@
-"""This sub-module provides 'keyboard awareness' for blessings."""
+"This sub-module provides 'keyboard awareness'."
 
 __author__ = 'Jeff Quast <contact@jeffquast.com>'
 __license__ = 'MIT'
@@ -112,7 +112,7 @@ def get_keyboard_sequences(term):
     """init_keyboard_sequences(T) -> (OrderedDict)
 
     Initialize and return a keyboard map and sequence lookup table,
-    (sequence, constant) from blessings Terminal instance ``term``,
+    (sequence, constant) from blessed Terminal instance ``term``,
     where ``sequence`` is a multibyte input sequence, such as u'\x1b[D',
     and ``constant`` is a constant, such as term.KEY_LEFT.  The return
     value is an OrderedDict instance, with their keys sorted longest-first.

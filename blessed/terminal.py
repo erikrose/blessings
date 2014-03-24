@@ -1,3 +1,4 @@
+"This primary module provides the Terminal class."
 # standard modules
 import collections
 import contextlib
@@ -125,8 +126,7 @@ class Terminal(object):
                         'A terminal of kind "%s" has been requested; due to an'
                         ' internal python curses bug,  terminal capabilities'
                         ' for a terminal of kind "%s" will continue to be'
-                        ' returned for the remainder of this process. see:'
-                        ' https://github.com/erikrose/blessings/issues/33' % (
+                        ' returned for the remainder of this process.' % (
                             self._kind, _CUR_TERM,))
 
         if self.does_styling:
