@@ -17,19 +17,13 @@ internals, you're in the right place.
 Then Read This If You Want
 ==========================
 
-.. autoclass:: blessed.Terminal
-   :members:
+Internal modules are as follows.
 
-Internal modules
-================
+.. automodule:: blessed.terminal
+   :members:
 .. automodule:: blessed.formatters
    :members:
 .. automodule:: blessed.keyboard
    :members:
 .. automodule:: blessed.sequences
    :members:
-blessed/__init__.py
-blessed/formatters.py
-blessed/keyboard.py
-blessed/sequences.py
-blessed/terminal.py
