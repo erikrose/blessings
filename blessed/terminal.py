@@ -189,10 +189,18 @@ class Terminal(object):
             # build database of sequence <=> KEY_NAME
             self._keymap = get_keyboard_sequences(self)
 
-        self._keyboard_buf = collections.deque()
-        locale.setlocale(locale.LC_ALL, '')
-        self._encoding = locale.getpreferredencoding()
-        self._keyboard_decoder = codecs.getincrementaldecoder(self._encoding)()
+        if self.keyboard_fd is not None:
+            self._keyboard_buf = collections.deque()
+            locale.setlocale(locale.LC_ALL, '')
+            self._encoding = locale.getpreferredencoding() or 'ascii'
+            try:
+                self._keyboard_decoder = codecs.getincrementaldecoder(
+                    self._encoding)()
+            except LookupError, err:
+                warnings.warn('%s, fallback to ASCII for keyboard.' % (err,))
+                self._encoding = 'ascii'
+                self._keyboard_decoder = codecs.getincrementaldecoder(
+                    self._encoding)()
 
         self.stream = stream
 

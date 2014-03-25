@@ -6,7 +6,9 @@ except ImportError:
     from io import StringIO
 
 import collections
+import warnings
 import platform
+import locale
 import sys
 import imp
 import os
@@ -152,7 +154,6 @@ def test_setupterm_singleton_issue33():
     "A warning is emitted if a new terminal ``kind`` is used per process."
     @as_subprocess
     def child():
-        import warnings
         warnings.filterwarnings("error", category=UserWarning)
 
         # instantiate first terminal, of type xterm-256color
@@ -184,7 +185,6 @@ def test_setupterm_invalid_issue39():
     # fail to lookup and emit a warning, only.
     @as_subprocess
     def child():
-        import warnings
         warnings.filterwarnings("error", category=UserWarning)
 
         try:
@@ -208,7 +208,6 @@ def test_setupterm_invalid_has_no_styling():
     # fail to lookup and emit a warning, only.
     @as_subprocess
     def child():
-        import warnings
         warnings.filterwarnings("ignore", category=UserWarning)
 
         term = TestTerminal(kind='unknown', force_styling=True)
@@ -351,3 +350,31 @@ def test_yield_hidden_cursor(all_terms):
         assert (t.stream.getvalue() == expected_output)
 
     child(all_terms)
+
+
+def test_no_preferredencoding_fallback_ascii():
+    "Ensure empty preferredencoding value defaults to ascii."
+    @as_subprocess
+    def child():
+        with mock.patch('locale.getpreferredencoding') as get_enc:
+            get_enc.return_value = u''
+            t = TestTerminal()
+            assert t._encoding == 'ascii'
+
+    child()
+
+
+def test_unknown_preferredencoding_warned_and_fallback_ascii():
+    "Ensure a locale without a codecs incrementaldecoder emits a warning."
+    @as_subprocess
+    def child():
+        with mock.patch('locale.getpreferredencoding') as get_enc:
+            with warnings.catch_warnings(record=True) as warned:
+                get_enc.return_value = '---unknown--encoding---'
+                t = TestTerminal()
+                assert t._encoding == 'ascii'
+                assert len(warned) == 1
+                assert issubclass(warned[-1].category, UserWarning)
+                assert "fallback to ASCII" in str(warned[-1].message)
+
+    child()
