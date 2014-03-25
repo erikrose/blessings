@@ -53,7 +53,7 @@ copyright = u'2014 Jeff Quast, 2011 Erik Rose'
 # built documents.
 #
 # The short X.Y version.
-version = '1.8'
+version = '1.8.1'
 
 # The full version, including alpha/beta/rc tags.
 release = version
