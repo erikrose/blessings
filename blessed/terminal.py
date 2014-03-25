@@ -485,6 +485,19 @@ class Terminal(object):
 
         return lines
 
+    def getch(self):
+        """T.getch() -> unicode
+
+        Read and decode next byte from keyboard stream.  May return u''
+        if decoding is not yet complete, or completed unicode character.
+        Should always return bytes when self.kbhit() returns True.
+
+        Implementors of input streams other than os.read() on the stdin fd
+        should derive and override this method.
+        """
+        byte = os.read(self.keyboard_fd, 1)
+        return self._keyboard_decoder.decode(byte, final=False)
+
     def kbhit(self, timeout=0):
         """T.kbhit([timeout=0]) -> bool
 
@@ -609,18 +622,13 @@ class Terminal(object):
         def _timeleft(stime, timeout):
             """_timeleft(stime, timeout) -> float
 
-            Returns time-relative time remaining before ``timeout`` after time
-            elapsed since ``stime``.
+            Returns time-relative time remaining before ``timeout``
+            after time elapsed since ``stime``.
             """
             if timeout is not None:
                 if timeout is 0:
                     return 0
                 return max(0, timeout - (time.time() - stime))
-
-        def _decode_next():
-            """Read and decode next byte from stdin."""
-            byte = os.read(self.keyboard_fd, 1)
-            return self._keyboard_decoder.decode(byte, final=False)
 
         resolve = functools.partial(resolve_sequence,
                                     mapper=self._keymap,
@@ -635,7 +643,7 @@ class Terminal(object):
 
         # receive all immediately available bytes
         while self.kbhit():
-            ucs += _decode_next()
+            ucs += self.getch()
 
         # decode keystroke, if any
         ks = resolve(text=ucs)
@@ -644,7 +652,7 @@ class Terminal(object):
         # incomplete, (which may be a multibyte encoding), block until until
         # one is received.
         while not ks and self.kbhit(_timeleft(stime, timeout)):
-            ucs += _decode_next()
+            ucs += self.getch()
             ks = resolve(text=ucs)
 
         # handle escape key (KEY_ESCAPE) vs. escape sequence (which begins
@@ -656,7 +664,7 @@ class Terminal(object):
             esctime = time.time()
             while (ks.code is self.KEY_ESCAPE and
                    self.kbhit(_timeleft(esctime, esc_delay))):
-                ucs += _decode_next()
+                ucs += self.getch()
                 ks = resolve(text=ucs)
 
         # buffer any remaining text received

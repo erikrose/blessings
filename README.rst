@@ -669,7 +669,9 @@ shares the same. See the LICENSE file.
 
 Version History
 ===============
-
+1.8
+  * enhancement: export keyboard-read function as public method getch(), so
+    that it may be overridden by custom terminal implementors (x/84 telnet bbs)
 1.7
   * Forked github project `erikrose/blessings`_ to `jquast/blessed`_, this
     project was previously known as **blessings** version 1.6 and prior.
@@ -684,23 +686,21 @@ Version History
   * introduced: ``center()``, ``rjust()``, ``ljust()``, ``strip()``, and
     ``strip_seqs()`` methods.  Allows text containing sequences to be aligned
     to screen, or ``width`` specified.
-  * introduced: ``wrap()`` method. allows text containing sequences to be
+  * introduced: ``wrap()`` method.  Allows text containing sequences to be
     word-wrapped without breaking mid-sequence and honoring their printable
     width.
-
   * bugfix: cannot call ``setupterm()`` more than once per process -- issue a
     warning about what terminal kind subsequent calls will use.
   * bugfix: resolved issue where ``number_of_colors`` fails when
-    ``does_styling`` is ``False``. resolves issue where piping tests
+    ``does_styling`` is ``False``.  Resolves issue where piping tests
     output would fail.
   * bugfix: warn and set ``does_styling`` to ``False`` when TERM is unknown.
   * bugfix: allow unsupported terminal capabilities to be callable just as
     supported capabilities, so that the return value of ``term.color(n)`` may
     be called on terminals without color capabilities.
   * bugfix: for terminals without underline, such as vt220,
-    ``term.underline('text')``. would be ``u'text' + term.normal``, now is
+    ``term.underline('text')``.  Would be ``u'text' + term.normal``, now is
     only ``u'text'``.
-
   * enhancement: some attributes are now properties, raise exceptions when
     assigned.
   * enhancement: pypy is now a supported python platform implementation.
@@ -711,7 +711,6 @@ Version History
     are used to test a multitude of terminal types.
   * enhancement: test accessories ``@as_subprocess`` resolves various issues
     with different terminal types that previously went untested.
-
   * deprecation: python2.5 is no longer supported (as tox does not supported).
 
 1.6
@@ -743,7 +742,7 @@ Version History
     capabilities.
   * Endorse the ``location()`` idiom for restoring cursor position after a
     series of manual movements.
-  * Fix a bug in which ``location()`` wouldn't do anything when passed zeroes.
+  * Fix a bug in which ``location()`` wouldn't do anything when passed zeros.
   * Allow tests to be run with ``python setup.py test``.
 
 1.3
