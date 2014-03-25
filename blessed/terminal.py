@@ -189,8 +189,8 @@ class Terminal(object):
             # build database of sequence <=> KEY_NAME
             self._keymap = get_keyboard_sequences(self)
 
+        self._keyboard_buf = collections.deque()
         if self.keyboard_fd is not None:
-            self._keyboard_buf = collections.deque()
             locale.setlocale(locale.LC_ALL, '')
             self._encoding = locale.getpreferredencoding() or 'ascii'
             try:
