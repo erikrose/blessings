@@ -670,8 +670,11 @@ shares the same. See the LICENSE file.
 Version History
 ===============
 1.8
-  * enhancement: export keyboard-read function as public method getch(), so
-    that it may be overridden by custom terminal implementors (x/84 telnet bbs)
+  * enhancement: export keyboard-read function as public method ``getch()``, so
+    that it may be overridden by custom terminal implementers (x/84 telnet bbs)
+  * bugfix: if ``locale.getpreferredencoding()`` returns empty string or an
+    encoding that is not a valid codec for ``codecs.getincrementaldecoder``,
+    fallback to ascii and emit a warning.
 1.7
   * Forked github project `erikrose/blessings`_ to `jquast/blessed`_, this
     project was previously known as **blessings** version 1.6 and prior.
