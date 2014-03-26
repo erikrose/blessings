@@ -10,4 +10,6 @@ def on_resize(sig, action):
 
 signal.signal(signal.SIGWINCH, on_resize)
 
-term.inkey(10)
+with term.cbreak():
+    while True:
+        print(repr(term.inkey()))
