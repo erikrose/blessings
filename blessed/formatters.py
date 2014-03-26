@@ -130,11 +130,8 @@ class NullCallableString(unicode):
             #
             # is actually simplified result of NullCallable()(), so
             # turtles all the way down: we return another instance.
-
             return NullCallableString()
-        return args[0]  # Should we force even strs in Python 2.x to be
-                        # unicodes? No. How would I know what encoding to use
-                        # to convert it?
+        return args[0]
 
 
 def split_compound(compound):
