@@ -112,7 +112,7 @@ def test_kbhit_interrupted_nonetype():
         stime = time.time()
         time.sleep(1.0)
         os.kill(pid, signal.SIGWINCH)
-        os.write(master_fd, 'X')
+        os.write(master_fd, b'X')
         output = read_until_eof(master_fd)
 
     pid, status = os.waitpid(pid, 0)
