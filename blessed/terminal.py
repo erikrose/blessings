@@ -507,13 +507,13 @@ class Terminal(object):
         return self._keyboard_decoder.decode(byte, final=False)
 
     def kbhit(self, timeout=None):
-        """T.kbhit([timeout=0]) -> bool
+        """T.kbhit([timeout=None]) -> bool
 
         Returns True if a keypress has been detected on keyboard.
 
-        When ``timeout`` is None, this call is non-blocking(default).
-        Otherwise blocking until keypress is detected, returning
-        True, or False after ``timeout`` seconds have elapsed.
+        When ``timeout`` is 0, this call is non-blocking, Otherwise blocking
+        until keypress is detected (default).  When ``timeout`` is a positive
+        number, returns after ``timeout`` seconds have elapsed.
 
         If input is not a terminal, False is always returned.
         """
