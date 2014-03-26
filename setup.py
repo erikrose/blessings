@@ -14,7 +14,7 @@ elif sys.version_info >= (3,):
 here = os.path.dirname(__file__)
 setup(
     name='blessed',
-    version='1.8.1',
+    version='1.8.2',
     description="A feature-filled fork of Erik Rose's blessings project",
     long_description=open(os.path.join(here, 'README.rst')).read(),
     author='Jeff Quast',
