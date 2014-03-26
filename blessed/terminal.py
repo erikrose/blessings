@@ -506,14 +506,14 @@ class Terminal(object):
         byte = os.read(self.keyboard_fd, 1)
         return self._keyboard_decoder.decode(byte, final=False)
 
-    def kbhit(self, timeout=0):
-        """T.kbhit([timeout=0]) -> bool
+    def kbhit(self, timeout=None):
+        """T.kbhit([timeout=None]) -> bool
 
         Returns True if a keypress has been detected on keyboard.
 
-        When ``timeout`` is 0, this call is non-blocking(default).
-        Otherwise blocking until keypress is detected, returning
-        True, or False after ``timeout`` seconds have elapsed.
+        When ``timeout`` is 0, this call is non-blocking, Otherwise blocking
+        until keypress is detected (default).  When ``timeout`` is a positive
+        number, returns after ``timeout`` seconds have elapsed.
 
         If input is not a terminal, False is always returned.
         """
@@ -532,12 +532,12 @@ class Terminal(object):
                 ready_r, ready_w, ready_x = select.select(
                     check_r, check_w, check_x, timeout)
             except InterruptedError:
-                if timeout != 0:
+                if timeout is not None:
                     # subtract time already elapsed,
                     timeout -= time.time() - stime
                     if timeout > 0:
                         continue
-                    ready_r = False
+                    ready_r = []
                     break
             else:
                 break
@@ -650,7 +650,7 @@ class Terminal(object):
             ucs += self._keyboard_buf.pop()
 
         # receive all immediately available bytes
-        while self.kbhit():
+        while self.kbhit(0):
             ucs += self.getch()
 
         # decode keystroke, if any
