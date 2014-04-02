@@ -319,10 +319,11 @@ def test_inkey_0s_raw_ctrl_c():
     pid, status = os.waitpid(pid, 0)
     if os.environ.get('TRAVIS', None) is not None:
         # For some reason, setraw has no effect travis-ci,
-        # is still accepts ^C, when causes system exit on
-        # py27, but exit 0 on py27 and p33 -- strangely, huh?
-        assert output == u'', repr(output)
-        assert os.WEXITSTATUS(status) in (0, 2)
+        # is still accepts ^C, causing system exit on py26,
+        # but exit 0 on py27, and either way on py33
+        # .. strange, huh?
+        assert output == u'' and os.WEXITSTATUS(status) == 2
+        assert output == u'\x03' and os.WEXITSTATUS(status) == 0
     else:
         assert output == u'\x03', repr(output)
         assert os.WEXITSTATUS(status) == 0
