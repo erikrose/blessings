@@ -21,24 +21,27 @@ class ParameterizingString(unicode):
 
     For example::
 
-        >>> c = ParameterizingString('color', term.color, term.normal)
-        >>> c(9)('color #9')
+        >> term = Terminal()
+        >> color = ParameterizingString(term.color, term.normal, 'color')
+        >> color(9)('color #9')
         u'\x1b[91mcolor #9\x1b(B\x1b[m'
     """
 
-    def __new__(cls, name, attr, normal):
-        """
-        :arg name: name of terminal capability.
-        :arg attr: terminal attribute sequence to receive arguments.
+    def __new__(cls, *args):
+        """P.__new__(cls, capname, [normal, [name]])
+
+        :arg capname: parameterized string suitable for curses.tparm()
         :arg normal: terminating sequence for this capability.
+        :arg name: name of this terminal capability.
         """
-        new = unicode.__new__(cls, attr)
-        new._name = name
-        new._normal = normal
+        assert len(args) and len(args) < 4, args
+        new = unicode.__new__(cls, args[0])
+        new._normal = len(args) >= 2 and args[1] or u''
+        new._name = len(args) == 3 and args[2] or u'<not specified>'
         return new
 
     def __call__(self, *args):
-        """P(*args) -> unicode
+        """P(*args) -> FormattingString()
 
         Return evaluated terminal capability (self), receiving arguments
         ``*args``, followed by the terminating sequence (self.normal) into
@@ -49,7 +52,7 @@ class ParameterizingString(unicode):
             # 3. However, appear to be a plain Unicode string otherwise so
             # concats work.
             attr = curses.tparm(self.encode('latin1'), *args).decode('latin1')
-            return FormattingString(attr=attr, normal=self._normal)
+            return FormattingString(attr, self._normal)
         except TypeError, err:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
@@ -68,22 +71,25 @@ class FormattingString(unicode):
     """A Unicode string which can be called using ``text``,
     returning a new string, ``attr`` + ``text`` + ``normal``::
 
-        >>> style = FormattingString(term.bright_blue, term.normal)
-        >>> style('Big Blue')
+        >> style = FormattingString(term.bright_blue, term.normal)
+        >> style('Big Blue')
         u'\x1b[94mBig Blue\x1b(B\x1b[m'
     """
 
-    def __new__(cls, attr, normal):
-        """
-        :arg attr: terminal attribute sequence.
+    def __new__(cls, *args):
+        """P.__new__(cls, sequence, [normal])
+        :arg sequence: terminal attribute sequence.
         :arg normal: terminating sequence for this attribute.
         """
-        new = unicode.__new__(cls, attr)
-        new._normal = normal
+        assert 1 <= len(args) <= 2, args
+        new = unicode.__new__(cls, args[0])
+        new._normal = len(args) > 1 and args[1] or u''
         return new
 
     def __call__(self, text):
-        """Return string ``text``, joined by specified video attribute,
+        """P(text) -> unicode
+
+        Return string ``text``, joined by specified video attribute,
         (self), and followed by reset attribute sequence (term.normal).
         """
         if len(self):
@@ -201,8 +207,8 @@ def resolve_attribute(term, attr):
 
     # A direct compoundable, such as `bold' or `on_red'.
     if attr in COMPOUNDABLES:
-        return FormattingString(resolve_capability(term, attr),
-                                term.normal)
+        sequence = resolve_capability(term, attr)
+        return FormattingString(sequence, term.normal)
 
     # Given `bold_on_red', resolve to ('bold', 'on_red'), RECURSIVE
     # call for each compounding section, joined and returned as
@@ -212,6 +218,5 @@ def resolve_attribute(term, attr):
         resolution = (resolve_attribute(term, fmt) for fmt in formatters)
         return FormattingString(u''.join(resolution), term.normal)
     else:
-        return ParameterizingString(name=attr,
-                                    attr=resolve_capability(term, attr),
-                                    normal=term.normal)
+        tparm_capseq = resolve_capability(term, attr)
+        return ParameterizingString(tparm_capseq, term.normal, attr)

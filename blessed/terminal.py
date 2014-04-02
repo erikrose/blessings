@@ -322,10 +322,12 @@ class Terminal(object):
     @contextlib.contextmanager
     def fullscreen(self):
         """Return a context manager that enters fullscreen mode while inside it
-        and restores normal mode on leaving. Fullscreen mode is characterized
-        by instructing the terminal emulator to store and save the current
-        screen state (all screen output), switch to "alternate screen". Upon
-        exiting, the previous screen state is returned.
+        and restores normal mode on leaving.
+
+        Fullscreen mode is characterized by instructing the terminal emulator
+        to store and save the current screen state (all screen output), switch
+        to "alternate screen". Upon exiting, the previous screen state is
+        returned.
 
         This call may not be tested; only one screen state may be saved at a
         time.
@@ -360,18 +362,16 @@ class Terminal(object):
         """
         if not self.does_styling:
             return NullCallableString()
-        return ParameterizingString(name='color',
-                                    attr=self._foreground_color,
-                                    normal=self.normal)
+        return ParameterizingString(self._foreground_color,
+                                    self.normal, 'color')
 
     @property
     def on_color(self):
         "Returns capability that sets the background color."
         if not self.does_styling:
             return NullCallableString()
-        return ParameterizingString(name='on_color',
-                                    attr=self._background_color,
-                                    normal=self.normal)
+        return ParameterizingString(self._background_color,
+                                    self.normal, 'on_color')
 
     @property
     def normal(self):

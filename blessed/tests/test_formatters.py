@@ -17,10 +17,10 @@ def test_parameterizing_string_args(monkeypatch):
     monkeypatch.setattr(curses, 'tparm', tparm)
 
     # given,
-    pstr = ParameterizingString(name=u'cap', attr=u'seqname', normal=u'norm')
+    pstr = ParameterizingString(u'seqname', u'norm', u'cap-name')
 
     # excersize __new__
-    assert pstr._name == u'cap'
+    assert pstr._name == u'cap-name'
     assert pstr._normal == u'norm'
     assert str(pstr) == u'seqname'
 
@@ -47,7 +47,7 @@ def test_parameterizing_string_type_error(monkeypatch):
     monkeypatch.setattr(curses, 'tparm', tparm_raises_TypeError)
 
     # given,
-    pstr = ParameterizingString(name=u'cap', attr=u'seqname', normal=u'norm')
+    pstr = ParameterizingString(u'seqname', u'norm', u'cap-name')
 
     # ensure TypeError when given a string raises custom exception
     try:
@@ -56,12 +56,12 @@ def test_parameterizing_string_type_error(monkeypatch):
     except TypeError, err:
         assert (err.args[0] == (  # py3x
             "A native or nonexistent capability template, "
-            "'cap' received invalid argument ('XYZ',): "
+            "'cap-name' received invalid argument ('XYZ',): "
             "custom_err. You probably misspelled a "
             "formatting call like `bright_red'") or
             err.args[0] == (
                 "A native or nonexistent capability template, "
-                "u'cap' received invalid argument ('XYZ',): "
+                "u'cap-name' received invalid argument ('XYZ',): "
                 "custom_err. You probably misspelled a "
                 "formatting call like `bright_red'"))
 
@@ -78,7 +78,7 @@ def test_formattingstring(monkeypatch):
     from blessed.formatters import (FormattingString)
 
     # given, with arg
-    pstr = FormattingString(attr=u'attr', normal=u'norm')
+    pstr = FormattingString(u'attr', u'norm')
 
     # excersize __call__,
     assert pstr._normal == u'norm'
@@ -86,7 +86,7 @@ def test_formattingstring(monkeypatch):
     assert pstr('text') == u'attrtextnorm'
 
     # given, without arg
-    pstr = FormattingString(attr=u'', normal=u'norm')
+    pstr = FormattingString(u'', u'norm')
     assert pstr('text') == u'text'
 
 
@@ -271,3 +271,41 @@ def test_resolve_attribute_recursive_compoundables(monkeypatch):
     assert type(pstr) == FormattingString
     assert str(pstr) == 'seq-6808seq-6502'
     assert pstr('text') == 'seq-6808seq-6502textseq-normal'
+
+
+def test_pickled_parameterizing_string(monkeypatch):
+    """Test pickle-ability of a formatters.ParameterizingString."""
+    from blessed.formatters import ParameterizingString, FormattingString
+
+    # simply send()/recv() over multiprocessing Pipe, a simple
+    # pickle.loads(dumps(...)) did not reproduce this issue,
+    from multiprocessing import Pipe
+    import pickle
+
+    # first argument to tparm() is the sequence name, returned as-is;
+    # subsequent arguments are usually Integers.
+    tparm = lambda *args: u'~'.join(
+        arg.decode('latin1') if not num else '%s' % (arg,)
+        for num, arg in enumerate(args)).encode('latin1')
+
+    monkeypatch.setattr(curses, 'tparm', tparm)
+
+    # given,
+    pstr = ParameterizingString(u'seqname', u'norm', u'cap-name')
+
+    # multiprocessing Pipe implicitly pickles.
+    r, w = Pipe()
+
+    # excersize picklability of ParameterizingString
+    for proto_num in range(pickle.HIGHEST_PROTOCOL):
+        assert pstr == pickle.loads(pickle.dumps(pstr, protocol=proto_num))
+    w.send(pstr)
+    r.recv() == pstr
+
+    # excersize picklability of FormattingString
+    # -- the return value of calling ParameterizingString
+    zero = pstr(0)
+    for proto_num in range(pickle.HIGHEST_PROTOCOL):
+        assert zero == pickle.loads(pickle.dumps(zero, protocol=proto_num))
+    w.send(zero)
+    r.recv() == zero
