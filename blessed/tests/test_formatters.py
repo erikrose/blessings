@@ -4,6 +4,38 @@ import curses
 import mock
 
 
+def test_parameterizing_string_args_unspecified(monkeypatch):
+    """Test default args of formatters.ParameterizingString."""
+    from blessed.formatters import ParameterizingString, FormattingString
+    # first argument to tparm() is the sequence name, returned as-is;
+    # subsequent arguments are usually Integers.
+    tparm = lambda *args: u'~'.join(
+        arg.decode('latin1') if not num else '%s' % (arg,)
+        for num, arg in enumerate(args)).encode('latin1')
+
+    monkeypatch.setattr(curses, 'tparm', tparm)
+
+    # given,
+    pstr = ParameterizingString(u'')
+
+    # excersize __new__
+    assert str(pstr) == u''
+    assert pstr._normal == u''
+    assert pstr._name == u'<not specified>'
+
+    # excersize __call__
+    zero = pstr(0)
+    assert type(zero) is FormattingString
+    assert zero == u'~0'
+    assert zero('text') == u'~0text'
+
+    # excersize __call__ with multiple args
+    onetwo = pstr(1, 2)
+    assert type(onetwo) is FormattingString
+    assert onetwo == u'~1~2'
+    assert onetwo('text') == u'~1~2text'
+
+
 def test_parameterizing_string_args(monkeypatch):
     """Test basic formatters.ParameterizingString."""
     from blessed.formatters import ParameterizingString, FormattingString
@@ -17,24 +49,24 @@ def test_parameterizing_string_args(monkeypatch):
     monkeypatch.setattr(curses, 'tparm', tparm)
 
     # given,
-    pstr = ParameterizingString(u'seqname', u'norm', u'cap-name')
+    pstr = ParameterizingString(u'cap', u'norm', u'seq-name')
 
     # excersize __new__
-    assert pstr._name == u'cap-name'
+    assert str(pstr) == u'cap'
     assert pstr._normal == u'norm'
-    assert str(pstr) == u'seqname'
+    assert pstr._name == u'seq-name'
 
     # excersize __call__
     zero = pstr(0)
     assert type(zero) is FormattingString
-    assert zero == u'seqname~0'
-    assert zero('text') == u'seqname~0textnorm'
+    assert zero == u'cap~0'
+    assert zero('text') == u'cap~0textnorm'
 
     # excersize __call__ with multiple args
     onetwo = pstr(1, 2)
     assert type(onetwo) is FormattingString
-    assert onetwo == u'seqname~1~2'
-    assert onetwo('text') == u'seqname~1~2textnorm'
+    assert onetwo == u'cap~1~2'
+    assert onetwo('text') == u'cap~1~2textnorm'
 
 
 def test_parameterizing_string_type_error(monkeypatch):
@@ -47,7 +79,7 @@ def test_parameterizing_string_type_error(monkeypatch):
     monkeypatch.setattr(curses, 'tparm', tparm_raises_TypeError)
 
     # given,
-    pstr = ParameterizingString(u'seqname', u'norm', u'cap-name')
+    pstr = ParameterizingString(u'cap', u'norm', u'cap-name')
 
     # ensure TypeError when given a string raises custom exception
     try:
