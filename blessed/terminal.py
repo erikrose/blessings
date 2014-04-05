@@ -176,18 +176,18 @@ class Terminal(object):
                         ' returned for the remainder of this process.' % (
                             self._kind, _CUR_TERM,))
 
-        if self.does_styling:
-            init_sequence_patterns(self)
+        for re_name, re_val in init_sequence_patterns(self).items():
+            setattr(self, re_name, re_val)
 
-            # build database of int code <=> KEY_NAME
-            self._keycodes = get_keyboard_codes()
+        # build database of int code <=> KEY_NAME
+        self._keycodes = get_keyboard_codes()
 
-            # store attributes as: self.KEY_NAME = code
-            for key_code, key_name in self._keycodes.items():
-                setattr(self, key_name, key_code)
+        # store attributes as: self.KEY_NAME = code
+        for key_code, key_name in self._keycodes.items():
+            setattr(self, key_name, key_code)
 
-            # build database of sequence <=> KEY_NAME
-            self._keymap = get_keyboard_sequences(self)
+        # build database of sequence <=> KEY_NAME
+        self._keymap = get_keyboard_sequences(self)
 
         self._keyboard_buf = collections.deque()
         if self.keyboard_fd is not None:

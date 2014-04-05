@@ -170,11 +170,37 @@ def test_inkey_0s_cbreak_noinput():
     child()
 
 
+def test_inkey_0s_cbreak_noinput_nokb():
+    """0-second inkey without input or  keyboard."""
+    @as_subprocess
+    def child():
+        term = TestTerminal(stream=StringIO.StringIO())
+        with term.cbreak():
+            stime = time.time()
+            inp = term.inkey(timeout=0)
+            assert (inp == u'')
+            assert (math.floor(time.time() - stime) == 0.0)
+    child()
+
+
 def test_inkey_1s_cbreak_noinput():
     """1-second inkey without input; '' should be returned after ~1 second."""
     @as_subprocess
     def child():
         term = TestTerminal()
+        with term.cbreak():
+            stime = time.time()
+            inp = term.inkey(timeout=1)
+            assert (inp == u'')
+            assert (math.floor(time.time() - stime) == 1.0)
+    child()
+
+
+def test_inkey_1s_cbreak_noinput_nokb():
+    """1-second inkey without input or keyboard."""
+    @as_subprocess
+    def child():
+        term = TestTerminal(stream=StringIO.StringIO())
         with term.cbreak():
             stime = time.time()
             inp = term.inkey(timeout=1)
@@ -498,7 +524,7 @@ def test_esc_delay_cbreak_timout_0():
     assert 35 <= int(duration_ms) <= 45, int(duration_ms)
 
 
-def test_no_keystroke():
+def test_keystroke_default_args():
     """Test keyboard.Keystroke constructor with default arguments."""
     from blessed.keyboard import Keystroke
     ks = Keystroke()

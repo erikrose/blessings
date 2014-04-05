@@ -160,10 +160,13 @@ def split_compound(compound):
 
 def resolve_capability(term, attr):
     """Return a Unicode string for the terminal capability ``attr``,
-    or an empty string if not found.
+    or an empty string if not found, or if terminal is without styling
+    capabilities.
     """
     # Decode sequences as latin1, as they are always 8-bit bytes, so when
     # b'\xff' is returned, this must be decoded to u'\xff'.
+    if not term.does_styling:
+        return u''
     val = curses.tigetstr(term._sugar.get(attr, attr))
     return u'' if val is None else val.decode('latin1')
 

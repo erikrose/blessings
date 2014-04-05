@@ -164,9 +164,18 @@ def test_resolve_capability(monkeypatch):
     assert resolve_capability(term, 'mnemonic') == u'seq-xyz'
     assert resolve_capability(term, 'natural') == u'seq-natural'
 
-    # given, always returns None
+    # given, where tigetstr returns None
     tigetstr_none = lambda attr: None
     monkeypatch.setattr(curses, 'tigetstr', tigetstr_none)
+
+    # excersize,
+    assert resolve_capability(term, 'natural') == u''
+
+    # given, where does_styling is False
+    def raises_exception(*args):
+        assert False, "Should not be called"
+    term.does_styling = False
+    monkeypatch.setattr(curses, 'tigetstr', raises_exception)
 
     # excersize,
     assert resolve_capability(term, 'natural') == u''

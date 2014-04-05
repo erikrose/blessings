@@ -129,7 +129,7 @@ def get_keyboard_sequences(term):
             (curses.tigetstr(cap), val)
             for (val, cap) in capability_names.iteritems()
         ) if seq
-    ))
+    ) if term.does_styling else ())
 
     sequence_map.update(_alternative_left_right(term))
     sequence_map.update(DEFAULT_SEQUENCE_MIXIN)
