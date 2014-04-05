@@ -89,8 +89,8 @@ def main():
     bearing = Direction(0, -1)
     nibble = Nibble(location=worm[0], value=0)
     color_nibble = term.black_on_green
-    color_worm = term.bright_yellow_on_blue
-    color_head = term.bright_red_on_blue
+    color_worm = term.on_yellow
+    color_head = term.on_red
     color_bg = term.on_blue
     echo(term.move(1, 1))
     echo(color_bg(term.clear))
@@ -141,12 +141,12 @@ def main():
 
             # display new worm head each turn, regardless.
             echo(term.move(*head))
-            echo(color_head(u'\u263a'))
+            echo(color_head(u' '))
 
             if worm:
                 # and its old head (now, a body piece)
                 echo(term.move(*worm[-1]))
-                echo(color_worm(u'\u2689'))
+                echo(color_worm(u' '))
 
             # wait for keyboard input, which may indicate
             # a new direction (up/down/left/right)
