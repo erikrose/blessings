@@ -49,7 +49,7 @@ def test_kbhit_interrupted():
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.raw():
-            assert term.inkey(timeout=1.05, _intr_continue=False) == u''
+            assert term.inkey(timeout=1.05) == u''
         os.write(sys.__stdout__.fileno(), b'complete')
         assert got_sigwinch is True
         if cov is not None:
