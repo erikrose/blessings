@@ -671,11 +671,15 @@ Version History
 ===============
 1.8
   * enhancement: export keyboard-read function as public method ``getch()``, so
-    that it may be overridden by custom terminal implementers (x/84 telnet bbs)
+    that it may be overridden by custom terminal implementers.
+  * enhancement: allow ``inkey()`` and ``kbhit()`` to return early when
+    interrupted by signal by passing argument ``_intr_continue=False``.
   * bugfix: if ``locale.getpreferredencoding()`` returns empty string or an
     encoding that is not a valid codec for ``codecs.getincrementaldecoder``,
     fallback to ascii and emit a warning.
   * bugfix: ensure FormattingString and ParameterizingString may be pickled.
+  * bugfix: allow term.inkey() and related to be called without a keyboard.
+
 1.7
   * Forked github project `erikrose/blessings`_ to `jquast/blessed`_, this
     project was previously known as **blessings** version 1.6 and prior.

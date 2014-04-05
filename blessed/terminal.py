@@ -506,7 +506,7 @@ class Terminal(object):
         byte = os.read(self.keyboard_fd, 1)
         return self._keyboard_decoder.decode(byte, final=False)
 
-    def kbhit(self, timeout=None):
+    def kbhit(self, timeout=None, _intr_continue=True):
         """T.kbhit([timeout=None]) -> bool
 
         Returns True if a keypress has been detected on keyboard.
@@ -532,6 +532,8 @@ class Terminal(object):
                 ready_r, ready_w, ready_x = select.select(
                     check_r, check_w, check_x, timeout)
             except InterruptedError:
+                if not _intr_continue:
+                    return u''
                 if timeout is not None:
                     # subtract time already elapsed,
                     timeout -= time.time() - stime
@@ -600,8 +602,8 @@ class Terminal(object):
         else:
             yield
 
-    def inkey(self, timeout=None, esc_delay=0.35):
-        """T.inkey(timeout=None, esc_delay=0.35) -> Keypress()
+    def inkey(self, timeout=None, esc_delay=0.35, _intr_continue=True):
+        """T.inkey(timeout=None, [esc_delay, [_intr_continue]]) -> Keypress()
 
         Receive next keystroke from keyboard (stdin), blocking until a
         keypress is received or ``timeout`` elapsed, if specified.
@@ -620,6 +622,12 @@ class Terminal(object):
         escape, the ``esc_delay`` specifies the amount of time after receiving
         the escape character (chr(27)) to seek for the completion
         of other application keys before returning ``KEY_ESCAPE``.
+
+        Normally, when this function is interrupted by a signal, such as the
+        installment of SIGWINCH, this function will ignore this interruption
+        and continue to poll for input up to the ``timemout`` specified. If
+        you'd rather this function return ``u''`` early, specify a value
+        of ``False`` for ``_intr_continue``.
         """
         # TODO(jquast): "meta sends escape", where alt+1 would send '\x1b1',
         #               what do we do with that? Surely, something useful.
@@ -659,7 +667,7 @@ class Terminal(object):
         # so long as the most immediately received or buffered keystroke is
         # incomplete, (which may be a multibyte encoding), block until until
         # one is received.
-        while not ks and self.kbhit(_timeleft(stime, timeout)):
+        while not ks and self.kbhit(_timeleft(stime, timeout), _intr_continue):
             ucs += self.getch()
             ks = resolve(text=ucs)
 

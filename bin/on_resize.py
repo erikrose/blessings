@@ -12,4 +12,4 @@ signal.signal(signal.SIGWINCH, on_resize)
 
 with term.cbreak():
     while True:
-        print(repr(term.inkey()))
+        print(repr(term.inkey(_intr_continue=False)))
