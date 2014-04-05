@@ -55,6 +55,9 @@ change_bearing = lambda f_mov, segment: Direction(
     f_mov(segment).y - segment.y,
     f_mov(segment).x - segment.x)
 
+# direction-flipped check, reject traveling in opposite direction.
+bearing_flipped = lambda dir1, dir2: (0, 0) == (dir1.y + dir2.y, dir1.x + dir2.x)
+
 echo = partial(print, end='', flush=True)
 
 # generate a new 'nibble' (number for worm bite)
@@ -152,11 +155,17 @@ def main():
             # a new direction (up/down/left/right)
             inp = term.inkey(speed)
 
-            # discover new direction, given keyboard input and/or bearing
-            direction = next_bearing(inp.code, bearing)
+            # discover new direction, given keyboard input and/or bearing.
+            nxt_direction = next_bearing(inp.code, bearing)
 
             # discover new bearing, given new direction compared to prev
-            bearing = change_bearing(direction, head)
+            nxt_bearing = change_bearing(nxt_direction, head)
+
+            # disallow new bearing/direction when flipped (running into
+            # oneself, fe. traveling left while traveling right)
+            if not bearing_flipped(bearing, nxt_bearing):
+                direction = nxt_direction
+                bearing = nxt_bearing
 
             # append the prior `head' onto the worm, then
             # a new `head' for the given direction.
