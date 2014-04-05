@@ -325,7 +325,8 @@ def test_inkey_0s_raw_ctrl_c():
         assert output in (u'', u'\x03')
         assert os.WEXITSTATUS(status) in (0, 2)
     else:
-        assert output == u'\x03', repr(output)
+        assert (output == u'\x03' or
+                output == u'' and not os.isatty(0))
         assert os.WEXITSTATUS(status) == 0
     assert math.floor(time.time() - stime) == 0.0
 
