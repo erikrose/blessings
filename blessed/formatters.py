@@ -28,16 +28,16 @@ class ParameterizingString(unicode):
     """
 
     def __new__(cls, *args):
-        """P.__new__(cls, capname, [normal, [name]])
+        """P.__new__(cls, cap, [normal, [name]])
 
-        :arg capname: parameterized string suitable for curses.tparm()
+        :arg cap: parameterized string suitable for curses.tparm()
         :arg normal: terminating sequence for this capability.
         :arg name: name of this terminal capability.
         """
         assert len(args) and len(args) < 4, args
         new = unicode.__new__(cls, args[0])
-        new._normal = len(args) >= 2 and args[1] or u''
-        new._name = len(args) == 3 and args[2] or u'<not specified>'
+        new._normal = len(args) > 1 and args[1] or u''
+        new._name = len(args) > 2 and args[2] or u'<not specified>'
         return new
 
     def __call__(self, *args):
