@@ -625,7 +625,7 @@ class Terminal(object):
 
         Normally, when this function is interrupted by a signal, such as the
         installment of SIGWINCH, this function will ignore this interruption
-        and continue to poll for input up to the ``timemout`` specified. If
+        and continue to poll for input up to the ``timeout`` specified. If
         you'd rather this function return ``u''`` early, specify a value
         of ``False`` for ``_intr_continue``.
         """
