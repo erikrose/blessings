@@ -56,7 +56,9 @@ change_bearing = lambda f_mov, segment: Direction(
     f_mov(segment).x - segment.x)
 
 # direction-flipped check, reject traveling in opposite direction.
-bearing_flipped = lambda dir1, dir2: (0, 0) == (dir1.y + dir2.y, dir1.x + dir2.x)
+bearing_flipped = lambda dir1, dir2: (
+    (0, 0) == (dir1.y + dir2.y, dir1.x + dir2.x)
+)
 
 echo = partial(print, end='', flush=True)
 
