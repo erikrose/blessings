@@ -1,20 +1,20 @@
-.. image:: https://secure.travis-ci.org/jquast/blessed.png
+.. image:: http://img.shields.io/travis/jquast/blessed.svg
    :target: https://travis-ci.org/jquast/blessed
-   :alt: travis continous integration
+   :alt: Travis Continous Integration
 
-.. image:: http://coveralls.io/repos/jquast/blessed/badge.png
+.. image:: http://img.shields.io/coveralls/jquast/blessed/badge.svg
    :target: http://coveralls.io/r/jquast/blessed
-   :alt: coveralls code coveraage
+   :alt: Coveralls Code Coveraage
 
-.. image:: https://pypip.in/v/blessed/badge.png
+.. image:: http://img.shields.io/pypi/v/blessed/badge.svg
    :target: https://pypi.python.org/pypi/blessed/
    :alt: Latest Version
 
-.. image:: https://pypip.in/license/blessed/badge.png
+.. image:: https://pypip.in/license/blessed/badge.svg
    :target: https://pypi.python.org/pypi/blessed/
    :alt: License
 
-.. image:: https://pypip.in/d/blessed/badge.png
+.. image:: http://img.shields.io/pypi/dm/blessed/badge.svg
    :target: https://pypi.python.org/pypi/blessed/
    :alt: Downloads
 
@@ -674,6 +674,8 @@ Version History
     that it may be overridden by custom terminal implementers.
   * enhancement: allow ``inkey()`` and ``kbhit()`` to return early when
     interrupted by signal by passing argument ``_intr_continue=False``.
+  * enhancement: allow ``hpa`` and ``vpa`` (move_x, move_y) to work on tmux(1)
+    or screen(1) by forcibly emulating their support by a proxy.
   * bugfix: if ``locale.getpreferredencoding()`` returns empty string or an
     encoding that is not a valid codec for ``codecs.getincrementaldecoder``,
     fallback to ascii and emit a warning.

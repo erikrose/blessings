@@ -92,7 +92,7 @@ def test_kbhit_interrupted_nonetype():
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.raw():
-            term.inkey(timeout=None)
+            term.inkey(timeout=1)
         os.write(sys.__stdout__.fileno(), b'complete')
         assert got_sigwinch is True
         if cov is not None:
@@ -106,8 +106,6 @@ def test_kbhit_interrupted_nonetype():
         stime = time.time()
         time.sleep(0.05)
         os.kill(pid, signal.SIGWINCH)
-        time.sleep(1.0)
-        os.write(master_fd, b'X')
         output = read_until_eof(master_fd)
 
     pid, status = os.waitpid(pid, 0)
