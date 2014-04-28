@@ -183,7 +183,27 @@ def test_horizontal_location(all_standard_terms):
              unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
-    child(all_standard_terms)
+    # skip 'screen', hpa is proxied (see later tests)
+    if all_standard_terms != 'screen':
+        child(all_standard_terms)
+
+
+def test_vertical_location(all_standard_terms):
+    """Make sure we can move the cursor horizontally without changing rows."""
+    @as_subprocess
+    def child(kind):
+        t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
+        with t.location(y=5):
+            pass
+        expected_output = u''.join(
+            (unicode_cap('sc'),
+             unicode_parm('vpa', 5),
+             unicode_cap('rc')))
+        assert (t.stream.getvalue() == expected_output)
+
+    # skip 'screen', vpa is proxied (see later tests)
+    if all_standard_terms != 'screen':
+        child(all_standard_terms)
 
 
 def test_inject_move_x_for_screen():
@@ -191,10 +211,12 @@ def test_inject_move_x_for_screen():
     @as_subprocess
     def child(kind):
         t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
-        with t.location(x=5):
+        COL = 5
+        with t.location(x=COL):
             pass
         expected_output = u''.join(
-            (unicode_cap('sc'), t.hpa(5),
+            (unicode_cap('sc'),
+             u'\x1b[{0}G'.format(COL + 1),
              unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
@@ -206,10 +228,12 @@ def test_inject_move_y_for_screen():
     @as_subprocess
     def child(kind):
         t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
-        with t.location(y=5):
+        ROW = 5
+        with t.location(y=ROW):
             pass
         expected_output = u''.join(
-            (unicode_cap('sc'), t.vpa(5),
+            (unicode_cap('sc'),
+             u'\x1b[{0}d'.format(ROW + 1),
              unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 

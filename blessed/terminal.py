@@ -539,6 +539,7 @@ class Terminal(object):
                     timeout -= time.time() - stime
                     if timeout > 0:
                         continue
+                    # no time remains after handling exception (rare)
                     ready_r = []
                     break
             else:
