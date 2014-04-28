@@ -67,6 +67,67 @@ class ParameterizingString(unicode):
             raise
 
 
+class ParameterizingProxyString(unicode):
+    """A Unicode string which can be called to proxy missing termcap entries.
+
+    For example::
+
+        >>> from blessed import Terminal
+        >>> term = Terminal('screen')
+        >>> hpa = ParameterizingString(term.hpa, term.normal, 'hpa')
+        >>> hpa(9)
+        u''
+        >>> fmt = u'\x1b[{0}G'
+        >>> fmt_arg = lambda *arg: (arg[0] + 1,)
+        >>> hpa = ParameterizingProxyString((fmt, fmt_arg), term.normal, 'hpa')
+        >>> hpa(9)
+        u'\x1b[10G'
+    """
+
+    def __new__(cls, *args):
+        """P.__new__(cls, (fmt, callable), [normal, [name]])
+
+        :arg fmt: format string suitable for displaying terminal sequences.
+        :arg callable: receives __call__ arguments for formatting fmt.
+        :arg normal: terminating sequence for this capability.
+        :arg name: name of this terminal capability.
+        """
+        assert len(args) and len(args) < 4, args
+        assert type(args[0]) is tuple, args[0]
+        assert callable(args[0][1]), args[0][1]
+        new = unicode.__new__(cls, args[0][0])
+        new._fmt_args = args[0][1]
+        new._normal = len(args) > 1 and args[1] or u''
+        new._name = len(args) > 2 and args[2] or u'<not specified>'
+        return new
+
+    def __call__(self, *args):
+        """P(*args) -> FormattingString()
+
+        Return evaluated terminal capability format, (self), using callable
+        ``self._fmt_args`` receiving arguments ``*args``, followed by the
+        terminating sequence (self.normal) into a FormattingString capable
+        of being called.
+        """
+        return FormattingString(self.format(*self._fmt_args(*args)),
+                                self._normal)
+
+
+def get_proxy_string(term, attr):
+    """ Returns an instance of ParameterizingProxyString
+    for (some kinds) of terminals and attributes.
+    """
+    if term._kind == 'screen' and attr in ('hpa', 'vpa'):
+        if attr == 'hpa':
+            fmt = u'\x1b[{0}G'
+        elif attr == 'vpa':
+            fmt = u'\x1b[{0}d'
+        fmt_arg = lambda *arg: (arg[0] + 1,)
+        return ParameterizingProxyString((fmt, fmt_arg),
+                                         term.normal, 'hpa')
+    return None
+
+
 class FormattingString(unicode):
     """A Unicode string which can be called using ``text``,
     returning a new string, ``attr`` + ``text`` + ``normal``::
@@ -124,18 +185,20 @@ class NullCallableString(unicode):
             # tparm can take not only ints but also (at least) strings as its
             # 2nd...nth argument. But we don't support callable parameterizing
             # capabilities that take non-ints yet, so we can cheap out here.
-            #
+
             # TODO(erikrose): Go through enough of the motions in the
             # capability resolvers to determine which of 2 special-purpose
             # classes, NullParameterizableString or NullFormattingString,
             # to return, and retire this one.
-            #
+
             # As a NullCallableString, even when provided with a parameter,
             # such as t.color(5), we must also still be callable, fe:
+            #
             # >>> t.color(5)('shmoo')
             #
-            # is actually simplified result of NullCallable()(), so
-            # turtles all the way down: we return another instance.
+            # is actually simplified result of NullCallable()() on terminals
+            # without color support, so turtles all the way down: we return
+            # another instance.
             return NullCallableString()
         return args[0]
 
@@ -221,5 +284,15 @@ def resolve_attribute(term, attr):
         resolution = (resolve_attribute(term, fmt) for fmt in formatters)
         return FormattingString(u''.join(resolution), term.normal)
     else:
+        # and, for special terminals, such as 'screen', provide a Proxy
+        # ParameterizingString for attributes they do not claim to support, but
+        # actually do! (such as 'hpa' and 'vpa').
+        proxy = get_proxy_string(term, term._sugar.get(attr, attr))
+        if proxy is not None:
+            return proxy
+        # otherwise, this is our end-game: given a sequence such as 'csr'
+        # (change scrolling region), return a ParameterizingString instance,
+        # that when called, performs and returns the final string after curses
+        # capability lookup is performed.
         tparm_capseq = resolve_capability(term, attr)
         return ParameterizingString(tparm_capseq, term.normal, attr)
