@@ -422,6 +422,10 @@ Bugs or suggestions? Visit the `issue tracker`_.
 
 .. _`issue tracker`: https://github.com/erikrose/blessings/issues/
 
+Blessings tests are run automatically by `Travis CI`_.
+
+.. _`Travis CI`: https://travis-ci.org/erikrose/blessings/
+
 .. image:: https://secure.travis-ci.org/erikrose/blessings.png
 
 
