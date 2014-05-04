@@ -155,7 +155,6 @@ def main():
             if len(worm) > worm_length:
                 echo(term.move(*worm.pop(0)))
                 echo(color_bg(u' '))
-#            print(worm_length)
 
             # compute head location
             head = worm.pop()
