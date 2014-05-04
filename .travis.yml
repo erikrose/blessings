@@ -4,20 +4,21 @@ env:
   - TOXENV=py26
   - TOXENV=py27
   - TOXENV=py33
+  - TOXENV=py34
   - TOXENV=pypy
 
 install:
   - pip install -q tox 
 
-  # for python versions <26, we must install ordereddict
+  # for python versions <27, we must install ordereddict
   # mimicking the same dynamically generated 'requires='
   # in setup.py
   - if [[ $TOXENV == "py25" ]] || [[ $TOXENV == "py26" ]]; then
         pip install -q ordereddict;
     fi
 
-  # for python version =27, cinstall and overage, coveralls.
-  # coverage is only measured and published for one version.
+  # for python version =27, install coverage, coveralls.
+  # (coverage only measured and published for one version)
   - if [[ $TOXENV == "py27" ]]; then
         pip install -q coverage coveralls;
     fi
@@ -27,7 +28,7 @@ script:
   - tox -e $TOXENV
 
 after_success:
-  - if [[ $TOXENV == "py27" ]]; then
+  - if [[ "${TOXENV}" == "py27" ]]; then
         coveralls;
     fi
 

@@ -1,48 +1,68 @@
 #!/usr/bin/env python
-from setuptools import setup
 import sys
 import os
+import setuptools
+import setuptools.command.develop
+import setuptools.command.test
 
-extra = {}
 
-if sys.version_info < (2, 7,):
-    extra.update({'install_requires': 'ordereddict'})
+class SetupDevelop(setuptools.command.develop.develop):
+    def run(self):
+        assert os.getenv('VIRTUAL_ENV'), 'You should be in a virtualenv'
+        self.spawn(('pip', 'install', '-U', 'tox',))
+        setuptools.command.develop.develop.run(self)
 
-elif sys.version_info >= (3,):
-    extra.update({'use_2to3': True})
 
-here = os.path.dirname(__file__)
-setup(
-    name='blessed',
-    version='1.8.5',
-    description="A feature-filled fork of Erik Rose's blessings project",
-    long_description=open(os.path.join(here, 'README.rst')).read(),
-    author='Jeff Quast',
-    author_email='contact@jeffquast.com',
-    license='MIT',
-    packages=['blessed', 'blessed.tests'],
-    url='https://github.com/jquast/blessed',
-    include_package_data=True,
-    test_suite='blessed.tests',
-    classifiers=[
-        'Intended Audience :: Developers',
-        'Natural Language :: English',
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: Console',
-        'Environment :: Console :: Curses',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: POSIX',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
-        'Topic :: Software Development :: Libraries',
-        'Topic :: Software Development :: User Interfaces',
-        'Topic :: Terminals'
-        ],
-    keywords=['terminal', 'sequences', 'tty', 'curses', 'ncurses',
-              'formatting', 'style', 'color', 'console', 'keyboard',
-              'ansi', 'xterm'],
-    **extra
-)
+class SetupTest(setuptools.command.test.test):
+    def run(self):
+        self.spawn(('tox',))
+
+
+def main():
+    extra = {}
+    if sys.version_info < (2, 7,):
+        extra.update({'install_requires': 'ordereddict'})
+
+    elif sys.version_info >= (3,):
+        extra.update({'use_2to3': True})
+
+    here = os.path.dirname(__file__)
+    setuptools.setup(
+        name='blessed',
+        version='1.8.6',
+        description="A feature-filled fork of Erik Rose's blessings project",
+        long_description=open(os.path.join(here, 'README.rst')).read(),
+        author='Jeff Quast',
+        author_email='contact@jeffquast.com',
+        license='MIT',
+        packages=['blessed', 'blessed.tests'],
+        url='https://github.com/jquast/blessed',
+        include_package_data=True,
+        test_suite='blessed.tests',
+        classifiers=[
+            'Intended Audience :: Developers',
+            'Natural Language :: English',
+            'Development Status :: 5 - Production/Stable',
+            'Environment :: Console',
+            'Environment :: Console :: Curses',
+            'License :: OSI Approved :: MIT License',
+            'Operating System :: POSIX',
+            'Programming Language :: Python :: 2',
+            'Programming Language :: Python :: 2.6',
+            'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: 3.2',
+            'Topic :: Software Development :: Libraries',
+            'Topic :: Software Development :: User Interfaces',
+            'Topic :: Terminals'
+            ],
+        keywords=['terminal', 'sequences', 'tty', 'curses', 'ncurses',
+                  'formatting', 'style', 'color', 'console', 'keyboard',
+                  'ansi', 'xterm'],
+        cmdclass={'develop': SetupDevelop,
+                  'test': SetupTest},
+        **extra
+    )
+
+if __name__ == '__main__':
+    main()
