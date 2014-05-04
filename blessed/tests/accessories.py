@@ -22,7 +22,7 @@ all_xterms_params = ['xterm', 'xterm-256color']
 all_terms_params = ['screen', 'vt220', 'rxvt', 'cons25', 'linux', 'ansi']
 binpacked_terminal_params = ['avatar', 'kermit']
 many_lines_params = [30, 100]
-many_columns_params = [10, 30, 100]
+many_columns_params = [10, 100]
 if os.environ.get('TRAVIS', None) is None:
     # TRAVIS-CI has a limited type of terminals, the others ...
     all_terms_params.extend(['avatar', 'kermit', 'dtterm', 'wyse520',

@@ -212,6 +212,21 @@ def test_cbreak_no_kb():
             with mock.patch("tty.setcbreak") as mock_setcbreak:
                 with term.cbreak():
                     assert not mock_setcbreak.called
+                assert term.keyboard_fd is None
+    child()
+
+
+def test_notty_kb_is_None():
+    "keyboard_fd should be None when os.isatty returns False."
+    # in this scenerio, stream is sys.__stdout__,
+    # but os.isatty(0) is False,
+    # such as when piping output to less(1)
+    @as_subprocess
+    def child():
+        with mock.patch("os.isatty") as mock_isatty:
+            mock_isatty.return_value = False
+            term = TestTerminal()
+            assert term.keyboard_fd is None
     child()
 
 
@@ -224,6 +239,7 @@ def test_raw_no_kb():
             with mock.patch("tty.setraw") as mock_setraw:
                 with term.raw():
                     assert not mock_setraw.called
+            assert term.keyboard_fd is None
     child()
 
 

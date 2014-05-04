@@ -130,7 +130,8 @@ class Terminal(object):
         global _CUR_TERM
         self.keyboard_fd = None
 
-        # default stream is stdout, keyboard only valid as stdin with stdout.
+        # default stream is stdout, keyboard only valid as stdin when
+        # output stream is stdout and output stream is a tty
         if stream is None or stream == sys.__stdout__:
             stream = sys.__stdout__
             self.keyboard_fd = sys.__stdin__.fileno()
@@ -144,6 +145,12 @@ class Terminal(object):
         self._is_a_tty = stream_fd is not None and os.isatty(stream_fd)
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
+
+        # keyboard_fd only non-None if both stdin and stdout is a tty.
+        self.keyboard_fd = (self.keyboard_fd
+                            if self.keyboard_fd is not None and
+                            self.is_a_tty and os.isatty(self.keyboard_fd)
+                            else None)
         self._normal = None  # cache normal attr, preventing recursive lookups
 
         # The descriptor to direct terminal initialization sequences to.
@@ -503,6 +510,7 @@ class Terminal(object):
         Implementors of input streams other than os.read() on the stdin fd
         should derive and override this method.
         """
+        assert self.keyboard_fd is not None
         byte = os.read(self.keyboard_fd, 1)
         return self._keyboard_decoder.decode(byte, final=False)
 

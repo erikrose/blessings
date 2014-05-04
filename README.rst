@@ -676,11 +676,17 @@ Version History
     interrupted by signal by passing argument ``_intr_continue=False``.
   * enhancement: allow ``hpa`` and ``vpa`` (move_x, move_y) to work on tmux(1)
     or screen(1) by forcibly emulating their support by a proxy.
+  * enhancement: ``setup.py develop`` ensures virtualenv and installs tox,
+    and ``setup.py test`` calls tox. Requires pythons defined by tox.ini.
   * bugfix: if ``locale.getpreferredencoding()`` returns empty string or an
     encoding that is not a valid codec for ``codecs.getincrementaldecoder``,
     fallback to ascii and emit a warning.
-  * bugfix: ensure FormattingString and ParameterizingString may be pickled.
-  * bugfix: allow term.inkey() and related to be called without a keyboard.
+  * bugfix: ensure ``FormattingString`` and ``ParameterizingString`` may be
+    pickled.
+  * bugfix: allow ``term.inkey()`` and related to be called without a keyboard.
+  * **change**: ``term.keyboard_fd`` is set ``None`` if ``stream`` or
+    ``sys.stdout`` is not a tty, making ``term.inkey()``, ``term.cbreak()``,
+    ``term.raw()``, no-op.
 
 1.7
   * Forked github project `erikrose/blessings`_ to `jquast/blessed`_, this
