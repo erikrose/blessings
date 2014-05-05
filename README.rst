@@ -2,11 +2,11 @@
     :target: https://travis-ci.org/jquast/blessed
     :alt: Travis Continous Integration
 
-.. image:: http://img.shields.io/coveralls/jquast/blessed/badge.svg
+.. image:: http://img.shields.io/coveralls/jquast/blessed.svg
     :target: http://coveralls.io/r/jquast/blessed
     :alt: Coveralls Code Coveraage
 
-.. image:: http://img.shields.io/pypi/v/blessed/badge.svg
+.. image:: http://img.shields.io/pypi/v/blessed.svg
     :target: https://pypi.python.org/pypi/blessed/
     :alt: Latest Version
 
@@ -14,7 +14,7 @@
     :target: https://pypi.python.org/pypi/blessed/
     :alt: License
 
-.. image:: http://img.shields.io/pypi/dm/blessed/badge.svg
+.. image:: http://img.shields.io/pypi/dm/blessed.svg
     :target: https://pypi.python.org/pypi/blessed/
     :alt: Downloads
 
