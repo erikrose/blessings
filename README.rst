@@ -4,7 +4,7 @@
 
 .. image:: http://img.shields.io/coveralls/jquast/blessed.svg
     :target: http://coveralls.io/r/jquast/blessed
-    :alt: Coveralls Code Coveraage
+    :alt: Coveralls Code Coverage
 
 .. image:: http://img.shields.io/pypi/v/blessed.svg
     :target: https://pypi.python.org/pypi/blessed/
