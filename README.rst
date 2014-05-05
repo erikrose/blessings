@@ -1,21 +1,16 @@
 .. image:: http://img.shields.io/travis/jquast/blessed.svg
-    :target: https://travis-ci.org/jquast/blessed
     :alt: Travis Continous Integration
 
 .. image:: http://img.shields.io/coveralls/jquast/blessed.svg
-    :target: http://coveralls.io/r/jquast/blessed
     :alt: Coveralls Code Coverage
 
 .. image:: http://img.shields.io/pypi/v/blessed.svg
-    :target: https://pypi.python.org/pypi/blessed/
     :alt: Latest Version
 
 .. image:: https://pypip.in/license/blessed/badge.svg
-    :target: https://pypi.python.org/pypi/blessed/
     :alt: License
 
 .. image:: http://img.shields.io/pypi/dm/blessed.svg
-    :target: https://pypi.python.org/pypi/blessed/
     :alt: Downloads
 
 =======
