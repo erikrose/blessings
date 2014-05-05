@@ -1,22 +1,22 @@
 .. image:: http://img.shields.io/travis/jquast/blessed.svg
-   :target: https://travis-ci.org/jquast/blessed
-   :alt: Travis Continous Integration
+    :target: https://travis-ci.org/jquast/blessed
+    :alt: Travis Continous Integration
 
 .. image:: http://img.shields.io/coveralls/jquast/blessed/badge.svg
-   :target: http://coveralls.io/r/jquast/blessed
-   :alt: Coveralls Code Coveraage
+    :target: http://coveralls.io/r/jquast/blessed
+    :alt: Coveralls Code Coveraage
 
 .. image:: http://img.shields.io/pypi/v/blessed/badge.svg
-   :target: https://pypi.python.org/pypi/blessed/
-   :alt: Latest Version
+    :target: https://pypi.python.org/pypi/blessed/
+    :alt: Latest Version
 
 .. image:: https://pypip.in/license/blessed/badge.svg
-   :target: https://pypi.python.org/pypi/blessed/
-   :alt: License
+    :target: https://pypi.python.org/pypi/blessed/
+    :alt: License
 
 .. image:: http://img.shields.io/pypi/dm/blessed/badge.svg
-   :target: https://pypi.python.org/pypi/blessed/
-   :alt: Downloads
+    :target: https://pypi.python.org/pypi/blessed/
+    :alt: Downloads
 
 =======
 Blessed
