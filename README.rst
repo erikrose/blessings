@@ -495,15 +495,15 @@ from Tao Te Ching, word-wrapped to 25 columns::
 
     from blessed import Terminal
 
-    t = Terminal()
+    term = Terminal()
 
-    poem = u''.join((term.bold_blue('Plan difficult tasks '),
-                     term.bold_black('through the simplest tasks'),
-                     term.bold_cyan('Achieve large tasks '),
-                     term.cyan('through the smallest tasks'))
+    poem = (term.bold_blue('Plan difficult tasks'),
+            term.blue('through the simplest tasks'),
+            term.bold_cyan('Achieve large tasks'),
+            term.cyan('through the smallest tasks'))
+
     for line in poem:
-        print('\n'.join(term.wrap(line, width=25,
-                                  subsequent_indent=' ' * 4)))
+        print('\n'.join(term.wrap(line, width=25, subsequent_indent=' ' * 4)))
 
 Keyboard Input
 --------------
@@ -648,11 +648,11 @@ Devlopers, Bugs
 ===============
 
 Bugs or suggestions? Visit the `issue tracker`_.
+`API Documentation`_ is available.
 
-For patches, please construct a test case if possible. To test,
-install and execute python package command *tox*.
+For patches, please construct a test case if possible.
 
-For the keenly interested, `API` Documentation is available.
+To test, install and execute python package command ``tox``.
 
 
 License
@@ -669,8 +669,8 @@ Version History
     that it may be overridden by custom terminal implementers.
   * enhancement: allow ``inkey()`` and ``kbhit()`` to return early when
     interrupted by signal by passing argument ``_intr_continue=False``.
-  * enhancement: allow ``hpa`` and ``vpa`` (move_x, move_y) to work on tmux(1)
-    or screen(1) by forcibly emulating their support by a proxy.
+  * enhancement: allow ``hpa`` and ``vpa`` (*move_x*, *move_y*) to work on
+    tmux(1) or screen(1) by forcibly emulating their support by a proxy.
   * enhancement: ``setup.py develop`` ensures virtualenv and installs tox,
     and ``setup.py test`` calls tox. Requires pythons defined by tox.ini.
   * bugfix: if ``locale.getpreferredencoding()`` returns empty string or an
@@ -690,16 +690,15 @@ Version History
     to ``tty.setcbreak()`` and ``tty.setraw()``, allowing input from stdin to be
     read as each key is pressed.
   * introduced: ``inkey()`` and ``kbhit()``, which will return 1 or more
-    characters as a unicode sequence, with attributes ``.code`` and ``.name``
-    non-None when a multibyte sequence is received, allowing arrow keys and
-    such to be detected. Optional value ``timeout`` allows timed polling or
-    blocking.
+    characters as a unicode sequence, with attributes ``.code`` and ``.name``,
+    with value non-``None`` when a multibyte sequence is received, allowing
+    application keys (such as UP/DOWN) to be detected. Optional value ``timeout``
+    allows timed asynchronous polling or blocking.
   * introduced: ``center()``, ``rjust()``, ``ljust()``, ``strip()``, and
     ``strip_seqs()`` methods.  Allows text containing sequences to be aligned
     to screen, or ``width`` specified.
   * introduced: ``wrap()`` method.  Allows text containing sequences to be
-    word-wrapped without breaking mid-sequence and honoring their printable
-    width.
+    word-wrapped without breaking mid-sequence, honoring their printable width.
   * bugfix: cannot call ``setupterm()`` more than once per process -- issue a
     warning about what terminal kind subsequent calls will use.
   * bugfix: resolved issue where ``number_of_colors`` fails when
@@ -796,22 +795,21 @@ Version History
   * Let ``location()`` operate on just an x *or* y coordinate.
 
 1.0
-  * Extracted Blessings from nose-progressive, my `progress-bar-having,
-    traceback-shortcutting, rootin', tootin' testrunner`_. It provided the
-    tootin' functionality.
+  * Extracted Blessings from `nose-progressive`_.
 
-.. _`progress-bar-having, traceback-shortcutting, rootin', tootin' testrunner`: http://pypi.python.org/pypi/nose-progressive/
+.. _`nose-progressive`: http://pypi.python.org/pypi/nose-progressive/
 .. _`erikrose/blessings`: https://github.com/erikrose/blessings
 .. _`jquast/blessed`: https://github.com/jquast/blessed
-.. _curses: http://docs.python.org/library/curses.html
-.. _couleur: http://pypi.python.org/pypi/couleur
+.. _`issue tracker`: https://github.com/jquast/blessed/issues/
+.. _curses: https://docs.python.org/library/curses.html
+.. _couleur: https://pypi.python.org/pypi/couleur
+.. _colorama: https://pypi.python.org/pypi/colorama
+.. _wcwidth: https://pypi.python.org/pypi/wcwidth
 .. _`cbreak(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
 .. _`curs_getch(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=curs_getch&apropos=0&sektion=3
 .. _`termios(4)`: http://www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4
 .. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
-.. _colorama: http://pypi.python.org/pypi/colorama/0.2.4
 .. _tigetstr: http://www.openbsd.org/cgi-bin/man.cgi?query=tigetstr&sektion=3
 .. _tparm: http://www.openbsd.org/cgi-bin/man.cgi?query=tparm&sektion=3
 .. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH
-.. _`issue tracker`: https://github.com/jquast/blessed/issues/
-.. _API: http://blessed.rtfd.org
+.. _`API Documentation`: http://blessed.rtfd.org
