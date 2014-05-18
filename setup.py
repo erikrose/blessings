@@ -19,17 +19,21 @@ class SetupTest(setuptools.command.test.test):
 
 
 def main():
-    extra = {}
+    extra = {
+        'install_requires': [
+            'wcwidth>=0.1.0',
+        ]
+    }
     if sys.version_info < (2, 7,):
-        extra.update({'install_requires': 'ordereddict'})
+        extra['install_requires'].extend(['ordereddict>=1.1'])
 
     elif sys.version_info >= (3,):
-        extra.update({'use_2to3': True})
+        extra['use_2to3'] = True
 
     here = os.path.dirname(__file__)
     setuptools.setup(
         name='blessed',
-        version='1.8.6',
+        version='1.8.7',
         description="A feature-filled fork of Erik Rose's blessings project",
         long_description=open(os.path.join(here, 'README.rst')).read(),
         author='Jeff Quast',

@@ -1,3 +1,4 @@
+# encoding: utf-8
 import itertools
 import platform
 import termios
@@ -20,6 +21,20 @@ from accessories import (
 )
 
 import pytest
+
+
+def test_length_cjk():
+
+    @as_subprocess
+    def child():
+        term = TestTerminal(kind='xterm-256color')
+
+        # given,
+        given = term.bold_red(u'コンニチハ, セカイ!')
+        expected = sum((2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 1,))
+        assert term.length(given) == expected
+
+    child()
 
 
 def test_sequence_length(all_terms):

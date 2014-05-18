@@ -6,11 +6,15 @@ __license__ = 'MIT'
 
 __all__ = ['init_sequence_patterns', 'Sequence', 'SequenceTextWrapper']
 
+# built-ins
 import functools
 import textwrap
 import warnings
 import math
 import re
+
+# 3rd-party
+import wcwidth  # https://github.com/jquast/wcwidth
 
 _BINTERM_UNSUPPORTED = ('kermit', 'avatar')
 _BINTERM_UNSUPPORTED_MSG = ('sequence-awareness for terminals emitting '
@@ -401,18 +405,29 @@ class Sequence(unicode):
         terminal sequences.
 
         Although accounted for, strings containing sequences such as
-        ``term.clear`` will not give accurate returns, it is considered
-        un-lengthy (length of 0).
+        ``term.clear`` will not give accurate returns, it is not
+        considered lengthy (a length of 0). Combining characters,
+        are also not considered lengthy.
 
         Strings containing ``term.left`` or ``\b`` will cause "overstrike",
         but a length less than 0 is not ever returned. So ``_\b+`` is a
         length of 1 (``+``), but ``\b`` is simply a length of 0.
+
+        Some characters may consume more than one cell, mainly those CJK
+        Unified Ideographs (Chinese, Japanese, Korean) defined by Unicode
+        as half or full-width characters.
+
+        For example:
+            >>> from blessed import Terminal
+            >>> from blessed.sequences import Sequence
+            >>> term = Terminal()
+            >>> Sequence(term.clear + term.red(u'コンニチハ')).length()
+            5
         """
-        # TODO(jquast): Should we implement the terminal printable
-        # width of 'East Asian Fullwidth' and 'East Asian Wide' characters,
-        # which can take 2 cells, see http://www.unicode.org/reports/tr11/
-        # and http://www.gossamer-threads.com/lists/python/bugs/972834
-        return len(self.strip_seqs())
+        # because combining characters may return -1, "clip" their length to 0.
+        clip = functools.partial(max, 0)
+        return sum(clip(wcwidth.wcwidth(w_char))
+                   for w_char in self.strip_seqs())
 
     def strip(self, chars=None):
         """S.strip([chars]) -> unicode
