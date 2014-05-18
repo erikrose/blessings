@@ -39,8 +39,8 @@ def _build_numeric_capability(term, cap, optional=False,
     if _cap:
         args = (base_num,) * nparams
         cap_re = re.escape(_cap(*args))
-        for num in range(base_num-1, base_num+2):
-            # search for matching ascii, n-1 through n+2
+        for num in range(base_num - 1, base_num + 2):
+            # search for matching ascii, n-1 through n+1
             if str(num) in cap_re:
                 # modify & return n to matching digit expression
                 cap_re = cap_re.replace(str(num), r'(\d+)%s' % (opt,))
@@ -261,13 +261,28 @@ def init_sequence_patterns(term):
 
     # Build will_move, a list of terminal capabilities that have
     # indeterminate effects on the terminal cursor position.
-    _will_move = _merge_sequences(get_movement_sequence_patterns(term)
-                                  ) if term.does_styling else set()
+    _will_move = set()
+    if term.does_styling:
+        _will_move = _merge_sequences(get_movement_sequence_patterns(term))
 
     # Build wont_move, a list of terminal capabilities that mainly affect
     # video attributes, for use with measure_length().
-    _wont_move = _merge_sequences(get_wontmove_sequence_patterns(term)
-                                  ) if term.does_styling else set()
+    _wont_move = set()
+    if term.does_styling:
+        _wont_move = _merge_sequences(get_wontmove_sequence_patterns(term))
+        _wont_move += [
+            # some last-ditch match efforts; well, xterm and aixterm is going
+            # to throw \x1b(B and other oddities all around, so, when given
+            # input such as ansi art (see test using wall.ans), and well,
+            # theres no reason a vt220 terminal shouldn't be able to recognize
+            # blue_on_red, even if it didn't cause it to be generated. these
+            # are final "ok, i will match this, anyway"
+            re.escape(u'\x1b') + r'\[(\d+)m',
+            re.escape(u'\x1b') + r'\[(\d+)\;(\d+)m',
+            re.escape(u'\x1b') + r'\[(\d+)\;(\d+)\;(\d+)m',
+            re.escape(u'\x1b') + r'\[(\d+)\;(\d+)\;(\d+)\;(\d+)m',
+            re.escape(u'\x1b(B'),
+        ]
 
     # compile as regular expressions, OR'd.
     _re_will_move = re.compile('(%s)' % ('|'.join(_will_move)))
