@@ -678,6 +678,8 @@ Version History
   * enhancement: include wcwidth_ library support for ``length()``, the
     printable width of many kinds of CJK (Chinese, Japanese, Korean) ideographs
     are more correctly determined.
+  * enhancement: better support for detecting the length or sequences of
+    externally-generated *ecma-48* codes when using ``xterm`` or ``aixterm``.
   * bugfix: if ``locale.getpreferredencoding()`` returns empty string or an
     encoding that is not a valid codec for ``codecs.getincrementaldecoder``,
     fallback to ascii and emit a warning.

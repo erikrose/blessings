@@ -24,7 +24,6 @@ import pytest
 
 
 def test_length_cjk():
-
     @as_subprocess
     def child():
         term = TestTerminal(kind='xterm-256color')
@@ -32,8 +31,30 @@ def test_length_cjk():
         # given,
         given = term.bold_red(u'コンニチハ, セカイ!')
         expected = sum((2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 1,))
+
+        # exercise,
         assert term.length(given) == expected
 
+    child()
+
+
+def test_length_ansiart():
+    @as_subprocess
+    def child():
+        import codecs
+        from blessed.sequences import Sequence
+        term = TestTerminal(kind='xterm-256color')
+        # this 'ansi' art contributed by xzip!impure for another project,
+        # unlike most CP-437 DOS ansi art, this is actually utf-8 encoded.
+        fname = os.path.join(os.path.dirname(__file__), 'wall.ans')
+        lines = codecs.open(fname, 'r', 'utf-8').readlines()
+        assert term.length(lines[0]) == 67  # ^[[64C^[[34m▄▓▄
+        assert term.length(lines[1]) == 75
+        assert term.length(lines[2]) == 78
+        assert term.length(lines[3]) == 78
+        assert term.length(lines[4]) == 78
+        assert term.length(lines[5]) == 78
+        assert term.length(lines[6]) == 77
     child()
 
 
@@ -42,7 +63,7 @@ def test_sequence_length(all_terms):
     @as_subprocess
     def child(kind):
         t = TestTerminal(kind=kind)
-        # Create a list of ascii characters, to be seperated
+        # Create a list of ascii characters, to be separated
         # by word, to be zipped up with a cycling list of
         # terminal sequences. Then, compare the length of
         # each, the basic plain_text.__len__ vs. the Terminal
