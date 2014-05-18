@@ -673,6 +673,8 @@ Version History
     tmux(1) or screen(1) by forcibly emulating their support by a proxy.
   * enhancement: ``setup.py develop`` ensures virtualenv and installs tox,
     and ``setup.py test`` calls tox. Requires pythons defined by tox.ini.
+  * enhancement: add ``rstrip()`` and ``lstrip()``, strips both sequences
+    and trailing or leading whitespace, respectively.
   * bugfix: if ``locale.getpreferredencoding()`` returns empty string or an
     encoding that is not a valid codec for ``codecs.getincrementaldecoder``,
     fallback to ascii and emit a warning.

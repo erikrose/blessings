@@ -503,3 +503,16 @@ def test_bna_parameter_emits_warning():
     else:
         assert False, 'Previous stmt should have raised exception.'
     warnings.resetwarnings()
+
+
+def test_padd():
+    """ Test terminal.padd(seq). """
+    @as_subprocess
+    def child():
+        from blessed.sequences import Sequence
+        from blessed import Terminal
+        term = Terminal('xterm-256color')
+        assert Sequence('xyz\b', term).padd() == u'xy'
+        assert Sequence('xxxx\x1b[3Dzz', term).padd() == u'xzz'
+
+    child()

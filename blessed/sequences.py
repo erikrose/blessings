@@ -1,3 +1,4 @@
+# encoding: utf-8
 " This sub-module provides 'sequence awareness' for blessed."
 
 __author__ = 'Jeff Quast <contact@jeffquast.com>'
@@ -268,9 +269,7 @@ def init_sequence_patterns(term):
     _re_will_move = re.compile('(%s)' % ('|'.join(_will_move)))
     _re_wont_move = re.compile('(%s)' % ('|'.join(_wont_move)))
 
-    #
     # static pattern matching for horizontal_distance(ucs, term)
-    #
     bnc = functools.partial(_build_numeric_capability, term)
 
     # parm_right_cursor: Move #1 characters to the right
@@ -294,19 +293,6 @@ def init_sequence_patterns(term):
             '_cuf1': _cuf1,
             '_cub1': _cub1, }
 
-# TODO(jquast): for some reason, 'screen' does not offer hpa and vpa,
-#               although they function perfectly fine ! We need some kind
-#               of patching function we may apply for such terminals ..
-#
-#    if term._kind == 'screen' and term.hpa == u'':
-#        def screen_hpa(*args):
-#            return u'\x1b[{}G'.format(len(args) and args[0] + 1 or 1)
-#        term.hpa = screen_hpa
-#    if term._kind == 'screen' and term.vpa == u'':
-#        def screen_vpa(*args):
-#            return u'\x1b[{}d'.format(len(args) and args[0] + 1 or 1)
-#        term.vpa = screen_vpa
-
 
 class SequenceTextWrapper(textwrap.TextWrapper):
     def __init__(self, width, term, **kwargs):
@@ -318,7 +304,7 @@ class SequenceTextWrapper(textwrap.TextWrapper):
 
     def _wrap_chunks(self, chunks):
         """
-        escape-sequence aware varient of _wrap_chunks. Though
+        escape-sequence aware variant of _wrap_chunks. Though
         movement sequences, such as term.left() are certainly not
         honored, sequences such as term.bold() are, and are not
         broken mid-sequence.
@@ -428,44 +414,91 @@ class Sequence(unicode):
         # and http://www.gossamer-threads.com/lists/python/bugs/972834
         return len(self.strip_seqs())
 
-    def strip(self):
-        """S.strip() -> unicode
+    def strip(self, chars=None):
+        """S.strip([chars]) -> unicode
 
-        Returns string derived from unicode string ``S``, stripped of
-        whitespace and terminal sequences.
+        Return a copy of the string S with terminal sequences removed, and
+        leading and trailing whitespace removed.
+
+        If chars is given and not None, remove characters in chars instead.
         """
-        return self.strip_seqs().strip()
+        return self.strip_seqs().strip(chars)
+
+    def lstrip(self, chars=None):
+        """S.lstrip([chars]) -> unicode
+
+        Return a copy of the string S with terminal sequences and leading
+        whitespace removed.
+
+        If chars is given and not None, remove characters in chars instead.
+        """
+        return self.strip_seqs().lstrip(chars)
+
+    def rstrip(self, chars=None):
+        """S.rstrip([chars]) -> unicode
+
+        Return a copy of the string S with terminal sequences and trailing
+        whitespace removed.
+
+        If chars is given and not None, remove characters in chars instead.
+        """
+        return self.strip_seqs().rstrip(chars)
 
     def strip_seqs(self):
         """S.strip_seqs() -> unicode
 
         Return a string without sequences for a string that contains
-        (most types) of (escape) sequences for the Terminal with which
-        they were created.
+        sequences for the Terminal with which they were created.
+
+        Where sequence ``move_right(n)`` is detected, it is replaced with
+        ``n * u' '``, and where ``move_left()`` or ``\\b`` is detected,
+        those last-most characters are destroyed.
+
+        All other sequences are simply removed. An example,
+            >>> from blessed import Terminal
+            >>> from blessed.sequences import Sequence
+            >>> term = Terminal()
+            >>> Sequence(term.clear + term.red(u'test')).strip_seqs()
+            u'test'
         """
         # nxt: points to first character beyond current escape sequence.
         # width: currently estimated display length.
+        input = self.padd()
+        outp = u''
+        nxt = 0
+        for idx in range(0, len(input)):
+            if idx == nxt:
+                # at sequence, point beyond it,
+                nxt = idx + measure_length(input[idx:], self._term)
+            if nxt <= idx:
+                # append non-sequence to outp,
+                outp += input[idx]
+                # point beyond next sequence, if any,
+                # otherwise point to next character
+                nxt = idx + measure_length(input[idx:], self._term) + 1
+        return outp
+
+    def padd(self):
+        """S.padd() -> unicode
+        Make non-destructive space or backspace into destructive ones.
+
+        Where sequence ``move_right(n)`` is detected, it is replaced with
+        ``n * u' '``.  Where sequence ``move_left(n)`` or ``\\b`` is
+        detected, those last-most characters are destroyed.
+        """
         outp = u''
         nxt = 0
         for idx in range(0, unicode.__len__(self)):
-            # account for width of sequences that contain padding (a sort of
-            # SGR-equivalent cheat for the python equivalent of ' '*N, for
-            # very large values of N that may xmit fewer bytes than many raw
-            # spaces. It should be noted, however, that this is a
-            # non-destructive space.
             width = horizontal_distance(self[idx:], self._term)
-            if width > 0:
-                outp += u' ' * horizontal_distance(self[idx:], self._term)
-            elif width < 0:
-                # \b causes the previous character to be trimmed
-                outp = outp[:width]
-            if idx == nxt:
-                # point beyond this sequence
+            if width != 0:
                 nxt = idx + measure_length(self[idx:], self._term)
+                if width > 0:
+                    outp += u' ' * width
+                elif width < 0:
+                    outp = outp[:width]
             if nxt <= idx:
                 outp += self[idx]
-                # point beyond next sequence, if any, otherwise next character
-                nxt = idx + measure_length(self[idx:], self._term) + 1
+                nxt = idx + 1
         return outp
 
 
@@ -551,11 +584,13 @@ def horizontal_distance(ucs, term):
         return -1
 
     elif ucs.startswith('\t'):
-        # as best as I can prove it, a tabstop is always 8 by default.
+        # As best as I can prove it, a tabstop is always 8 by default.
         # Though, given that blessings is:
+        #
         #  1. unaware of the output device's current cursor position, and
         #  2. unaware of the location the callee may chose to output any
         #     given string,
+        #
         # It is not possible to determine how many cells any particular
         # \t would consume on the output device!
         return 8
