@@ -665,8 +665,8 @@ shares the same. See the LICENSE file.
 Version History
 ===============
 1.8
-  * enhancement: export keyboard-read function as public method ``getch()``, so
-    that it may be overridden by custom terminal implementers.
+  * enhancement: export keyboard-read function as public method ``getch()``,
+    so that it may be overridden by custom terminal implementers.
   * enhancement: allow ``inkey()`` and ``kbhit()`` to return early when
     interrupted by signal by passing argument ``_intr_continue=False``.
   * enhancement: allow ``hpa`` and ``vpa`` (*move_x*, *move_y*) to work on
@@ -675,6 +675,9 @@ Version History
     and ``setup.py test`` calls tox. Requires pythons defined by tox.ini.
   * enhancement: add ``rstrip()`` and ``lstrip()``, strips both sequences
     and trailing or leading whitespace, respectively.
+  * enhancement: include wcwidth_ library support for ``length()``, the
+    printable width of many kinds of CJK (Chinese, Japanese, Korean) ideographs
+    are more correctly determined.
   * bugfix: if ``locale.getpreferredencoding()`` returns empty string or an
     encoding that is not a valid codec for ``codecs.getincrementaldecoder``,
     fallback to ascii and emit a warning.
