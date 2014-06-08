@@ -484,19 +484,20 @@ class Terminal(object):
         return Sequence(text, self).strip_seqs()
 
     def wrap(self, text, width=None, **kwargs):
-        """T.wrap(text, [width=None, indent=u'', ...]) -> unicode
+        """T.wrap(text, [width=None, **kwargs ..]) -> list[unicode]
 
-        Wrap paragraphs containing escape sequences, ``text``, to the full
-        width of Terminal instance T, unless width is specified, wrapped by
-        the virtual printable length, irregardless of the video attribute
-        sequences it may contain.
+        Wrap paragraphs containing escape sequences ``text`` to the full
+        ``width`` of Terminal instance *T*, unless ``width`` is specified.
+        Wrapped by the virtual printable length, irregardless of the video
+        attribute sequences it may contain, allowing text containing colors,
+        bold, underline, etc. to be wrapped.
 
         Returns a list of strings that may contain escape sequences. See
-        textwrap.TextWrapper class for available additional kwargs to
-        customize wrapping behavior.
+        ``textwrap.TextWrapper`` for all available additional kwargs to
+        customize wrapping behavior such as ``subsequent_indent``.
 
         Note that the keyword argument ``break_long_words`` may not be set,
-        it is not sequence-safe.
+        it is not sequence-safe!
         """
 
         _blw = 'break_long_words'

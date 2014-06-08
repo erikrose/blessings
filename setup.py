@@ -33,7 +33,7 @@ def main():
     here = os.path.dirname(__file__)
     setuptools.setup(
         name='blessed',
-        version='1.8.8',
+        version='1.8.9',
         description="A feature-filled fork of Erik Rose's blessings project",
         long_description=open(os.path.join(here, 'README.rst')).read(),
         author='Jeff Quast',

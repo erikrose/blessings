@@ -689,6 +689,7 @@ Version History
   * **change**: ``term.keyboard_fd`` is set ``None`` if ``stream`` or
     ``sys.stdout`` is not a tty, making ``term.inkey()``, ``term.cbreak()``,
     ``term.raw()``, no-op.
+  * bugfix: ``\x1bOH`` (KEY_HOME) was incorrectly mapped as KEY_LEFT.
 
 1.7
   * Forked github project `erikrose/blessings`_ to `jquast/blessed`_, this

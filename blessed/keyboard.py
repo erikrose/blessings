@@ -192,7 +192,7 @@ DEFAULT_SEQUENCE_MIXIN = (
     (u"\x1bOB", curses.KEY_DOWN),
     (u"\x1bOC", curses.KEY_RIGHT),
     (u"\x1bOD", curses.KEY_LEFT),
-    (u"\x1bOH", curses.KEY_LEFT),
+    (u"\x1bOH", curses.KEY_HOME),
     (u"\x1bOF", curses.KEY_END),
     (u"\x1bOP", curses.KEY_F1),
     (u"\x1bOQ", curses.KEY_F2),

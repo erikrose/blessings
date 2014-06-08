@@ -96,26 +96,20 @@ def main():
             inps.append(inp)
 
     with term.cbreak():
-        sys.stdout.write(u''.join((
-            term.move(term.height),
-            term.clear_eol,
-            u'Your final score was %s' % (score,),
-            u' at level %s' % (level,),
-            term.clear_eol,
-            u'\n',
-            term.clear_eol,
-            u'You hit %s' % (hit_highbit,),
-            u' 8-bit (extended ascii) characters',
-            term.clear_eol,
-            u'\n',
-            term.clear_eol,
-            u'You hit %s' % (hit_unicode,),
-            u' unicode characters.',
-            term.clear_eol,
-            u'\n',
-            term.clear_eol,
-            u'press any key',
-            term.clear_eol,))
+        sys.stdout.write(term.move(term.height))
+        sys.stdout.write(
+            u'{term.clear_eol}Your final score was {score} '
+            u'at level {level}{term.clear_eol}\n'
+            u'{term.clear_eol}\n'
+            u'{term.clear_eol}You hit {hit_highbit} '
+            u' 8-bit characters\n{term.clear_eol}\n'
+            u'{term.clear_eol}You hit {hit_unicode} '
+            u' unicode characters.\n{term.clear_eol}\n'
+            u'{term.clear_eol}press any key\n'.format(
+                term=term,
+                score=score, level=level,
+                hit_highbit=hit_highbit,
+                hit_unicode=hit_unicode)
         )
         term.inkey()
 
