@@ -71,6 +71,7 @@ class ParameterizingString(unicode):
             # with http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses installed
             if "tparm() returned NULL" not in err:
                 raise
+            return NullCallableString()
 
 
 class ParameterizingProxyString(unicode):
