@@ -670,8 +670,7 @@ Version History
 ===============
 1.9
   * workaround: ignore 'tparm() returned NULL', this occurs on win32
-    platforms using PDCurses_ without a termcap or termlib.
-  * bugfix: term.center('text') should not padd right side with whitespace.
+    platforms using PDCurses_ where tparm() is not implemented.
 
 1.8
   * enhancement: export keyboard-read function as public method ``getch()``,
