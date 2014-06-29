@@ -24,7 +24,7 @@ def test_SequenceWrapper_invalid_width():
         t = TestTerminal()
         try:
             my_wrapped = t.wrap(u'------- -------------', WIDTH)
-        except ValueError, err:
+        except ValueError as err:
             assert err.args[0] == (
                 "invalid width %r(%s) (must be integer > 0)" % (
                     WIDTH, type(WIDTH)))

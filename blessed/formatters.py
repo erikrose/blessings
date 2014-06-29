@@ -53,7 +53,7 @@ class ParameterizingString(unicode):
             # concats work.
             attr = curses.tparm(self.encode('latin1'), *args).decode('latin1')
             return FormattingString(attr, self._normal)
-        except TypeError, err:
+        except TypeError as err:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
             if len(args) and isinstance(args[0], basestring):
@@ -65,7 +65,7 @@ class ParameterizingString(unicode):
             # Somebody passed a non-string; I don't feel confident
             # guessing what they were trying to do.
             raise
-        except Exception, err:
+        except Exception as err:
             # ignore 'tparm() returned NULL', you won't get any styling,
             # even if does_styling is True. This happens on win32 platforms
             # with http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses installed

@@ -230,7 +230,7 @@ def test_missing_ordereddict_uses_module(monkeypatch):
 
     try:
         imp.reload(blessed.keyboard)
-    except ImportError, err:
+    except ImportError as err:
         assert err.args[0] in ("No module named ordereddict",  # py2
                                "No module named 'ordereddict'")  # py3
         sys.modules['ordereddict'] = mock.Mock()
@@ -255,7 +255,7 @@ def test_python3_2_raises_exception(monkeypatch):
 
     try:
         imp.reload(blessed)
-    except ImportError, err:
+    except ImportError as err:
         assert err.args[0] == (
             'Blessed needs Python 3.2.3 or greater for Python 3 '
             'support due to http://bugs.python.org/issue10570.')

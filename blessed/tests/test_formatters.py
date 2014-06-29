@@ -85,7 +85,7 @@ def test_parameterizing_string_type_error(monkeypatch):
     try:
         pstr('XYZ')
         assert False, "previous call should have raised TypeError"
-    except TypeError, err:
+    except TypeError as err:
         assert (err.args[0] == (  # py3x
             "A native or nonexistent capability template, "
             "'cap-name' received invalid argument ('XYZ',): "
@@ -101,7 +101,7 @@ def test_parameterizing_string_type_error(monkeypatch):
     try:
         pstr(0)
         assert False, "previous call should have raised TypeError"
-    except TypeError, err:
+    except TypeError as err:
         assert err.args[0] == "custom_err"
 
 

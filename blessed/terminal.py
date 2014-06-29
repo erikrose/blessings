@@ -203,7 +203,7 @@ class Terminal(object):
             try:
                 self._keyboard_decoder = codecs.getincrementaldecoder(
                     self._encoding)()
-            except LookupError, err:
+            except LookupError as err:
                 warnings.warn('%s, fallback to ASCII for keyboard.' % (err,))
                 self._encoding = 'ascii'
                 self._keyboard_decoder = codecs.getincrementaldecoder(
