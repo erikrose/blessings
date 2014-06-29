@@ -4,17 +4,30 @@ import collections
 import contextlib
 import functools
 import warnings
-import termios
 import codecs
 import curses
 import locale
 import select
 import struct
-import fcntl
 import time
-import tty
 import sys
 import os
+
+try:
+    import termios
+    import fcntl
+    import tty
+except ImportError:
+    tty_methods = ('setraw', 'cbreak', 'kbhit', 'height', 'width')
+    msg_nosupport = (
+        'One or more of the modules termios, fcntl, and tty were '
+        'not found on your platform {0}. The following methods are '
+        'dummy/no-op unless a deriving class overrides them: '
+        '{1}'.format(sys.platform.lower(), ', '.join(tty_methods)))
+    warnings.warn(msg_nosupport)
+    HAS_TTY = False
+else:
+    HAS_TTY = True
 
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
@@ -271,8 +284,10 @@ class Terminal(object):
 
         May raise exception IOError.
         """
-        data = fcntl.ioctl(fd, termios.TIOCGWINSZ, WINSZ._BUF)
-        return WINSZ(*struct.unpack(WINSZ._FMT, data))
+        if HAS_TTY:
+            data = fcntl.ioctl(fd, termios.TIOCGWINSZ, WINSZ._BUF)
+            return WINSZ(*struct.unpack(WINSZ._FMT, data))
+        return WINSZ(80, 24, 0, 0)
 
     def _height_and_width(self):
         """Return a tuple of (terminal height, terminal width).
@@ -546,10 +561,10 @@ class Terminal(object):
         # beyond timeout, then False is returned. Otherwise, when timeout is 0,
         # we continue to block indefinitely (default).
         stime = time.time()
-        check_w, check_x = [], []
+        check_w, check_x, ready_r = [], [], [None, ]
         check_r = [self.keyboard_fd] if self.keyboard_fd is not None else []
 
-        while True:
+        while HAS_TTY and True:
             try:
                 ready_r, ready_w, ready_x = select.select(
                     check_r, check_w, check_x, timeout)
@@ -589,7 +604,7 @@ class Terminal(object):
         Note also that setcbreak sets VMIN = 1 and VTIME = 0,
         http://www.unixwiz.net/techtips/termios-vmin-vtime.html
         """
-        if self.keyboard_fd is not None:
+        if HAS_TTY and self.keyboard_fd is not None:
             # save current terminal mode,
             save_mode = termios.tcgetattr(self.keyboard_fd)
             tty.setcbreak(self.keyboard_fd, termios.TCSANOW)
@@ -611,7 +626,7 @@ class Terminal(object):
         suspend, and flow control characters are all passed through as their
         raw character values instead of generating a signal.
         """
-        if self.keyboard_fd is not None:
+        if HAS_TTY and self.keyboard_fd is not None:
             # save current terminal mode,
             save_mode = termios.tcgetattr(self.keyboard_fd)
             tty.setraw(self.keyboard_fd, termios.TCSANOW)
