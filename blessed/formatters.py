@@ -65,6 +65,12 @@ class ParameterizingString(unicode):
             # Somebody passed a non-string; I don't feel confident
             # guessing what they were trying to do.
             raise
+        except Exception, err:
+            # ignore 'tparm() returned NULL', you won't get any styling,
+            # even if does_styling is True. This happens on win32 platforms
+            # with http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses installed
+            if "tparm() returned NULL" not in err:
+                raise
 
 
 class ParameterizingProxyString(unicode):

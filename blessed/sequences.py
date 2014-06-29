@@ -409,9 +409,7 @@ class Sequence(unicode):
         split = max(0.0, float(width) - self.length()) / 2
         leftside = fillchar * int((max(0.0, math.floor(split)))
                                   / float(len(fillchar)))
-        rightside = fillchar * int((max(0.0, math.ceil(split)))
-                                   / float(len(fillchar)))
-        return u''.join((leftside, self, rightside))
+        return u''.join((leftside, self))
 
     def length(self):
         """S.length() -> int

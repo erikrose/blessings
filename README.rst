@@ -668,6 +668,11 @@ shares the same. See the LICENSE file.
 
 Version History
 ===============
+1.9
+  * workaround: ignore 'tparm() returned NULL', this occurs on win32
+    platforms using PDCurses_ without a termcap or termlib.
+  * bugfix: term.center('text') should not padd right side with whitespace.
+
 1.8
   * enhancement: export keyboard-read function as public method ``getch()``,
     so that it may be overridden by custom terminal implementers.
@@ -825,3 +830,4 @@ Version History
 .. _tparm: http://www.openbsd.org/cgi-bin/man.cgi?query=tparm&sektion=3
 .. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH
 .. _`API Documentation`: http://blessed.rtfd.org
+.. _`PDCurses`: http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses
