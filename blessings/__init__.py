@@ -17,7 +17,8 @@ from os import isatty, environ
 from platform import python_version_tuple
 import struct
 import sys
-from termios import TIOCGWINSZ
+import termios
+import tty
 
 
 __all__ = ['Terminal']
@@ -229,7 +230,8 @@ class Terminal(object):
         for descriptor in self._init_descriptor, sys.__stdout__:
             try:
                 return struct.unpack(
-                        'hhhh', ioctl(descriptor, TIOCGWINSZ, '\000' * 8))[0:2]
+                    'hhhh',
+                    ioctl(descriptor, termios.TIOCGWINSZ, '\000' * 8))[0:2]
             except IOError:
                 # when the output stream or init descriptor is not a tty, such
                 # as when when stdout is piped to another program, fe. tee(1),
@@ -293,6 +295,25 @@ class Terminal(object):
             yield
         finally:
             self.stream.write(self.normal_cursor)
+
+    @contextmanager
+    def unbuffered_input(self):
+        """Return a context manager that stops input from being grouped into
+        chunks by the tty before being passed to stdin and turns of local
+        printing of input characters.
+        """
+        if self.is_a_tty:
+            orig_tty_attrs = termios.tcgetattr(self.stream)
+            tty.setcbreak(self.stream)
+            try:
+                yield
+            finally:
+                # Only restore original attrs after we've recieved all input
+                # from the stream by specifying TCSADRAIN
+                termios.tcsetattr(
+                    self.stream, termios.TCSADRAIN, orig_tty_attrs)
+        else:
+            yield
 
     @property
     def color(self):
