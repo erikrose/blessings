@@ -255,11 +255,11 @@ when used as a callable, without any video attributes. If the **TERM** defines
 a terminal that does support colors, but actually does not, they are usually
 harmless.
 
-Colorless terminals, such as the amber or monochrome *vt220*, do not support
-colors but do support reverse video. For this reason, it may be desirable in
-some applications, such as a selection bar, to simply select a foreground
-color, followed by reverse video to achieve the desired background color
-effect::
+Colorless terminals, such as the amber or green monochrome *vt220*, do not
+support colors but do support reverse video. For this reason, it may be
+desirable in some applications, such as a selection bar, to simply select
+a foreground color, followed by reverse video to achieve the desired
+background color effect::
 
     from blessed import Terminal
 
@@ -269,13 +269,15 @@ effect::
         standout=term.green_reverse('standout')))
 
 Which appears as *bright white on green* on color terminals, or *black text
-on amber or green* on monochrome terminals.  You can check whether the terminal
-definition used supports colors, and how many, using the ``number_of_colors``
-property, which returns any of *0* *8* or *256* for terminal types
-such as *vt220*, *ansi*, and *xterm-256color*, respectively.
+on amber or green* on monochrome terminals.
 
-**NOTE**: On most color terminals, *bright_black* is actually a very dark
-shade of gray!
+You can check whether the terminal definition used supports colors, and how
+many, using the ``number_of_colors`` property, which returns any of *0*,
+*8* or *256* for terminal types such as *vt220*, *ansi*, and
+*xterm-256color*, respectively.
+
+**NOTE**: On most color terminals, unlink *black*, *bright_black* is not
+invisible -- it is actually a very dark shade of gray!
 
 Compound Formatting
 -------------------
@@ -320,15 +322,19 @@ Moving The Cursor
 -----------------
 
 When you want to move the cursor, you have a few choices, the
-``location(y=None, x=None)`` context manager, ``move(y, x)``, ``move_y(row)``,
+``location(x=None, y=None)`` context manager, ``move(y, x)``, ``move_y(row)``,
 and ``move_x(col)`` attributes.
 
+**NOTE**: The ``location()`` method receives arguments in form of *(x, y)*,
+whereas the ``move()`` argument receives arguments in form of *(y, x)*.  This
+is a flaw in the original `erikrose/blessings`_ implementation, but remains
+for compatibility.
 
 Moving Temporarily
 ~~~~~~~~~~~~~~~~~~
 
-A context manager, ``location`` is provided to move the cursor to a *(x, y)*
-screen position and restore the previous position upon exit::
+A context manager, ``location()`` is provided to move the cursor to an
+*(x, y)* screen position and restore the previous position upon exit::
 
     from blessed import Terminal
 
@@ -337,7 +343,7 @@ screen position and restore the previous position upon exit::
         print('Here is the bottom.')
     print('This is back where I came from.')
 
-Parameters to *location()* are **optional** *x* and/or *y*::
+Parameters to ``location()`` are **optional** *x* and/or *y*::
 
     with term.location(y=10):
         print('We changed just the row.')
@@ -348,7 +354,8 @@ When omitted, it saves the cursor position and restore it upon exit::
         print(term.move(1, 1) + 'Hi')
         print(term.move(9, 9) + 'Mom')
 
-*NOTE*: calls to *location* may not be nested, as only one location may be saved.
+**NOTE**: calls to ``location()`` may not be nested, as only one location
+may be saved.
 
 
 Moving Permanently
@@ -368,12 +375,6 @@ this::
   Position the cursor at given horizontal column.
 ``move_y``
   Position the cursor at given vertical column.
-
-*NOTE*: The *location* method receives arguments in form of *(x, y)*,
-where the *move* argument receives arguments in form of *(y, x)*.  This is a
-flaw in the original `erikrose/blessings`_ implementation, kept for
-compatibility.
-
 
 One-Notch Movement
 ~~~~~~~~~~~~~~~~~~
@@ -446,12 +447,13 @@ screen (such as your shell prompt) after exiting, you're seeing the
 
 There's also a context manager you can use as a shortcut::
 
+    from __future__ import division
     from blessed import Terminal
 
     term = Terminal()
     with term.fullscreen():
-        print(term.move_y(term.height/2) +
-              term.center('press any key'))
+        print(term.move_y(term.height // 2) +
+              term.center('press any key').rstrip())
         term.inkey()
 
 Pipe Savvy
@@ -474,7 +476,7 @@ bars and other frippery and just stick to content::
 
     term = Terminal()
     if term.does_styling:
-        with term.location(0, term.height - 1):
+        with term.location(x=0, y=term.height - 1):
             print('Progress: [=======>   ]')
     print(term.bold('Important stuff'))
 
@@ -512,13 +514,15 @@ from Tao Te Ching, word-wrapped to 25 columns::
 Keyboard Input
 --------------
 
-The built-in python *raw_input* function does not return a value until the return
-key is pressed, and is not suitable for detecting each individual keypress, much
-less arrow or function keys that emit multibyte sequences.  Special `termios(4)`_
-routines are required to enter Non-canonical, known in curses as `cbreak(3)`_.
-These functions also receive bytes, which must be incrementally decoded to unicode.
+The built-in python function ``raw_input`` function does not return a value until
+the return key is pressed, and is not suitable for detecting each individual
+keypress, much less arrow or function keys that emit multibyte sequences.
 
-Blessed handles all of these special cases with the following simple calls.
+Special `termios(4)`_ routines are required to enter Non-canonical mode, known
+in curses as `cbreak(3)`_.  When calling read on input stream, only bytes are
+received, which must be decoded to unicode.
+
+Blessed handles all of these special cases!!
 
 cbreak
 ~~~~~~
@@ -547,7 +551,7 @@ inkey
 ~~~~~
 
 The method ``inkey`` resolves many issues with terminal input by returning
-a unicode-derived *Keypress* instance. Although its return value may be
+a unicode-derived *Keypress* instance.  Although its return value may be
 printed, joined with, or compared to other unicode strings, it also provides
 the special attributes ``is_sequence`` (bool), ``code`` (int),
 and ``name`` (str)::
@@ -584,21 +588,22 @@ Its output might appear as::
     got q.
     bye!
 
-A *timeout* value of None (default) will block forever. Any other value specifies
-the length of time to poll for input, if no input is received after such time
-has elapsed, an empty string is returned. A timeout value of 0 is nonblocking.
+A ``timeout`` value of *None* (default) will block forever. Any other value
+specifies the length of time to poll for input, if no input is received after
+such time has elapsed, an empty string is returned. A ``timeout`` value of *0*
+is non-blocking.
 
 keyboard codes
 ~~~~~~~~~~~~~~
 
 The return value of the *Terminal* method ``inkey`` is an instance of the
-class ``Keystroke``, and may be inspected for its property *is_sequence*
-(bool).  When *True*, it means the value is a *multibyte sequence*,
-representing a special non-alphanumeric key of your keyboard.
+class ``Keystroke``, and may be inspected for its property ``is_sequence``
+(bool).  When *True*, the value is a **multibyte sequence**, representing
+a special non-alphanumeric key of your keyboard.
 
-The *code* property (int) may then be compared with attributes of the
-*Terminal* instance, which are equivalent to the same of those listed
-by `curs_getch(3)`_ or the curses_ module, with the following helpful
+The ``code`` property (int) may then be compared with attributes of
+*Terminal*, which are duplicated from those seen in the manpage
+`curs_getch(3)`_ or the curses_ module, with the following helpful
 aliases:
 
 * use ``KEY_DELETE`` for ``KEY_DC`` (chr(127)).
@@ -619,9 +624,9 @@ aliases:
 The *name* property of the return value of ``inkey()`` will prefer
 these aliases over the built-in curses_ names.
 
-The following are not available in the curses_ module, but provided
-for distinguishing a keypress of those keypad keys where num lock is
-enabled and the ``keypad()`` context manager is used:
+The following are **not** available in the curses_ module, but
+provided for keypad support, especially where the ``keypad()``
+context manager is used:
 
 * ``KEY_KP_MULTIPLY``
 * ``KEY_KP_ADD``
@@ -686,13 +691,12 @@ shares the same. See the LICENSE file.
 Version History
 ===============
 1.9
-  * workaround: ignore 'tparm() returned NULL', this occurs on win32
-    platforms using PDCurses_ where tparm() is not implemented.
+  * workaround: ignore curses.error 'tparm() returned NULL', this occurs
+    on win32 platforms using PDCurses_ where ``tparm()`` is not
+    implemented.
   * enhancement: new context manager ``keypad()``, which enables
     keypad application keys such as the diagonal keys on the numpad.
-  * bugfix: translate keypad application keys correctly to their
-    diagonal movement directions ``KEY_LL``, ``KEY_LR``, ``KEY_UL``,
-    ``KEY_LR``, and ``KEY_CENTER``.
+  * bugfix: translate keypad application keys correctly.
 
 1.8
   * enhancement: export keyboard-read function as public method ``getch()``,
@@ -852,3 +856,4 @@ Version History
 .. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH
 .. _`API Documentation`: http://blessed.rtfd.org
 .. _`PDCurses`: http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses
+.. _`ansi`: https://github.com/tehmaze/ansi
