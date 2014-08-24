@@ -591,32 +591,45 @@ has elapsed, an empty string is returned. A timeout value of 0 is nonblocking.
 keyboard codes
 ~~~~~~~~~~~~~~
 
-The return value of the *Terminal* method ``inkey`` may be inspected for ts property
-*is_sequence*.  When *True*, it means the value is a *multibyte sequence*,
-representing an application key of your terminal.
+The return value of the *Terminal* method ``inkey`` is an instance of the
+class ``Keystroke``, and may be inspected for its property *is_sequence*
+(bool).  When *True*, it means the value is a *multibyte sequence*,
+representing a special non-alphanumeric key of your keyboard.
 
-The *code* property (int) may then be compared with any of the following
-attributes of the *Terminal* instance, which are equivalent to the same
-available in `curs_getch(3)`_, with the following exceptions:
+The *code* property (int) may then be compared with attributes of the
+*Terminal* instance, which are equivalent to the same of those listed
+by `curs_getch(3)`_ or the curses_ module, with the following helpful
+aliases:
 
-* use ``KEY_DELETE`` instead of ``KEY_DC`` (chr(127))
-* use ``KEY_INSERT`` instead of ``KEY_IC``
-* use ``KEY_PGUP`` instead of ``KEY_PPAGE``
-* use ``KEY_PGDOWN`` instead of ``KEY_NPAGE``
-* use ``KEY_ESCAPE`` instead of ``KEY_EXIT``
-* use ``KEY_SUP`` instead of ``KEY_SR`` (shift + up)
-* use ``KEY_SDOWN`` instead of ``KEY_SF`` (shift + down)
+* use ``KEY_DELETE`` for ``KEY_DC`` (chr(127)).
+* use ``KEY_TAB`` for chr(9).
+* use ``KEY_INSERT`` for ``KEY_IC``.
+* use ``KEY_PGUP`` for ``KEY_PPAGE``.
+* use ``KEY_PGDOWN`` for ``KEY_NPAGE``.
+* use ``KEY_ESCAPE`` for ``KEY_EXIT``.
+* use ``KEY_SUP`` for ``KEY_SR`` (shift + up).
+* use ``KEY_SDOWN`` for ``KEY_SF`` (shift + down).
+* use ``KEY_DOWN_LEFT`` for ``KEY_C1`` (keypad lower-left).
+* use ``KEY_UP_RIGHT`` for ``KEY_A1`` (keypad upper-left).
+* use ``KEY_DOWN_RIGHT`` for ``KEY_C3`` (keypad lower-left).
+* use ``KEY_UP_RIGHT`` for ``KEY_A3`` (keypad lower-right).
+* use ``KEY_CENTER`` for ``KEY_B2`` (keypad center).
+* use ``KEY_BEGIN`` for ``KEY_BEG``.
 
-Additionally, use any of the following common attributes:
+The *name* property of the return value of ``inkey()`` will prefer
+these aliases over the built-in curses_ names.
 
-* ``KEY_BACKSPACE`` (chr(8)).
-* ``KEY_TAB`` (chr(9)).
-* ``KEY_DOWN``, ``KEY_UP``, ``KEY_LEFT``, ``KEY_RIGHT``.
-* ``KEY_SLEFT`` (shift + left).
-* ``KEY_SRIGHT``  (shift + right).
-* ``KEY_HOME``, ``KEY_END``.
-* ``KEY_F1`` through ``KEY_F22``.
+The following are not available in the curses_ module, but provided
+for distinguishing a keypress of those keypad keys where num lock is
+enabled and the ``keypad()`` context manager is used:
 
+* ``KEY_KP_MULTIPLY``
+* ``KEY_KP_ADD``
+* ``KEY_KP_SEPARATOR``
+* ``KEY_KP_SUBTRACT``
+* ``KEY_KP_DECIMAL``
+* ``KEY_KP_DIVIDE``
+* ``KEY_KP_0`` through ``KEY_KP_9``
 
 Shopping List
 =============
@@ -644,8 +657,10 @@ detail and behavior in edge cases make a difference. Here are some ways
 
 Blessed does not provide...
 
-* Native color support on the Windows command prompt. However, it should work
-  when used in concert with colorama_. Patches welcome!
+* Native color support on the Windows command prompt.  A PDCurses_ build
+  of python for windows provides only partial support at this time -- there
+  are plans to merge with the ansi_ module in concert with colorama_ to
+  resolve this.  Patches welcome!
 
 
 Devlopers, Bugs
@@ -656,7 +671,9 @@ Bugs or suggestions? Visit the `issue tracker`_.
 
 For patches, please construct a test case if possible.
 
-To test, install and execute python package command ``tox``.
+To test, execute ``./setup.py develop`` followed by command ``tox``.
+
+Pull requests are tested by Travis-CI.
 
 
 License
@@ -671,6 +688,11 @@ Version History
 1.9
   * workaround: ignore 'tparm() returned NULL', this occurs on win32
     platforms using PDCurses_ where tparm() is not implemented.
+  * enhancement: new context manager ``keypad()``, which enables
+    keypad application keys such as the diagonal keys on the numpad.
+  * bugfix: translate keypad application keys correctly to their
+    diagonal movement directions ``KEY_LL``, ``KEY_LR``, ``KEY_UL``,
+    ``KEY_LR``, and ``KEY_CENTER``.
 
 1.8
   * enhancement: export keyboard-read function as public method ``getch()``,
@@ -689,7 +711,7 @@ Version History
   * enhancement: better support for detecting the length or sequences of
     externally-generated *ecma-48* codes when using ``xterm`` or ``aixterm``.
   * bugfix: if ``locale.getpreferredencoding()`` returns empty string or an
-    encoding that is not a valid codec for ``codecs.getincrementaldecoder``,
+    encoding that is not a valid encoding for ``codecs.getincrementaldecoder``,
     fallback to ascii and emit a warning.
   * bugfix: ensure ``FormattingString`` and ``ParameterizingString`` may be
     pickled.
@@ -703,13 +725,13 @@ Version History
   * Forked github project `erikrose/blessings`_ to `jquast/blessed`_, this
     project was previously known as **blessings** version 1.6 and prior.
   * introduced: context manager ``cbreak()`` and ``raw()``, which is equivalent
-    to ``tty.setcbreak()`` and ``tty.setraw()``, allowing input from stdin to be
-    read as each key is pressed.
+    to ``tty.setcbreak()`` and ``tty.setraw()``, allowing input from stdin to
+    be read as each key is pressed.
   * introduced: ``inkey()`` and ``kbhit()``, which will return 1 or more
     characters as a unicode sequence, with attributes ``.code`` and ``.name``,
     with value non-``None`` when a multibyte sequence is received, allowing
-    application keys (such as UP/DOWN) to be detected. Optional value ``timeout``
-    allows timed asynchronous polling or blocking.
+    application keys (such as UP/DOWN) to be detected. Optional value
+    ``timeout`` allows timed asynchronous polling or blocking.
   * introduced: ``center()``, ``rjust()``, ``ljust()``, ``strip()``, and
     ``strip_seqs()`` methods.  Allows text containing sequences to be aligned
     to screen, or ``width`` specified.
