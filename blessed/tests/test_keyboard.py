@@ -2,7 +2,11 @@
 "Tests for keyboard support."
 import functools
 import tempfile
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    import io
+    StringIO = io.StringIO
 import signal
 import curses
 import time
@@ -26,6 +30,9 @@ from accessories import (
 )
 
 import mock
+
+if sys.version_info[0] == 3:
+    unichr = chr
 
 
 def test_kbhit_interrupted():
@@ -248,7 +255,7 @@ def test_kbhit_no_kb():
     "kbhit() always immediately returns False without a keyboard."
     @as_subprocess
     def child():
-        term = TestTerminal(stream=StringIO.StringIO())
+        term = TestTerminal(stream=StringIO())
         stime = time.time()
         assert term.keyboard_fd is None
         assert term.kbhit(timeout=1.1) is False
@@ -273,7 +280,7 @@ def test_inkey_0s_cbreak_noinput_nokb():
     "0-second inkey without data in input stream and no keyboard/tty."
     @as_subprocess
     def child():
-        term = TestTerminal(stream=StringIO.StringIO())
+        term = TestTerminal(stream=StringIO())
         with term.cbreak():
             stime = time.time()
             inp = term.inkey(timeout=0)
@@ -299,7 +306,7 @@ def test_inkey_1s_cbreak_noinput_nokb():
     "1-second inkey without input or keyboard."
     @as_subprocess
     def child():
-        term = TestTerminal(stream=StringIO.StringIO())
+        term = TestTerminal(stream=StringIO())
         with term.cbreak():
             stime = time.time()
             inp = term.inkey(timeout=1)
@@ -752,7 +759,7 @@ def test_get_keyboard_sequence(monkeypatch):
     term._cub1 = SEQ_ALT_CUB1.decode('latin1')
     keymap = blessed.keyboard.get_keyboard_sequences(term)
 
-    assert keymap.items() == [
+    assert list(keymap.items()) == [
         (SEQ_LARGE.decode('latin1'), KEY_LARGE),
         (SEQ_ALT_CUB1.decode('latin1'), curses.KEY_LEFT),
         (SEQ_ALT_CUF1.decode('latin1'), curses.KEY_RIGHT),

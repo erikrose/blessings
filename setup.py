@@ -27,9 +27,6 @@ def main():
     if sys.version_info < (2, 7,):
         extra['install_requires'].extend(['ordereddict>=1.1'])
 
-    elif sys.version_info >= (3,):
-        extra['use_2to3'] = True
-
     here = os.path.dirname(__file__)
     setuptools.setup(
         name='blessed',

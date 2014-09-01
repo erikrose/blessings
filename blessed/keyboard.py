@@ -5,9 +5,11 @@ __license__ = 'MIT'
 
 __all__ = ['Keystroke', 'get_keyboard_codes', 'get_keyboard_sequences']
 
-import curses
 import curses.has_key
 import collections
+import curses
+import sys
+
 if hasattr(collections, 'OrderedDict'):
     OrderedDict = collections.OrderedDict
 else:
@@ -50,8 +52,14 @@ for key in ('TAB', 'KP_MULTIPLY', 'KP_ADD', 'KP_SEPARATOR', 'KP_SUBTRACT',
     _lastval += 1
     setattr(curses, 'KEY_{0}'.format(key), _lastval)
 
+if sys.version_info[0] == 3:
+    text_type = str
+    unichr = chr
+else:
+    text_type = unicode  # noqa
 
-class Keystroke(unicode):
+
+class Keystroke(text_type):
     """A unicode-derived class for describing keyboard input returned by
     the ``inkey()`` method of ``Terminal``, which may, at times, be a
     multibyte sequence, providing properties ``is_sequence`` as ``True``
@@ -60,7 +68,7 @@ class Keystroke(unicode):
     such as ``KEY_LEFT``.
     """
     def __new__(cls, ucs='', code=None, name=None):
-        new = unicode.__new__(cls, ucs)
+        new = text_type.__new__(cls, ucs)
         new._name = name
         new._code = code
         return new
@@ -71,8 +79,8 @@ class Keystroke(unicode):
         return self._code is not None
 
     def __repr__(self):
-        return self._name is None and unicode.__repr__(self) or self._name
-    __repr__.__doc__ = unicode.__doc__
+        return self._name is None and text_type.__repr__(self) or self._name
+    __repr__.__doc__ = text_type.__doc__
 
     @property
     def name(self):
@@ -152,7 +160,7 @@ def get_keyboard_sequences(term):
         (seq.decode('latin1'), val)
         for (seq, val) in (
             (curses.tigetstr(cap), val)
-            for (val, cap) in capability_names.iteritems()
+            for (val, cap) in capability_names.items()
         ) if seq
     ) if term.does_styling else ())
 
@@ -164,7 +172,7 @@ def get_keyboard_sequences(term):
     # over simple sequences such as ('\x1b', KEY_EXIT).
     return OrderedDict((
         (seq, sequence_map[seq]) for seq in sorted(
-            sequence_map, key=len, reverse=True)))
+            sequence_map.keys(), key=len, reverse=True)))
 
 
 def resolve_sequence(text, mapper, codes):
@@ -176,7 +184,7 @@ def resolve_sequence(text, mapper, codes):
     their integer value (260), and ``codes`` is a dict of integer values (260)
     paired by their mnemonic name, 'KEY_LEFT'.
     """
-    for sequence, code in mapper.iteritems():
+    for sequence, code in mapper.items():
         if text.startswith(sequence):
             return Keystroke(ucs=sequence, code=code, name=codes[code])
     return Keystroke(ucs=text and text[0] or u'')

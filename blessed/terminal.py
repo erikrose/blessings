@@ -44,20 +44,20 @@ except NameError:
     InterruptedError = select.error
 
 # local imports
-from formatters import (
+from .formatters import (
     ParameterizingString,
     NullCallableString,
     resolve_capability,
     resolve_attribute,
 )
 
-from sequences import (
+from .sequences import (
     init_sequence_patterns,
     SequenceTextWrapper,
     Sequence,
 )
 
-from keyboard import (
+from .keyboard import (
     get_keyboard_sequences,
     get_keyboard_codes,
     resolve_sequence,

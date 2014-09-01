@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 "Core blessed Terminal() tests."
+
+# std
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
-
 import collections
 import warnings
 import platform
@@ -13,6 +14,7 @@ import sys
 import imp
 import os
 
+# local
 from accessories import (
     as_subprocess,
     TestTerminal,
@@ -20,6 +22,7 @@ from accessories import (
     all_terms
 )
 
+# 3rd party
 import mock
 import pytest
 
