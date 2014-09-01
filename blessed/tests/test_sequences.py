@@ -240,6 +240,22 @@ def test_inject_move_y_for_screen():
     child('screen')
 
 
+def test_inject_civis_and_cnorm_for_ansi():
+    """Test injection of cvis attribute for ansi."""
+    @as_subprocess
+    def child(kind):
+        t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
+        with t.hidden_cursor():
+            pass
+        expected_output = u''.join(
+            (unicode_cap('sc'),
+             u'\x1b[?25l\x1b[?25h',
+             unicode_cap('rc')))
+        assert (t.stream.getvalue() == expected_output)
+
+    child('ansi')
+
+
 def test_zero_location(all_standard_terms):
     """Make sure ``location()`` pays attention to 0-valued args."""
     @as_subprocess
