@@ -59,7 +59,7 @@ def test_capability_with_forced_tty():
 
 
 def test_parametrization():
-    """Test parametrizing a capability."""
+    """Test parameterizing a capability."""
     @as_subprocess
     def child():
         assert TestTerminal().cup(3, 4) == unicode_parm('cup', 3, 4)

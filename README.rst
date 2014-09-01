@@ -697,6 +697,9 @@ Version History
   * enhancement: new context manager ``keypad()``, which enables
     keypad application keys such as the diagonal keys on the numpad.
   * bugfix: translate keypad application keys correctly.
+  * enhancement: no longer depend on the '2to3' tool for python 3 support.
+  * enhancement: allow ``civis`` and ``cnorm`` (*hide_cursor*, *normal_hide*)
+    to work with terminal-type *ansi* by emulating support by proxy.
 
 1.8
   * enhancement: export keyboard-read function as public method ``getch()``,
@@ -704,7 +707,7 @@ Version History
   * enhancement: allow ``inkey()`` and ``kbhit()`` to return early when
     interrupted by signal by passing argument ``_intr_continue=False``.
   * enhancement: allow ``hpa`` and ``vpa`` (*move_x*, *move_y*) to work on
-    tmux(1) or screen(1) by forcibly emulating their support by a proxy.
+    tmux(1) or screen(1) by emulating support by proxy.
   * enhancement: ``setup.py develop`` ensures virtualenv and installs tox,
     and ``setup.py test`` calls tox. Requires pythons defined by tox.ini.
   * enhancement: add ``rstrip()`` and ``lstrip()``, strips both sequences

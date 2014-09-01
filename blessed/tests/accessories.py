@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Accessories for automated py.test runner."""
+# std
 from __future__ import with_statement
 import contextlib
 import functools
@@ -11,9 +12,16 @@ import sys
 import pty
 import os
 
+# local
 from blessed import Terminal
 
+# 3rd
 import pytest
+
+if sys.version_info[0] == 3:
+    text_type = str
+else:
+    text_type = unicode  # noqa
 
 TestTerminal = functools.partial(Terminal, kind='xterm-256color')
 SEND_SEMAPHORE = SEMAPHORE = b'SEMAPHORE\n'
@@ -78,7 +86,7 @@ class as_subprocess(object):
                     cov.save()
                 os._exit(0)
 
-        exc_output = unicode()
+        exc_output = text_type()
         decoder = codecs.getincrementaldecoder(self.encoding)()
         while True:
             try:
@@ -119,7 +127,7 @@ def read_until_semaphore(fd, semaphore=RECV_SEMAPHORE,
     # process will read xyz\\r\\n -- this is how pseudo terminals
     # behave; a virtual terminal requires both carriage return and
     # line feed, it is only for convenience that \\n does both.
-    outp = unicode()
+    outp = text_type()
     decoder = codecs.getincrementaldecoder(encoding)()
     semaphore = semaphore.decode('ascii')
     while not outp.startswith(semaphore):
@@ -139,7 +147,7 @@ def read_until_semaphore(fd, semaphore=RECV_SEMAPHORE,
 def read_until_eof(fd, encoding='utf8'):
     """Read file descriptor ``fd`` until EOF. Return decoded string."""
     decoder = codecs.getincrementaldecoder(encoding)()
-    outp = unicode()
+    outp = text_type()
     while True:
         try:
             _exc = os.read(fd, 100)
