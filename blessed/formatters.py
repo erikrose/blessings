@@ -128,18 +128,30 @@ class ParameterizingProxyString(text_type):
 
 
 def get_proxy_string(term, attr):
-    """ Returns an instance of ParameterizingProxyString
-    for (some kinds) of terminals and attributes.
+    """ Proxy and return callable StringClass for proxied attributes.
+
+    We know that some kinds of terminal kinds support sequences that the
+    terminfo database often doesn't report -- such as the 'move_x' attribute
+    for terminal type 'screen', or 'hide_cursor' for 'ansi'.
+
+    Returns instance of ParameterizingProxyString or NullCallableString.
     """
-    if term._kind == 'screen' and attr in ('hpa', 'vpa'):
-        if attr == 'hpa':
-            fmt = u'\x1b[{0}G'
-        elif attr == 'vpa':
-            fmt = u'\x1b[{0}d'
-        fmt_arg = lambda *arg: (arg[0] + 1,)
-        return ParameterizingProxyString((fmt, fmt_arg),
-                                         term.normal, 'hpa')
-    return None
+    return {
+        'screen': {
+            # proxy move_x/move_y for 'screen' terminal type.
+            'hpa': ParameterizingProxyString(
+                (u'\x1b[{0}G', lambda *arg: (arg[0] + 1,)), term.normal, attr),
+            'vpa': ParameterizingProxyString(
+                (u'\x1b[{0}d', lambda *arg: (arg[0] + 1,)), term.normal, attr),
+        },
+        'ansi': {
+            # proxy show/hide cursor for 'ansi' terminal type.
+            'civis': ParameterizingProxyString(
+                (u'\x1b[?25l', lambda *arg: ()), term.normal, attr),
+            'cnorm': ParameterizingProxyString(
+                (u'\x1b[?25h', lambda *arg: ()), term.normal, attr),
+        }
+    }.get(term._kind, {}).get(attr, None)
 
 
 class FormattingString(text_type):
@@ -299,8 +311,8 @@ def resolve_attribute(term, attr):
         return FormattingString(u''.join(resolution), term.normal)
     else:
         # and, for special terminals, such as 'screen', provide a Proxy
-        # ParameterizingString for attributes they do not claim to support, but
-        # actually do! (such as 'hpa' and 'vpa').
+        # ParameterizingString for attributes they do not claim to support,
+        # but actually do! (such as 'hpa' and 'vpa').
         proxy = get_proxy_string(term, term._sugar.get(attr, attr))
         if proxy is not None:
             return proxy
