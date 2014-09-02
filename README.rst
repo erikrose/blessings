@@ -90,7 +90,7 @@ The same program with *Blessed* is simply::
 
     term = Terminal()
     with term.location(0, term.height - 1):
-        print('This is', term.underline('pretty!'))
+        print('This is' + term.underline('pretty!'))
 
 
 Screenshots
