@@ -136,12 +136,9 @@ def get_proxy_string(term, attr):
 
     Returns instance of ParameterizingProxyString or NullCallableString.
     """
-
     # normalize 'screen-256color', or 'ansi.sys' to its basic names
-    _normalize = ('screen', 'ansi',)
-    term = next(iter(_simp for _simp in _normalize
-                     if term.kind.startswith(_simp)), term)
-
+    term_kind = next(iter(_kind for _kind in ('screen', 'ansi',)
+                          if term.kind.startswith(_kind)), term)
     return {
         'screen': {
             # proxy move_x/move_y for 'screen' terminal type.
@@ -157,7 +154,7 @@ def get_proxy_string(term, attr):
             'cnorm': ParameterizingProxyString(
                 (u'\x1b[?25h', lambda *arg: ()), term.normal, attr),
         }
-    }.get(term.kind, {}).get(attr, None)
+    }.get(term_kind, {}).get(attr, None)
 
 
 class FormattingString(text_type):
