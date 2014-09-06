@@ -8,7 +8,7 @@ import platform
 import sys
 import os
 
-from accessories import (
+from .accessories import (
     unsupported_sequence_terminals,
     all_standard_terms,
     as_subprocess,

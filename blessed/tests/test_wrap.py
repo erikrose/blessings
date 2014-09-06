@@ -5,7 +5,7 @@ import struct
 import fcntl
 import sys
 
-from accessories import (
+from .accessories import (
     as_subprocess,
     TestTerminal,
     many_columns,

@@ -11,7 +11,7 @@ try:
 except ImportError:
     from io import StringIO
 
-from accessories import (
+from .accessories import (
     all_standard_terms,
     as_subprocess,
     TestTerminal,

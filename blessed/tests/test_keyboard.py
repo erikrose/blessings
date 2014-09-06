@@ -16,7 +16,7 @@ import pty
 import sys
 import os
 
-from accessories import (
+from .accessories import (
     read_until_eof,
     read_until_semaphore,
     SEND_SEMAPHORE,
@@ -592,7 +592,7 @@ def test_esc_delay_cbreak_135():
     assert key_name == u'KEY_ESCAPE'
     assert os.WEXITSTATUS(status) == 0
     assert math.floor(time.time() - stime) == 1.0
-    assert 135 <= int(duration_ms) <= 145, int(duration_ms)
+    assert 134 <= int(duration_ms) <= 145, int(duration_ms)
 
 
 def test_esc_delay_cbreak_timout_0():
@@ -627,7 +627,7 @@ def test_esc_delay_cbreak_timout_0():
     assert key_name == u'KEY_ESCAPE'
     assert os.WEXITSTATUS(status) == 0
     assert math.floor(time.time() - stime) == 0.0
-    assert 35 <= int(duration_ms) <= 45, int(duration_ms)
+    assert 34 <= int(duration_ms) <= 45, int(duration_ms)
 
 
 def test_keystroke_default_args():

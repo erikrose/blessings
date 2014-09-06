@@ -15,7 +15,7 @@ import imp
 import os
 
 # local
-from accessories import (
+from .accessories import (
     as_subprocess,
     TestTerminal,
     unicode_cap,
