@@ -119,7 +119,7 @@ def test_unit_binpacked_unittest(unsupported_sequence_terminals):
                                    init_sequence_patterns)
     warnings.filterwarnings("error", category=UserWarning)
     term = mock.Mock()
-    term._kind = unsupported_sequence_terminals
+    term.kind = unsupported_sequence_terminals
 
     try:
         init_sequence_patterns(term)
@@ -256,7 +256,6 @@ def test_inject_civis_and_cnorm_for_ansi():
         assert (t.stream.getvalue() == expected_output)
 
     child('ansi')
-    child('ansi.sys')
 
 
 def test_zero_location(all_standard_terms):
