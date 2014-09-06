@@ -136,6 +136,12 @@ def get_proxy_string(term, attr):
 
     Returns instance of ParameterizingProxyString or NullCallableString.
     """
+
+    # normalize 'screen-256color', or 'ansi.sys' to its basic names
+    _normalize = ('screen', 'ansi',)
+    term = next(iter(_simp for _simp in _normalize
+                     if term.startswith(_simp)), term)
+
     return {
         'screen': {
             # proxy move_x/move_y for 'screen' terminal type.
