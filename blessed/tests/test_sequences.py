@@ -221,6 +221,7 @@ def test_inject_move_x_for_screen():
         assert (t.stream.getvalue() == expected_output)
 
     child('screen')
+    child('screen-256color')
 
 
 def test_inject_move_y_for_screen():
@@ -238,6 +239,7 @@ def test_inject_move_y_for_screen():
         assert (t.stream.getvalue() == expected_output)
 
     child('screen')
+    child('screen-256color')
 
 
 def test_inject_civis_and_cnorm_for_ansi():
@@ -254,6 +256,7 @@ def test_inject_civis_and_cnorm_for_ansi():
         assert (t.stream.getvalue() == expected_output)
 
     child('ansi')
+    child('ansi.sys')
 
 
 def test_zero_location(all_standard_terms):
