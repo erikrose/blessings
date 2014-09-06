@@ -232,7 +232,7 @@ def test_setupterm_invalid_has_no_styling():
         warnings.filterwarnings("ignore", category=UserWarning)
 
         term = TestTerminal(kind='unknown', force_styling=True)
-        assert term._kind is None
+        assert term.kind is None
         assert term.does_styling is False
         assert term.number_of_colors == 0
         warnings.resetwarnings()

@@ -700,6 +700,7 @@ Version History
   * enhancement: no longer depend on the '2to3' tool for python 3 support.
   * enhancement: allow ``civis`` and ``cnorm`` (*hide_cursor*, *normal_hide*)
     to work with terminal-type *ansi* by emulating support by proxy.
+  * enhancement: new public attribute: ``kind``.
 
 1.8
   * enhancement: export keyboard-read function as public method ``getch()``,

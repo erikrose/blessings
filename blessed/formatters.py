@@ -140,7 +140,7 @@ def get_proxy_string(term, attr):
     # normalize 'screen-256color', or 'ansi.sys' to its basic names
     _normalize = ('screen', 'ansi',)
     term = next(iter(_simp for _simp in _normalize
-                     if term.startswith(_simp)), term)
+                     if term.kind.startswith(_simp)), term)
 
     return {
         'screen': {
@@ -157,7 +157,7 @@ def get_proxy_string(term, attr):
             'cnorm': ParameterizingProxyString(
                 (u'\x1b[?25h', lambda *arg: ()), term.normal, attr),
         }
-    }.get(term._kind, {}).get(attr, None)
+    }.get(term.kind, {}).get(attr, None)
 
 
 class FormattingString(text_type):

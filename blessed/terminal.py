@@ -249,6 +249,11 @@ class Terminal(object):
         return val
 
     @property
+    def kind(self):
+        """Name of this terminal type as string."""
+        return self._kind
+
+    @property
     def does_styling(self):
         """Whether this instance will emit terminal sequences (bool)."""
         return self._does_styling
