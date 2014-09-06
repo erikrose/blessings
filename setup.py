@@ -5,11 +5,14 @@ import setuptools
 import setuptools.command.develop
 import setuptools.command.test
 
+here = os.path.dirname(__file__)
+
 
 class SetupDevelop(setuptools.command.develop.develop):
     def run(self):
         assert os.getenv('VIRTUAL_ENV'), 'You should be in a virtualenv'
-        self.spawn(('pip', 'install', '-U', 'tox',))
+        self.spawn(('pip', 'install', '-U', '-r',
+                    os.path.join(here, 'dev-requirements.txt')))
         setuptools.command.develop.develop.run(self)
 
 
@@ -27,7 +30,6 @@ def main():
     if sys.version_info < (2, 7,):
         extra['install_requires'].extend(['ordereddict>=1.1'])
 
-    here = os.path.dirname(__file__)
     setuptools.setup(
         name='blessed',
         version='1.9.4',
