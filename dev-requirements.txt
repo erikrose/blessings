@@ -1,0 +1,6 @@
+pytest-flakes
+pytest-pep8
+pytest-cov
+pytest
+mock
+tox
