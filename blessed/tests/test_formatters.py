@@ -350,3 +350,46 @@ def test_pickled_parameterizing_string(monkeypatch):
         assert zero == pickle.loads(pickle.dumps(zero, protocol=proto_num))
     w.send(zero)
     r.recv() == zero
+
+
+def test_tparm_returns_null(monkeypatch):
+    """ Test 'tparm() returned NULL' is caught (win32 PDCurses systems). """
+    # on win32, any calls to tparm raises curses.error with message,
+    # "tparm() returned NULL", function PyCurses_tparm of _cursesmodule.c
+    from blessed.formatters import ParameterizingString, NullCallableString
+
+    def tparm(*args):
+        raise curses.error("tparm() returned NULL")
+
+    monkeypatch.setattr(curses, 'tparm', tparm)
+
+    term = mock.Mock()
+    term.normal = 'seq-normal'
+
+    pstr = ParameterizingString(u'cap', u'norm', u'seq-name')
+
+    value = pstr(u'x')
+    assert type(value) is NullCallableString
+
+
+def test_tparm_other_exception(monkeypatch):
+    """ Test 'tparm() returned NULL' is caught (win32 PDCurses systems). """
+    # on win32, any calls to tparm raises curses.error with message,
+    # "tparm() returned NULL", function PyCurses_tparm of _cursesmodule.c
+    from blessed.formatters import ParameterizingString, NullCallableString
+
+    def tparm(*args):
+        raise curses.error("unexpected error in tparm()")
+
+    monkeypatch.setattr(curses, 'tparm', tparm)
+
+    term = mock.Mock()
+    term.normal = 'seq-normal'
+
+    pstr = ParameterizingString(u'cap', u'norm', u'seq-name')
+
+    try:
+        pstr(u'x')
+        assert False, "previous call should have raised curses.error"
+    except curses.error:
+        pass

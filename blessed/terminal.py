@@ -20,10 +20,10 @@ try:
 except ImportError:
     tty_methods = ('setraw', 'cbreak', 'kbhit', 'height', 'width')
     msg_nosupport = (
-        'One or more of the modules termios, fcntl, and tty were '
-        'not found on your platform {0}. The following methods are '
-        'dummy/no-op unless a deriving class overrides them: '
-        '{1}'.format(sys.platform.lower(), ', '.join(tty_methods)))
+        "One or more of the modules: 'termios', 'fcntl', and 'tty' "
+        "are not found on your platform '{0}'. The following methods "
+        "of Terminal are dummy/no-op unless a deriving class overrides "
+        "them: {1}".format(sys.platform.lower(), ', '.join(tty_methods)))
     warnings.warn(msg_nosupport)
     HAS_TTY = False
 else:
@@ -292,7 +292,7 @@ class Terminal(object):
         if HAS_TTY:
             data = fcntl.ioctl(fd, termios.TIOCGWINSZ, WINSZ._BUF)
             return WINSZ(*struct.unpack(WINSZ._FMT, data))
-        return WINSZ(80, 24, 0, 0)
+        return WINSZ(ws_row=24, ws_col=80, ws_xpixel=0, ws_ypixel=0)
 
     def _height_and_width(self):
         """Return a tuple of (terminal height, terminal width).
@@ -763,7 +763,7 @@ class Terminal(object):
 #
 #   if (!initialised_setupterm && setupterm(termstr,fd,&err) == ERR) {
 #
-# Python - perhaps wrongly - will not allow a re-initialisation of new
+# Python - perhaps wrongly - will not allow for re-initialisation of new
 # terminals through setupterm(), so the value of cur_term cannot be changed
 # once set: subsequent calls to setupterm() have no effect.
 #

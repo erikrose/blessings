@@ -399,3 +399,51 @@ def test_unknown_preferredencoding_warned_and_fallback_ascii():
                 assert "fallback to ASCII" in str(warned[-1].message)
 
     child()
+
+
+def test_win32_missing_tty_modules(monkeypatch):
+    "Ensure dummy exception is used when io is without UnsupportedOperation."
+    @as_subprocess
+    def child():
+        try:
+            import builtins as __builtins__
+        except ImportError:
+            import __builtins__
+
+        original_import = __builtins__.__import__
+
+        tty_modules = ('termios', 'fcntl', 'tty')
+
+        def __import__(name, *args):
+            if name in tty_modules:
+                raise ImportError
+            return original_import(name, *args)
+
+        for module in tty_modules:
+            sys.modules.pop(module, None)
+
+        warnings.filterwarnings("error", category=UserWarning)
+        try:
+            __builtins__.__import__ = __import__
+            try:
+                import blessed.terminal
+                imp.reload(blessed.terminal)
+            except UserWarning:
+                err = sys.exc_info()[1]
+                assert err.args[0] == blessed.terminal.msg_nosupport
+
+            warnings.filterwarnings("ignore", category=UserWarning)
+            import blessed.terminal
+            imp.reload(blessed.terminal)
+            assert blessed.terminal.HAS_TTY is False
+            term = blessed.terminal.Terminal('ansi')
+            assert term.height == 24
+            assert term.width == 80
+
+        finally:
+            __builtins__.__import__ = original_import
+            warnings.resetwarnings()
+            import blessed.terminal
+            imp.reload(blessed.terminal)
+
+    child()
