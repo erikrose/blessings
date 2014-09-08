@@ -206,8 +206,8 @@ def test_vertical_location(all_standard_terms):
         child(all_standard_terms)
 
 
-def test_inject_move_x_for_screen():
-    """Test injection of hpa attribute for screen (issue #55)."""
+def test_inject_move_x():
+    """Test injection of hpa attribute for screen/ansi (issue #55)."""
     @as_subprocess
     def child(kind):
         t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
@@ -219,13 +219,15 @@ def test_inject_move_x_for_screen():
              u'\x1b[{0}G'.format(COL + 1),
              unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
+        assert (t.move_x(COL) == u'\x1b[{0}G'.format(COL + 1))
 
     child('screen')
     child('screen-256color')
+    child('ansi')
 
 
-def test_inject_move_y_for_screen():
-    """Test injection of vpa attribute for screen (issue #55)."""
+def test_inject_move_y():
+    """Test injection of vpa attribute for screen/ansi (issue #55)."""
     @as_subprocess
     def child(kind):
         t = TestTerminal(kind=kind, stream=StringIO(), force_styling=True)
@@ -237,9 +239,11 @@ def test_inject_move_y_for_screen():
              u'\x1b[{0}d'.format(ROW + 1),
              unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
+        assert (t.move_y(ROW) == u'\x1b[{0}d'.format(ROW + 1))
 
     child('screen')
     child('screen-256color')
+    child('ansi')
 
 
 def test_inject_civis_and_cnorm_for_ansi():

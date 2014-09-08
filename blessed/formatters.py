@@ -131,8 +131,8 @@ def get_proxy_string(term, attr):
     """ Proxy and return callable StringClass for proxied attributes.
 
     We know that some kinds of terminal kinds support sequences that the
-    terminfo database often doesn't report -- such as the 'move_x' attribute
-    for terminal type 'screen', or 'hide_cursor' for 'ansi'.
+    terminfo database always report -- such as the 'move_x' attribute for
+    terminal type 'screen' and 'ansi', or 'hide_cursor' for 'ansi'.
 
     Returns instance of ParameterizingProxyString or NullCallableString.
     """
@@ -153,6 +153,10 @@ def get_proxy_string(term, attr):
                 (u'\x1b[?25l', lambda *arg: ()), term.normal, attr),
             'cnorm': ParameterizingProxyString(
                 (u'\x1b[?25h', lambda *arg: ()), term.normal, attr),
+            'hpa': ParameterizingProxyString(
+                (u'\x1b[{0}G', lambda *arg: (arg[0] + 1,)), term.normal, attr),
+            'vpa': ParameterizingProxyString(
+                (u'\x1b[{0}d', lambda *arg: (arg[0] + 1,)), term.normal, attr),
         }
     }.get(term_kind, {}).get(attr, None)
 
@@ -313,15 +317,16 @@ def resolve_attribute(term, attr):
         resolution = (resolve_attribute(term, fmt) for fmt in formatters)
         return FormattingString(u''.join(resolution), term.normal)
     else:
-        # and, for special terminals, such as 'screen', provide a Proxy
-        # ParameterizingString for attributes they do not claim to support,
-        # but actually do! (such as 'hpa' and 'vpa').
-        proxy = get_proxy_string(term, term._sugar.get(attr, attr))
-        if proxy is not None:
-            return proxy
         # otherwise, this is our end-game: given a sequence such as 'csr'
         # (change scrolling region), return a ParameterizingString instance,
         # that when called, performs and returns the final string after curses
         # capability lookup is performed.
         tparm_capseq = resolve_capability(term, attr)
+        if not tparm_capseq:
+            # and, for special terminals, such as 'screen', provide a Proxy
+            # ParameterizingString for attributes they do not claim to support,
+            # but actually do! (such as 'hpa' and 'vpa').
+            proxy = get_proxy_string(term, term._sugar.get(attr, attr))
+            if proxy is not None:
+                return proxy
         return ParameterizingString(tparm_capseq, term.normal, attr)
