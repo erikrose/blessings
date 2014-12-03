@@ -739,11 +739,12 @@ class Terminal(object):
         # handle escape key (KEY_ESCAPE) vs. escape sequence (which begins
         # with KEY_ESCAPE, \x1b[, \x1bO, or \x1b?), up to esc_delay when
         # received. This is not optimal, but causes least delay when
-        # (currently unhandled, and rare) "meta sends escape" is used,
+        # "meta sends escape" is used,
         # or when an unsupported sequence is sent.
         if ks.code is self.KEY_ESCAPE:
             esctime = time.time()
             while (ks.code is self.KEY_ESCAPE and
+                   (len(ucs) == 1 or ucs[1] in (u'[', u'O', u'?')) and
                    self.kbhit(_timeleft(esctime, esc_delay))):
                 ucs += self.getch()
                 ks = resolve(text=ucs)
