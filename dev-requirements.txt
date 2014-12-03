@@ -1,4 +1,5 @@
 pytest-flakes
+pytest-xdist
 pytest-pep8
 pytest-cov
 pytest
