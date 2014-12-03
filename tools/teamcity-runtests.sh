@@ -5,12 +5,6 @@
 set -e
 set -o pipefail
 
-if [ -z $1 ]; then
-	echo "$0 (2.6|2.7|3.3|3.4)"
-	exit 1
-fi
-
-pyversion=$1
 here=$(cd `dirname $0`; pwd)
 osrel=$(uname -s)
 
