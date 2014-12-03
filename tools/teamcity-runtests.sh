@@ -10,8 +10,17 @@ osrel=$(uname -s)
 
 # run tests
 cd $here/..
+
+_cmd=tox
+if [ X"$osrel" == X"Darwin" ]; then
+	# python2.6 locks up during py.test on osx build slave,
+	# exclude the test environment py26 from osx.
+	_cmd='tox -epy27,py33,py34,pypy'
+fi
+
 ret=0
-tox || ret=$?
+echo ${_cmd}
+${_cmd} || ret=$?
 
 if [ $ret -ne 0 ]; then
 	# we always exit 0, preferring instead the jUnit XML
