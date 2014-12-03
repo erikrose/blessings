@@ -17,13 +17,7 @@ osrel=$(uname -s)
 # run tests
 cd $here/..
 ret=0
-tox \
-	--cov pexpect \
-	--cov-config .coveragerc \
-	--junit-xml=results.${osrel}.py${pyversion}.xml \
-	--verbose \
-	--verbose \
-	|| ret=$?
+tox || ret=$?
 
 if [ $ret -ne 0 ]; then
 	# we always exit 0, preferring instead the jUnit XML
@@ -36,4 +30,4 @@ fi
 # artifact in {pexpect_projdir}/build-output
 mkdir -p build-output
 coverage combine
-mv .coverage build-output/.coverage.${osrel}.py{$pyversion}.$RANDOM.$$
+mv .coverage build-output/.coverage.${osrel}.$RANDOM.$$
