@@ -12,10 +12,7 @@ osrel=$(uname -s)
 cd $here/..
 
 _cmd=tox
-if [ X"$osrel" == X"Darwin" ] || [ X"$osrel" == X"Linux" ]; then
-	# python2.6 locks up during py.test on osx build slave,
-	# exclude the test environment py26 from osx.
-	#
+if [ X"$osrel" == X"Linux" ]; then
 	# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=754248
 	# cannot create a virtualenv for python2.6 due to use of
 	# "{}".format in virtualenv, throws exception
