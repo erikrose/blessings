@@ -1,6 +1,10 @@
 #!/usr/bin/env python
+# std imports,
+import subprocess
 import sys
 import os
+
+# 3rd-party
 import setuptools
 import setuptools.command.develop
 import setuptools.command.test
@@ -10,9 +14,11 @@ here = os.path.dirname(__file__)
 
 class SetupDevelop(setuptools.command.develop.develop):
     def run(self):
+        # ensure a virtualenv is loaded,
         assert os.getenv('VIRTUAL_ENV'), 'You should be in a virtualenv'
-        self.spawn(('pip', 'install', '-U', '-r',
-                    os.path.join(here, 'dev-requirements.txt')))
+        # ensure tox is installed
+        subprocess.check_call(('pip', 'install', 'tox'))
+        # install development egg-link
         setuptools.command.develop.develop.run(self)
 
 
@@ -60,7 +66,7 @@ def main():
             'Topic :: Software Development :: Libraries',
             'Topic :: Software Development :: User Interfaces',
             'Topic :: Terminals'
-            ],
+        ],
         keywords=['terminal', 'sequences', 'tty', 'curses', 'ncurses',
                   'formatting', 'style', 'color', 'console', 'keyboard',
                   'ansi', 'xterm'],
