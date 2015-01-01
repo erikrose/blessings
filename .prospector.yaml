@@ -1,0 +1,66 @@
+inherits:
+    - strictness_veryhigh
+
+ignore:
+  - (^|/)\..+
+  - ^docs/
+
+test-warnings: true
+
+output-format: grouped
+
+dodgy:
+    # Looks at Python code to search for things which look "dodgy"
+    # such as passwords or git conflict artifacts
+    run: true
+
+frosted:
+    # static analysis
+    run: true
+
+mccabe:
+    # complexity checking.
+    run: true
+
+pep257:
+    # docstring checking
+    run: true
+
+pep8:
+    # style checking
+    run: true
+    options:
+        max-line-length: 100
+
+pyflakes:
+    # preferring 'frosted' instead (a fork of)
+    run: false
+
+pylint:
+    # static analysis and then some
+    run: true
+    options:
+        # pytest module has dynamically assigned functions,
+        # raising errors such as: E1101: Module 'pytest' has
+        # no 'mark' member
+        ignored-classes: pytest
+    disable:
+        # Too many lines in module
+        ##- C0302
+        # Used * or ** magic
+        ##- W0142
+        # Used builtin function 'filter'.
+        # (For maintainability, one should prefer list comprehension.)
+        ##- W0141
+        # Use % formatting in logging functions but pass the % parameters
+        ##- W1202
+
+pyroma:
+    # checks setup.py
+    run: true
+
+vulture:
+    # this tool does a good job of finding unused code.
+    run: true
+
+# vim: noai:ts=4:sw=4

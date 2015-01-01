@@ -4,6 +4,7 @@
 *.egg-info
 *.egg
 *.pyc
+results*.xml
 build
 dist
 docs/_build

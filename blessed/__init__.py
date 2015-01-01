@@ -1,6 +1,8 @@
-"A thin, practical wrapper around curses terminal capabilities."
+"""
+A thin, practical wrapper around terminal capabilities in Python
 
-# import as _platform to avoid tab-completion with IPython (thanks @kanzure)
+http://pypi.python.org/pypi/blessed
+"""
 import platform as _platform
 if ('3', '0', '0') <= _platform.python_version_tuple() < ('3', '2', '2+'):
     # Good till 3.2.10
@@ -11,4 +13,4 @@ if ('3', '0', '0') <= _platform.python_version_tuple() < ('3', '2', '2+'):
 
 from .terminal import Terminal
 
-__all__ = ['Terminal']
+__all__ = ('Terminal',)
