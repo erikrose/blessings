@@ -72,6 +72,7 @@ def main():
                   'ansi', 'xterm'],
         cmdclass={'develop': SetupDevelop,
                   'test': SetupTest},
+        zip_safe=True,
         **extra
     )
 
