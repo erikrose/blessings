@@ -1,20 +1,23 @@
-.. image:: https://img.shields.io/travis/jquast/blessed.svg
+.. image:: https://img.shields.io/travis/jquast/blessed.png
     :alt: Travis Continous Integration
     :target: https://travis-ci.org/jquast/blessed
 
-.. image:: https://img.shields.io/coveralls/jquast/blessed.svg
+.. image::  https://img.shields.io/teamcity/http/teamcity-master.pexpect.org/s/Blessed_BuildHead.png
+    :alt: TeamCity Build status
+    :target: https://teamcity-master.pexpect.org/viewType.html?buildTypeId=Blessed_BuildHead&branch_Blessed=%3Cdefault%3E&tab=buildTypeStatusDiv
+
+.. image:: https://img.shields.io/coveralls/jquast/blessed.png
     :alt: Coveralls Code Coverage
     :target: https://coveralls.io/r/jquast/blessed?branch=master
 
-.. image:: https://img.shields.io/pypi/v/blessed.svg
+.. image:: https://img.shields.io/pypi/v/blessed.png
     :alt: Latest Version
     :target: https://pypi.python.org/pypi/blessed
 
 .. image:: https://pypip.in/license/blessed/badge.svg
     :alt: License
-    :target: http://opensource.org/licenses/MIT
 
-.. image:: https://img.shields.io/pypi/dm/blessed.svg
+.. image:: https://img.shields.io/pypi/dm/blessed.png
     :alt: Downloads
     :target: https://pypi.python.org/pypi/blessed
 
