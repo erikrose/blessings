@@ -68,7 +68,9 @@ def test_SequenceWrapper(all_terms, many_columns, kwargs):
         # build a test paragraph, along with a very colorful version
         t = TestTerminal()
         pgraph = u' '.join((
-            'a', 'bc', 'vwxyz123456789ABCDEFGHIJKLMN  ')) * 2
+            'a', 'bc', 'def', 'ghij', 'klmno', 'pqrstu', 'vwxyz012',
+            '34567890A', 'BCDEFGHIJK', 'LMNOPQRSTUV', 'WXYZabcdefgh',
+            'ijklmnopqrstu', 'vwxyz123456789', '0ABCDEFGHIJKLMN  '))
 
         pgraph_colored = u''.join([
             t.color(idx % 7)(char) if char != ' ' else ' '
