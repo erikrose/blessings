@@ -21,9 +21,9 @@ def test_SequenceWrapper_invalid_width():
 
     @as_subprocess
     def child():
-        t = TestTerminal()
+        term = TestTerminal()
         try:
-            my_wrapped = t.wrap(u'------- -------------', WIDTH)
+            my_wrapped = term.wrap(u'------- -------------', WIDTH)
         except ValueError as err:
             assert err.args[0] == (
                 "invalid width %r(%s) (must be integer > 0)" % (
@@ -66,33 +66,40 @@ def test_SequenceWrapper(all_terms, many_columns, kwargs):
     @as_subprocess
     def child(term, width, kwargs):
         # build a test paragraph, along with a very colorful version
-        t = TestTerminal()
-        pgraph = u' '.join((
-            'a', 'bc', 'def', 'ghij', 'klmno', 'pqrstu', 'vwxyz012',
-            '34567890A', 'BCDEFGHIJK', 'LMNOPQRSTUV', 'WXYZabcdefgh',
-            'ijklmnopqrstu', 'vwxyz123456789', '0ABCDEFGHIJKLMN  '))
+        term = TestTerminal()
+        pgraph = u' Z! a bc defghij klmnopqrstuvw<<>>xyz012345678900  '
+        attributes = ('bright_red', 'on_bright_blue', 'underline', 'reverse',
+                      'red_reverse', 'red_on_white', 'superscript',
+                      'subscript', 'on_bright_white')
+        term.bright_red('x')
+        term.on_bright_blue('x')
+        term.underline('x')
+        term.reverse('x')
+        term.red_reverse('x')
+        term.red_on_white('x')
+        term.superscript('x')
+        term.subscript('x')
+        term.on_bright_white('x')
 
         pgraph_colored = u''.join([
-            t.color(idx % 7)(char) if char != ' ' else ' '
+            getattr(term, (attributes[idx % len(attributes)]))(char)
+            if char != u' ' else u' '
             for idx, char in enumerate(pgraph)])
 
         internal_wrapped = textwrap.wrap(pgraph, width=width, **kwargs)
-        my_wrapped = t.wrap(pgraph, width=width, **kwargs)
-        my_wrapped_colored = t.wrap(pgraph_colored, width=width, **kwargs)
+        my_wrapped = term.wrap(pgraph, width=width, **kwargs)
+        my_wrapped_colored = term.wrap(pgraph_colored, width=width, **kwargs)
 
         # ensure we textwrap ascii the same as python
-        assert (internal_wrapped == my_wrapped)
+        assert internal_wrapped == my_wrapped
 
-        # ensure our first and last line wraps at its ends
-        first_l = internal_wrapped[0]
-        last_l = internal_wrapped[-1]
-        my_first_l = my_wrapped_colored[0]
-        my_last_l = my_wrapped_colored[-1]
-        assert (len(first_l) == t.length(my_first_l))
-        assert (len(last_l) == t.length(my_last_l))
-        assert (len(internal_wrapped[-1]) == t.length(my_wrapped_colored[-1]))
+        # ensure content matches for each line, when the sequences are
+        # stripped back off of each line
+        for line_no, (left, right) in enumerate(
+                zip(internal_wrapped, my_wrapped_colored)):
+            assert left == term.strip_seqs(right)
 
-        # ensure our colored textwrap is the same line length
+        # ensure our colored textwrap is the same paragraph length
         assert (len(internal_wrapped) == len(my_wrapped_colored))
 
     child(all_terms, many_columns, kwargs)
