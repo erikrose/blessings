@@ -34,7 +34,8 @@ from blessed._binterms import binary_terminals
 try:
     all_terms_params = (set(
         _term.split(None, 1)[0].decode('ascii') for _term in
-        subprocess.check_output(('toe',)).splitlines()
+        subprocess.Popen(["toe"], stdout=subprocess.PIPE, close_fds=True)
+        .communicate()[0].splitlines()
     ) - (set(binary_terminals) if not os.environ.get('TEST_BINTERMS')
          else set()))
 except OSError:
