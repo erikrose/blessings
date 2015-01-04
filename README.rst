@@ -691,6 +691,7 @@ shares the same. See the LICENSE file.
 Version History
 ===============
 1.9
+  * enhancement: ``break_long_words=True`` now supported by ``term.wrap``
   * workaround: ignore curses.error 'tparm() returned NULL', this occurs
     on win32 platforms using PDCurses_ where ``tparm()`` is not
     implemented.
