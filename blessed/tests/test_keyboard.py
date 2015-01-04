@@ -698,7 +698,6 @@ def test_cuf1_and_cub1_as_RIGHT_LEFT(all_terms):
         term = TestTerminal(kind=kind, force_styling=True)
         keymap = get_keyboard_sequences(term)
         if term._cuf1:
-            assert term._cuf1 != u' '
             assert term._cuf1 in keymap
             assert keymap[term._cuf1] == term.KEY_RIGHT
         if term._cub1:

@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 """Tests for Terminal() sequences and sequence-awareness."""
+# std imports
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
 import platform
+import random
 import sys
 import os
 
+# local
 from .accessories import (
     unsupported_sequence_terminals,
-    all_standard_terms,
+    all_terms,
     as_subprocess,
     TestTerminal,
     unicode_parm,
@@ -19,6 +22,7 @@ from .accessories import (
     many_lines,
 )
 
+# 3rd-party
 import pytest
 import mock
 
@@ -89,12 +93,14 @@ def test_stream_attr():
 
 @pytest.mark.skipif(os.environ.get('TRAVIS', None) is not None,
                     reason="travis-ci does not have binary-packed terminals.")
-def test_emit_warnings_about_binpacked(unsupported_sequence_terminals):
+def test_emit_warnings_about_binpacked():
     """Test known binary-packed terminals (kermit, avatar) emit a warning."""
+    from blessed.sequences import _BINTERM_UNSUPPORTED_MSG
+    from blessed._binterms import binary_terminals
+
     @as_subprocess
     def child(kind):
         import warnings
-        from blessed.sequences import _BINTERM_UNSUPPORTED_MSG
         warnings.filterwarnings("error", category=RuntimeWarning)
         warnings.filterwarnings("error", category=UserWarning)
 
@@ -102,30 +108,33 @@ def test_emit_warnings_about_binpacked(unsupported_sequence_terminals):
             TestTerminal(kind=kind, force_styling=True)
         except UserWarning:
             err = sys.exc_info()[1]
-            assert (err.args[0] == _BINTERM_UNSUPPORTED_MSG or
-                    err.args[0].startswith('Unknown parameter in ')
+            assert (err.args[0] == _BINTERM_UNSUPPORTED_MSG.format(kind) or
+                    err.args[0].startswith('Unknown parameter in ') or
+                    err.args[0].startswith('Failed to setupterm(')
                     ), err
         else:
             assert 'warnings should have been emitted.'
         warnings.resetwarnings()
 
-    child(unsupported_sequence_terminals)
+    # any binary terminal should do.
+    child(binary_terminals[random.randrange(len(binary_terminals))])
 
 
-def test_unit_binpacked_unittest(unsupported_sequence_terminals):
+def test_unit_binpacked_unittest():
     """Unit Test known binary-packed terminals emit a warning (travis-safe)."""
     import warnings
+    from blessed._binterms import binary_terminals
     from blessed.sequences import (_BINTERM_UNSUPPORTED_MSG,
                                    init_sequence_patterns)
     warnings.filterwarnings("error", category=UserWarning)
     term = mock.Mock()
-    term.kind = unsupported_sequence_terminals
+    term.kind = binary_terminals[random.randrange(len(binary_terminals))]
 
     try:
         init_sequence_patterns(term)
     except UserWarning:
         err = sys.exc_info()[1]
-        assert err.args[0] == _BINTERM_UNSUPPORTED_MSG
+        assert err.args[0] == _BINTERM_UNSUPPORTED_MSG.format(term.kind)
     else:
         assert False, 'Previous stmt should have raised exception.'
     warnings.resetwarnings()
@@ -139,7 +148,7 @@ def test_merge_sequences():
     assert (_merge_sequences(input_list) == output_expected)
 
 
-def test_location_with_styling(all_standard_terms):
+def test_location_with_styling(all_terms):
     """Make sure ``location()`` works on all terminals."""
     @as_subprocess
     def child_with_styling(kind):
@@ -152,7 +161,7 @@ def test_location_with_styling(all_standard_terms):
              u'hi', unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
-    child_with_styling(all_standard_terms)
+    child_with_styling(all_terms)
 
 
 def test_location_without_styling():
@@ -170,7 +179,7 @@ def test_location_without_styling():
     child_without_styling()
 
 
-def test_horizontal_location(all_standard_terms):
+def test_horizontal_location(all_terms):
     """Make sure we can move the cursor horizontally without changing rows."""
     @as_subprocess
     def child(kind):
@@ -181,14 +190,15 @@ def test_horizontal_location(all_standard_terms):
             (unicode_cap('sc'),
              unicode_parm('hpa', 5),
              unicode_cap('rc')))
-        assert (t.stream.getvalue() == expected_output)
+        assert (t.stream.getvalue() == expected_output), (
+            repr(t.stream.getvalue()), repr(expected_output))
 
     # skip 'screen', hpa is proxied (see later tests)
-    if all_standard_terms != 'screen':
-        child(all_standard_terms)
+    if all_terms != 'screen':
+        child(all_terms)
 
 
-def test_vertical_location(all_standard_terms):
+def test_vertical_location(all_terms):
     """Make sure we can move the cursor horizontally without changing rows."""
     @as_subprocess
     def child(kind):
@@ -202,8 +212,8 @@ def test_vertical_location(all_standard_terms):
         assert (t.stream.getvalue() == expected_output)
 
     # skip 'screen', vpa is proxied (see later tests)
-    if all_standard_terms != 'screen':
-        child(all_standard_terms)
+    if all_terms != 'screen':
+        child(all_terms)
 
 
 def test_inject_move_x():
@@ -262,7 +272,7 @@ def test_inject_civis_and_cnorm_for_ansi():
     child('ansi')
 
 
-def test_zero_location(all_standard_terms):
+def test_zero_location(all_terms):
     """Make sure ``location()`` pays attention to 0-valued args."""
     @as_subprocess
     def child(kind):
@@ -275,10 +285,10 @@ def test_zero_location(all_standard_terms):
              unicode_cap('rc')))
         assert (t.stream.getvalue() == expected_output)
 
-    child(all_standard_terms)
+    child(all_terms)
 
 
-def test_mnemonic_colors(all_standard_terms):
+def test_mnemonic_colors(all_terms):
     """Make sure color shortcuts work."""
     @as_subprocess
     def child(kind):
@@ -300,10 +310,10 @@ def test_mnemonic_colors(all_standard_terms):
         assert (t.on_bright_black == on_color(t, 8))
         assert (t.on_bright_green == on_color(t, 10))
 
-    child(all_standard_terms)
+    child(all_terms)
 
 
-def test_callable_numeric_colors(all_standard_terms):
+def test_callable_numeric_colors(all_terms):
     """``color(n)`` should return a formatting wrapper."""
     @as_subprocess
     def child(kind):
@@ -333,10 +343,10 @@ def test_callable_numeric_colors(all_standard_terms):
         else:
             assert t.on_color(6)('smoo') == 'smoo'
 
-    child(all_standard_terms)
+    child(all_terms)
 
 
-def test_null_callable_numeric_colors(all_standard_terms):
+def test_null_callable_numeric_colors(all_terms):
     """``color(n)`` should be a no-op on null terminals."""
     @as_subprocess
     def child(kind):
@@ -344,20 +354,20 @@ def test_null_callable_numeric_colors(all_standard_terms):
         assert (t.color(5)('smoo') == 'smoo')
         assert (t.on_color(6)('smoo') == 'smoo')
 
-    child(all_standard_terms)
+    child(all_terms)
 
 
-def test_naked_color_cap(all_standard_terms):
+def test_naked_color_cap(all_terms):
     """``term.color`` should return a stringlike capability."""
     @as_subprocess
     def child(kind):
         t = TestTerminal(kind=kind)
         assert (t.color + '' == t.setaf + '')
 
-    child(all_standard_terms)
+    child(all_terms)
 
 
-def test_formatting_functions(all_standard_terms):
+def test_formatting_functions(all_terms):
     """Test simple and compound formatting wrappers."""
     @as_subprocess
     def child(kind):
@@ -388,10 +398,10 @@ def test_formatting_functions(all_standard_terms):
 
         assert (t.subscript(u'[1]') == expected_output)
 
-    child(all_standard_terms)
+    child(all_terms)
 
 
-def test_compound_formatting(all_standard_terms):
+def test_compound_formatting(all_terms):
     """Test simple and compound formatting wrappers."""
     @as_subprocess
     def child(kind):
@@ -411,10 +421,10 @@ def test_compound_formatting(all_standard_terms):
         assert (t.on_bright_red_bold_bright_green_underline('meh')
                 == expected_output)
 
-    child(all_standard_terms)
+    child(all_terms)
 
 
-def test_formatting_functions_without_tty(all_standard_terms):
+def test_formatting_functions_without_tty(all_terms):
     """Test crazy-ass formatting wrappers when there's no tty."""
     @as_subprocess
     def child(kind):
@@ -426,10 +436,10 @@ def test_formatting_functions_without_tty(all_standard_terms):
         assert (t.bold_underline_green_on_red('loo') == u'loo')
         assert (t.on_bright_red_bold_bright_green_underline('meh') == u'meh')
 
-    child(all_standard_terms)
+    child(all_terms)
 
 
-def test_nice_formatting_errors(all_standard_terms):
+def test_nice_formatting_errors(all_terms):
     """Make sure you get nice hints if you misspell a formatting wrapper."""
     @as_subprocess
     def child(kind):
@@ -463,10 +473,10 @@ def test_nice_formatting_errors(all_standard_terms):
                 e = sys.exc_info()[1]
                 assert 'probably misspelled' in e.args[0], e.args
 
-    child(all_standard_terms)
+    child(all_terms)
 
 
-def test_null_callable_string(all_standard_terms):
+def test_null_callable_string(all_terms):
     """Make sure NullCallableString tolerates all kinds of args."""
     @as_subprocess
     def child(kind):
@@ -480,7 +490,7 @@ def test_null_callable_string(all_standard_terms):
         assert (t.uhh(9876) == '')
         assert (t.clear('x') == 'x')
 
-    child(all_standard_terms)
+    child(all_terms)
 
 
 def test_bnc_parameter_emits_warning():

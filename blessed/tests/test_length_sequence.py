@@ -12,12 +12,11 @@ except ImportError:
     from io import StringIO
 
 from .accessories import (
-    all_standard_terms,
+    all_terms,
     as_subprocess,
     TestTerminal,
     many_columns,
     many_lines,
-    all_terms,
 )
 
 import pytest
@@ -310,7 +309,7 @@ def test_sequence_is_movement_false(all_terms):
     child_mnemonics_wontmove(all_terms)
 
 
-def test_sequence_is_movement_true(all_standard_terms):
+def test_sequence_is_movement_true(all_terms):
     """Test parsers about sequences that move the cursor."""
     @as_subprocess
     def child_mnemonics_willmove(kind):
@@ -340,4 +339,4 @@ def test_sequence_is_movement_true(all_standard_terms):
         assert not t.clear or (len(t.clear) ==
                                measure_length(t.clear, t))
 
-    child_mnemonics_willmove(all_standard_terms)
+    child_mnemonics_willmove(all_terms)

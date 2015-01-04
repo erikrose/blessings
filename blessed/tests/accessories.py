@@ -3,6 +3,7 @@
 # std
 from __future__ import with_statement
 import contextlib
+import subprocess
 import functools
 import traceback
 import termios
@@ -27,16 +28,18 @@ TestTerminal = functools.partial(Terminal, kind='xterm-256color')
 SEND_SEMAPHORE = SEMAPHORE = b'SEMAPHORE\n'
 RECV_SEMAPHORE = b'SEMAPHORE\r\n'
 all_xterms_params = ['xterm', 'xterm-256color']
-all_terms_params = ['screen', 'vt220', 'rxvt', 'cons25', 'linux', 'ansi']
-binpacked_terminal_params = ['avatar', 'kermit']
 many_lines_params = [30, 100]
-many_columns_params = [10, 100]
-if os.environ.get('TRAVIS', None) is None:
-    # TRAVIS-CI has a limited type of terminals, the others ...
-    all_terms_params.extend(['avatar', 'kermit', 'dtterm', 'wyse520',
-                             'minix', 'eterm', 'aixterm', 'putty'])
-all_standard_terms_params = (set(all_terms_params) -
-                             set(binpacked_terminal_params))
+many_columns_params = [1, 25, 50]
+from blessed._binterms import binary_terminals
+try:
+    all_terms_params = set(_term.split(None, 1)[0] for _term in
+                           subprocess.check_output(('toe',)).splitlines()
+                           ) - (set(binary_terminals)
+                                if not os.environ.get('TEST_BINTERMS')
+                                else set())
+except OSError:
+    all_terms_params = ['screen', 'vt220', 'rxvt',
+                        'cons25', 'linux', 'ansi']
 
 
 class as_subprocess(object):
@@ -174,7 +177,10 @@ def echo_off(fd):
 
 def unicode_cap(cap):
     """Return the result of ``tigetstr`` except as Unicode."""
-    val = curses.tigetstr(cap)
+    try:
+        val = curses.tigetstr(cap)
+    except curses.error:
+        val = None
     if val:
         return val.decode('latin1')
     return u''
@@ -182,15 +188,21 @@ def unicode_cap(cap):
 
 def unicode_parm(cap, *parms):
     """Return the result of ``tparm(tigetstr())`` except as Unicode."""
-    cap = curses.tigetstr(cap)
+    try:
+        cap = curses.tigetstr(cap)
+    except curses.error:
+        cap = None
     if cap:
-        val = curses.tparm(cap, *parms)
+        try:
+            val = curses.tparm(cap, *parms)
+        except curses.error:
+            val = None
         if val:
             return val.decode('latin1')
     return u''
 
 
-@pytest.fixture(params=binpacked_terminal_params)
+@pytest.fixture(params=binary_terminals)
 def unsupported_sequence_terminals(request):
     """Terminals that emit warnings for unsupported sequence-awareness."""
     return request.param
@@ -205,12 +217,6 @@ def xterms(request):
 @pytest.fixture(params=all_terms_params)
 def all_terms(request):
     """Common kind values for all kinds of terminals."""
-    return request.param
-
-
-@pytest.fixture(params=all_standard_terms_params)
-def all_standard_terms(request):
-    """Common kind values for all kinds of terminals (except binary-packed)."""
     return request.param
 
 
