@@ -17,7 +17,7 @@ class SetupDevelop(setuptools.command.develop.develop):
         # ensure a virtualenv is loaded,
         assert os.getenv('VIRTUAL_ENV'), 'You should be in a virtualenv'
         # ensure tox is installed
-        subprocess.check_call(('pip', 'install', 'tox'))
+        subprocess.check_call(('pip', 'install', 'tox', 'ipython'))
         # install development egg-link
         setuptools.command.develop.develop.run(self)
 
@@ -38,7 +38,7 @@ def main():
 
     setuptools.setup(
         name='blessed',
-        version='1.9.4',
+        version='1.9.5',
         description="A feature-filled fork of Erik Rose's blessings project",
         long_description=open(os.path.join(here, 'README.rst')).read(),
         author='Jeff Quast',

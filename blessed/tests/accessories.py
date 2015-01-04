@@ -30,24 +30,24 @@ SEND_SEMAPHORE = SEMAPHORE = b'SEMAPHORE\n'
 RECV_SEMAPHORE = b'SEMAPHORE\r\n'
 all_xterms_params = ['xterm', 'xterm-256color']
 many_lines_params = [30, 100]
-many_columns_params = [1, 25, 50]
+many_columns_params = [1, 10]
 from blessed._binterms import binary_terminals
 default_all_terms = ['screen', 'vt220', 'rxvt', 'cons25', 'linux', 'ansi']
-try:
-    available_terms = [
-        _term.split(None, 1)[0].decode('ascii') for _term in
-        subprocess.Popen(["toe"], stdout=subprocess.PIPE, close_fds=True)
-        .communicate()[0].splitlines()]
-    if not os.environ.get('TEST_ALLTERMS'):
-        # we just pick 3 random terminal types, they're all as good as any so
-        # long as they're not in the binary_terminals list.
-        random.shuffle(available_terms)
-        available_terms = available_terms[:3]
-    all_terms_params = list(set(available_terms) - (
-        set(binary_terminals) if not os.environ.get('TEST_BINTERMS')
-        else set())) or default_all_terms
-except OSError:
-    all_terms_params = default_all_terms
+if os.environ.get('TEST_ALLTERMS'):
+    try:
+        available_terms = [
+            _term.split(None, 1)[0].decode('ascii') for _term in
+            subprocess.Popen(('toe', '-a'),
+                             stdout=subprocess.PIPE,
+                             close_fds=True)
+            .communicate()[0].splitlines()]
+    except OSError:
+        all_terms_params = default_all_terms
+else:
+    available_terms = default_all_terms
+all_terms_params = list(set(available_terms) - (
+    set(binary_terminals) if not os.environ.get('TEST_BINTERMS')
+    else set())) or default_all_terms
 
 
 class as_subprocess(object):

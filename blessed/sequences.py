@@ -103,7 +103,7 @@ def get_movement_sequence_patterns(term):
         re.escape(term.rc),
         # clear_screen: clear screen and home cursor
         re.escape(term.clear),
-        # cursor_up: Up one line
+        # enter/exit_fullscreen: switch to alternate screen buffer
         re.escape(term.enter_fullscreen),
         re.escape(term.exit_fullscreen),
         # forward cursor
@@ -368,6 +368,60 @@ class SequenceTextWrapper(textwrap.TextWrapper):
             if cur_line:
                 lines.append(indent + u''.join(cur_line))
         return lines
+
+    def _handle_long_word(self, reversed_chunks, cur_line, cur_len, width):
+        """_handle_long_word(chunks : [string],
+                             cur_line : [string],
+                             cur_len : int, width : int)
+
+        Handle a chunk of text (most likely a word, not whitespace) that
+        is too long to fit in any line.
+        """
+        # Figure out when indent is larger than the specified width, and make
+        # sure at least one character is stripped off on every pass
+        if width < 1:
+            space_left = 1
+        else:
+            space_left = width - cur_len
+
+        # If we're allowed to break long words, then do so: put as much
+        # of the next chunk onto the current line as will fit.
+        if self.break_long_words:
+            term = self.term
+            chunk = reversed_chunks[-1]
+            if (space_left == 0 or
+                    space_left == 1 and chunk == u' '):
+                idx = space_left
+            else:
+                nxt = 0
+                for idx in range(0, len(chunk)):
+                    if idx == nxt:
+                        # at sequence, point beyond it,
+                        nxt = idx + measure_length(chunk[idx:], term)
+                    if nxt <= idx:
+                        # point beyond next sequence, if any,
+                        # otherwise point to next character
+                        nxt = idx + measure_length(chunk[idx:], term) + 1
+                    if Sequence(chunk[:nxt], term).length() > space_left:
+                        break
+                else:
+                    idx = space_left
+
+            cur_line.append(reversed_chunks[-1][:idx])
+            reversed_chunks[-1] = reversed_chunks[-1][idx:]
+
+        # Otherwise, we have to preserve the long word intact.  Only add
+        # it to the current line if there's nothing already there --
+        # that minimizes how much we violate the width constraint.
+        elif not cur_line:
+            cur_line.append(reversed_chunks.pop())
+
+        # If we're not allowed to break long words, and there's already
+        # text on the current line, do nothing.  Next time through the
+        # main loop of _wrap_chunks(), we'll wind up here again, but
+        # cur_len will be zero, so the next line will be entirely
+        # devoted to the long word that we can't handle right now.
+
 
 SequenceTextWrapper.__doc__ = textwrap.TextWrapper.__doc__
 
