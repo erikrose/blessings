@@ -103,7 +103,7 @@ def get_movement_sequence_patterns(term):
         re.escape(term.rc),
         # clear_screen: clear screen and home cursor
         re.escape(term.clear),
-        # cursor_up: Up one line
+        # enter/exit_fullscreen: switch to alternate screen buffer
         re.escape(term.enter_fullscreen),
         re.escape(term.exit_fullscreen),
         # forward cursor
