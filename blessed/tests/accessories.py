@@ -30,7 +30,7 @@ SEND_SEMAPHORE = SEMAPHORE = b'SEMAPHORE\n'
 RECV_SEMAPHORE = b'SEMAPHORE\r\n'
 all_xterms_params = ['xterm', 'xterm-256color']
 many_lines_params = [30, 100]
-many_columns_params = [1, 25, 50]
+many_columns_params = [1, 25]
 from blessed._binterms import binary_terminals
 default_all_terms = ['screen', 'vt220', 'rxvt', 'cons25', 'linux', 'ansi']
 try:
