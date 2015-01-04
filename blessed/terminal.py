@@ -4,6 +4,7 @@ import collections
 import contextlib
 import functools
 import warnings
+import platform
 import codecs
 import curses
 import locale
@@ -180,9 +181,16 @@ class Terminal(object):
             # send them to stdout as a fallback, since they have to go
             # somewhere.
             try:
-                curses.setupterm(self._kind, self._init_descriptor)
-            except curses.error:
-                warnings.warn('Failed to setupterm(kind=%s)' % (self._kind,))
+                if (platform.python_implementation() == 'PyPy' and
+                        isinstance(self._kind, unicode)):
+                    # pypy/2.4.0_2/libexec/lib_pypy/_curses.py, line 1131
+                    # TypeError: initializer for ctype 'char *' must be a str
+                    curses.setupterm(self._kind.encode('ascii'), self._init_descriptor)
+                else:
+                    curses.setupterm(self._kind, self._init_descriptor)
+            except curses.error as err:
+                warnings.warn('Failed to setupterm(kind={0!r}): {1}'
+                              .format(self._kind, err))
                 self._kind = None
                 self._does_styling = False
             else:
@@ -515,16 +523,8 @@ class Terminal(object):
         Returns a list of strings that may contain escape sequences. See
         ``textwrap.TextWrapper`` for all available additional kwargs to
         customize wrapping behavior such as ``subsequent_indent``.
-
-        Note that the keyword argument ``break_long_words`` may not be set,
-        it is not sequence-safe!
         """
-
-        _blw = 'break_long_words'
-        assert (_blw not in kwargs or not kwargs[_blw]), (
-            "keyword argument, '{}' is not sequence-safe".format(_blw))
-
-        width = width is None and self.width or width
+        width = self.width if width is None else width
         lines = []
         for line in text.splitlines():
             lines.extend(

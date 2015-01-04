@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 "Tests for keyboard support."
+# std imports
 import functools
 import tempfile
 try:
@@ -7,15 +8,17 @@ try:
 except ImportError:
     import io
     StringIO = io.StringIO
+import platform
 import signal
 import curses
 import time
 import math
-import tty
+import tty   # NOQA
 import pty
 import sys
 import os
 
+# local
 from .accessories import (
     read_until_eof,
     read_until_semaphore,
@@ -29,6 +32,8 @@ from .accessories import (
     xterms,
 )
 
+# 3rd-party
+import pytest
 import mock
 
 if sys.version_info[0] == 3:
@@ -422,6 +427,9 @@ def test_inkey_0s_cbreak_multibyte_utf8():
     assert math.floor(time.time() - stime) == 0.0
 
 
+@pytest.mark.skipif(os.environ.get('TRAVIS', None) is not None or
+                    platform.python_implementation() == 'PyPy',
+                    reason="travis-ci nor pypy handle ^C very well.")
 def test_inkey_0s_raw_ctrl_c():
     "0-second inkey with raw allows receiving ^C."
     pid, master_fd = pty.fork()
@@ -449,17 +457,9 @@ def test_inkey_0s_raw_ctrl_c():
         stime = time.time()
         output = read_until_eof(master_fd)
     pid, status = os.waitpid(pid, 0)
-    if os.environ.get('TRAVIS', None) is not None:
-        # For some reason, setraw has no effect travis-ci,
-        # is still accepts ^C, causing system exit on py26,
-        # but exit 0 on py27, and either way on py33
-        # .. strange, huh?
-        assert output in (u'', u'\x03')
-        assert os.WEXITSTATUS(status) in (0, 2)
-    else:
-        assert (output == u'\x03' or
-                output == u'' and not os.isatty(0))
-        assert os.WEXITSTATUS(status) == 0
+    assert (output == u'\x03' or
+            output == u'' and not os.isatty(0))
+    assert os.WEXITSTATUS(status) == 0
     assert math.floor(time.time() - stime) == 0.0
 
 
@@ -698,7 +698,6 @@ def test_cuf1_and_cub1_as_RIGHT_LEFT(all_terms):
         term = TestTerminal(kind=kind, force_styling=True)
         keymap = get_keyboard_sequences(term)
         if term._cuf1:
-            assert term._cuf1 != u' '
             assert term._cuf1 in keymap
             assert keymap[term._cuf1] == term.KEY_RIGHT
         if term._cub1:

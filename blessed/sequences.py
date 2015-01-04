@@ -14,12 +14,15 @@ import math
 import sys
 import re
 
+# local
+from ._binterms import binary_terminals as _BINTERM_UNSUPPORTED
+
 # 3rd-party
 import wcwidth  # https://github.com/jquast/wcwidth
 
-_BINTERM_UNSUPPORTED = ('kermit', 'avatar')
-_BINTERM_UNSUPPORTED_MSG = ('sequence-awareness for terminals emitting '
-                            'binary-packed capabilities are not supported.')
+_BINTERM_UNSUPPORTED_MSG = (
+    u"Terminal kind {0!r} contains binary-packed capabilities, blessed "
+    u"is likely to fail to measure the length of its sequences.")
 
 if sys.version_info[0] == 3:
     text_type = str
@@ -263,7 +266,7 @@ def init_sequence_patterns(term):
     printable length of a string.
     """
     if term.kind in _BINTERM_UNSUPPORTED:
-        warnings.warn(_BINTERM_UNSUPPORTED_MSG)
+        warnings.warn(_BINTERM_UNSUPPORTED_MSG.format(term.kind))
 
     # Build will_move, a list of terminal capabilities that have
     # indeterminate effects on the terminal cursor position.
@@ -322,9 +325,6 @@ def init_sequence_patterns(term):
 class SequenceTextWrapper(textwrap.TextWrapper):
     def __init__(self, width, term, **kwargs):
         self.term = term
-        assert kwargs.get('break_long_words', False) is False, (
-            'break_long_words is not sequence-safe')
-        kwargs['break_long_words'] = False
         textwrap.TextWrapper.__init__(self, width, **kwargs)
 
     def _wrap_chunks(self, chunks):

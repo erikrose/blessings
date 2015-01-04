@@ -29,8 +29,6 @@ pep257:
 pep8:
     # style checking
     run: true
-    options:
-        max-line-length: 100
 
 pyflakes:
     # preferring 'frosted' instead (a fork of)

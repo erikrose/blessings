@@ -212,7 +212,9 @@ def test_setupterm_invalid_issue39():
             term = TestTerminal(kind='unknown', force_styling=True)
         except UserWarning:
             err = sys.exc_info()[1]
-            assert err.args[0] == 'Failed to setupterm(kind=unknown)'
+            assert err.args[0] == (
+                "Failed to setupterm(kind='unknown'): "
+                "setupterm: could not find terminal")
         else:
             assert not term.is_a_tty and not term.does_styling, (
                 'Should have thrown exception')
