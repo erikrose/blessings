@@ -31,16 +31,16 @@ all_xterms_params = ['xterm', 'xterm-256color']
 many_lines_params = [30, 100]
 many_columns_params = [1, 25, 50]
 from blessed._binterms import binary_terminals
+default_all_terms = ['screen', 'vt220', 'rxvt', 'cons25', 'linux', 'ansi']
 try:
-    all_terms_params = (set(
+    all_terms_params = list(set(
         _term.split(None, 1)[0].decode('ascii') for _term in
         subprocess.Popen(["toe"], stdout=subprocess.PIPE, close_fds=True)
         .communicate()[0].splitlines()
     ) - (set(binary_terminals) if not os.environ.get('TEST_BINTERMS')
-         else set()))
+         else set())) or default_all_terms
 except OSError:
-    all_terms_params = ['screen', 'vt220', 'rxvt',
-                        'cons25', 'linux', 'ansi']
+    all_terms_params = default_all_terms
 
 
 class as_subprocess(object):
