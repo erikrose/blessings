@@ -243,7 +243,7 @@ def test_winsize(many_lines, many_columns):
 
 @pytest.mark.skipif(platform.python_implementation() == 'PyPy',
                     reason='PyPy fails TIOCSWINSZ')
-def test_Sequence_alignment(all_terms, many_lines):
+def test_Sequence_alignment(all_terms):
     """Tests methods related to Sequence class, namely ljust, rjust, center."""
     @as_subprocess
     def child(kind, lines=25, cols=80):
@@ -269,7 +269,7 @@ def test_Sequence_alignment(all_terms, many_lines):
         assert (t.length(radjusted.strip()) == pony_len)
         assert (t.length(radjusted) == len(pony_msg.rjust(t.width)))
 
-    child(kind=all_terms, lines=many_lines)
+    child(kind=all_terms)
 
 
 def test_sequence_is_movement_false(all_terms):
