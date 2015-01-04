@@ -23,7 +23,6 @@ install:
         pip install -q coverage coveralls;
     fi
 
-
 script:
   - tox -e $TOXENV
 
