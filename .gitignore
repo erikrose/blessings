@@ -1,4 +1,5 @@
 .coverage
+.coverage.*
 .cache
 .tox
 *.egg-info
@@ -10,4 +11,3 @@ dist
 docs/_build
 htmlcov
 .coveralls.yml
-._coverage*

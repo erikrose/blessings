@@ -389,26 +389,24 @@ class SequenceTextWrapper(textwrap.TextWrapper):
         if self.break_long_words:
             term = self.term
             chunk = reversed_chunks[-1]
-            if (space_left == 0 or
-                    space_left == 1 and chunk == u' '):
-                idx = space_left
+            nxt = 0
+            for idx in range(0, len(chunk)):
+                if idx == nxt:
+                    # at sequence, point beyond it,
+                    nxt = idx + measure_length(chunk[idx:], term)
+                if nxt <= idx:
+                    # point beyond next sequence, if any,
+                    # otherwise point to next character
+                    nxt = idx + measure_length(chunk[idx:], term) + 1
+                if Sequence(chunk[:nxt], term).length() > space_left:
+                    break
             else:
-                nxt = 0
-                for idx in range(0, len(chunk)):
-                    if idx == nxt:
-                        # at sequence, point beyond it,
-                        nxt = idx + measure_length(chunk[idx:], term)
-                    if nxt <= idx:
-                        # point beyond next sequence, if any,
-                        # otherwise point to next character
-                        nxt = idx + measure_length(chunk[idx:], term) + 1
-                    if Sequence(chunk[:nxt], term).length() > space_left:
-                        break
-                else:
-                    idx = space_left
+                # our text ends with a sequence, such as in text
+                # u'!\x1b(B\x1b[m', set index at at end (nxt)
+                idx = nxt
 
-            cur_line.append(reversed_chunks[-1][:idx])
-            reversed_chunks[-1] = reversed_chunks[-1][idx:]
+            cur_line.append(chunk[:idx])
+            reversed_chunks[-1] = chunk[idx:]
 
         # Otherwise, we have to preserve the long word intact.  Only add
         # it to the current line if there's nothing already there --

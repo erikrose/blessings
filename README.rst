@@ -676,10 +676,6 @@ Bugs or suggestions? Visit the `issue tracker`_.
 
 For patches, please construct a test case if possible.
 
-To test, execute ``./setup.py develop`` followed by command ``tox``.
-
-Pull requests are tested by Travis-CI.
-
 
 License
 =======
