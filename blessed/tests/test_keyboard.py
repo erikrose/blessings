@@ -8,6 +8,7 @@ try:
 except ImportError:
     import io
     StringIO = io.StringIO
+import platform
 import signal
 import curses
 import time
@@ -426,8 +427,9 @@ def test_inkey_0s_cbreak_multibyte_utf8():
     assert math.floor(time.time() - stime) == 0.0
 
 
-@pytest.mark.skipif(os.environ.get('TRAVIS', None) is not None,
-                    reason="travis-ci doesn't handle ^C well.")
+@pytest.mark.skipif(os.environ.get('TRAVIS', None) is not None or
+                    platform.python_implementation() == 'PyPy',
+                    reason="travis-ci nor pypy handle ^C very well.")
 def test_inkey_0s_raw_ctrl_c():
     "0-second inkey with raw allows receiving ^C."
     pid, master_fd = pty.fork()
