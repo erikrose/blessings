@@ -36,7 +36,7 @@ default_all_terms = ['screen', 'vt220', 'rxvt', 'cons25', 'linux', 'ansi']
 try:
     available_terms = [
         _term.split(None, 1)[0].decode('ascii') for _term in
-        subprocess.Popen(["toe"], stdout=subprocess.PIPE, close_fds=True)
+        subprocess.Popen(('toe', '-a'), stdout=subprocess.PIPE, close_fds=True)
         .communicate()[0].splitlines()]
     if not os.environ.get('TEST_ALLTERMS'):
         # we just pick 3 random terminal types, they're all as good as any so
