@@ -19,7 +19,6 @@ from .accessories import (
     unicode_parm,
     many_columns,
     unicode_cap,
-    many_lines,
 )
 
 # 3rd-party

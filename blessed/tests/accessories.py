@@ -36,7 +36,7 @@ default_all_terms = ['screen', 'vt220', 'rxvt', 'cons25', 'linux', 'ansi']
 if os.environ.get('TEST_ALLTERMS'):
     try:
         available_terms = [
-            _term.split(None, 1)[0].decode('ascii') for _term in
+            _term.split(None, 1)[0] for _term in
             subprocess.Popen(('toe', '-a'),
                              stdout=subprocess.PIPE,
                              close_fds=True)
