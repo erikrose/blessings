@@ -2,7 +2,7 @@
     :alt: Travis Continous Integration
     :target: https://travis-ci.org/jquast/blessed
 
-.. image:: https://coveralls.io/repos/jquast/blessed/badge.png?branch=master
+.. image:: https://img.shields.io/coveralls/jquast/blessed.svg
     :alt: Coveralls Code Coverage
     :target: https://coveralls.io/r/jquast/blessed?branch=master
 
@@ -16,6 +16,7 @@
 
 .. image:: https://img.shields.io/pypi/dm/blessed.svg
     :alt: Downloads
+    :target: https://pypi.python.org/pypi/blessed
 
 =======
 Blessed
