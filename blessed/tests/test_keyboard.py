@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 "Tests for keyboard support."
+# std imports
 import functools
 import tempfile
 try:
@@ -11,11 +12,12 @@ import signal
 import curses
 import time
 import math
-import tty
+import tty   # NOQA
 import pty
 import sys
 import os
 
+# local
 from .accessories import (
     read_until_eof,
     read_until_semaphore,
@@ -29,6 +31,8 @@ from .accessories import (
     xterms,
 )
 
+# 3rd-party
+import pytest
 import mock
 
 if sys.version_info[0] == 3:
