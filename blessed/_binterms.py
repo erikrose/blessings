@@ -707,6 +707,7 @@ tvi950-rv
 tvi950-rv-2p
 tvi950-rv-4p
 tvipt
+unknown
 vanilla
 vc303
 vc404
@@ -816,6 +817,7 @@ wy99fa
 wy99gt
 wy99gt-25
 wy99gt-vb
+wy99gt-tek
 wyse-vp
 xerox1720
 xerox820

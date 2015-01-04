@@ -32,11 +32,11 @@ many_lines_params = [30, 100]
 many_columns_params = [1, 25, 50]
 from blessed._binterms import binary_terminals
 try:
-    all_terms_params = set(_term.split(None, 1)[0] for _term in
-                           subprocess.check_output(('toe',)).splitlines()
-                           ) - (set(binary_terminals)
-                                if not os.environ.get('TEST_BINTERMS')
-                                else set())
+    all_terms_params = (set(
+        _term.split(None, 1)[0] for _term in
+        subprocess.check_output(('toe',)).splitlines()
+    ) - (set(binary_terminals) if not os.environ.get('TEST_BINTERMS')
+         else set()))
 except OSError:
     all_terms_params = ['screen', 'vt220', 'rxvt',
                         'cons25', 'linux', 'ansi']
