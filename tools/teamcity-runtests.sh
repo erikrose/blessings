@@ -8,9 +8,6 @@ set -o pipefail
 here=$(cd `dirname $0`; pwd)
 osrel=$(uname -s)
 
-# ensure pip, virtualenv, and tox are up-to-date
-pip install --upgrade pip virtualenv tox
-
 # run tests
 cd $here/..
 
