@@ -3,12 +3,22 @@
 __author__ = 'Jeff Quast <contact@jeffquast.com>'
 __license__ = 'MIT'
 
-__all__ = ('Keystroke', 'get_keyboard_codes', 'get_keyboard_sequences',)
+__all__ = ('Key', 'get_keyboard_codes', 'get_keyboard_sequences',)
 
 import curses.has_key
 import collections
 import curses
+import functools
+import os
+import select
 import sys
+import time
+
+try:
+    InterruptedError
+except NameError:
+    # alias py2 exception to py3
+    InterruptedError = select.error
 
 if hasattr(collections, 'OrderedDict'):
     OrderedDict = collections.OrderedDict
@@ -59,7 +69,7 @@ else:
     text_type = unicode  # noqa
 
 
-class Keystroke(text_type):
+class Key(text_type):
     """A unicode-derived class for describing keyboard input returned by
     the ``inkey()`` method of ``Terminal``, which may, at times, be a
     multibyte sequence, providing properties ``is_sequence`` as ``True``
@@ -91,6 +101,159 @@ class Keystroke(text_type):
     def code(self):
         "Integer keycode value of multibyte sequence (int)."
         return self._code
+
+
+class BufferedKeyboard(object):
+    """A buffered hookup to a Terminal's input stream.
+
+    This is essentially just :meth:`key` with a buffer attached so that
+    buffered input doesn't live beyond the span of the
+    :meth:`~blessings.Terminal.key_mode()` context manager.
+
+    """
+    def __init__(self, keymap, keycodes, escape, keyboard_fd, keyboard_decoder, has_tty):
+        self._keymap = keymap
+        self._keycodes = keycodes
+        self._escape = escape
+        self._keyboard_fd = keyboard_fd
+        self._keyboard_decoder = keyboard_decoder
+        self._has_tty = has_tty
+        self._buffer = collections.deque()
+
+    def key(self, timeout=None, esc_delay=0.35, _intr_continue=True):
+        """Receive next Key from keyboard (stdin), blocking until a
+        keypress is received or ``timeout`` elapsed, if specified.
+
+        The value returned is an instance of ``Key``, with properties
+        ``is_sequence``, and, when True, non-None values for attributes
+        ``code`` and ``name``. The value of ``code`` may be compared against
+        attributes of the parent terminal beginning with *KEY*, such as
+        ``KEY_ESCAPE``.
+
+        To distinguish between ``KEY_ESCAPE`` and sequences beginning with
+        escape, the ``esc_delay`` specifies the amount of time after receiving
+        the escape character (chr(27)) to seek for the completion
+        of other application keys before returning ``KEY_ESCAPE``.
+
+        Normally, when this function is interrupted by a signal, such as the
+        installment of SIGWINCH, this function will ignore this interruption
+        and continue to poll for input up to the ``timeout`` specified. If
+        you'd rather this function return ``u''`` early, specify ``False`` for
+        ``_intr_continue``.
+
+        """
+        # TODO(jquast): "meta sends escape", where alt+1 would send '\x1b1',
+        #               what do we do with that? Surely, something useful.
+        #               comparator to term.KEY_meta('x') ?
+        # TODO(jquast): Ctrl characters, KEY_CTRL_[A-Z], and the rest;
+        #               KEY_CTRL_\, KEY_CTRL_{, etc. are not legitimate
+        #               attributes. comparator to term.KEY_ctrl('z') ?
+        def time_left(stime, timeout):
+            """time_left(stime, timeout) -> float
+
+            Returns time-relative time remaining before ``timeout``
+            after time elapsed since ``stime``.
+            """
+            if timeout is not None:
+                if timeout is 0:
+                    return 0
+                return max(0, timeout - (time.time() - stime))
+
+        resolve = functools.partial(resolve_sequence,
+                                    mapper=self._keymap,
+                                    codes=self._keycodes)
+
+        stime = time.time()
+
+        # re-buffer previously received keystrokes,
+        ucs = u''
+        while self._buffer:
+            ucs += self._buffer.pop()
+
+        # receive all immediately available bytes
+        while self._char_is_ready(0):
+            ucs += self._next_char()
+
+        # decode keystroke, if any
+        ks = resolve(text=ucs)
+
+        # so long as the most immediately received or buffered keystroke is
+        # incomplete, (which may be a multibyte encoding), block until until
+        # one is received.
+        while not ks and self._char_is_ready(time_left(stime, timeout), _intr_continue):
+            ucs += self._next_char()
+            ks = resolve(text=ucs)
+
+        # handle escape key (KEY_ESCAPE) vs. escape sequence (which begins
+        # with KEY_ESCAPE, \x1b[, \x1bO, or \x1b?), up to esc_delay when
+        # received. This is not optimal, but causes least delay when
+        # (currently unhandled, and rare) "meta sends escape" is used,
+        # or when an unsupported sequence is sent.
+        if ks.code == self._escape:
+            esctime = time.time()
+            while (ks.code == self._escape and
+                   self._char_is_ready(time_left(esctime, esc_delay))):
+                ucs += self._next_char()
+                ks = resolve(text=ucs)
+
+        # buffer any remaining text received
+        self._buffer.extendleft(ucs[len(ks):])
+        return ks
+
+    def _next_char(self):
+        """Return a single unicode char or ''.
+
+        Read and decode next byte from keyboard stream. May return u''
+        if decoding is not yet complete, or completed unicode character.
+        Should always return bytes when self.kbhit() returns True.
+
+        Implementors of input streams other than os.read() on the stdin fd
+        should derive and override this method.
+
+        """
+        assert self._keyboard_fd is not None
+        byte = os.read(self._keyboard_fd, 1)
+        return self._keyboard_decoder.decode(byte, final=False)
+
+    def _char_is_ready(self, timeout=None, _intr_continue=True):
+        """Returns True if a keypress has been detected on keyboard.
+
+        When ``timeout`` is 0, this call is non-blocking, otherwise blocking
+        until keypress is detected (default).  When ``timeout`` is a positive
+        number, returns after ``timeout`` seconds have elapsed.
+
+        If input is not a terminal, False is always returned.
+
+        """
+        # Special care is taken to handle a custom SIGWINCH handler, which
+        # causes select() to be interrupted with errno 4 (EAGAIN) --
+        # it is ignored, and a new timeout value is derived from the previous,
+        # unless timeout becomes negative, because signal handler has blocked
+        # beyond timeout, then False is returned. Otherwise, when timeout is 0,
+        # we continue to block indefinitely (default).
+        stime = time.time()
+        check_w, check_x, ready_r = [], [], [None, ]
+        check_r = [self._keyboard_fd] if self._keyboard_fd is not None else []
+
+        while self._has_tty:
+            try:
+                ready_r, ready_w, ready_x = select.select(
+                    check_r, check_w, check_x, timeout)
+            except InterruptedError:
+                if not _intr_continue:
+                    return u''
+                if timeout is not None:
+                    # subtract time already elapsed,
+                    timeout -= time.time() - stime
+                    if timeout > 0:
+                        continue
+                    # no time remains after handling exception (rare)
+                    ready_r = []
+                    break
+            else:
+                break
+
+        return False if self._keyboard_fd is None else check_r == ready_r
 
 
 def get_keyboard_codes():
@@ -176,9 +339,9 @@ def get_keyboard_sequences(term):
 
 
 def resolve_sequence(text, mapper, codes):
-    """resolve_sequence(text, mapper, codes) -> Keystroke()
+    """resolve_sequence(text, mapper, codes) -> Key
 
-    Returns first matching Keystroke() instance for sequences found in
+    Returns first matching Key instance for sequences found in
     ``mapper`` beginning with input ``text``, where ``mapper`` is an
     OrderedDict of unicode multibyte sequences, such as u'\x1b[D' paired by
     their integer value (260), and ``codes`` is a dict of integer values (260)
@@ -186,8 +349,8 @@ def resolve_sequence(text, mapper, codes):
     """
     for sequence, code in mapper.items():
         if text.startswith(sequence):
-            return Keystroke(ucs=sequence, code=code, name=codes[code])
-    return Keystroke(ucs=text and text[0] or u'')
+            return Key(ucs=sequence, code=code, name=codes[code])
+    return Key(ucs=text and text[0] or u'')
 
 """In a perfect world, terminal emulators would always send exactly what
 the terminfo(5) capability database plans for them, accordingly by the
@@ -250,7 +413,6 @@ DEFAULT_SEQUENCE_MIXIN = (
     (u"\x1bOx", curses.KEY_KP_8),          # 8
     (u"\x1bOy", curses.KEY_KP_9),          # 9
 
-    #
     # keypad, numlock off
     (u"\x1b[1~", curses.KEY_FIND),         # find
     (u"\x1b[2~", curses.KEY_IC),           # insert (0)

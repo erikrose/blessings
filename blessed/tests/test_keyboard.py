@@ -31,6 +31,8 @@ from .accessories import (
     echo_off,
     xterms,
 )
+from ..keyboard import BufferedKeyboard  # TODO: Remove relative import once package names are normalized.
+from ..terminal import HAS_TTY, NoKeyboard
 
 # 3rd-party
 import pytest
@@ -61,8 +63,8 @@ def test_kbhit_interrupted():
         signal.signal(signal.SIGWINCH, on_resize)
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.raw():
-            assert term.inkey(timeout=1.05) == u''
+        with term.key_mode(raw=True) as key:
+            assert key(timeout=1.05) == u''
         os.write(sys.__stdout__.fileno(), b'complete')
         assert got_sigwinch is True
         if cov is not None:
@@ -104,8 +106,8 @@ def test_kbhit_interrupted_nonetype():
         signal.signal(signal.SIGWINCH, on_resize)
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.raw():
-            term.inkey(timeout=1)
+        with term.key_mode(raw=True) as key:
+            key(timeout=1)
         os.write(sys.__stdout__.fileno(), b'complete')
         assert got_sigwinch is True
         if cov is not None:
@@ -148,8 +150,8 @@ def test_kbhit_interrupted_no_continue():
         signal.signal(signal.SIGWINCH, on_resize)
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.raw():
-            term.inkey(timeout=1.05, _intr_continue=False)
+        with term.key_mode(raw=True) as key:
+            key(timeout=1.05, _intr_continue=False)
         os.write(sys.__stdout__.fileno(), b'complete')
         assert got_sigwinch is True
         if cov is not None:
@@ -192,8 +194,8 @@ def test_kbhit_interrupted_nonetype_no_continue():
         signal.signal(signal.SIGWINCH, on_resize)
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.raw():
-            term.inkey(timeout=None, _intr_continue=False)
+        with term.key_mode(raw=True) as key:
+            key(timeout=None, _intr_continue=False)
         os.write(sys.__stdout__.fileno(), b'complete')
         assert got_sigwinch is True
         if cov is not None:
@@ -216,16 +218,14 @@ def test_kbhit_interrupted_nonetype_no_continue():
     assert math.floor(time.time() - stime) == 0.0
 
 
-def test_cbreak_no_kb():
-    "cbreak() should not call tty.setcbreak() without keyboard."
+def test_key_mode_no_kb():
+    "key_mode() should promptly explode without keyboard."
     @as_subprocess
     def child():
-        with tempfile.NamedTemporaryFile() as stream:
-            term = TestTerminal(stream=stream)
-            with mock.patch("tty.setcbreak") as mock_setcbreak:
-                with term.cbreak():
-                    assert not mock_setcbreak.called
-                assert term.keyboard_fd is None
+        term = TestTerminal(stream=StringIO())
+        with pytest.raises(NoKeyboard):
+            with term.key_mode():
+                pass
     child()
 
 
@@ -243,19 +243,6 @@ def test_notty_kb_is_None():
     child()
 
 
-def test_raw_no_kb():
-    "raw() should not call tty.setraw() without keyboard."
-    @as_subprocess
-    def child():
-        with tempfile.NamedTemporaryFile() as stream:
-            term = TestTerminal(stream=stream)
-            with mock.patch("tty.setraw") as mock_setraw:
-                with term.raw():
-                    assert not mock_setraw.called
-            assert term.keyboard_fd is None
-    child()
-
-
 def test_kbhit_no_kb():
     "kbhit() always immediately returns False without a keyboard."
     @as_subprocess
@@ -263,7 +250,14 @@ def test_kbhit_no_kb():
         term = TestTerminal(stream=StringIO())
         stime = time.time()
         assert term.keyboard_fd is None
-        assert term.kbhit(timeout=1.1) is False
+        
+        listener = BufferedKeyboard(term._keymap,
+                                    term._keycodes,
+                                    term.KEY_ESCAPE,
+                                    term.keyboard_fd,
+                                    term._keyboard_decoder,
+                                    HAS_TTY)
+        assert listener._char_is_ready(timeout=1.1) is False
         assert (math.floor(time.time() - stime) == 1.0)
     child()
 
@@ -273,22 +267,9 @@ def test_inkey_0s_cbreak_noinput():
     @as_subprocess
     def child():
         term = TestTerminal()
-        with term.cbreak():
+        with term.key_mode() as key:
             stime = time.time()
-            inp = term.inkey(timeout=0)
-            assert (inp == u'')
-            assert (math.floor(time.time() - stime) == 0.0)
-    child()
-
-
-def test_inkey_0s_cbreak_noinput_nokb():
-    "0-second inkey without data in input stream and no keyboard/tty."
-    @as_subprocess
-    def child():
-        term = TestTerminal(stream=StringIO())
-        with term.cbreak():
-            stime = time.time()
-            inp = term.inkey(timeout=0)
+            inp = key(timeout=0)
             assert (inp == u'')
             assert (math.floor(time.time() - stime) == 0.0)
     child()
@@ -299,22 +280,9 @@ def test_inkey_1s_cbreak_noinput():
     @as_subprocess
     def child():
         term = TestTerminal()
-        with term.cbreak():
+        with term.key_mode() as key:
             stime = time.time()
-            inp = term.inkey(timeout=1)
-            assert (inp == u'')
-            assert (math.floor(time.time() - stime) == 1.0)
-    child()
-
-
-def test_inkey_1s_cbreak_noinput_nokb():
-    "1-second inkey without input or keyboard."
-    @as_subprocess
-    def child():
-        term = TestTerminal(stream=StringIO())
-        with term.cbreak():
-            stime = time.time()
-            inp = term.inkey(timeout=1)
+            inp = key(timeout=1)
             assert (inp == u'')
             assert (math.floor(time.time() - stime) == 1.0)
     child()
@@ -332,8 +300,8 @@ def test_inkey_0s_cbreak_input():
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.cbreak():
-            inp = term.inkey(timeout=0)
+        with term.key_mode() as key:
+            inp = key(timeout=0)
             os.write(sys.__stdout__.fileno(), inp.encode('utf-8'))
         if cov is not None:
             cov.stop()
@@ -365,9 +333,9 @@ def test_inkey_cbreak_input_slowly():
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.cbreak():
+        with term.key_mode() as key:
             while True:
-                inp = term.inkey(timeout=0.5)
+                inp = key(timeout=0.5)
                 os.write(sys.__stdout__.fileno(), inp.encode('utf-8'))
                 if inp == 'X':
                     break
@@ -407,8 +375,8 @@ def test_inkey_0s_cbreak_multibyte_utf8():
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.cbreak():
-            inp = term.inkey(timeout=0)
+        with term.key_mode() as key:
+            inp = key(timeout=0)
             os.write(sys.__stdout__.fileno(), inp.encode('utf-8'))
         if cov is not None:
             cov.stop()
@@ -440,9 +408,9 @@ def test_inkey_0s_raw_ctrl_c():
             cov = None
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
-        with term.raw():
+        with term.key_mode(raw=True) as key:
             os.write(sys.__stdout__.fileno(), RECV_SEMAPHORE)
-            inp = term.inkey(timeout=0)
+            inp = key(timeout=0)
             os.write(sys.__stdout__.fileno(), inp.encode('latin1'))
         if cov is not None:
             cov.stop()
@@ -473,8 +441,8 @@ def test_inkey_0s_cbreak_sequence():
             cov = None
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.cbreak():
-            inp = term.inkey(timeout=0)
+        with term.key_mode() as key:
+            inp = key(timeout=0)
             os.write(sys.__stdout__.fileno(), inp.name.encode('ascii'))
             sys.stdout.flush()
         if cov is not None:
@@ -503,8 +471,8 @@ def test_inkey_1s_cbreak_input():
             cov = None
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.cbreak():
-            inp = term.inkey(timeout=3)
+        with term.key_mode() as key:
+            inp = key(timeout=3)
             os.write(sys.__stdout__.fileno(), inp.name.encode('utf-8'))
             sys.stdout.flush()
         if cov is not None:
@@ -535,9 +503,9 @@ def test_esc_delay_cbreak_035():
             cov = None
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.cbreak():
+        with term.key_mode() as key:
             stime = time.time()
-            inp = term.inkey(timeout=5)
+            inp = key(timeout=5)
             measured_time = (time.time() - stime) * 100
             os.write(sys.__stdout__.fileno(), (
                 '%s %i' % (inp.name, measured_time,)).encode('ascii'))
@@ -570,9 +538,9 @@ def test_esc_delay_cbreak_135():
             cov = None
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.cbreak():
+        with term.key_mode() as key:
             stime = time.time()
-            inp = term.inkey(timeout=5, esc_delay=1.35)
+            inp = key(timeout=5, esc_delay=1.35)
             measured_time = (time.time() - stime) * 100
             os.write(sys.__stdout__.fileno(), (
                 '%s %i' % (inp.name, measured_time,)).encode('ascii'))
@@ -605,9 +573,9 @@ def test_esc_delay_cbreak_timout_0():
             cov = None
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.cbreak():
+        with term.key_mode() as key:
             stime = time.time()
-            inp = term.inkey(timeout=0)
+            inp = key(timeout=0)
             measured_time = (time.time() - stime) * 100
             os.write(sys.__stdout__.fileno(), (
                 '%s %i' % (inp.name, measured_time,)).encode('ascii'))
@@ -631,9 +599,9 @@ def test_esc_delay_cbreak_timout_0():
 
 
 def test_keystroke_default_args():
-    "Test keyboard.Keystroke constructor with default arguments."
-    from blessed.keyboard import Keystroke
-    ks = Keystroke()
+    "Test keyboard.Key constructor with default arguments."
+    from blessed.keyboard import Key
+    ks = Key()
     assert ks._name is None
     assert ks.name == ks._name
     assert ks._code is None
@@ -645,9 +613,9 @@ def test_keystroke_default_args():
 
 
 def test_a_keystroke():
-    "Test keyboard.Keystroke constructor with set arguments."
-    from blessed.keyboard import Keystroke
-    ks = Keystroke(ucs=u'x', code=1, name=u'the X')
+    "Test keyboard.Key constructor with set arguments."
+    from blessed.keyboard import Key
+    ks = Key(ucs=u'x', code=1, name=u'the X')
     assert ks._name is u'the X'
     assert ks.name == ks._name
     assert ks._code is 1

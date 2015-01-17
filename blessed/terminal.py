@@ -2,15 +2,12 @@
 # standard modules
 import collections
 import contextlib
-import functools
 import warnings
 import platform
 import codecs
 import curses
 import locale
-import select
 import struct
-import time
 import sys
 import os
 
@@ -37,13 +34,6 @@ except ImportError:
         """A dummy exception to take the place of Python 3's
         ``io.UnsupportedOperation`` in Python 2.5"""
 
-try:
-    _ = InterruptedError
-    del _
-except NameError:
-    # alias py2 exception to py3
-    InterruptedError = select.error
-
 # local imports
 from .formatters import (
     ParameterizingString,
@@ -61,6 +51,7 @@ from .sequences import (
 from .keyboard import (
     get_keyboard_sequences,
     get_keyboard_codes,
+    BufferedKeyboard,
     resolve_sequence,
 )
 
@@ -199,7 +190,7 @@ class Terminal(object):
                 else:
                     warnings.warn(
                         'A terminal of kind "%s" has been requested; due to an'
-                        ' internal python curses bug,  terminal capabilities'
+                        ' internal python curses bug, terminal capabilities'
                         ' for a terminal of kind "%s" will continue to be'
                         ' returned for the remainder of this process.' % (
                             self._kind, _CUR_TERM,))
@@ -217,7 +208,6 @@ class Terminal(object):
         # build database of sequence <=> KEY_NAME
         self._keymap = get_keyboard_sequences(self)
 
-        self._keyboard_buf = collections.deque()
         if self.keyboard_fd is not None:
             locale.setlocale(locale.LC_ALL, '')
             self._encoding = locale.getpreferredencoding() or 'ascii'
@@ -534,71 +524,27 @@ class Terminal(object):
 
         return lines
 
-    def getch(self):
-        """T.getch() -> unicode
-
-        Read and decode next byte from keyboard stream.  May return u''
-        if decoding is not yet complete, or completed unicode character.
-        Should always return bytes when self.kbhit() returns True.
-
-        Implementors of input streams other than os.read() on the stdin fd
-        should derive and override this method.
-        """
-        assert self.keyboard_fd is not None
-        byte = os.read(self.keyboard_fd, 1)
-        return self._keyboard_decoder.decode(byte, final=False)
-
-    def kbhit(self, timeout=None, _intr_continue=True):
-        """T.kbhit([timeout=None]) -> bool
-
-        Returns True if a keypress has been detected on keyboard.
-
-        When ``timeout`` is 0, this call is non-blocking, Otherwise blocking
-        until keypress is detected (default).  When ``timeout`` is a positive
-        number, returns after ``timeout`` seconds have elapsed.
-
-        If input is not a terminal, False is always returned.
-        """
-        # Special care is taken to handle a custom SIGWINCH handler, which
-        # causes select() to be interrupted with errno 4 (EAGAIN) --
-        # it is ignored, and a new timeout value is derived from the previous,
-        # unless timeout becomes negative, because signal handler has blocked
-        # beyond timeout, then False is returned. Otherwise, when timeout is 0,
-        # we continue to block indefinitely (default).
-        stime = time.time()
-        check_w, check_x, ready_r = [], [], [None, ]
-        check_r = [self.keyboard_fd] if self.keyboard_fd is not None else []
-
-        while HAS_TTY and True:
-            try:
-                ready_r, ready_w, ready_x = select.select(
-                    check_r, check_w, check_x, timeout)
-            except InterruptedError:
-                if not _intr_continue:
-                    return u''
-                if timeout is not None:
-                    # subtract time already elapsed,
-                    timeout -= time.time() - stime
-                    if timeout > 0:
-                        continue
-                    # no time remains after handling exception (rare)
-                    ready_r = []
-                    break
-            else:
-                break
-
-        return False if self.keyboard_fd is None else check_r == ready_r
-
     @contextlib.contextmanager
-    def cbreak(self):
-        """Return a context manager that enters 'cbreak' mode: disabling line
-        buffering of keyboard input, making characters typed by the user
-        immediately available to the program.  Also referred to as 'rare'
-        mode, this is the opposite of 'cooked' mode, the default for most
-        shells.
+    def key_mode(self, raw=False):
+        """Return a context manager that sets up the terminal to do
+        key-at-a-time input.
 
-        In 'cbreak' mode, echo of input is also disabled: the application must
-        explicitly print any input received, if they so wish.
+        On entering the context manager, "cbreak" mode is activated, disabling
+        line buffering of keyboard input and turning off automatic echoing of
+        input. (You must explicitly print any input if you'd like it shown.)
+        Also referred to as 'rare' mode, this is the opposite of 'cooked' mode,
+        the default for most shells.
+
+        Entering the context manager also yields a callable for retrieving a
+        single keypress worth of input. See Recommend use::
+
+            with term.key_mode() as key:
+                a_key = key()
+
+        If ``raw`` is True, enter "raw" mode instead of "cbreak" mode. Raw mode
+        differs in that the interrupt, quit, suspend, and flow control
+        characters are all passed through as their raw character values instead
+        of generating a signal.
 
         More information can be found in the manual page for curses.h,
         http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak
@@ -608,42 +554,27 @@ class Terminal(object):
 
         Note also that setcbreak sets VMIN = 1 and VTIME = 0,
         http://www.unixwiz.net/techtips/termios-vmin-vtime.html
-        """
-        if HAS_TTY and self.keyboard_fd is not None:
-            # save current terminal mode,
-            save_mode = termios.tcgetattr(self.keyboard_fd)
-            tty.setcbreak(self.keyboard_fd, termios.TCSANOW)
-            try:
-                yield
-            finally:
-                # restore prior mode,
-                termios.tcsetattr(self.keyboard_fd,
-                                  termios.TCSAFLUSH,
-                                  save_mode)
-        else:
-            yield
 
-    @contextlib.contextmanager
-    def raw(self):
-        """Return a context manager that enters *raw* mode. Raw mode is
-        similar to *cbreak* mode, in that characters typed are immediately
-        available to ``inkey()`` with one exception: the interrupt, quit,
-        suspend, and flow control characters are all passed through as their
-        raw character values instead of generating a signal.
         """
         if HAS_TTY and self.keyboard_fd is not None:
-            # save current terminal mode,
+            # Save current terminal mode:
             save_mode = termios.tcgetattr(self.keyboard_fd)
-            tty.setraw(self.keyboard_fd, termios.TCSANOW)
+            mode_setter = tty.setraw if raw else tty.setcbreak
+            mode_setter(self.keyboard_fd, termios.TCSANOW)
             try:
-                yield
+                yield BufferedKeyboard(self._keymap,
+                                       self._keycodes,
+                                       self.KEY_ESCAPE,
+                                       self.keyboard_fd,
+                                       self._keyboard_decoder,
+                                       HAS_TTY).key
             finally:
-                # restore prior mode,
+                # Restore prior mode:
                 termios.tcsetattr(self.keyboard_fd,
                                   termios.TCSAFLUSH,
                                   save_mode)
         else:
-            yield
+            raise NoKeyboard
 
     @contextlib.contextmanager
     def keypad(self):
@@ -667,90 +598,11 @@ class Terminal(object):
         finally:
             self.stream.write(self.rmkx)
 
-    def inkey(self, timeout=None, esc_delay=0.35, _intr_continue=True):
-        """T.inkey(timeout=None, [esc_delay, [_intr_continue]]) -> Keypress()
 
-        Receive next keystroke from keyboard (stdin), blocking until a
-        keypress is received or ``timeout`` elapsed, if specified.
+class NoKeyboard(Exception):
+    """Exception raised when a Terminal that has no means of input connected is
+    asked to perform input tasks."""
 
-        When used without the context manager ``cbreak``, stdin remains
-        line-buffered, and this function will block until return is pressed,
-        even though only one unicode character is returned at a time..
-
-        The value returned is an instance of ``Keystroke``, with properties
-        ``is_sequence``, and, when True, non-None values for attributes
-        ``code`` and ``name``. The value of ``code`` may be compared against
-        attributes of this terminal beginning with *KEY*, such as
-        ``KEY_ESCAPE``.
-
-        To distinguish between ``KEY_ESCAPE``, and sequences beginning with
-        escape, the ``esc_delay`` specifies the amount of time after receiving
-        the escape character (chr(27)) to seek for the completion
-        of other application keys before returning ``KEY_ESCAPE``.
-
-        Normally, when this function is interrupted by a signal, such as the
-        installment of SIGWINCH, this function will ignore this interruption
-        and continue to poll for input up to the ``timeout`` specified. If
-        you'd rather this function return ``u''`` early, specify a value
-        of ``False`` for ``_intr_continue``.
-        """
-        # TODO(jquast): "meta sends escape", where alt+1 would send '\x1b1',
-        #               what do we do with that? Surely, something useful.
-        #               comparator to term.KEY_meta('x') ?
-        # TODO(jquast): Ctrl characters, KEY_CTRL_[A-Z], and the rest;
-        #               KEY_CTRL_\, KEY_CTRL_{, etc. are not legitimate
-        #               attributes. comparator to term.KEY_ctrl('z') ?
-        def _timeleft(stime, timeout):
-            """_timeleft(stime, timeout) -> float
-
-            Returns time-relative time remaining before ``timeout``
-            after time elapsed since ``stime``.
-            """
-            if timeout is not None:
-                if timeout is 0:
-                    return 0
-                return max(0, timeout - (time.time() - stime))
-
-        resolve = functools.partial(resolve_sequence,
-                                    mapper=self._keymap,
-                                    codes=self._keycodes)
-
-        stime = time.time()
-
-        # re-buffer previously received keystrokes,
-        ucs = u''
-        while self._keyboard_buf:
-            ucs += self._keyboard_buf.pop()
-
-        # receive all immediately available bytes
-        while self.kbhit(0):
-            ucs += self.getch()
-
-        # decode keystroke, if any
-        ks = resolve(text=ucs)
-
-        # so long as the most immediately received or buffered keystroke is
-        # incomplete, (which may be a multibyte encoding), block until until
-        # one is received.
-        while not ks and self.kbhit(_timeleft(stime, timeout), _intr_continue):
-            ucs += self.getch()
-            ks = resolve(text=ucs)
-
-        # handle escape key (KEY_ESCAPE) vs. escape sequence (which begins
-        # with KEY_ESCAPE, \x1b[, \x1bO, or \x1b?), up to esc_delay when
-        # received. This is not optimal, but causes least delay when
-        # (currently unhandled, and rare) "meta sends escape" is used,
-        # or when an unsupported sequence is sent.
-        if ks.code is self.KEY_ESCAPE:
-            esctime = time.time()
-            while (ks.code is self.KEY_ESCAPE and
-                   self.kbhit(_timeleft(esctime, esc_delay))):
-                ucs += self.getch()
-                ks = resolve(text=ucs)
-
-        # buffer any remaining text received
-        self._keyboard_buf.extendleft(ucs[len(ks):])
-        return ks
 
 # From libcurses/doc/ncurses-intro.html (ESR, Thomas Dickey, et. al):
 #
