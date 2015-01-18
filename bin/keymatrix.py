@@ -73,13 +73,13 @@ def main():
     gb = build_gameboard(term)
     inps = []
 
-    with term.raw(), term.keypad(), term.location():
-        inp = term.inkey(timeout=0)
+    with term.keypad(), term.location(), term.keymode(raw=True) as inkey:
+        inp = inkey(timeout=0)
         while inp != chr(3):
             if dirty:
                 refresh(term, gb, level, score, inps)
                 dirty = False
-            inp = term.inkey(timeout=5.0)
+            inp = inkey(timeout=5.0)
             dirty = True
             if (inp.is_sequence and
                     inp.name in gb and
@@ -112,7 +112,7 @@ def main():
                 hit_highbit=hit_highbit,
                 hit_unicode=hit_unicode)
         )
-        term.inkey()
+        inkey()
 
 if __name__ == '__main__':
     main()

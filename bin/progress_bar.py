@@ -19,7 +19,7 @@ def main():
         'Terminal does not support hpa (Horizontal position absolute)')
 
     col, offset = 1, 1
-    with term.cbreak():
+    with term.key_mode() as inkey:
         inp = None
         print("press 'X' to stop.")
         sys.stderr.write(term.move(term.height, 0) + u'[')
@@ -33,7 +33,7 @@ def main():
             col += offset
             sys.stderr.write(term.move_x(col) + u'|\b')
             sys.stderr.flush()
-            inp = term.inkey(0.04)
+            inp = inkey(0.04)
     print()
 
 if __name__ == '__main__':
