@@ -34,7 +34,6 @@ from .accessories import (
 
 # TODO: Remove relative import once package names are normalized.
 from ..keyboard import BufferedKeyboard
-from ..terminal import HAS_TTY
 
 # 3rd-party
 import pytest
@@ -258,8 +257,7 @@ def test_kbhit_no_kb():
                                     term._keycodes,
                                     term.KEY_ESCAPE,
                                     term.keyboard_fd,
-                                    term._keyboard_decoder,
-                                    HAS_TTY)
+                                    term._keyboard_decoder)
         assert listener._char_is_ready(timeout=1.1) is False
         assert (math.floor(time.time() - stime) == 1.0)
     child()
