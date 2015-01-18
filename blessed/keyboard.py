@@ -111,13 +111,13 @@ class BufferedKeyboard(object):
     :meth:`~blessings.Terminal.key_mode()` context manager.
 
     """
-    def __init__(self, keymap, keycodes, escape, keyboard_fd, keyboard_decoder, has_tty):
+    def __init__(self, keymap, keycodes, escape,
+                 keyboard_fd, keyboard_decoder):
         self._keymap = keymap
         self._keycodes = keycodes
         self._escape = escape
         self._keyboard_fd = keyboard_fd
         self._keyboard_decoder = keyboard_decoder
-        self._has_tty = has_tty
         self._buffer = collections.deque()
 
     def key(self, timeout=None, esc_delay=0.35, _intr_continue=True):
@@ -140,7 +140,6 @@ class BufferedKeyboard(object):
         and continue to poll for input up to the ``timeout`` specified. If
         you'd rather this function return ``u''`` early, specify ``False`` for
         ``_intr_continue``.
-
         """
         # TODO(jquast): "meta sends escape", where alt+1 would send '\x1b1',
         #               what do we do with that? Surely, something useful.
@@ -148,6 +147,7 @@ class BufferedKeyboard(object):
         # TODO(jquast): Ctrl characters, KEY_CTRL_[A-Z], and the rest;
         #               KEY_CTRL_\, KEY_CTRL_{, etc. are not legitimate
         #               attributes. comparator to term.KEY_ctrl('z') ?
+        # https://github.com/jquast/blessed/pull/31
         def time_left(stime, timeout):
             """time_left(stime, timeout) -> float
 
@@ -180,7 +180,8 @@ class BufferedKeyboard(object):
         # so long as the most immediately received or buffered keystroke is
         # incomplete, (which may be a multibyte encoding), block until until
         # one is received.
-        while not ks and self._char_is_ready(time_left(stime, timeout), _intr_continue):
+        while not ks and self._char_is_ready(time_left(stime, timeout),
+                                             _intr_continue):
             ucs += self._next_char()
             ks = resolve(text=ucs)
 
@@ -235,7 +236,7 @@ class BufferedKeyboard(object):
         check_w, check_x, ready_r = [], [], [None, ]
         check_r = [self._keyboard_fd] if self._keyboard_fd is not None else []
 
-        while self._has_tty:
+        while True:
             try:
                 ready_r, ready_w, ready_x = select.select(
                     check_r, check_w, check_x, timeout)
