@@ -25,16 +25,16 @@ Coding with *Blessed* looks like this... ::
 
     from blessed import Terminal
 
-    t = Terminal()
+    term = Terminal()
 
-    print(t.bold('Hi there!'))
-    print(t.bold_red_on_bright_green('It hurts my eyes!'))
+    print(term.bold('Hi there!'))
+    print(term.bold_red_on_bright_green('It hurts my eyes!'))
 
-    with t.location(0, t.height - 1):
-        print(t.center(t.blink('press any key to continue.')))
+    with term.location(0, term.height - 1):
+        print(term.center(term.blink('press any key to continue.')))
 
-    with t.cbreak():
-        t.inkey()
+    with term.key_mode() as inkey:
+        inkey()
 
 
 The Pitch
@@ -93,30 +93,6 @@ The same program with *Blessed* is simply::
         print('This is' + term.underline('pretty!'))
 
 
-Screenshots
-===========
-
-.. image:: http://jeffquast.com/blessed-weather.png
-   :target: http://jeffquast.com/blessed-weather.png
-   :scale: 50 %
-   :alt: Weather forecast demo (by @jquast)
-
-.. image:: http://jeffquast.com/blessed-tetris.png
-   :target: http://jeffquast.com/blessed-tetris.png
-   :scale: 50 %
-   :alt: Tetris game demo (by @johannesl)
-
-.. image:: http://jeffquast.com/blessed-wall.png
-   :target: http://jeffquast.com/blessed-wall.png
-   :scale: 50 %
-   :alt: bbs-scene.org api oneliners demo (art by xzip!impure)
-
-.. image:: http://jeffquast.com/blessed-quick-logon.png
-   :target: http://jeffquast.com/blessed-quick-logon.png
-   :scale: 50 %
-   :alt: x/84 bbs quick logon screen (art by xzip!impure)
-
-
 What It Provides
 ================
 
@@ -152,7 +128,7 @@ The same can be written as::
 You may also use the *Terminal* instance as an argument for ``.format`` string
 method, so that capabilities can be displayed in-line for more complex strings::
 
-    print('{t.red_on_yellow}Candy corn{t.normal} for everyone!'.format(t=term))
+    print('{term.red_on_yellow}Candy corn{term.normal} for everyone!'.format(t=term))
 
 
 Capabilities
@@ -411,11 +387,12 @@ These are always current, so they may be used with a callback from SIGWINCH_ sig
     term = Terminal()
 
     def on_resize(sig, action):
-        print('height={t.height}, width={t.width}'.format(t=term))
+        print('height={term.height}, width={term.width}'.format(term=term))
 
     signal.signal(signal.SIGWINCH, on_resize)
 
-    term.inkey()
+    with term.key_mode() as inkey:
+        inkey()
 
 
 Clearing The Screen
@@ -451,10 +428,10 @@ There's also a context manager you can use as a shortcut::
     from blessed import Terminal
 
     term = Terminal()
-    with term.fullscreen():
+    with term.fullscreen(), term.key_mode() as inkey:
         print(term.move_y(term.height // 2) +
               term.center('press any key').rstrip())
-        term.inkey()
+        inkey()
 
 Pipe Savvy
 ----------
@@ -519,52 +496,36 @@ the return key is pressed, and is not suitable for detecting each individual
 keypress, much less arrow or function keys that emit multibyte sequences.
 
 Special `termios(4)`_ routines are required to enter Non-canonical mode, known
-in curses as `cbreak(3)`_.  When calling read on input stream, only bytes are
-received, which must be decoded to unicode.
+in curses as `cbreak(3)`_.
+
+Furthermore, when calling read on input stream, only bytes are received, which
+must be decoded to unicode, and special application keys are multibyte sequences
+which differ by terminal-type, and must be translated to a "key code".
 
 Blessed handles all of these special cases!!
 
-cbreak
-~~~~~~
+key_mode
+~~~~~~~~
 
-The context manager ``cbreak`` can be used to enter *key-at-a-time* mode: Any
-keypress by the user is immediately consumed by read calls::
+The method ``key_mode`` of *Terminal* is a context manager that resolves many
+issues with terminal input by yielding a callable which may be used to return
+key-at-a-time input.  This callable (defined by method 
+``blessed.keyboard.BufferedKeyboard.key``), returns a unicode-derived
+``blessed.keyboard.Key`` class instance.
 
-    from blessed import Terminal
-    import sys
-
-    t = Terminal()
-
-    with t.cbreak():
-        # blocks until any key is pressed.
-        sys.stdin.read(1)
-
-raw
-~~~
-
-The context manager ``raw`` is the same as ``cbreak``, except interrupt (^C),
-quit (^\\), suspend (^Z), and flow control (^S, ^Q) characters are not trapped,
-but instead sent directly as their natural character. This is necessary if you
-actually want to handle the receipt of Ctrl+C
-
-inkey
-~~~~~
-
-The method ``inkey`` resolves many issues with terminal input by returning
-a unicode-derived *Keypress* instance.  Although its return value may be
-printed, joined with, or compared to other unicode strings, it also provides
-the special attributes ``is_sequence`` (bool), ``code`` (int),
-and ``name`` (str)::
+As it is derived from the unicode type, its return value may be printed, joined
+with, or compared to other unicode strings, but it also provides the special
+attributes ``is_sequence`` (bool), ``code`` (int), and ``name`` (str)::
 
     from blessed import Terminal
 
-    t = Terminal()
+    term = Terminal()
 
     print("press 'q' to quit.")
-    with t.cbreak():
+    with term.key_mode() as inkey:
         val = None
         while val not in (u'q', u'Q',):
-            val = t.inkey(timeout=5)
+            val = inkey(timeout=5)
             if not val:
                # timeout
                print("It sure is quiet in here ...")
@@ -588,18 +549,48 @@ Its output might appear as::
     got q.
     bye!
 
-A ``timeout`` value of *None* (default) will block forever. Any other value
-specifies the length of time to poll for input, if no input is received after
-such time has elapsed, an empty string is returned. A ``timeout`` value of *0*
-is non-blocking.
 
-keyboard codes
+The callable returned by the context manager ``Terminal.key_mode`` accepts the
+following optional arguments:
+
+- ``timeout``: A value of *None* (default) will block forever. Any other value
+   specifies the length of time to poll for input, if no input is received after
+   such time has elapsed, an empty string is returned. A ``timeout`` value of *0*
+   is non-blocking.
+
+- ``esc_delay``: Over especially high-latency links, the difference between
+  the bare escape keypress must be distinguished from application keys beginning
+  with escape.  Valued ``0.35`` by default, this is the length of time elapsed
+  until a bare sequence of ``\x1b`` with *code* attribute ``KEY_ESCAPE`` is
+  returned if only the escape key is pressed.
+
+- ``_intr_continue``: True by default, if an ``InterruptError`` exception is
+  raised during keyboard input, the keyboard will continue to be polled for
+  sequences through the full duration of ``timeout``.  Otherwise, an empty
+  sequence is immediately returned.  This often happens when attaching signal
+  handlers, such as for ``SIGWINCH`` to detect window resize events.
+
+
+Raw mode
+~~~~~~~~
+
+The context manager ``Terminal.key_mode`` may be used with optional argument
+``key_mode(raw=True)`` -- it behaves the same as the default mode, except
+interrupt (^C), quit (^\\), suspend (^Z), and flow control (^S, ^Q) characters
+are not trapped, but instead sent directly as their natural character.
+
+This is necessary if you actually want to handle the receipt of *Ctrl + C*.
+
+
+Keyboard codes
 ~~~~~~~~~~~~~~
 
-The return value of the *Terminal* method ``inkey`` is an instance of the
-class ``Keystroke``, and may be inspected for its property ``is_sequence``
-(bool).  When *True*, the value is a **multibyte sequence**, representing
-a special non-alphanumeric key of your keyboard.
+The return value of the callable returned by context manager ``Terminal.key_mode``
+is an instance of the class ``terminal.keyboard.Key``, and may be inspected for its
+property ``is_sequence`` (bool).
+
+When *True*, the value may be a **multibyte sequence**, representing a special
+non-alphanumeric key of your keyboard.
 
 The ``code`` property (int) may then be compared with attributes of
 *Terminal*, which are duplicated from those seen in the manpage
@@ -621,8 +612,8 @@ aliases:
 * use ``KEY_CENTER`` for ``KEY_B2`` (keypad center).
 * use ``KEY_BEGIN`` for ``KEY_BEG``.
 
-The *name* property of the return value of ``inkey()`` will prefer
-these aliases over the built-in curses_ names.
+The *name* property of ``Key`` class instance will prefer these aliases over
+the built-in curses_ names.
 
 The following are **not** available in the curses_ module, but
 provided for keypad support, especially where the ``keypad()``

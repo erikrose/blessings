@@ -4,7 +4,7 @@ This is an example application for the 'blessed' Terminal library for python.
 
 Window size changes are caught by the 'on_resize' function using a traditional
 signal handler.  Meanwhile, blocking keyboard input is displayed to stdout.
-If a resize event is discovered, an empty string is returned by term.inkey()
+If a resize event is discovered, an empty string is returned by ``inkey()``
 when _intr_continue is False, as it is here.
 """
 import signal
@@ -27,9 +27,9 @@ signal.signal(signal.SIGWINCH, on_resize)
 # interference of such driver -- so we must write \r\n ourselves; as python
 # will append '\n' to our print statements, we simply end our statements with
 # \r.
-with term.raw():
+with term.key_mode(raw=True) as inkey:
     print("press 'X' to stop.\r")
     inp = None
     while inp != 'X':
-        inp = term.inkey(_intr_continue=False)
+        inp = inkey(_intr_continue=False)
         print(repr(inp) + u'\r')

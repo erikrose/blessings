@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # Dumb full-screen editor. It doesn't save anything but to the screen.
 #
 # "Why wont python let me read memory
@@ -9,10 +9,22 @@
 from __future__ import division, print_function
 import collections
 import functools
+import string
 from blessed import Terminal
 
-echo = lambda text: (
-    functools.partial(print, end='', flush=True)(text))
+try:
+    print(end='', flush=True)
+    echo = lambda text: (
+        functools.partial(print, end='', flush=True)(text))
+except TypeError:
+    # TypeError: 'flush' is an invalid keyword argument for this function
+    # python 2
+    import sys
+
+    def echo(text):
+        sys.stdout.write(text)
+        sys.stdout.flush()
+
 
 echo_yx = lambda cursor, text: (
     echo(cursor.term.move(cursor.y, cursor.x) + text))
@@ -106,11 +118,11 @@ lookup_move = lambda inp_code, csr, term: {
 }.get(inp_code, csr)
 
 
-def readline(term, width=20):
+def readline(term, inkey, width=20):
     # a rudimentary readline function
     string = u''
     while True:
-        inp = term.inkey()
+        inp = inkey()
         if inp.code == term.KEY_ENTER:
             break
         elif inp.code == term.KEY_ESCAPE or inp == chr(3):
@@ -173,14 +185,14 @@ def main():
     csr = Cursor(0, 0, term)
     screen = {}
     with term.hidden_cursor(), \
-            term.raw(), \
             term.location(), \
             term.fullscreen(), \
-            term.keypad():
+            term.keypad(), \
+            term.key_mode(raw=True) as inkey:
         inp = None
         while True:
             echo_yx(csr, term.reverse(screen.get((csr.y, csr.x), u' ')))
-            inp = term.inkey()
+            inp = inkey()
 
             if inp == chr(3):
                 # ^c exits
@@ -191,7 +203,7 @@ def main():
                 echo_yx(home(bottom(csr)),
                         term.ljust(term.bold_white('Filename: ')))
                 echo_yx(right_of(home(bottom(csr)), len('Filename: ')), u'')
-                save(screen, readline(term))
+                save(screen, readline(term, inkey))
                 echo_yx(home(bottom(csr)), term.clear_eol)
                 redraw(term=term, screen=screen,
                        start=home(bottom(csr)),
@@ -208,7 +220,7 @@ def main():
                 echo_yx(csr, screen.get((csr.y, csr.x), u' '))
                 csr = n_csr
 
-            elif not inp.is_sequence and inp.isprintable():
+            elif not inp.is_sequence and inp in string.printable:
                 echo_yx(csr, inp)
                 screen[(csr.y, csr.x)] = inp.__str__()
                 n_csr = right_of(csr, 1)

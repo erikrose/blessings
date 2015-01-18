@@ -148,7 +148,7 @@ def main():
     modifier = 0.93
     inp = None
 
-    with term.hidden_cursor(), term.raw():
+    with term.hidden_cursor(), term.key_mode(raw=True) as inkey:
         while inp not in (u'q', u'Q'):
 
             # delete the tail of the worm at worm_length
@@ -194,7 +194,7 @@ def main():
 
             # wait for keyboard input, which may indicate
             # a new direction (up/down/left/right)
-            inp = term.inkey(speed)
+            inp = inkey(speed)
 
             # discover new direction, given keyboard input and/or bearing.
             nxt_direction = next_bearing(term, inp.code, bearing)

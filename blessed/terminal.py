@@ -51,8 +51,7 @@ from .sequences import (
 from .keyboard import (
     get_keyboard_sequences,
     get_keyboard_codes,
-    BufferedKeyboard,
-    resolve_sequence,
+    BufferedKeyboard
 )
 
 
@@ -562,12 +561,13 @@ class Terminal(object):
             mode_setter = tty.setraw if raw else tty.setcbreak
             mode_setter(self.keyboard_fd, termios.TCSANOW)
             try:
-                yield BufferedKeyboard(self._keymap,
-                                       self._keycodes,
-                                       self.KEY_ESCAPE,
-                                       self.keyboard_fd,
-                                       self._keyboard_decoder,
-                                       HAS_TTY).key
+                yield BufferedKeyboard(
+                    keymap=self._keymap,
+                    keycodes=self._keycodes,
+                    escape=self.KEY_ESCAPE,
+                    keyboard_fd=self.keyboard_fd,
+                    keyboard_decoder=self._keyboard_decoder
+                ).key
             finally:
                 # Restore prior mode:
                 termios.tcsetattr(self.keyboard_fd,

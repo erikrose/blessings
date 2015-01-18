@@ -31,8 +31,9 @@ from .accessories import (
     echo_off,
     xterms,
 )
-from ..keyboard import BufferedKeyboard  # TODO: Remove relative import once package names are normalized.
-from ..terminal import HAS_TTY, NoKeyboard
+
+# TODO: Remove relative import once package names are normalized.
+from ..keyboard import BufferedKeyboard
 
 # 3rd-party
 import pytest
@@ -223,6 +224,7 @@ def test_key_mode_no_kb():
     @as_subprocess
     def child():
         term = TestTerminal(stream=StringIO())
+        from blessed.terminal import NoKeyboard
         with pytest.raises(NoKeyboard):
             with term.key_mode():
                 pass
@@ -250,13 +252,12 @@ def test_kbhit_no_kb():
         term = TestTerminal(stream=StringIO())
         stime = time.time()
         assert term.keyboard_fd is None
-        
+
         listener = BufferedKeyboard(term._keymap,
                                     term._keycodes,
                                     term.KEY_ESCAPE,
                                     term.keyboard_fd,
-                                    term._keyboard_decoder,
-                                    HAS_TTY)
+                                    term._keyboard_decoder)
         assert listener._char_is_ready(timeout=1.1) is False
         assert (math.floor(time.time() - stime) == 1.0)
     child()
