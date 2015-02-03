@@ -127,8 +127,8 @@ def test_char_is_ready_interrupted_nonetype():
     assert math.floor(time.time() - stime) == 1.0
 
 
-def test_char_is_ready_interrupted_no_continue():
-    "_char_is_ready() may be interrupted when _intr_continue=False."
+def test_char_is_ready_interrupted_interruptable():
+    "_char_is_ready() may be interrupted when interruptable=False."
     pid, master_fd = pty.fork()
     if pid is 0:
         try:
@@ -149,7 +149,7 @@ def test_char_is_ready_interrupted_no_continue():
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.keystroke_input(raw=True):
-            term.keystroke(timeout=1.05, _intr_continue=False)
+            term.keystroke(timeout=1.05, interruptable=False)
         os.write(sys.__stdout__.fileno(), b'complete')
         assert got_sigwinch is True
         if cov is not None:
@@ -171,8 +171,8 @@ def test_char_is_ready_interrupted_no_continue():
     assert math.floor(time.time() - stime) == 0.0
 
 
-def test_char_is_ready_interrupted_nonetype_no_continue():
-    "_char_is_ready() may be interrupted when _intr_continue=False with timeout None."
+def test_char_is_ready_interrupted_nonetype_interruptable():
+    "_char_is_ready() may be interrupted when interruptable=False with timeout None."
     pid, master_fd = pty.fork()
     if pid is 0:
         try:
@@ -193,7 +193,7 @@ def test_char_is_ready_interrupted_nonetype_no_continue():
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.keystroke_input(raw=True):
-            term.keystroke(timeout=None, _intr_continue=False)
+            term.keystroke(timeout=None, interruptable=False)
         os.write(sys.__stdout__.fileno(), b'complete')
         assert got_sigwinch is True
         if cov is not None:
