@@ -172,7 +172,8 @@ def test_char_is_ready_interrupted_interruptable():
 
 
 def test_char_is_ready_interrupted_nonetype_interruptable():
-    "_char_is_ready() may be interrupted when interruptable=False with timeout None."
+    """_char_is_ready() may be interrupted when interruptable=False with
+    timeout None."""
     pid, master_fd = pty.fork()
     if pid is 0:
         try:
