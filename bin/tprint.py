@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import argparse
-from blessed import Terminal
+
+from blessings import Terminal
+
 
 parser = argparse.ArgumentParser(
     description='displays argument as specified style')

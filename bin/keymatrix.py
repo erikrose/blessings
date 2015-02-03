@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 from __future__ import division
-from blessed import Terminal
 import sys
+
+from blessings import Terminal
 
 
 def main():

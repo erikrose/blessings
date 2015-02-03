@@ -1,6 +1,6 @@
-""" Exports a list of binary terminals blessed is not able to cope with. """
+""" Exports a list of binary terminals blessings is not able to cope with. """
 #: This list of terminals is manually managed, it describes all of the terminals
-#: that blessed cannot measure the sequence length for; they contain
+#: that blessings cannot measure the sequence length for; they contain
 #: binary-packed capabilities instead of numerics, so it is not possible to
 #: build regular expressions in the way that sequences.py does.
 #:

@@ -15,7 +15,7 @@ import pty
 import os
 
 # local
-from blessed import Terminal
+from blessings import Terminal
 
 # 3rd
 import pytest
@@ -31,7 +31,7 @@ RECV_SEMAPHORE = b'SEMAPHORE\r\n'
 all_xterms_params = ['xterm', 'xterm-256color']
 many_lines_params = [30, 100]
 many_columns_params = [1, 10]
-from blessed._binterms import binary_terminals
+from blessings._binterms import binary_terminals
 default_all_terms = ['screen', 'vt220', 'rxvt', 'cons25', 'linux', 'ansi']
 if os.environ.get('TEST_ALLTERMS'):
     try:

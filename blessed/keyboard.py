@@ -139,7 +139,7 @@ def get_keyboard_sequences(term):
     """get_keyboard_sequences(T) -> (OrderedDict)
 
     Initialize and return a keyboard map and sequence lookup table,
-    (sequence, constant) from blessed Terminal instance ``term``,
+    (sequence, constant) from blessings Terminal instance ``term``,
     where ``sequence`` is a multibyte input sequence, such as u'\x1b[D',
     and ``constant`` is a constant, such as term.KEY_LEFT.  The return
     value is an OrderedDict instance, with their keys sorted longest-first.

@@ -1,5 +1,5 @@
 # encoding: utf-8
-" This sub-module provides 'sequence awareness' for blessed."
+" This sub-module provides 'sequence awareness' for blessings."
 
 __author__ = 'Jeff Quast <contact@jeffquast.com>'
 __license__ = 'MIT'
@@ -21,7 +21,7 @@ from ._binterms import binary_terminals as _BINTERM_UNSUPPORTED
 import wcwidth  # https://github.com/jquast/wcwidth
 
 _BINTERM_UNSUPPORTED_MSG = (
-    u"Terminal kind {0!r} contains binary-packed capabilities, blessed "
+    u"Terminal kind {0!r} contains binary-packed capabilities, blessings "
     u"is likely to fail to measure the length of its sequences.")
 
 if sys.version_info[0] == 3:
@@ -491,8 +491,8 @@ class Sequence(text_type):
         as half or full-width characters.
 
         For example:
-            >>> from blessed import Terminal
-            >>> from blessed.sequences import Sequence
+            >>> from blessings import Terminal
+            >>> from blessings.sequences import Sequence
             >>> term = Terminal()
             >>> Sequence(term.clear + term.red(u'コンニチハ')).length()
             5
@@ -543,8 +543,8 @@ class Sequence(text_type):
         those last-most characters are destroyed.
 
         All other sequences are simply removed. An example,
-            >>> from blessed import Terminal
-            >>> from blessed.sequences import Sequence
+            >>> from blessings import Terminal
+            >>> from blessings.sequences import Sequence
             >>> term = Terminal()
             >>> Sequence(term.clear + term.red(u'test')).strip_seqs()
             u'test'

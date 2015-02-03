@@ -9,7 +9,9 @@
 from __future__ import division, print_function
 import collections
 import functools
-from blessed import Terminal
+
+from blessings import Terminal
+
 
 echo = lambda text: (
     functools.partial(print, end='', flush=True)(text))
