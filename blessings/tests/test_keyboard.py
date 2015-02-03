@@ -633,7 +633,7 @@ def test_esc_delay_keystroke_input_timout_0():
 
 def test_keystroke_default_args():
     "Test keyboard.Keystroke constructor with default arguments."
-    from blessed.keyboard import Keystroke
+    from blessings.keyboard import Keystroke
     ks = Keystroke()
     assert ks._name is None
     assert ks.name == ks._name
@@ -647,7 +647,7 @@ def test_keystroke_default_args():
 
 def test_a_keystroke():
     "Test keyboard.Keystroke constructor with set arguments."
-    from blessed.keyboard import Keystroke
+    from blessings.keyboard import Keystroke
     ks = Keystroke(ucs=u'x', code=1, name=u'the X')
     assert ks._name is u'the X'
     assert ks.name == ks._name
@@ -660,7 +660,7 @@ def test_a_keystroke():
 
 def test_get_keyboard_codes():
     "Test all values returned by get_keyboard_codes are from curses."
-    from blessed.keyboard import (
+    from blessings.keyboard import (
         get_keyboard_codes,
         CURSES_KEYCODE_OVERRIDE_MIXIN,
     )
@@ -675,7 +675,7 @@ def test_get_keyboard_codes():
 
 def test_alternative_left_right():
     "Test _alternative_left_right behavior for space/backspace."
-    from blessed.keyboard import _alternative_left_right
+    from blessings.keyboard import _alternative_left_right
     term = mock.Mock()
     term._cuf1 = u''
     term._cub1 = u''
@@ -692,7 +692,7 @@ def test_alternative_left_right():
 
 def test_cuf1_and_cub1_as_RIGHT_LEFT(all_terms):
     "Test that cuf1 and cub1 are assigned KEY_RIGHT and KEY_LEFT."
-    from blessed.keyboard import get_keyboard_sequences
+    from blessings.keyboard import get_keyboard_sequences
 
     @as_subprocess
     def child(kind):
@@ -728,7 +728,7 @@ def test_get_keyboard_sequences_sort_order(xterms):
 def test_get_keyboard_sequence(monkeypatch):
     "Test keyboard.get_keyboard_sequence. "
     import curses.has_key
-    import blessed.keyboard
+    import blessings.keyboard
 
     (KEY_SMALL, KEY_LARGE, KEY_MIXIN) = range(3)
     (CAP_SMALL, CAP_LARGE) = 'cap-small cap-large'.split()
@@ -749,7 +749,7 @@ def test_get_keyboard_sequence(monkeypatch):
                               (KEY_LARGE, CAP_LARGE,))))
 
     # patch global sequence mix-in
-    monkeypatch.setattr(blessed.keyboard,
+    monkeypatch.setattr(blessings.keyboard,
                         'DEFAULT_SEQUENCE_MIXIN', (
                             (SEQ_MIXIN.decode('latin1'), KEY_MIXIN),))
 
@@ -757,7 +757,7 @@ def test_get_keyboard_sequence(monkeypatch):
     term = mock.Mock()
     term._cuf1 = SEQ_ALT_CUF1.decode('latin1')
     term._cub1 = SEQ_ALT_CUB1.decode('latin1')
-    keymap = blessed.keyboard.get_keyboard_sequences(term)
+    keymap = blessings.keyboard.get_keyboard_sequences(term)
 
     assert list(keymap.items()) == [
         (SEQ_LARGE.decode('latin1'), KEY_LARGE),
@@ -769,7 +769,7 @@ def test_get_keyboard_sequence(monkeypatch):
 
 def test_resolve_sequence():
     "Test resolve_sequence for order-dependent mapping."
-    from blessed.keyboard import resolve_sequence, OrderedDict
+    from blessings.keyboard import resolve_sequence, OrderedDict
     mapper = OrderedDict(((u'SEQ1', 1),
                           (u'SEQ2', 2),
                           # takes precedence over LONGSEQ, first-match
@@ -841,7 +841,7 @@ def test_keypad_mixins_and_aliases():
     @as_subprocess
     def child(kind):
         term = TestTerminal(kind=kind, force_styling=True)
-        from blessed.keyboard import resolve_sequence
+        from blessings.keyboard import resolve_sequence
 
         resolve = functools.partial(resolve_sequence,
                                     mapper=term._keymap,

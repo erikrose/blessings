@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# blessed documentation build configuration file, created by
+# blessings documentation build configuration file, created by
 # sphinx-quickstart on Thu Mar 31 13:40:27 2011.
 #
 # This file is execfile()d with the current directory set to its
@@ -20,7 +20,7 @@ import os
 here = os.path.dirname(__file__)
 sys.path.insert(0, os.path.abspath(os.path.join(here, '..')))
 
-import blessed
+import blessings
 
 
 # -- General configuration ----------------------------------------------------
@@ -45,7 +45,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Blessed'
+project = u'Blessings'
 copyright = u'2014 Jeff Quast, 2011 Erik Rose'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -171,7 +171,7 @@ html_static_path = []
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'blesseddoc'
+htmlhelp_basename = 'blessingsdoc'
 
 
 # -- Options for LaTeX output -------------------------------------------------
@@ -186,7 +186,7 @@ htmlhelp_basename = 'blesseddoc'
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
 latex_documents = [
-    ('index', 'blessed.tex', u'Blessed Documentation',
+    ('index', 'blessings.tex', u'Blessings Documentation',
      u'Jeff Quast', 'manual'),
 ]
 
@@ -219,10 +219,10 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'Blessed', u'Blessed Documentation',
+    ('index', 'Blessings', u'Blessings Documentation',
      [u'Jeff Quast'], 1)
 ]
 autodoc_member_order = 'bysource'
 
 
-del blessed  # imported but unused
+del blessings  # imported but unused

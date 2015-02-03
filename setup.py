@@ -37,17 +37,17 @@ def main():
         extra['install_requires'].extend(['ordereddict>=1.1'])
 
     setuptools.setup(
-        name='blessed',
+        name='blessings',
         version='1.9.5',
         description="A feature-filled fork of Erik Rose's blessings project",
         long_description=open(os.path.join(here, 'README.rst')).read(),
         author='Jeff Quast',
         author_email='contact@jeffquast.com',
         license='MIT',
-        packages=['blessed', 'blessed.tests'],
-        url='https://github.com/jquast/blessed',
+        packages=['blessings', 'blessings.tests'],
+        url='https://github.com/erikrose/blessings',
         include_package_data=True,
-        test_suite='blessed.tests',
+        test_suite='blessings.tests',
         classifiers=[
             'Intended Audience :: Developers',
             'Natural Language :: English',
