@@ -250,7 +250,6 @@ DEFAULT_SEQUENCE_MIXIN = (
     (u"\x1bOx", curses.KEY_KP_8),          # 8
     (u"\x1bOy", curses.KEY_KP_9),          # 9
 
-    #
     # keypad, numlock off
     (u"\x1b[1~", curses.KEY_FIND),         # find
     (u"\x1b[2~", curses.KEY_IC),           # insert (0)
