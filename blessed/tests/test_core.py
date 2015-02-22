@@ -107,7 +107,12 @@ def test_number_of_colors_without_tty():
 
     @as_subprocess
     def child_8_forcestyle():
-        t = TestTerminal(kind='ansi', stream=StringIO(),
+        kind = 'ansi'
+        if platform.system().lower() == 'freebsd':
+            # 'ansi' on freebsd returns 0 colors, we use the 'cons25' driver,
+            # compatible with its kernel tty.c
+            kind = 'cons25'
+        t = TestTerminal(kind=kind, stream=StringIO(),
                          force_styling=True)
         assert (t.number_of_colors == 8)
 
@@ -132,7 +137,12 @@ def test_number_of_colors_with_tty():
 
     @as_subprocess
     def child_8():
-        t = TestTerminal(kind='ansi')
+        kind = 'ansi'
+        if platform.system().lower() == 'freebsd':
+            # 'ansi' on freebsd returns 0 colors, we use the 'cons25' driver,
+            # compatible with its kernel tty.c
+            kind = 'cons25'
+        t = TestTerminal(kind=kind)
         assert (t.number_of_colors == 8)
 
     @as_subprocess
@@ -201,9 +211,10 @@ def test_setupterm_singleton_issue33():
 def test_setupterm_invalid_issue39():
     "A warning is emitted if TERM is invalid."
     # https://bugzilla.mozilla.org/show_bug.cgi?id=878089
-
+    #
     # if TERM is unset, defaults to 'unknown', which should
-    # fail to lookup and emit a warning, only.
+    # fail to lookup and emit a warning on *some* systems.
+    # freebsd actually has a termcap entry for 'unknown'
     @as_subprocess
     def child():
         warnings.filterwarnings("error", category=UserWarning)
@@ -216,8 +227,9 @@ def test_setupterm_invalid_issue39():
                 "Failed to setupterm(kind='unknown'): "
                 "setupterm: could not find terminal")
         else:
-            assert not term.is_a_tty and not term.does_styling, (
-                'Should have thrown exception')
+            if platform.system().lower() != 'freebsd':
+                assert not term.is_a_tty and not term.does_styling, (
+                    'Should have thrown exception')
         warnings.resetwarnings()
 
     child()
@@ -233,7 +245,7 @@ def test_setupterm_invalid_has_no_styling():
     def child():
         warnings.filterwarnings("ignore", category=UserWarning)
 
-        term = TestTerminal(kind='unknown', force_styling=True)
+        term = TestTerminal(kind='xxXunknownXxx', force_styling=True)
         assert term.kind is None
         assert term.does_styling is False
         assert term.number_of_colors == 0

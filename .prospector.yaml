@@ -1,7 +1,7 @@
 inherits:
     - strictness_veryhigh
 
-ignore:
+ignore-patterns:
   - (^|/)\..+
   - ^docs/
   # ignore tests and bin/ for the moment, their quality does not so much matter.
@@ -62,6 +62,6 @@ pyroma:
 
 vulture:
     # this tool does a good job of finding unused code.
-    run: true
+    run: false
 
 # vim: noai:ts=4:sw=4

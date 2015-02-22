@@ -40,8 +40,9 @@ def _merge_sequences(inp):
 
 def _build_numeric_capability(term, cap, optional=False,
                               base_num=99, nparams=1):
-    """ Build regexp from capabilities having matching numeric
-        parameter contained within termcap value: n->(\d+).
+    r"""
+    Build regexp from capabilities having matching numeric
+    parameter contained within termcap value: n->(\d+).
     """
     _cap = getattr(term, cap)
     opt = '?' if optional else ''
@@ -59,8 +60,9 @@ def _build_numeric_capability(term, cap, optional=False,
 
 
 def _build_any_numeric_capability(term, cap, num=99, nparams=1):
-    """ Build regexp from capabilities having *any* digit parameters
-        (substitute matching \d with pattern \d and return).
+    r"""
+    Build regexp from capabilities having *any* digit parameters
+    (substitute matching \d with pattern \d and return).
     """
     _cap = getattr(term, cap)
     if _cap:

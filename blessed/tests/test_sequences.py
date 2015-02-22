@@ -192,8 +192,8 @@ def test_horizontal_location(all_terms):
         assert (t.stream.getvalue() == expected_output), (
             repr(t.stream.getvalue()), repr(expected_output))
 
-    # skip 'screen', hpa is proxied (see later tests)
-    if all_terms != 'screen':
+    # skip 'screen', 'ansi': hpa is proxied (see later tests)
+    if all_terms not in ('screen', 'ansi'):
         child(all_terms)
 
 
@@ -211,7 +211,7 @@ def test_vertical_location(all_terms):
         assert (t.stream.getvalue() == expected_output)
 
     # skip 'screen', vpa is proxied (see later tests)
-    if all_terms != 'screen':
+    if all_terms not in ('screen', 'ansi'):
         child(all_terms)
 
 
