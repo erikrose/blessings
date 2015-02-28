@@ -226,12 +226,12 @@ def test_keystroke_input_no_kb():
             with mock.patch("tty.setcbreak") as mock_setcbreak:
                 with term.keystroke_input():
                     assert not mock_setcbreak.called
-                assert term.keyboard_fd is None
+                assert term._keyboard_fd is None
     child()
 
 
 def test_notty_kb_is_None():
-    "keyboard_fd should be None when os.isatty returns False."
+    "term._keyboard_fd should be None when os.isatty returns False."
     # in this scenerio, stream is sys.__stdout__,
     # but os.isatty(0) is False,
     # such as when piping output to less(1)
@@ -240,7 +240,7 @@ def test_notty_kb_is_None():
         with mock.patch("os.isatty") as mock_isatty:
             mock_isatty.return_value = False
             term = TestTerminal()
-            assert term.keyboard_fd is None
+            assert term._keyboard_fd is None
     child()
 
 
@@ -253,7 +253,7 @@ def test_raw_input_no_kb():
             with mock.patch("tty.setraw") as mock_setraw:
                 with term.keystroke_input(raw=True):
                     assert not mock_setraw.called
-            assert term.keyboard_fd is None
+            assert term._keyboard_fd is None
     child()
 
 
@@ -263,7 +263,7 @@ def test_char_is_ready_no_kb():
     def child():
         term = TestTerminal(stream=StringIO())
         stime = time.time()
-        assert term.keyboard_fd is None
+        assert term._keyboard_fd is None
         assert term._char_is_ready(timeout=1.1) is False
         assert (math.floor(time.time() - stime) == 1.0)
     child()
