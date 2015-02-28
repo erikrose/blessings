@@ -46,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Blessings'
-copyright = u'2014 Jeff Quast, 2011 Erik Rose'
+copyright = u'2011 Erik Rose, Jeff Quast'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -187,7 +187,7 @@ htmlhelp_basename = 'blessingsdoc'
 # [howto/manual]).
 latex_documents = [
     ('index', 'blessings.tex', u'Blessings Documentation',
-     u'Jeff Quast', 'manual'),
+     u'Erik Rose, Jeff Quast', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -220,7 +220,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'Blessings', u'Blessings Documentation',
-     [u'Jeff Quast'], 1)
+     [u'Erik Rose, Jeff Quast'], 1)
 ]
 autodoc_member_order = 'bysource'
 
