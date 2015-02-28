@@ -5,10 +5,13 @@ __license__ = 'MIT'
 
 __all__ = ('Keystroke', 'get_keyboard_codes', 'get_keyboard_sequences',)
 
+# standard imports
 import curses.has_key
 import collections
 import curses
-import sys
+
+# 3rd-party
+import six
 
 if hasattr(collections, 'OrderedDict'):
     OrderedDict = collections.OrderedDict
@@ -52,14 +55,8 @@ for key in ('TAB', 'KP_MULTIPLY', 'KP_ADD', 'KP_SEPARATOR', 'KP_SUBTRACT',
     _lastval += 1
     setattr(curses, 'KEY_{0}'.format(key), _lastval)
 
-if sys.version_info[0] == 3:
-    text_type = str
-    unichr = chr
-else:
-    text_type = unicode  # noqa
 
-
-class Keystroke(text_type):
+class Keystroke(six.text_type):
     """A unicode-derived class for describing keyboard input returned by
     the ``inkey()`` method of ``Terminal``, which may, at times, be a
     multibyte sequence, providing properties ``is_sequence`` as ``True``
@@ -68,7 +65,7 @@ class Keystroke(text_type):
     such as ``KEY_LEFT``.
     """
     def __new__(cls, ucs='', code=None, name=None):
-        new = text_type.__new__(cls, ucs)
+        new = six.text_type.__new__(cls, ucs)
         new._name = name
         new._code = code
         return new
@@ -79,8 +76,8 @@ class Keystroke(text_type):
         return self._code is not None
 
     def __repr__(self):
-        return self._name is None and text_type.__repr__(self) or self._name
-    __repr__.__doc__ = text_type.__doc__
+        return self._name is None and six.text_type.__repr__(self) or self._name
+    __repr__.__doc__ = six.text_type.__doc__
 
     @property
     def name(self):
@@ -208,12 +205,12 @@ and numeric 0.
 DEFAULT_SEQUENCE_MIXIN = (
     # these common control characters (and 127, ctrl+'?') mapped to
     # an application key definition.
-    (unichr(10), curses.KEY_ENTER),
-    (unichr(13), curses.KEY_ENTER),
-    (unichr(8), curses.KEY_BACKSPACE),
-    (unichr(9), curses.KEY_TAB),
-    (unichr(27), curses.KEY_EXIT),
-    (unichr(127), curses.KEY_DC),
+    (six.unichr(10), curses.KEY_ENTER),
+    (six.unichr(13), curses.KEY_ENTER),
+    (six.unichr(8), curses.KEY_BACKSPACE),
+    (six.unichr(9), curses.KEY_TAB),
+    (six.unichr(27), curses.KEY_EXIT),
+    (six.unichr(127), curses.KEY_DC),
 
     (u"\x1b[A", curses.KEY_UP),
     (u"\x1b[B", curses.KEY_DOWN),
