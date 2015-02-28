@@ -324,7 +324,7 @@ def test_IOUnsupportedOperation():
         assert term.stream == mock_stream
         assert term.does_styling is False
         assert term.is_a_tty is False
-        assert term.number_of_colors is 0
+        assert term.number_of_colors == 0
 
     child()
 
