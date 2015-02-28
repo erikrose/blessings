@@ -13,4 +13,4 @@ if ('3', '0', '0') <= _platform.python_version_tuple() < ('3', '2', '2+'):
 
 from .terminal import Terminal
 
-__all__ = ('Terminal',)
+__all__ = ['Terminal',]
