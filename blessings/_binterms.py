@@ -707,7 +707,6 @@ tvi950-rv
 tvi950-rv-2p
 tvi950-rv-4p
 tvipt
-unknown
 vanilla
 vc303
 vc404
