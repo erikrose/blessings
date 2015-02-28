@@ -1,7 +1,4 @@
 #!/bin/bash
-#
-# This script assumes that the project 'ptyprocess' is
-# available in the parent of the project's folder.
 set -e
 set -o pipefail
 
