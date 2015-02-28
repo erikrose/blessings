@@ -95,7 +95,6 @@ def test_stream_attr():
 def test_emit_warnings_about_binpacked():
     """Test known binary-packed terminals (kermit, avatar) emit a warning."""
     from blessings.sequences import _BINTERM_UNSUPPORTED_MSG
-    from blessings._binterms import binary_terminals
 
     @as_subprocess
     def child(kind):
@@ -115,19 +114,25 @@ def test_emit_warnings_about_binpacked():
             assert 'warnings should have been emitted.'
         warnings.resetwarnings()
 
-    # any binary terminal should do.
-    child(binary_terminals[random.randrange(len(binary_terminals))])
+    # Although any binary terminal should do, FreeBSD has "termcap entry bugs"
+    # that cause false negatives, because their underlying curses library emits
+    # some kind of "warning" to stderr, which our @as_subprocess decorator
+    # determines to be noteworthy enough to fail the test:
+    #     https://gist.github.com/jquast/7b90af251fe4000baa09
+    #
+    # so we chose only one of beautiful lineage:
+    #    http://terminals.classiccmp.org/wiki/index.php/Tektronix_4207
+    child(kind='tek4207-s')
 
 
 def test_unit_binpacked_unittest():
     """Unit Test known binary-packed terminals emit a warning (travis-safe)."""
     import warnings
-    from blessings._binterms import binary_terminals
     from blessings.sequences import (_BINTERM_UNSUPPORTED_MSG,
                                      init_sequence_patterns)
     warnings.filterwarnings("error", category=UserWarning)
     term = mock.Mock()
-    term.kind = binary_terminals[random.randrange(len(binary_terminals))]
+    term.kind = 'tek4207-s'
 
     try:
         init_sequence_patterns(term)
