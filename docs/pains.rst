@@ -71,7 +71,7 @@ they are available!
 
   In ascending order of intensity, the shades of grey are:
 
-  - ``bold_black``: in lieu of the uselessness of a "intense black", this is
+  - ``bold_black``: in lieu of the uselessness of an "intense black", this is
     color is instead mapped to "dark grey".
   - ``white``: white is actually mild compared to the true color 'white': this
     is more officially mapped to "common grey", and is often the default
@@ -113,7 +113,7 @@ configuration.  Two popular emulators continue to supply *black-on-white* by
 default to this day: Xorg's xterm and Apple's Terminal.app.
 
 .. note:: Windows no longer supplies a terminal emulator: the "command prompt"
-   as we know it now uses the msvcrt API routines to interact and does not
+   as we know it now uses the MSVCRT API routines to interact and does not
    make use of terminal sequences, even ignoring those sequences that MS-DOS
    family of systems previously interpreted through the ANSI.SYS driver,
    though it continues to default to *white-on-black*.
@@ -179,12 +179,12 @@ possible with ``~/.XResources``, the introduction of PuTTy and iTerm2 to
 interactively adjustment these colors have made this much more common.
 
 This may cause your audience to see your intended interface in a wildly
-different form.  Your intended presentation may appear "washed out", or even
-mildly unreadable.
+different form.  Your intended presentation may appear mildly unreadable.
 
 Users are certainly free to customize their colors however they like, but it
-should be known that displaying ``term.black_on_red("DANGER!")`` to your users
-may appear as "grey on pastel red", reducing the intended effect of intensity.
+should be known that displaying ``term.black_on_red("DANGER!")`` may appear
+as "grey on pastel red" to your audience, reducing the intended effect of
+intensity.
 
 
 256 colors can avoid customization
@@ -198,7 +198,7 @@ attribute is **to adjust their terminal emulator's color scheme of the base
 This is not necessary: the environment variable ``LSCOLORS`` may be redefined
 to map an alternative color for blue, or to use ``bright_blue`` in its place.
 
-Furthermore, all common terminal text editors such as emacs or vim may be be
+Furthermore, all common terminal text editors such as emacs or vim may be
 configured with "colorschemes" to make use of the 256-color support found in
 most modern emulators.  Many readable shades of blue are available, and many
 programs that emit such colors can be configured to emit a higher or lower
@@ -229,7 +229,7 @@ displays as well.
 Multibyte Encodings and Code pages
 ----------------------------------
 
-A terminal that supports both multibyte encodings (utf-8) and legacy 8-bit
+A terminal that supports both multibyte encodings (UTF-8) and legacy 8-bit
 code pages (ISO 2022) may instruct the terminal to switch between both
 modes using the following sequences:
 
@@ -248,23 +248,22 @@ sequences following the `Control-Sequence-Inducer`_.
 Detecting multibyte
 ~~~~~~~~~~~~~~~~~~~
 
-How can one be assured that the connecting client is capable of
-representing utf-8 and other multibyte character encodings?  Firstly,
-by the environment variable ``LANG``.  If this is not possible, there is an
-alternative method: 
+One can be assured that the connecting client is capable of representing
+UTF-8 and other multibyte character encodings by the Environment variable
+``LANG``.  If this is not possible, there is an alternative method:
 
-  - emit Report Cursor Position (CPR), ``\x1b[6n`` and store response.
-  - emit a multibyte utf-8 character, such as ⦰ (``\x29\xb0``).
-  - emit Report Cursor Position (CPR), ``\x1b[6n`` and store response.
-  - determine the difference of the *(y, x)* location of the response.
-    If it is *1*, then the client decoded the two utf-8 bytes as a
+  - Emit Report Cursor Position (CPR), ``\x1b[6n`` and store response.
+  - Emit a multibyte UTF-8 character, such as ⦰ (``\x29\xb0``).
+  - Emit Report Cursor Position (CPR), ``\x1b[6n`` and store response.
+  - Determine the difference of the *(y, x)* location of the response.
+    If it is *1*, then the client decoded the two UTF-8 bytes as a
     single character, and can be considered capable.  If it is *2*,
     the client is using a `code page`_ and is incapable of decoding
-    a utf-8 bytesream.
+    a UTF-8 bytestream.
 
 Note that both SSH and Telnet protocols provide means for forwarding
-the ``LANG`` environment variable.  However, some transports, such as
-over serial cable, is incapable of forwarding such sequences.
+the ``LANG`` environment variable.  However, some transports such as
+a link by serial cable is incapable of forwarding Environment variables.
 
 Detecting screen size
 ~~~~~~~~~~~~~~~~~~~~~
@@ -274,12 +273,12 @@ While we're on the subject, there are times when :attr:`height` and
 to propagate the COLUMNS and ROWS Environment values, or propagate the
 SIGWINCH signals, such as through a serial link.
 
-The same means described above for multibyte detection may be used to detect
-the remote client's window size:
+The same means described above for multibyte encoding detection may be used to
+detect the remote client's window size:
 
-  - move cursor to row 999, 999
-  - emit Report Cursor Position (CPR), ``\x1b[6n`` and store response.
-  - the given value is the user's screen dimensions.
+  - Move cursor to row 999, 999.
+  - Emit Report Cursor Position (CPR), ``\x1b[6n`` and store response.
+  - The return value is the window dimensions of the client.
 
 This is the method used by the program ``resize`` provided in the Xorg
 distribution, and its source may be viewed as file `resize.c`_.
@@ -287,24 +286,24 @@ distribution, and its source may be viewed as file `resize.c`_.
 Alt or meta sends Escape
 ------------------------
 
-Programs using gnu readline such as bash continue to provide default mappings
-such as *alt+u/l* to uppercase/lowercase word after cursor. This is achieved
+Programs using GNU readline such as bash continue to provide default mappings
+such as *ALT+u/l* to uppercase/lowercase word after cursor. This is achieved
 by the configuration option, altSendsEscape or `metaSendsEscape
 <http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Alt-and-Meta-Keys>`_
 
 The default for most terminals, however, is that the meta key is bound by
-the operating system (such as *meta+f* for find), and that alt is used for
-inserting international keys, where the combination ``alt+u, a`` is used
+the operating system (such as *META+f* for find), and that alt is used for
+inserting international keys, where the combination *ALT+u, a* is used
 to insert the character ``ä``.
 
 The ability to detect alt or meta key combinations is achieved by two means:
 
-  - The alt or meta key sets the 8th bit "high", so that a*lt+z* becomes
-    the value of 'z' + 128: ``ú``
+  - The alt or meta key sets the 8th bit "high", so that *ALT+z* becomes
+    the value of ``'z'`` + 128: ``ú``
   - The alt or meta key prefaces the combining character with escape, so
-    that *alt+z* becomes escape + z: ``\x1bz``
+    that *ALT+z* becomes *Escape + z*: ``\x1bz``
 
-It is therefor a recommendation to **avoid alt or meta keys entirely** in
+It is therefore a recommendation to **avoid alt or meta keys entirely** in
 applications, and instead prefer the ctrl-key combinations, so as to avoid
 instructing your users to configure their terminal emulators to communicate
 such sequences.
@@ -318,7 +317,7 @@ Typically, backspace is ``^H`` (8, or 0x08) and delete is ^? (127, or 0x7f).
 On some systems however, the key for backspace is actually labeled and
 transmitted as "delete", though its function in the operating system behaves
 just as backspace.  It is highly recommend to accept **both** ``KEY_DELETE``
-and ``KEY_DELETE`` as having the same meaning except when implementing full
+and ``KEY_BACKSPACE`` as having the same meaning except when implementing full
 screen editors.
 
 And only then, to provide the choice to map delete as true delete as a
@@ -340,21 +339,21 @@ When people say 'ANSI Sequence', they are discussing:
 - The `ANSI.SYS`_ driver provided in MS-DOS and
   clones.  The popularity of the IBM Personal Computer and MS-DOS of the era,
   and its ability to display colored text further populated the idea that such
-  text "is ansi".
+  text "is ANSI".
 
 - The `IBM CP437`_ `code page`_ (which provided "block art" characters) paired
   with `ECMA-48`_ sequences supported by the MS-DOS ANSI.SYS driver to create
-  artwork, known as `ansi art <http://sixteencolors.net/>`_.
+  artwork, known as `ANSI art <http://sixteencolors.net/>`_.
 
   This is purely an American misnomer, because early IBM PC and clones in the
   European nations did not ship with the `IBM CP437`_ `code page`_ by default.
 
-  Many people now mistake the difference between "ascii art" and "ansi art" to
+  Many people now mistake the difference between "ASCII art" and "ANSI art" to
   be whether or not block art and other characters from the `IBM CP437`_
-  code page are used.  Where even such "ascii art" may contain `ECMA-48`_
+  code page are used.  Where even such "ASCII art" may contain `ECMA-48`_
   color codes!
 
-- The*ansi terminal database entry and its many descendants in the
+- The ANSI terminal database entry and its many descendants in the
   `terminfo database
   <http://invisible-island.net/ncurses/terminfo.src.html>`_.  This is mostly
   due to terminals compatible with SCO UNIX, which was the successor of
@@ -362,7 +361,7 @@ When people say 'ANSI Sequence', they are discussing:
   `ANSI.SYS`_ driver capabilities.
 
 - `Select Graphics Rendition (SGR) <http://vt100.net/docs/vt510-rm/SGR>`_
-  on vt100 clones, which includes many of the common sequences in ECMA-48.
+  on vt100 clones, which include many of the common sequences in `ECMA-48`_.
 
 - Any sequence started by the `Control-Sequence-Inducer`_ is often
   mistakenly termed as an "ANSI Escape Sequence" though not appearing in
