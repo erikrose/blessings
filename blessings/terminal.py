@@ -1,4 +1,6 @@
-"This primary module provides the Terminal class."
+"""
+This module contains :class:`Terminal`, the primary API interface of Blessings.
+"""
 # standard modules
 import collections
 import contextlib
@@ -66,15 +68,8 @@ from .keyboard import (
 
 
 class Terminal(object):
-    """A wrapper for curses and related terminfo(5) terminal capabilities.
-
-    Instance attributes:
-
-      ``stream``
-        The stream the terminal outputs to. It's convenient to pass the stream
-        around with the terminal; it's almost always needed when the terminal
-        is and saves sticking lots of extra args on client functions in
-        practice.
+    """
+    Wrapper for curses and related terminfo(5) terminal capabilities.
     """
 
     #: Sugary names for commonly-used capabilities
@@ -114,7 +109,8 @@ class Terminal(object):
         no_underline='rmul')
 
     def __init__(self, kind=None, stream=None, force_styling=False):
-        """Initialize the terminal.
+        """
+        Initialize the Terminal.
 
         If ``stream`` is not a tty, I will default to returning an empty
         Unicode string for all capability values, so things like piping your
@@ -122,24 +118,20 @@ class Terminal(object):
         ``ls`` command sets a precedent for this: it defaults to columnar
         output when being sent to a tty and one-item-per-line when not.
 
-        :arg kind: A terminal string as taken by ``setupterm()``. Defaults to
-            the value of the ``TERM`` environment variable.
-        :arg stream: A file-like object representing the terminal. Defaults to
-            the original value of stdout, like ``curses.initscr()`` does.
-        :arg force_styling: Whether to force the emission of capabilities, even
-            if we don't seem to be in a terminal. This comes in handy if users
-            are trying to pipe your output through something like ``less -r``,
-            which supports terminal codes just fine but doesn't appear itself
-            to be a terminal. Just expose a command-line option, and set
-            ``force_styling`` based on it. Terminal initialization sequences
-            will be sent to ``stream`` if it has a file descriptor and to
-            ``sys.__stdout__`` otherwise. (``setupterm()`` demands to send them
-            somewhere, and stdout is probably where the output is ultimately
-            headed. If not, stderr is probably bound to the same terminal.)
+        :param str kind: A terminal string as taken by
+            :func:`curses.setupterm`.  Defaults to the value of the ``TERM``
+            Environment variable.
+        :param stream: A file-like object representing the Terminal. Defaults
+            to the original value of ``sys.__stdout__``, like
+            :func:`curses.initscr` does.
+        :param bool force_styling: Whether to force the emission of
+            capabilities, even if stdout does not seem to be connected to a
+            terminal. This comes in handy if users are trying to pipe your
+            output through something like ``less -r`` or build systems which
+            support decoding of terminal sequences.
 
             If you want to force styling to not happen, pass
             ``force_styling=None``.
-
         """
         global _CUR_TERM
         self.keyboard_fd = None
@@ -230,10 +222,11 @@ class Terminal(object):
                 self._keyboard_decoder = codecs.getincrementaldecoder(
                     self._encoding)()
 
-        self.stream = stream
+        self._stream = stream
 
     def __getattr__(self, attr):
-        """Return a terminal capability as Unicode string.
+        """
+        Return a terminal capability as Unicode string.
 
         For example, ``term.bold`` is a unicode string that may be prepended
         to text to set the video attribute for bold, which should also be
@@ -245,9 +238,12 @@ class Terminal(object):
         Compound formatters may also be used, for example:
         ``term.bold_blink_red_on_green("merry x-mas!")``.
 
-        For a parametrized capability such as ``cup`` (cursor_address), pass
-        the parameters as arguments ``some_term.cup(line, column)``. See
-        manual page terminfo(5) for a complete list of capabilities.
+        For a parametrized capability such as ``move`` (cup), pass the
+        parameters as positional arguments ``term.move(line, column)``.  See
+        manual page `terminfo(5)`_ for a complete list of capabilities and
+        their arguments.
+
+        .. _terminfo(5): http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
         """
         if not self.does_styling:
             return NullCallableString()
@@ -258,44 +254,66 @@ class Terminal(object):
 
     @property
     def kind(self):
-        """Name of this terminal type as string."""
+        """
+        Name of this terminal type.
+
+        :rtype: str
+        """
         return self._kind
 
     @property
     def does_styling(self):
-        """Whether this instance will emit terminal sequences (bool)."""
+        """
+        Whether this instance will emit terminal sequences.
+
+        :rtype: bool
+        """
         return self._does_styling
 
     @property
     def is_a_tty(self):
-        """Whether the ``stream`` associated with this instance is a terminal
-        (bool)."""
+        """
+        Whether the :attr:`stream` associated with this instance is a terminal.
+
+        :rtype: bool
+        """
         return self._is_a_tty
 
     @property
     def height(self):
-        """T.height -> int
+        """
+        The height of the terminal in by its number of character cells.
 
-        The height of the terminal in characters.
+        :rtype: int
         """
         return self._height_and_width().ws_row
 
     @property
     def width(self):
-        """T.width -> int
+        """
+        The width of the terminal by its number of character cells.
 
-        The width of the terminal in characters.
+        :rtype: int
         """
         return self._height_and_width().ws_col
 
     @staticmethod
     def _winsize(fd):
-        """T._winsize -> WINSZ(ws_row, ws_col, ws_xpixel, ws_ypixel)
+        """
+        Return a named tuple describing the size of the terminal by ``fd``.
 
-        The tty connected by file desriptor fd is queried for its window size,
-        and returned as a collections.namedtuple instance WINSZ.
+        :param int fd: file descriptor queries for its window size.
+        :raises IOError: the file descriptor ``fd`` is not a terminal.
+        :rtype: WINSZ
 
-        May raise exception IOError.
+        WINSZ is a :class:`collections.namedtuple` instance, its structure
+        directly maps to the return value of the :const:`termios.TIOCGWINSZ`
+        ioctl return value.  The return parameters are:
+
+            - ``ws_row``: width of terminal by its number of character cells.
+            - ``ws_col``: height of terminal by its number of character cells.
+            - ``ws_xpixel``: width of terminal by pixels (not accurate).
+            - ``ws_ypixel``: height of terminal by pixels (not accurate).
         """
         if HAS_TTY:
             data = fcntl.ioctl(fd, termios.TIOCGWINSZ, WINSZ._BUF)
@@ -415,6 +433,18 @@ class Terminal(object):
             return self._normal
         self._normal = resolve_capability(self, 'normal')
         return self._normal
+
+    @property
+    def stream(self):
+        """
+        The stream the terminal outputs to.
+
+        It's convenient to pass :attr:`~.stream` around with the terminal; it's
+        almost always needed when the :class:`~.Terminal` is, and saves
+        sticking lots of extra args on client functions in practice.
+        """
+        return self._stream
+
 
     @property
     def number_of_colors(self):

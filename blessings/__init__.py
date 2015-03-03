@@ -1,5 +1,5 @@
 """
-A thin, practical wrapper around terminal capabilities in Python
+A thin, practical wrapper around terminal capabilities in Python.
 
 http://pypi.python.org/pypi/blessings
 """
