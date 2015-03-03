@@ -1,34 +1,32 @@
 Growing Pains
 =============
 
-In the world of creating interactive and colorful text-mode applications,
-there are a surprisingly great number of issues!  Blessings provides an
-abstraction for the full terminal capability database.  When you begin
-writing interactive applications with the intent of portability across
-*any* terminal emulator, you will experience growing pains.  This chapter
-intends to guide you through best practices and sensibilities to deal with
-such issues.
+When constructing rich console applications, there are a surprisingly great
+number of portability issues.  Though Blessings provides an abstraction for
+the full terminal capability database to ensure compatibility across many
+types of terminals, there are still many portability issues that the
+terminal :attr:`~.kind` alone cannot abstract for you.
+
+This section intends to raise awareness and guide you through these kinds of
+issues.
+
 
 8 and 16 colors
 ---------------
 
-**Where 8 and 16 colors are used, they should be assumed to be the
-`CGA Color Palette`_**.  Though the actual CGA Color Palette is not
-used, their 24-bit true-color values are the closest approximations
-across all common (classic and modern) hardware terminals and terminal
-emulators.
+Where 8 and 16 colors are used, they should be assumed to be the
+`CGA Color Palette`_.  Though there is no terminal standard that proclaims
+that the CGA colors are used, their values are the best approximations
+across all common hardware terminals and terminal emulators.
 
-A recent phenomenon for new emulators, and users of traditional emulators,
-is to re-configure the base 16 colors to provide more "washed out" and
-color schemes.
+A recent phenomenon of users is to customize their base 16 colors to provide
+(often, more "washed out") color schemes.  Furthermore, we are only recently
+getting LCD displays of colorspaces that achieve close approximation to the
+original video terminals.  Some find these values uncomfortably intense: in
+their original CRT form, their contrast and brightness was lowered by hardware
+dials, whereas today's LCD's typically display well only near full intensity.
 
-Furthermore, we are only recently getting LCD displays of colorspaces that
-achieve close approximation to the original video terminals.  Some find these
-values uncomfortably intense: this is because their original implementations
-were meant to have their contrast and brightness lowered by hardware dials,
-whereas today's LCD's typically display well only near full intensity.
-
-Though one cannot *trust*, much less *query* through Terminal I/O routines
+Though one can not *trust*, much less *query* through Terminal I/O routines
 the colorspace of the remote terminal, **we can**:
 
 - Trust that a close approximation of the `CGA Color Palette`_ for the base
@@ -41,66 +39,65 @@ the colorspace of the remote terminal, **we can**:
 .. note::
 
    It has become popular to use dynamic system-wide color palette adjustments
-   in software such as `f.lux <https://justgetflux.com/>`_, which adjust the
-   system-wide "Color Profile" of the entire graphics display depending on the
-   time of day.  One might assume that ``term.blue("text")`` may be
-   **completely** invisible to such users during the night!
+   in software such as `f.lux`_, which adjust the system-wide "Color Profile"
+   of the entire graphics display depending on the time of day.  One might
+   assume that ``term.blue("text")`` may be **completely** invisible to such
+   users during the night!
+
 
 Where is brown, purple, or grey?
 --------------------------------
 
-There are **only 8 color names** on even a 16-color terminal:  The other eight
-are "high intensity" versions of the first (in direct series).  The colors
-brown, purple, and grey are not named in the first series.  They are, however
-available!
+There are **only 8 color names** on even a 16-color terminal:  The second
+eight colors are "high intensity" versions of the first in direct series.  The
+colors *brown*, *purple*, and *grey* are not named in the first series, though
+they are available!
 
-- **brown**: **yellow is brown**, only high-intensity yellow
+- **brown**: *yellow is brown*, only high-intensity yellow
   (``bright_yellow``) is yellow!
 
-- **purple**: **magenta is purple**.  In earlier, 4-bit color spaces, there
+- **purple**: *magenta is purple*.  In earlier, 4-bit color spaces, there
   were only black, cyan, magenta, and white of low and high intensity, such
-  as found on a common home computer of the time such as the `ZX Spectrum
-  <http://en.wikipedia.org/wiki/List_of_8-bit_computer_hardware_palettes#ZX_Spectrum>`_.
+  as found on a common home computer of the time such as the `ZX Spectrum`_.
 
   Additional "colors" were only possible through dithering.  The color names
   cyan and magenta on later graphics adapters are carried over from its
-  predecessors.  Although cyan remained true to its 3-bit predecessor,
-  magenta shifted farther towards blue from red becoming purple, as true red
-  was introduced as one of the base 8 colors.
+  predecessors.  Although the color cyan remained true in RGB value on
+  16-color to its predecessor, magenta shifted farther towards blue from red
+  becoming purple (as true red was introduced as one of the base 8 colors).
 
-- **grey**: there are actually **three shades of grey** (or American 'gray'),
-  though the color attribute named 'grey' does not exist!  In ascending order
-  of intensity, they are:
+- **grey**: there are actually **three shades of grey** (or American spelling,
+  'gray'), though the color attribute named 'grey' does not exist!
+
+  In ascending order of intensity, the shades of grey are:
 
   - ``bold_black``: in lieu of the uselessness of a "intense black", this is
     color is instead mapped to "dark grey".
   - ``white``: white is actually mild compared to the true color 'white': this
-    is more officially mapped to "common grey".
-  - ``bright_white``: is pure white, ``#ffffff``.
-
+    is more officially mapped to "common grey", and is often the default
+    foreground color.
+  - ``bright_white``: is pure white (``#ffffff``).
 
 
 white-on-black
 ~~~~~~~~~~~~~~
 
-**The default foreground and background of attribute ``normal`` (sgr0) should
-also be assumed as *white-on-black**.
+The default foreground and background should be assumed as *white-on-black*.
 
-For quite some time, the VT-family terminals produced by DEC (and its many
-clones), and high-end terminals produced by companies such as Tektronix
-dominated the computing world with the default colorscheme of
-*green-on-black* and *amber-on-black* monochrome displays: **The inverse
-(*black-on-white*) was a non-default configuration**.  Most famously in
-"serious business", IBM 3270 clients exclusively used *white/green-on-black*
-on both hardware and in software emulators, and is likely a driving factor
-of the default *white-on-black* appearance of the first IBM Personal
-Computer.
+For quite some time, the families of terminals produced by DEC, IBM, and
+Tektronix dominated the computing world with the default color scheme of
+*green-on-black* and less commonly *amber-on-black* monochrome displays:
+The inverse was a non-default configuration.  The IBM 3270 clients exclusively
+used *green-on-black* in both hardware and software emulators, and is likely
+a driving factor of the default *white-on-black* appearance of the first IBM
+Personal Computer.
 
 The less common *black-on-white* "ink paper" style of emulators is a valid
-concern for those designing terminal interfaces.  The "color scheme" of
+concern for those designing terminal interfaces.  The color scheme of
 *black-on-white* directly conflicts with the intention of `bold is bright`_,
 where ``term.bright_red('ATTENTION!')`` may become difficult to read,
 as it appears as *pink on white*!
+
 
 History of ink-paper inspired black-on-white
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -113,7 +110,7 @@ capabilities over competitors (such as the Apple ][).
 More common, X11's xterm and the software HyperTerm bundle with MS Windows
 provided an "ink on paper" *black-on-white* appearance as their default
 configuration.  Two popular emulators continue to supply *black-on-white* by
-default to this day: xorg's xterm and Apple's Terminal.app.
+default to this day: Xorg's xterm and Apple's Terminal.app.
 
 .. note:: Windows no longer supplies a terminal emulator: the "command prompt"
    as we know it now uses the msvcrt API routines to interact and does not
@@ -121,54 +118,46 @@ default to this day: xorg's xterm and Apple's Terminal.app.
    family of systems previously interpreted through the ANSI.SYS driver,
    though it continues to default to *white-on-black*.
 
-*White-on-black* monochrome displays were **very uncommon** until color
-displays became affordable.  Namely due to the technical limitation that
-multiple colors were required to display true white on CRT displays!
 
-Meanwhile, color terminals were typically reserved for Home Computers or
-Workstations, while hardware terminals continued to be in used in business as
-appendages to mainframes and servers for quite some time.  As they were meant
-to be low-cost thin clients, few hardware terminals "in the wild" provided
-more than one color.  It was only until much later that Workstations and
-Terminals met in the economy to provide an emulating terminal as one of
-many applications offered on a multi-tasking Workstation.
-
-bold is bright
+Bold is bright
 --------------
 
 **Where Bold is used, it should be assumed to be *Bright***.
 
-Due to the influence of early graphics adapters naturally providing a set
-of 8 "low-itensity" and an additional 8 of "high intensity", the term
-"bold" for terminals sequences is synonymous with "high intensity" on
-almost all circumanstances.
+Due to the influence of early graphics adapters providing a set of 8
+"low-intensity" and 8 "high intensity" versions of the first, the term
+"bold" for terminals sequences is synonymous with "high intensity" in
+almost all circumstances.
+
 
 History of bold as "wide stroke"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In typography, the true translation of the term ``bold`` is that a font should
-be displayed *with emphasis*.  In classical terms, this would be achieved by
-pen "with a wider stroke", normally be re-writing over the same letters.  On a
-teletype, this was similarly achieved by writing a character, backspacing,
-then repeating the same character in a form called **overstriking**.  To bold
-a character, ``C``, one would emit the sequence ``C^HC`` where ``^H`` is
-backspace (0x08).  To underline ``C``, one would would emit ``C^H_``.
+In typography, the true translation of "bold" is that a font should be
+displayed *with emphasis*.  In classical terms, this would be achieved by
+pen be re-writing over the same letters.  On a teletype or printer, this was
+similarly achieved by writing a character, backspacing, then repeating the
+same character in a form called **overstriking**.
+
+To bold a character, ``C``, one would emit the sequence ``C^HC`` where
+``^H`` is backspace (0x08).  To underline ``C``, one would would emit
+``C^H_``.
 
 **Video terminals do not support overstriking**.  Though the mdoc format for
-manual pages continue to emit characters for overstriking for the purpose of
-bold and underline, translators such as troff or mandoc will instead emit
-an appropriate terminal sequence.  In fact, many characters previously
-displayable by combining ascii characters on teletypes, such as: ±, ⋲, ≉, ≠,
-⩝, ⦵, ⦰, ¥, ¢, or ₭ were delegated to a `code page`_ or lost entirely until
-the introduction of multibyte encodings.
+manual pages continue to emit overstriking sequences for bold and underline,
+translators such as mandoc will instead emit an appropriate terminal sequence.
 
-Much like "ink paper" influence, "wide stroke" bold was introduced only much
-later with the introduction of windowing systems when terminal emulators begin
-suppling the alternative option of bold mapped to their font systems such as
-TrueType.
+Many characters previously displayable by combining using overstriking of
+ASCII characters on teletypes, such as: ±, ≠, or ⩝ were delegated to a
+`code page`_ or lost entirely until the introduction of multibyte encodings.
 
-clear_eos and setb
-~~~~~~~~~~~~~~~~~~
+Much like the "ink paper" introduction in windowing systems for terminal
+emulators, "wide stroke" bold was introduced only much later when combined
+with operating systems that provided font routines such as TrueType.
+
+
+Enforcing white-on-black
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 In conclusion, *white-on-black* should be considered the default.  If there is
 a need to **enforce** *white-on-black* for terminal clients suspected to be
@@ -176,13 +165,13 @@ defaulted as *black-on-white*, one would want to trust that a combination of
 ``term.home + term.white_on_black + term.clear`` should repaint the entire
 emulator's window with the desired effect.
 
-However, this cannot be trusted to all terminal emulators to perform
+However, this cannot be trusted to **all** terminal emulators to perform
 correctly!  Depending on your audience, you may instead ensure that the
 entire screen (including whitespace) is painted using the ``on_black``
 mnemonic.
 
-Beware of customized colorschemes
----------------------------------
+Beware of customized color schemes
+----------------------------------
 
 A recent phenomenon is for users to customize these first 16 colors of their
 preferred emulator to colors of their own liking.  Though this has always been
@@ -197,22 +186,24 @@ Users are certainly free to customize their colors however they like, but it
 should be known that displaying ``term.black_on_red("DANGER!")`` to your users
 may appear as "grey on pastel red", reducing the intended effect of intensity.
 
+
 256 colors can avoid customization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The first instinct of a user who aliases ls(1) to ``ls -G`` or ``colorls``,
-when faced with the particularly low intensity of the default ``blue`` attribute
-is **to adjust their terminal emulator's color scheme for the base 16 colors**.
+when faced with the particularly low intensity of the default ``blue``
+attribute is **to adjust their terminal emulator's color scheme of the base
+16 colors**.
 
 This is not necessary: the environment variable ``LSCOLORS`` may be redefined
 to map an alternative color for blue, or to use ``bright_blue`` in its place.
 
 Furthermore, all common terminal text editors such as emacs or vim may be be
-configured with more-accurate "colorschemes" to make use of the 256-color
-support found in most modern emulators.  Many readable shades of blue are
-available, and many programs that emit such colors can be configured to emit
-a higher or lower intensity variant from the full 256 color space through
-program configuration.
+configured with "colorschemes" to make use of the 256-color support found in
+most modern emulators.  Many readable shades of blue are available, and many
+programs that emit such colors can be configured to emit a higher or lower
+intensity variant from the full 256 color space through program configuration.
+
 
 Monochrome and reverse
 ----------------------
@@ -225,7 +216,7 @@ different!
 
 If your userbase consists of monochrome terminals, you may wish to provide
 "lightbars" and other such effects using the compound formatter
-``red_reverse``.  In the literal sense of "set foreground attribute, then
+``red_reverse``.  In the literal sense of "set foreground color to red, then
 swap foreground and background", this produces a similar effect on
 **both** color and monochrome displays.
 
@@ -234,125 +225,157 @@ base 16 colors, so you should generally wish for ``black_on_{color}``
 anyway.  By using ``{color}_reverse`` you may be portable with monochrome
 displays as well.
 
+
 Multibyte Encodings and Code pages
 ----------------------------------
 
-If you're going to work with terminals or terminal emulators that do not
-support multibyte encodings, such as utf-8, you are writing 8-bit bytes
-and often incorrectly assuming that the client maps it to the character
-that you wish. Some modern terminal emulators, such as SyncTerm, distinctly
-reject multibyte encodings, providing **only** direct single
-byte-to-character mapping.  For such systems, you must instruct the client
-to select the encoding, or use (unique to SyncTerm) sequences to direct
-the client to change encodings.
+A terminal that supports both multibyte encodings (utf-8) and legacy 8-bit
+code pages (ISO 2022) may instruct the terminal to switch between both
+modes using the following sequences:
 
-The interpretation of "extended ascii" bytes, such ``ä`` (value 228, 0xE4)
-may not be the letter a with umlaut (two dots) placed above.
+  - ``\x1b%@``: Select default character set, that is ISO 8859-1 (ISO 2022).
+  - ``\x1b%G``: Select UTF-8 character set (ISO 2022).
 
-ISO 2022 (code pages)
+When a terminal is in ISO 2022 mode, you may use a sequence
+to request a terminal to change its `code page`_.  It begins by ``\x1b(``,
+followed by an ASCII character representing a code page selection.  For
+example ``\x1b(U`` on the VGA Linux console switches to the `IBM CP437`_
+`code page`_, allowing MS-DOS artwork to be displayed in its natural
+8-bit byte encoding.  A list of standard codes and the expected code page
+may be found on Thomas E. Dickey's xterm control sequences section on
+sequences following the `Control-Sequence-Inducer`_.
+
+Detecting multibyte
+~~~~~~~~~~~~~~~~~~~
+
+How can one be assured that the connecting client is capable of
+representing utf-8 and other multibyte character encodings?  Firstly,
+by the environment variable ``LANG``.  If this is not possible, there is an
+alternative method: 
+
+  - emit Report Cursor Position (CPR), ``\x1b[6n`` and store response.
+  - emit a multibyte utf-8 character, such as ⦰ (``\x29\xb0``).
+  - emit Report Cursor Position (CPR), ``\x1b[6n`` and store response.
+  - determine the difference of the *(y, x)* location of the response.
+    If it is *1*, then the client decoded the two utf-8 bytes as a
+    single character, and can be considered capable.  If it is *2*,
+    the client is using a `code page`_ and is incapable of decoding
+    a utf-8 bytesream.
+
+Note that both SSH and Telnet protocols provide means for forwarding
+the ``LANG`` environment variable.  However, some transports, such as
+over serial cable, is incapable of forwarding such sequences.
+
+Detecting screen size
 ~~~~~~~~~~~~~~~~~~~~~
 
-Control Sequence Inducers (CSI) exist to request a terminal to `switch
-<http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Controls-beginning-with-ESC>`_.
-code pages, it begins with ``\x1b(``, followed by a character representing
-what terminals implemented as a bank of mapping characters.  Legacy
-terminals had a "Character ROM" that mapped bytes beyond the ASCII
-range to a glyph or character, which made up its "font" or
-`code page`_.  A ROM of many code pages could be supplied, and a control
-sequence could be used to "switch banks".
+While we're on the subject, there are times when :attr:`height` and
+:attr:`width` are not accurate -- when a transport does not provide the means
+to propagate the COLUMNS and ROWS Environment values, or propagate the
+SIGWINCH signals, such as through a serial link.
 
-For example ``\x1b(U`` on the VGA Linux console switches to the `IBM CP437`_
-`code page`_, allowing MS-DOS artwork to be displayed in its natural 8-bit
-byte encoding on Linux (most distributions typically do not ship with the
-original VGA console any longer).
+The same means described above for multibyte detection may be used to detect
+the remote client's window size:
 
-The literal translation is of this sequence is, "Designate G0 Character Set
-(ISO 2022, VT220) to Codepage ``U``" (Thomas E. Dickey).
+  - move cursor to row 999, 999
+  - emit Report Cursor Position (CPR), ``\x1b[6n`` and store response.
+  - the given value is the user's screen dimensions.
 
-A terminal that supports both multibyte encodings (utf-8) and legacy 8-bit
-code pages (ISO 2022) may instruct the terminal to switch to ISO 2022 in
-case it is currently in UTF-8 mode, using sequence ``\x1b%@``.  The literal
-translation of this sequence is "Select default character set.  That is ISO
-8859-1 (ISO 2022)" (Thomas E. Dickey).
+This is the method used by the program ``resize`` provided in the Xorg
+distribution, and its source may be viewed as file `resize.c`_.
 
-utf-8
-~~~~~
+Alt or meta sends Escape
+------------------------
 
-XXX
+Programs using gnu readline such as bash continue to provide default mappings
+such as *alt+u/l* to uppercase/lowercase word after cursor. This is achieved
+by the configuration option, altSendsEscape or `metaSendsEscape
+<http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Alt-and-Meta-Keys>`_
 
-UTF-8 is dangerous for terminal emulators: What if a terminal sequence
-contains utf-8 start bytes (...)
+The default for most terminals, however, is that the meta key is bound by
+the operating system (such as *meta+f* for find), and that alt is used for
+inserting international keys, where the combination ``alt+u, a`` is used
+to insert the character ``ä``.
 
-XXX
+The ability to detect alt or meta key combinations is achieved by two means:
 
-How can one be **assured** that the connecting client is capable of representing
-UTF-8?  You can only really know by asking: either by inspecting environment
-variables such as ``LANG``, or where not made available, by asking or through
-configuration property of your application.  There are some terminal emulators
-however, that honor the sequences to instruct a terminal to switch to UTF-8:
-``\x1b%G`` activates UTF-8, and ``\x1b%@`` can be used again later to revert
-back to ISO 2022 again as encoding/`code page`_ ISO 8859-1.
+  - The alt or meta key sets the 8th bit "high", so that a*lt+z* becomes
+    the value of 'z' + 128: ``ú``
+  - The alt or meta key prefaces the combining character with escape, so
+    that *alt+z* becomes escape + z: ``\x1bz``
 
-Meta sends Escape
------------------
+It is therefor a recommendation to **avoid alt or meta keys entirely** in
+applications, and instead prefer the ctrl-key combinations, so as to avoid
+instructing your users to configure their terminal emulators to communicate
+such sequences.
 
-XXX
 
 Backspace sends delete
 ----------------------
 
-XXX
+Typically, backspace is ``^H`` (8, or 0x08) and delete is ^? (127, or 0x7f).
+
+On some systems however, the key for backspace is actually labeled and
+transmitted as "delete", though its function in the operating system behaves
+just as backspace.  It is highly recommend to accept **both** ``KEY_DELETE``
+and ``KEY_DELETE`` as having the same meaning except when implementing full
+screen editors.
+
+And only then, to provide the choice to map delete as true delete as a
+non-default configuration option.
+
 
 The misnomer of ANSI
 --------------------
 
 When people say 'ANSI Sequence', they are discussing:
 
-- Standard ECMA-48: `Control Functions for Coded Character Sets
-  <http://www.ecma-international.org/publications/standards/Ecma-048.htm>`_
+- Standard `ECMA-48`_: Control Functions for Coded Character Sets
 
-- Is a misnomer for `ANSI X3.64
-  <http://sydney.edu.au/engineering/it/~tapted/ansi.html>`_ from 1981, when
-  the `American National Standards Institute <http://www.ansi.org/>`_ adopted
-  the ECMA-48 as standard, which was later withdrawn in 1997 (so in this sense
-  it is *not* an ANSI standard).
+- `ANSI X3.64 <http://sydney.edu.au/engineering/it/~tapted/ansi.html>`_ from
+  1981, when the `American National Standards Institute
+  <http://www.ansi.org/>`_ adopted the `ECMA-48`_ as standard, which was later
+  withdrawn in 1997 (so in this sense it is *not* an ANSI standard).
 
-- The `ANSI.SYS <http://www.kegel.com/nansi/>`_ driver provided in MS-DOS and
+- The `ANSI.SYS`_ driver provided in MS-DOS and
   clones.  The popularity of the IBM Personal Computer and MS-DOS of the era,
   and its ability to display colored text further populated the idea that such
   text "is ansi".
 
 - The `IBM CP437`_ `code page`_ (which provided "block art" characters) paired
-  with ECMA-48 sequences supported by the MS-DOS ANSI.SYS driver to create
+  with `ECMA-48`_ sequences supported by the MS-DOS ANSI.SYS driver to create
   artwork, known as `ansi art <http://sixteencolors.net/>`_.
 
   This is purely an American misnomer, because early IBM PC and clones in the
   European nations did not ship with the `IBM CP437`_ `code page`_ by default.
 
   Many people now mistake the difference between "ascii art" and "ansi art" to
-  be whether or not they block art and other characters from the CP437 codepage,
-  where even such "ascii art" may contain ECMA-48 color codes!
+  be whether or not block art and other characters from the `IBM CP437`_
+  code page are used.  Where even such "ascii art" may contain `ECMA-48`_
+  color codes!
 
-- The ``ansi`` terminal capability and its many descendants and clones
-  in the `terminfo capability database
+- The*ansi terminal database entry and its many descendants in the
+  `terminfo database
   <http://invisible-island.net/ncurses/terminfo.src.html>`_.  This is mostly
   due to terminals compatible with SCO UNIX, which was the successor of
-  Microsoft's Xenix, likely brining some semblance of the dos ANSI.SYS
-  driver capabilities.  SCO UNIX was one of the most successful commercial
-  unix systems of its time providing 16 color support.
+  Microsoft's Xenix, which brought some semblance of the Microsoft DOS
+  `ANSI.SYS`_ driver capabilities.
 
 - `Select Graphics Rendition (SGR) <http://vt100.net/docs/vt510-rm/SGR>`_
-  on vt100 clones, which includes the ability to emit many of the common
-  sequences in ECMA-48.
+  on vt100 clones, which includes many of the common sequences in ECMA-48.
 
-- Any sequence started by the `Control-Sequence-Inducer (CSI)
-  <http://invisible-island.net/xterm/ctlseqs/ctlseqs.html>`_ is often
+- Any sequence started by the `Control-Sequence-Inducer`_ is often
   mistakenly termed as an "ANSI Escape Sequence" though not appearing in
-  ECMA-48 or interpreted by the ANSI.SYS driver. The adjoining phrase
+  `ECMA-48`_ or interpreted by the `ANSI.SYS`_ driver. The adjoining phrase
   "Escape Sequence" is so termed because it follows the ASCII character
   for the escape key (ESC, ``\x1b``).
 
-
-.. `code page`: http://en.wikipedia.org/wiki/Code_page
-.. `IBM CP437`: http://en.wikipedia.org/wiki/Code_page_437
-.. `CGA Color Palette`: http://en.wikipedia.org/wiki/Color_Graphics_Adapter#With_an_RGBI_monitor
+.. _code page: http://en.wikipedia.org/wiki/Code_page
+.. _IBM CP437: http://en.wikipedia.org/wiki/Code_page_437
+.. _CGA Color Palette: http://en.wikipedia.org/wiki/Color_Graphics_Adapter#With_an_RGBI_monitor
+.. _f.lux: https://justgetflux.com/
+.. _ZX Spectrum: http://en.wikipedia.org/wiki/List_of_8-bit_computer_hardware_palettes#ZX_Spectrum
+.. _Control-Sequence-Inducer: http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Controls-beginning-with-ESC
+.. _resize.c: http://www.opensource.apple.com/source/X11apps/X11apps-13/xterm/xterm-207/resize.c
+.. _ANSI.SYS: http://www.kegel.com/nansi/
+.. _ECMA-48: http://www.ecma-international.org/publications/standards/Ecma-048.htm

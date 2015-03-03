@@ -75,7 +75,7 @@ Here are some recommended readings to help you along:
   them), it is probably not the most interesting, but it can get you started:
 
      - `FreeBSD <https://github.com/freebsd/freebsd/blob/master/sys/kern/tty.c>`_
-     - `OpenBSD <http://cvsweb.openbsd.org/cgi-bin/cvsweb/~checkout~/src/sys/kern/tty.c?content-type=text/plain>_
+     - `OpenBSD <http://cvsweb.openbsd.org/cgi-bin/cvsweb/~checkout~/src/sys/kern/tty.c?content-type=text/plain>`_
      - `Illumos (Solaris) <https://github.com/illumos/illumos-gate/blob/master/usr/src/uts/common/io/tty_common.c>`
      - `Minix <https://github.com/minix3/minix/blob/master/minix/drivers/tty/tty/tty.c>`_
      - `Linux <https://github.com/torvalds/linux/blob/master/drivers/tty/n_tty.c>`_
