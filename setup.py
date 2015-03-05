@@ -1,10 +1,8 @@
 #!/usr/bin/env python
-# std imports,
 import subprocess
 import sys
 import os
 
-# 3rd-party
 import setuptools
 import setuptools.command.develop
 import setuptools.command.test
@@ -16,9 +14,10 @@ class SetupDevelop(setuptools.command.develop.develop):
     def run(self):
         # ensure a virtualenv is loaded,
         assert os.getenv('VIRTUAL_ENV'), 'You should be in a virtualenv'
-        # ensure tox is installed
+        # ensure tox and ipython is installed
         subprocess.check_call(('pip', 'install', 'tox', 'ipython'))
-        # install development egg-link
+        # Call super() (except develop is an old-style class, so we must call
+        # directly). The effect is that the development egg-link is installed.
         setuptools.command.develop.develop.run(self)
 
 
@@ -33,16 +32,19 @@ def main():
             'wcwidth>=0.1.0',
         ]
     }
-    if sys.version_info < (2, 7,):
+    if sys.version_info < (2, 7):
+        # we make use of collections.ordereddict: for python 2.6 we require the
+        # assistance of the 'orderddict' module which backports the same.
         extra['install_requires'].extend(['ordereddict>=1.1'])
 
     setuptools.setup(
         name='blessings',
         version='1.9.5',
-        description="A feature-filled fork of Erik Rose's blessings project",
+        description='A thin, practical wrapper around terminal coloring, '
+                    'styling, positioning, and keyboard input.',
         long_description=open(os.path.join(here, 'README.rst')).read(),
-        author='Jeff Quast',
-        author_email='contact@jeffquast.com',
+        author='Erik Rose, Jeff Quast',
+        author_email='erikrose@grinchcentral.com',
         license='MIT',
         packages=['blessings', 'blessings.tests'],
         url='https://github.com/erikrose/blessings',

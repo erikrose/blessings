@@ -1,9 +1,6 @@
 # encoding: utf-8
 " This sub-module provides 'sequence awareness' for blessings."
 
-__author__ = 'Jeff Quast <contact@jeffquast.com>'
-__license__ = 'MIT'
-
 __all__ = ['init_sequence_patterns', 'Sequence', 'SequenceTextWrapper']
 
 # built-ins
