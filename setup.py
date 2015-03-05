@@ -1,10 +1,8 @@
 #!/usr/bin/env python
-# std imports,
 import subprocess
 import sys
 import os
 
-# 3rd-party
 import setuptools
 import setuptools.command.develop
 import setuptools.command.test
@@ -34,7 +32,7 @@ def main():
             'wcwidth>=0.1.0',
         ]
     }
-    if sys.version_info < (2, 7,):
+    if sys.version_info < (2, 7):
         # we make use of collections.ordereddict: for python 2.6 we require the
         # assistance of the 'orderddict' module which backports the same.
         extra['install_requires'].extend(['ordereddict>=1.1'])
@@ -42,8 +40,8 @@ def main():
     setuptools.setup(
         name='blessings',
         version='1.9.5',
-        description=("A thin, practical wrapper around terminal coloring, "
-                     "styling, positioning, and keyboard input."),
+        description='A thin, practical wrapper around terminal coloring, '
+                    'styling, positioning, and keyboard input.',
         long_description=open(os.path.join(here, 'README.rst')).read(),
         author='Erik Rose, Jeff Quast',
         author_email='erikrose@grinchcentral.com',
