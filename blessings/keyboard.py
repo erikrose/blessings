@@ -3,7 +3,7 @@
 __author__ = 'Jeff Quast <contact@jeffquast.com>'
 __license__ = 'MIT'
 
-__all__ = ('Keystroke', 'get_keyboard_codes', 'get_keyboard_sequences',)
+__all__ = ['Keystroke', 'get_keyboard_codes', 'get_keyboard_sequences']
 
 import curses.has_key
 import collections

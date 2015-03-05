@@ -868,4 +868,4 @@ zen50
 ztx
 """.split()
 
-__all__ = ('binary_terminals',)
+__all__ = ['binary_terminals']
