@@ -64,7 +64,7 @@ def test_char_is_ready_interrupted():
         with term.keystroke_input(raw=True):
             assert term.keystroke(timeout=1.05) == u''
         os.write(sys.__stdout__.fileno(), b'complete')
-        assert got_sigwinch is True
+        assert got_sigwinch
         if cov is not None:
             cov.stop()
             cov.save()
@@ -107,7 +107,7 @@ def test_char_is_ready_interrupted_nonetype():
         with term.keystroke_input(raw=True):
             term.keystroke(timeout=1)
         os.write(sys.__stdout__.fileno(), b'complete')
-        assert got_sigwinch is True
+        assert got_sigwinch
         if cov is not None:
             cov.stop()
             cov.save()
@@ -151,7 +151,7 @@ def test_char_is_ready_interrupted_interruptable():
         with term.keystroke_input(raw=True):
             term.keystroke(timeout=1.05, interruptable=False)
         os.write(sys.__stdout__.fileno(), b'complete')
-        assert got_sigwinch is True
+        assert got_sigwinch
         if cov is not None:
             cov.stop()
             cov.save()
@@ -196,7 +196,7 @@ def test_char_is_ready_interrupted_nonetype_interruptable():
         with term.keystroke_input(raw=True):
             term.keystroke(timeout=None, interruptable=False)
         os.write(sys.__stdout__.fileno(), b'complete')
-        assert got_sigwinch is True
+        assert got_sigwinch
         if cov is not None:
             cov.stop()
             cov.save()
@@ -264,8 +264,8 @@ def test_char_is_ready_no_kb():
         term = TestTerminal(stream=StringIO())
         stime = time.time()
         assert term.keyboard_fd is None
-        assert term._char_is_ready(timeout=1.1) is False
-        assert (math.floor(time.time() - stime) == 1.0)
+        assert not term._char_is_ready(timeout=1.1)
+        assert math.floor(time.time() - stime) == 1.0
     child()
 
 
@@ -640,7 +640,7 @@ def test_keystroke_default_args():
     assert ks._code is None
     assert ks.code == ks._code
     assert u'x' == u'x' + ks
-    assert ks.is_sequence is False
+    assert not ks.is_sequence
     assert repr(ks) in ("u''",  # py26, 27
                         "''",)  # py33
 
@@ -654,7 +654,7 @@ def test_a_keystroke():
     assert ks._code == 1
     assert ks.code == ks._code
     assert u'xx' == u'x' + ks
-    assert ks.is_sequence is True
+    assert ks.is_sequence
     assert repr(ks) == "the X"
 
 
@@ -789,7 +789,7 @@ def test_resolve_sequence():
     assert ks == u''
     assert ks.name is None
     assert ks.code == None
-    assert ks.is_sequence is False
+    assert not ks.is_sequence
     assert repr(ks) in ("u''",  # py26, 27
                         "''",)  # py33
 
@@ -797,35 +797,35 @@ def test_resolve_sequence():
     assert ks == u'n'
     assert ks.name is None
     assert ks.code is None
-    assert ks.is_sequence is False
+    assert not ks.is_sequence
     assert repr(ks) in (u"u'n'", "'n'",)
 
     ks = resolve_sequence(u'SEQ1', mapper, codes)
     assert ks == u'SEQ1'
     assert ks.name == u'KEY_SEQ1'
     assert ks.code == 1
-    assert ks.is_sequence is True
+    assert ks.is_sequence
     assert repr(ks) in (u"KEY_SEQ1", "KEY_SEQ1")
 
     ks = resolve_sequence(u'LONGSEQ_longer', mapper, codes)
     assert ks == u'LONGSEQ'
     assert ks.name == u'KEY_LONGSEQ'
     assert ks.code == 4
-    assert ks.is_sequence is True
+    assert ks.is_sequence
     assert repr(ks) in (u"KEY_LONGSEQ", "KEY_LONGSEQ")
 
     ks = resolve_sequence(u'LONGSEQ', mapper, codes)
     assert ks == u'LONGSEQ'
     assert ks.name == u'KEY_LONGSEQ'
     assert ks.code == 4
-    assert ks.is_sequence is True
+    assert ks.is_sequence
     assert repr(ks) in (u"KEY_LONGSEQ", "KEY_LONGSEQ")
 
     ks = resolve_sequence(u'Lxxxxx', mapper, codes)
     assert ks == u'L'
     assert ks.name == u'KEY_L'
     assert ks.code == 6
-    assert ks.is_sequence is True
+    assert ks.is_sequence
     assert repr(ks) in (u"KEY_L", "KEY_L")
 
 

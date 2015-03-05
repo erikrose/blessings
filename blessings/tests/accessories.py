@@ -63,7 +63,7 @@ class as_subprocess(object):
 
     def __call__(self, *args, **kwargs):
         pid, master_fd = pty.fork()
-        if pid is self._CHILD_PID:
+        if pid == self._CHILD_PID:
             # child process executes function, raises exception
             # if failed, causing a non-zero exit code, using the
             # protected _exit() function of ``os``; to prevent the

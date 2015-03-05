@@ -235,7 +235,7 @@ def test_setupterm_invalid_has_no_styling():
 
         term = TestTerminal(kind='unknown', force_styling=True)
         assert term.kind is None
-        assert term.does_styling is False
+        assert not term.does_styling
         assert term.number_of_colors == 0
         warnings.resetwarnings()
 
@@ -322,8 +322,8 @@ def test_IOUnsupportedOperation():
 
         term = TestTerminal(stream=mock_stream)
         assert term.stream == mock_stream
-        assert term.does_styling is False
-        assert term.is_a_tty is False
+        assert not term.does_styling
+        assert not term.is_a_tty
         assert term.number_of_colors == 0
 
     child()
@@ -440,7 +440,7 @@ def test_win32_missing_tty_modules(monkeypatch):
             warnings.filterwarnings("ignore", category=UserWarning)
             import blessings.terminal
             imp.reload(blessings.terminal)
-            assert blessings.terminal.HAS_TTY is False
+            assert not blessings.terminal.HAS_TTY
             term = blessings.terminal.Terminal('ansi')
             assert term.height == 24
             assert term.width == 80
