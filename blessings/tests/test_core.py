@@ -30,7 +30,7 @@ import pytest
 def test_export_only_Terminal():
     "Ensure only Terminal instance is exported for import * statements."
     import blessings
-    assert blessings.__all__ == ('Terminal',)
+    assert blessings.__all__ == ['Terminal',]
 
 
 def test_null_location(all_terms):
