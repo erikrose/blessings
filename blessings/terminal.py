@@ -142,13 +142,13 @@ class Terminal(object):
 
         """
         global _CUR_TERM
-        self.keyboard_fd = None
+        self._keyboard_fd = None
 
         # default stream is stdout, keyboard only valid as stdin when
         # output stream is stdout and output stream is a tty
         if stream is None or stream == sys.__stdout__:
             stream = sys.__stdout__
-            self.keyboard_fd = sys.__stdin__.fileno()
+            self._keyboard_fd = sys.__stdin__.fileno()
 
         try:
             stream_fd = (stream.fileno() if hasattr(stream, 'fileno')
@@ -160,10 +160,10 @@ class Terminal(object):
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
 
-        # keyboard_fd only non-None if both stdin and stdout is a tty.
-        self.keyboard_fd = (self.keyboard_fd
-                            if self.keyboard_fd is not None and
-                            self.is_a_tty and os.isatty(self.keyboard_fd)
+        # _keyboard_fd only non-None if both stdin and stdout is a tty.
+        self._keyboard_fd = (self._keyboard_fd
+                            if self._keyboard_fd is not None and
+                            self.is_a_tty and os.isatty(self._keyboard_fd)
                             else None)
         self._normal = None  # cache normal attr, preventing recursive lookups
 
@@ -218,7 +218,7 @@ class Terminal(object):
         self._keymap = get_keyboard_sequences(self)
 
         self._keyboard_buf = collections.deque()
-        if self.keyboard_fd is not None:
+        if self._keyboard_fd is not None:
             locale.setlocale(locale.LC_ALL, '')
             self._encoding = locale.getpreferredencoding() or 'ascii'
             try:
@@ -544,8 +544,8 @@ class Terminal(object):
         Implementors of input streams other than os.read() on the stdin fd
         should derive and override this method.
         """
-        assert self.keyboard_fd is not None
-        byte = os.read(self.keyboard_fd, 1)
+        assert self._keyboard_fd is not None
+        byte = os.read(self._keyboard_fd, 1)
         return self._keyboard_decoder.decode(byte, final=False)
 
     def _char_is_ready(self, timeout=None, interruptable=True):
@@ -567,7 +567,7 @@ class Terminal(object):
         # we continue to block indefinitely (default).
         stime = time.time()
         check_w, check_x, ready_r = [], [], [None, ]
-        check_r = [self.keyboard_fd] if self.keyboard_fd is not None else []
+        check_r = [self._keyboard_fd] if self._keyboard_fd is not None else []
 
         while HAS_TTY and True:
             try:
@@ -587,7 +587,7 @@ class Terminal(object):
             else:
                 break
 
-        return False if self.keyboard_fd is None else check_r == ready_r
+        return False if self._keyboard_fd is None else check_r == ready_r
 
     @contextlib.contextmanager
     def keystroke_input(self, raw=False):
@@ -614,16 +614,16 @@ class Terminal(object):
         Note also that setcbreak sets VMIN = 1 and VTIME = 0,
         http://www.unixwiz.net/techtips/termios-vmin-vtime.html
         """
-        if HAS_TTY and self.keyboard_fd is not None:
+        if HAS_TTY and self._keyboard_fd is not None:
             # Save current terminal mode:
-            save_mode = termios.tcgetattr(self.keyboard_fd)
+            save_mode = termios.tcgetattr(self._keyboard_fd)
             mode_setter = tty.setraw if raw else tty.setcbreak
-            mode_setter(self.keyboard_fd, termios.TCSANOW)
+            mode_setter(self._keyboard_fd, termios.TCSANOW)
             try:
                 yield
             finally:
                 # Restore prior mode:
-                termios.tcsetattr(self.keyboard_fd,
+                termios.tcsetattr(self._keyboard_fd,
                                   termios.TCSAFLUSH,
                                   save_mode)
         else:
@@ -684,13 +684,13 @@ class Terminal(object):
         # TODO(jquast): Ctrl characters, KEY_CTRL_[A-Z], and the rest;
         #               KEY_CTRL_\, KEY_CTRL_{, etc. are not legitimate
         #               attributes. comparator to term.KEY_ctrl('z') ?
-        
-        if timeout is None and self.keyboard_fd is None:
+
+        if timeout is None and self._keyboard_fd is None:
             raise NoKeyboard(
-                    'Waiting for a keystroke on a terminal with no keyboard '
-                    'attached and no timeout would take a long time. Add a '
-                    'timeout and revise your program logic.')
-        
+                'Waiting for a keystroke on a terminal with no keyboard '
+                'attached and no timeout would take a long time. Add a '
+                'timeout and revise your program logic.')
+
         def time_left(stime, timeout):
             """time_left(stime, timeout) -> float
 
