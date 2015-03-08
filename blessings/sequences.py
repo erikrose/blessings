@@ -1,7 +1,7 @@
 # encoding: utf-8
 " This sub-module provides 'sequence awareness' for blessings."
 
-__all__ = ('init_sequence_patterns', 'Sequence', 'SequenceTextWrapper',)
+__all__ = ['init_sequence_patterns', 'Sequence', 'SequenceTextWrapper']
 
 # built-ins
 import functools

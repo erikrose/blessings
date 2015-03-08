@@ -1,6 +1,6 @@
 "This sub-module provides 'keyboard awareness'."
 
-__all__ = ('Keystroke', 'get_keyboard_codes', 'get_keyboard_sequences',)
+__all__ = ['Keystroke', 'get_keyboard_codes', 'get_keyboard_sequences']
 
 import curses.has_key
 import collections
