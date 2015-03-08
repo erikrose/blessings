@@ -6,7 +6,7 @@ ignore:
   - ^docs/
   # ignore tests and bin/ for the moment, their quality does not so much matter.
   - ^bin/
-  - ^blessed/tests/
+  - ^blessings/tests/
 
 test-warnings: true
 
