@@ -36,8 +36,10 @@ try:
     from io import UnsupportedOperation as IOUnsupportedOperation
 except ImportError:
     class IOUnsupportedOperation(Exception):
-        """A dummy exception to take the place of Python 3's
-        ``io.UnsupportedOperation`` in Python 2.5"""
+        """
+        A dummy exception to take the place of Python 3's
+        :class:`io.UnsupportedOperation` in Python 2.5
+        """
 
 try:
     _ = InterruptedError
@@ -68,6 +70,7 @@ from .keyboard import (
 
 
 class Terminal(object):
+
     """
     Wrapper for curses and related terminfo(5) terminal capabilities.
     """
@@ -109,8 +112,7 @@ class Terminal(object):
         no_underline='rmul')
 
     def __init__(self, kind=None, stream=None, force_styling=False):
-        """
-        Initialize the Terminal.
+        """Initialize the Terminal.
 
         If ``stream`` is not a tty, I will default to returning an empty
         Unicode string for all capability values, so things like piping your
@@ -136,8 +138,8 @@ class Terminal(object):
         global _CUR_TERM
         self.keyboard_fd = None
 
-        # default stream is stdout, keyboard only valid as stdin when
-        # output stream is stdout and output stream is a tty
+        # Default stream is stdout, keyboard only valid as stdin when
+        # output stream is stdout is a tty.
         if stream is None or stream == sys.__stdout__:
             stream = sys.__stdout__
             self.keyboard_fd = sys.__stdin__.fileno()
@@ -160,8 +162,6 @@ class Terminal(object):
         self._normal = None  # cache normal attr, preventing recursive lookups
 
         # The descriptor to direct terminal initialization sequences to.
-        # sys.__stdout__ seems to always have a descriptor of 1, even if output
-        # is redirected.
         self._init_descriptor = (stream_fd is None and sys.__stdout__.fileno()
                                  or stream_fd)
         self._kind = kind or os.environ.get('TERM', 'unknown')
@@ -177,7 +177,8 @@ class Terminal(object):
                         isinstance(self._kind, unicode)):
                     # pypy/2.4.0_2/libexec/lib_pypy/_curses.py, line 1131
                     # TypeError: initializer for ctype 'char *' must be a str
-                    curses.setupterm(self._kind.encode('ascii'), self._init_descriptor)
+                    curses.setupterm(self._kind.encode('ascii'),
+                                     self._init_descriptor)
                 else:
                     curses.setupterm(self._kind, self._init_descriptor)
             except curses.error as err:
@@ -199,14 +200,14 @@ class Terminal(object):
         for re_name, re_val in init_sequence_patterns(self).items():
             setattr(self, re_name, re_val)
 
-        # build database of int code <=> KEY_NAME
+        # Build database of int code <=> KEY_NAME.
         self._keycodes = get_keyboard_codes()
 
-        # store attributes as: self.KEY_NAME = code
+        # Store attributes as: self.KEY_NAME = code.
         for key_code, key_name in self._keycodes.items():
             setattr(self, key_name, key_code)
 
-        # build database of sequence <=> KEY_NAME
+        # Build database of sequence <=> KEY_NAME.
         self._keymap = get_keyboard_sequences(self)
 
         self._keyboard_buf = collections.deque()
@@ -217,7 +218,8 @@ class Terminal(object):
                 self._keyboard_decoder = codecs.getincrementaldecoder(
                     self._encoding)()
             except LookupError as err:
-                warnings.warn('%s, fallback to ASCII for keyboard.' % (err,))
+                warnings.warn('LookupError: %s, fallback to ASCII for '
+                              'keyboard.' % (err,))
                 self._encoding = 'ascii'
                 self._keyboard_decoder = codecs.getincrementaldecoder(
                     self._encoding)()
@@ -225,15 +227,14 @@ class Terminal(object):
         self._stream = stream
 
     def __getattr__(self, attr):
-        """
-        Return a terminal capability as Unicode string.
+        """Return a terminal capability as Unicode string.
 
         For example, ``term.bold`` is a unicode string that may be prepended
         to text to set the video attribute for bold, which should also be
         terminated with the pairing ``term.normal``.
 
-        This capability is also callable, so you can use ``term.bold("hi")``
-        which results in the joining of (term.bold, "hi", term.normal).
+        This capability returns a callable, so you can use ``term.bold("hi")``
+        which results in the joining of ``(term.bold, "hi", term.normal)``.
 
         Compound formatters may also be used, for example:
         ``term.bold_blink_red_on_green("merry x-mas!")``.
@@ -254,8 +255,7 @@ class Terminal(object):
 
     @property
     def kind(self):
-        """
-        Name of this terminal type.
+        """Name of this terminal type.
 
         :rtype: str
         """
@@ -263,8 +263,7 @@ class Terminal(object):
 
     @property
     def does_styling(self):
-        """
-        Whether this instance will emit terminal sequences.
+        """Whether this instance will emit terminal sequences.
 
         :rtype: bool
         """
@@ -272,8 +271,7 @@ class Terminal(object):
 
     @property
     def is_a_tty(self):
-        """
-        Whether the :attr:`stream` associated with this instance is a terminal.
+        """Whether :attr:`~.stream` is a terminal.
 
         :rtype: bool
         """
@@ -281,8 +279,7 @@ class Terminal(object):
 
     @property
     def height(self):
-        """
-        The height of the terminal in by its number of character cells.
+        """The height of the terminal (by number of character cells).
 
         :rtype: int
         """
@@ -290,8 +287,7 @@ class Terminal(object):
 
     @property
     def width(self):
-        """
-        The width of the terminal by its number of character cells.
+        """The width of the terminal (by number of character cells).
 
         :rtype: int
         """
@@ -299,14 +295,17 @@ class Terminal(object):
 
     @staticmethod
     def _winsize(fd):
-        """
-        Return a named tuple describing the size of the terminal by ``fd``.
+        """Return named tuple describing size of the terminal by ``fd``.
+
+        If the given platform does not have modules :mod:`termios`,
+        :mod:`fcntl`, or :mod:`tty`, window size of 80 columns by 24
+        rows is always returned.
 
         :param int fd: file descriptor queries for its window size.
         :raises IOError: the file descriptor ``fd`` is not a terminal.
         :rtype: WINSZ
 
-        WINSZ is a :class:`collections.namedtuple` instance, its structure
+        WINSZ is a :class:`collections.namedtuple` instance, whose structure
         directly maps to the return value of the :const:`termios.TIOCGWINSZ`
         ioctl return value.  The return parameters are:
 
@@ -321,11 +320,25 @@ class Terminal(object):
         return WINSZ(ws_row=24, ws_col=80, ws_xpixel=0, ws_ypixel=0)
 
     def _height_and_width(self):
-        """Return a tuple of (terminal height, terminal width).
         """
-        # TODO(jquast): hey kids, even if stdout is redirected to a file,
-        # we can still query sys.__stdin__.fileno() for our terminal size.
-        # -- of course, if both are redirected, we have no use for this fd.
+        Return a tuple of (terminal height, terminal width).
+
+        If :attr:`stream` or :obj:`sys.__stdout__` is not a tty or does not
+        support :func:`fcntl.ioctl` of :const:`termios.TIOCGWINSZ`, a window
+        size of 80 columns by 24 rows is returned.
+
+        :rtype: WINSZ
+
+        WINSZ is a :class:`collections.namedtuple` instance, whose structure
+        directly maps to the return value of the :const:`termios.TIOCGWINSZ`
+        ioctl return value.  The return parameters are:
+
+            - ``ws_row``: width of terminal by its number of character cells.
+            - ``ws_col``: height of terminal by its number of character cells.
+            - ``ws_xpixel``: width of terminal by pixels (not accurate).
+            - ``ws_ypixel``: height of terminal by pixels (not accurate).
+
+        """
         for fd in (self._init_descriptor, sys.__stdout__):
             try:
                 if fd is not None:
@@ -347,9 +360,8 @@ class Terminal(object):
 
             term = Terminal()
             with term.location(2, 5):
-                print 'Hello, world!'
-                for x in xrange(10):
-                    print 'I can do it %i times!' % x
+                print('Hello, world!')
+            print('previous location')
 
         Specify ``x`` to move to a certain column, ``y`` to move to a certain
         row, both, or neither. If you specify neither, only the saving and
@@ -357,6 +369,7 @@ class Terminal(object):
         simply want to restore your place after doing some manual cursor
         movement.
 
+        :rtype: None
         """
         # Save position and move to the requested column, row, or both:
         self.stream.write(self.save)
@@ -374,16 +387,20 @@ class Terminal(object):
 
     @contextlib.contextmanager
     def fullscreen(self):
-        """Return a context manager that enters fullscreen mode while inside it
-        and restores normal mode on leaving.
+        """Context manager that switches to alternate screen.
 
-        Fullscreen mode is characterized by instructing the terminal emulator
-        to store and save the current screen state (all screen output), switch
-        to "alternate screen". Upon exiting, the previous screen state is
-        returned.
+        "Fullscreen mode" is characterized by instructing the terminal to
+        store and save the current output display before switching to an
+        "alternate screen" (which often begins as an empty screen).  Upon
+        exiting, the previous screen state is returned::
 
-        This call may not be tested; only one screen state may be saved at a
-        time.
+            with term.fullscreen(), term.hidden_cursor():
+                main()
+
+        There is only 1 primary and secondary screen: you should not use this
+        context manager more than once within the same context.
+
+        :rtype: None
         """
         self.stream.write(self.enter_fullscreen)
         try:
@@ -393,8 +410,16 @@ class Terminal(object):
 
     @contextlib.contextmanager
     def hidden_cursor(self):
-        """Return a context manager that hides the cursor upon entering,
-        and makes it visible again upon exiting."""
+        """Context manager that hides the cursor.
+
+        Upon entering, ``hide_cursor`` is emitted to :attr:`stream`, and
+        ``normal_cursor`` is emitted upon exit.
+
+        You should not use this context manager more than once within the
+        same context.
+
+        :rtype: None
+        """
         self.stream.write(self.hide_cursor)
         try:
             yield
@@ -403,15 +428,15 @@ class Terminal(object):
 
     @property
     def color(self):
-        """Returns capability that sets the foreground color.
+        """Return capability that sets the foreground color.
 
         The capability is unparameterized until called and passed a number
         (0-15), at which point it returns another string which represents a
         specific color change. This second string can further be called to
         color a piece of text and set everything back to normal afterward.
 
-        :arg num: The number, 0-15, of the color
-
+        :arg int num: The foreground color index.  This should be within the
+           bounds of :attr:`~.number_of_colors`.
         """
         if not self.does_styling:
             return NullCallableString()
@@ -420,7 +445,10 @@ class Terminal(object):
 
     @property
     def on_color(self):
-        "Returns capability that sets the background color."
+        """Return capability that sets the background color.
+
+        :arg int num: The background color index.
+        """
         if not self.does_styling:
             return NullCallableString()
         return ParameterizingString(self._background_color,
@@ -428,7 +456,12 @@ class Terminal(object):
 
     @property
     def normal(self):
-        "Returns sequence that resets video attribute."
+        """Return sequence that resets all video attributes.
+
+        :attr:`~.normal` is an alias for ``sgr0`` or ``exit_attribute_mode``:
+        any attributes previously applied (such as foreground or
+        background colors, reverse video, or bold) are unset.
+        """
         if self._normal:
             return self._normal
         self._normal = resolve_capability(self, 'normal')
@@ -437,43 +470,61 @@ class Terminal(object):
     @property
     def stream(self):
         """
-        The stream the terminal outputs to.
+        The output stream connected to the terminal.
 
-        It's convenient to pass :attr:`~.stream` around with the terminal; it's
-        almost always needed when the :class:`~.Terminal` is, and saves
-        sticking lots of extra args on client functions in practice.
+        This is a convenience attribute.  It is used for implied writes
+        performed by context managers :meth:`~.hidden_cursor`,
+        :meth:`~.fullscreen`, :meth:`~.location` and :meth:`~.keypad`.
         """
         return self._stream
 
-
     @property
     def number_of_colors(self):
-        """Return the number of colors the terminal supports.
+        """The number of colors the terminal supports.
 
         Common values are 0, 8, 16, 88, and 256. Most commonly
-        this may be used to test color capabilities at all::
+        this may be used to test whether the terminal supports colors::
 
             if term.number_of_colors:
-                ..."""
+                ...
+        """
         # trim value to 0, as tigetnum('colors') returns -1 if no support,
-        # -2 if no such capability.
+        # and -2 if no such capability.
         return max(0, self.does_styling and curses.tigetnum('colors') or -1)
 
     @property
     def _foreground_color(self):
+        """Convenience property used by :attr:`~.color`.
+
+        Prefers returning sequence for capability ``setaf``, "Set foreground
+        color to #1, using ANSI escape".  If the given terminal does not
+        support such sequence, fallback to returning attribute ``setf``, "Set
+        foreground color #1".
+        """
         return self.setaf or self.setf
 
     @property
     def _background_color(self):
+        """Convenience property used by :attr:`~.on_color`.
+
+        Prefers returning sequence for capability ``setab``, "Set background
+        color to #1, using ANSI escape".  If the given terminal does not
+        support such sequence, fallback to returning attribute ``setb``, "Set
+        background color #1".
+        """
         return self.setab or self.setb
 
     def ljust(self, text, width=None, fillchar=u' '):
-        """T.ljust(text, [width], [fillchar]) -> unicode
+        """A sequence and window-size aware equivalent to :meth:`str.ljust`.
 
-        Return string ``text``, left-justified by printable length ``width``.
-        Padding is done using the specified fill character (default is a
-        space).  Default ``width`` is the attached terminal's width. ``text``
-        may contain terminal sequences."""
+        String ``text`` is left-justified by ``width``, which defaults to the
+        width of the terminal.  Return string ``text``, left-justified by
+        printable length ``width``.  Padding is done using the specified
+        ``fillchar`` (default is a space). ``text`` may contain terminal
+        sequences::
+
+            print(term.ljust(term.bold('page 1 of 9')))
+        """
         if width is None:
             width = self.width
         return Sequence(text, self).ljust(width, fillchar)
