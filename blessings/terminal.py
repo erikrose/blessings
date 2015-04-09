@@ -1,7 +1,7 @@
 """
 This module contains :class:`Terminal`, the primary API interface of Blessings.
 """
-# standard modules
+# std imports
 import collections
 import contextlib
 import functools

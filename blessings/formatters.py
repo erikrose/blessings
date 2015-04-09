@@ -1,6 +1,10 @@
 "This sub-module provides formatting functions."
+# standard imports
 import curses
 import sys
+
+# 3rd-party
+import six
 
 _derivatives = ('on', 'bright', 'on_bright',)
 
@@ -16,14 +20,8 @@ COLORS = set(['_'.join((derivitive, color))
 #: All valid compoundable names.
 COMPOUNDABLES = (COLORS | _compoundables)
 
-if sys.version_info[0] == 3:
-    text_type = str
-    basestring = str
-else:
-    text_type = unicode  # noqa
 
-
-class ParameterizingString(text_type):
+class ParameterizingString(six.text_type):
     """A Unicode string which can be called as a parameterizing termcap.
 
     For example::
@@ -42,7 +40,7 @@ class ParameterizingString(text_type):
         :arg name: name of this terminal capability.
         """
         assert len(args) and len(args) < 4, args
-        new = text_type.__new__(cls, args[0])
+        new = six.text_type.__new__(cls, args[0])
         new._normal = len(args) > 1 and args[1] or u''
         new._name = len(args) > 2 and args[2] or u'<not specified>'
         return new
@@ -63,7 +61,7 @@ class ParameterizingString(text_type):
         except TypeError as err:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
-            if len(args) and isinstance(args[0], basestring):
+            if len(args) and isinstance(args[0], six.string_types):
                 raise TypeError(
                     "A native or nonexistent capability template, %r received"
                     " invalid argument %r: %s. You probably misspelled a"
@@ -76,12 +74,12 @@ class ParameterizingString(text_type):
             # ignore 'tparm() returned NULL', you won't get any styling,
             # even if does_styling is True. This happens on win32 platforms
             # with http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses installed
-            if "tparm() returned NULL" not in text_type(err):
+            if "tparm() returned NULL" not in six.text_type(err):
                 raise
             return NullCallableString()
 
 
-class ParameterizingProxyString(text_type):
+class ParameterizingProxyString(six.text_type):
     """A Unicode string which can be called to proxy missing termcap entries.
 
     For example::
@@ -109,7 +107,7 @@ class ParameterizingProxyString(text_type):
         assert len(args) and len(args) < 4, args
         assert type(args[0]) is tuple, args[0]
         assert callable(args[0][1]), args[0][1]
-        new = text_type.__new__(cls, args[0][0])
+        new = six.text_type.__new__(cls, args[0][0])
         new._fmt_args = args[0][1]
         new._normal = len(args) > 1 and args[1] or u''
         new._name = len(args) > 2 and args[2] or u'<not specified>'
@@ -161,7 +159,7 @@ def get_proxy_string(term, attr):
     }.get(term_kind, {}).get(attr, None)
 
 
-class FormattingString(text_type):
+class FormattingString(six.text_type):
     """A Unicode string which can be called using ``text``,
     returning a new string, ``attr`` + ``text`` + ``normal``::
 
@@ -176,7 +174,7 @@ class FormattingString(text_type):
         :arg normal: terminating sequence for this attribute.
         """
         assert 1 <= len(args) <= 2, args
-        new = text_type.__new__(cls, args[0])
+        new = six.text_type.__new__(cls, args[0])
         new._normal = len(args) > 1 and args[1] or u''
         return new
 
@@ -191,12 +189,12 @@ class FormattingString(text_type):
         return text
 
 
-class NullCallableString(text_type):
+class NullCallableString(six.text_type):
     """A dummy callable Unicode to stand in for ``FormattingString`` and
     ``ParameterizingString`` for terminals that cannot perform styling.
     """
     def __new__(cls):
-        new = text_type.__new__(cls, u'')
+        new = six.text_type.__new__(cls, u'')
         return new
 
     def __call__(self, *args):
