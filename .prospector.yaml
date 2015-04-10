@@ -1,12 +1,13 @@
 inherits:
     - strictness_veryhigh
 
-ignore:
+ignore-patterns:
   - (^|/)\..+
   - ^docs/
   # ignore tests and bin/ for the moment, their quality does not so much matter.
   - ^bin/
   - ^blessings/tests/
+  - ^tools/
 
 test-warnings: true
 
@@ -46,22 +47,16 @@ pylint:
         # no 'mark' member
         ignored-classes: pytest
     disable:
-        # Too many lines in module
-        ##- C0302
-        # Used * or ** magic
-        ##- W0142
-        # Used builtin function 'filter'.
-        # (For maintainability, one should prefer list comprehension.)
-        ##- W0141
-        # Use % formatting in logging functions but pass the % parameters
-        ##- W1202
+        # Access to a protected member _sugar of a client class
+        - protected-access
 
 pyroma:
     # checks setup.py
     run: true
 
 vulture:
-    # this tool does a good job of finding unused code.
-    run: true
+    # this tool does a good job of finding unused code, which isn't terribly
+    # useful from an API perspective, disable.
+    run: false
 
 # vim: noai:ts=4:sw=4
