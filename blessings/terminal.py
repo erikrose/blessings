@@ -15,6 +15,7 @@ import struct
 import time
 import sys
 import os
+import io
 
 try:
     import termios
@@ -31,15 +32,6 @@ except ImportError:
     HAS_TTY = False
 else:
     HAS_TTY = True
-
-try:
-    from io import UnsupportedOperation as IOUnsupportedOperation
-except ImportError:
-    class IOUnsupportedOperation(Exception):
-        """
-        A dummy exception to take the place of Python 3's
-        :class:`io.UnsupportedOperation` in Python 2.5
-        """
 
 try:
     _ = InterruptedError
@@ -147,7 +139,7 @@ class Terminal(object):
         try:
             stream_fd = (stream.fileno() if hasattr(stream, 'fileno')
                          and callable(stream.fileno) else None)
-        except IOUnsupportedOperation:
+        except io.UnsupportedOperation:
             stream_fd = None
 
         self._is_a_tty = stream_fd is not None and os.isatty(stream_fd)
