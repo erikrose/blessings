@@ -8,6 +8,8 @@ ignore-patterns:
   - ^bin/
   - ^blessings/tests/
   - ^tools/
+  # not maintained
+  - ^fabfile.py
 
 test-warnings: true
 
