@@ -29,7 +29,8 @@ class SetupTest(setuptools.command.test.test):
 def main():
     extra = {
         'install_requires': [
-            'wcwidth>=0.1.0',
+            'wcwidth>=0.1.4',
+            'six>=1.9.0',
         ]
     }
     if sys.version_info < (2, 7):
