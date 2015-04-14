@@ -8,23 +8,18 @@ import functools
 import textwrap
 import warnings
 import math
-import sys
 import re
 
 # local
 from ._binterms import binary_terminals as _BINTERM_UNSUPPORTED
 
 # 3rd-party
-import wcwidth  # https://github.com/jquast/wcwidth
+import wcwidth
+import six
 
 _BINTERM_UNSUPPORTED_MSG = (
     u"Terminal kind {0!r} contains binary-packed capabilities, blessings "
     u"is likely to fail to measure the length of its sequences.")
-
-if sys.version_info[0] == 3:
-    text_type = str
-else:
-    text_type = unicode  # noqa
 
 
 def _merge_sequences(inp):
@@ -421,7 +416,7 @@ class SequenceTextWrapper(textwrap.TextWrapper):
 SequenceTextWrapper.__doc__ = textwrap.TextWrapper.__doc__
 
 
-class Sequence(text_type):
+class Sequence(six.text_type):
     """
     This unicode-derived class understands the effect of escape sequences
     of printable length, allowing a properly implemented .rjust(), .ljust(),
@@ -434,7 +429,7 @@ class Sequence(text_type):
         :arg sequence_text: A string containing sequences.
         :arg term: Terminal instance this string was created with.
         """
-        new = text_type.__new__(cls, sequence_text)
+        new = six.text_type.__new__(cls, sequence_text)
         new._term = term
         return new
 
@@ -573,7 +568,7 @@ class Sequence(text_type):
         """
         outp = u''
         nxt = 0
-        for idx in range(0, text_type.__len__(self)):
+        for idx in range(0, six.text_type.__len__(self)):
             width = horizontal_distance(self[idx:], self._term)
             if width != 0:
                 nxt = idx + measure_length(self[idx:], self._term)

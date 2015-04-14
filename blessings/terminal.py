@@ -1,5 +1,5 @@
 "This primary module provides the Terminal class."
-# standard modules
+# standard imports
 import collections
 import contextlib
 import functools
