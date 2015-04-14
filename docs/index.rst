@@ -11,6 +11,8 @@ Contents:
    intro
    overview
    api
+   further
+   pains
    history
 
 =======
