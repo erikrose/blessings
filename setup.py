@@ -41,9 +41,9 @@ def main():
     setuptools.setup(
         name='blessings',
         version='1.9.5',
-        description='A thin, practical wrapper around terminal coloring, '
-                    'styling, positioning, and keyboard input.',
-        long_description=open(os.path.join(here, 'README.rst')).read(),
+        description=('A thin, practical wrapper around terminal coloring, '
+                     'styling, positioning, and keyboard input.'),
+        long_description=open(os.path.join(here, 'docs/intro.rst')).read(),
         author='Erik Rose, Jeff Quast',
         author_email='erikrose@grinchcentral.com',
         license='MIT',
