@@ -321,7 +321,7 @@ def resolve_capability(term, attr):
     :returns: string of the given terminal capability named by ``attr``,
        which may be empty (``u''``) if not found or not supported by the
        given ``term.kind``.
-    :rtype: unicode
+    :rtype: str
     """
     # Decode sequences as latin1, as they are always 8-bit bytes, so when
     # b'\xff' is returned, this must be decoded to u'\xff'.
@@ -338,7 +338,7 @@ def resolve_color(term, color):
     This function supports :func:`resolve_attribute`.
 
     :param blessings.Terminal term: :class:`~.Terminal` instance.
-    :param str color: any string found in set :var:`COLORS`.
+    :param str color: any string found in set :const:`COLORS`.
     :returns: a string class instance which emits the terminal sequence
         for the given color, and may be used as a callable to wrap the
         given string with such sequence.

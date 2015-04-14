@@ -431,7 +431,7 @@ def test_win32_missing_tty_modules(monkeypatch):
                 imp.reload(blessings.terminal)
             except UserWarning:
                 err = sys.exc_info()[1]
-                assert err.args[0] == blessings.terminal.msg_nosupport
+                assert err.args[0] == blessings.terminal._MSG_NOSUPPORT
 
             warnings.filterwarnings("ignore", category=UserWarning)
             import blessings.terminal

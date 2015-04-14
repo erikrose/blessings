@@ -141,12 +141,12 @@ def test_unit_binpacked_unittest():
     warnings.resetwarnings()
 
 
-def test_merge_sequences():
+def test_sort_sequences():
     """Test sequences are filtered and ordered longest-first."""
-    from blessings.sequences import _merge_sequences
+    from blessings.sequences import _sort_sequences
     input_list = [u'a', u'aa', u'aaa', u'']
     output_expected = [u'aaa', u'aa', u'a']
-    assert (_merge_sequences(input_list) == output_expected)
+    assert (_sort_sequences(input_list) == output_expected)
 
 
 def test_location_with_styling(all_terms):

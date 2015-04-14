@@ -4,7 +4,8 @@ inherits:
 ignore-patterns:
   - (^|/)\..+
   - ^docs/
-  # ignore tests and bin/ for the moment, their quality does not so much matter.
+  - ^build/
+  # ignore these, their quality does not so much matter.
   - ^bin/
   - ^blessings/tests/
   - ^tools/
@@ -27,6 +28,9 @@ frosted:
 mccabe:
     # complexity checking.
     run: true
+    disable:
+        # Terminal.__init__ is too complex (14)
+        - MC0001
 
 pep257:
     # docstring checking
@@ -51,6 +55,16 @@ pylint:
     disable:
         # Access to a protected member _sugar of a client class
         - protected-access
+        # blessings.Terminal: Too many instance attributes (12/7)
+        - too-many-instance-attributes
+        # blessings.Terminal: Too many public methods (25/20)
+        - too-many-public-methods
+        # blessings.Terminal: Too many branches (13/12)
+        - too-many-branches
+        # blessings.sequences.get_wontmove_sequence_patterns:
+        #   Used builtin function 'map'
+        - bad-builtin
+
 
 pyroma:
     # checks setup.py
