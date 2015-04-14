@@ -20,11 +20,11 @@ class SetupDevelop(setuptools.command.develop.develop):
         Prepare environment for development.
 
         - Ensures a virtualenv environmnt is used.
-        - Ensures tox and ipython is installed for convenience and testing.
+        - Ensures tox, ipython, wheel is installed for convenience and testing.
         - Call super()'s run method.
         """
         assert os.getenv('VIRTUAL_ENV'), 'You should be in a virtualenv'
-        subprocess.check_call(('pip', 'install', 'tox', 'ipython'))
+        subprocess.check_call(('pip', 'install', 'tox', 'ipython', 'wheel'))
 
         # Call super() (except develop is an old-style class, so we must call
         # directly). The effect is that the development egg-link is installed.
