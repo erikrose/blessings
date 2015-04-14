@@ -780,8 +780,8 @@ class Terminal(object):
         Also referred to as 'rare' mode, entering this context is the opposite
         of 'cooked' mode: On entering, :func:`tty.setcbreak` mode is activated,
         disabling line buffering of keyboard input and turning off automatic
-        echoing of input.  This allows each keystroke to be received immediately
-        after it is pressed.
+        echoing of input.  This allows each keystroke to be received
+        immediately after it is pressed.
 
         :param bool raw: When True, enter :func:`tty.setraw` mode instead.
            Raw mode differs in that the interrupt, quit, suspend, and flow
@@ -867,8 +867,9 @@ class Terminal(object):
            ``timeout`` is specified and keystroke is not received.
 
         .. note:: When used without the context manager
-            :meth:`keystroke_input`, :obj:`sys.__stdin__` remains line-buffered,
-            and this function will block until the return key is pressed.
+            :meth:`keystroke_input`, :obj:`sys.__stdin__` remains
+            line-buffered, and this function will block until the return key
+            is pressed.
         """
         if timeout is None and self._keyboard_fd is None:
             raise NoKeyboard(
