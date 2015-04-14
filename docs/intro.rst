@@ -152,4 +152,4 @@ Blessings is under the MIT License. See the LICENSE file.
 .. _ansi: https://github.com/tehmaze/ansi
 .. _colorama: https://pypi.python.org/pypi/colorama
 .. _PDCurses: http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses
-.. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
+.. _`terminfo(5)`: http://invisible-island.net/ncurses/man/terminfo.5.html

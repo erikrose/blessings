@@ -510,7 +510,7 @@ The *name* property of the return value of ``inkey()`` will prefer
 these aliases over the built-in curses_ names.
 
 The following are **not** available in the curses_ module, but
-provided for keypad support, especially where the ``keypad()``
+provided for keypad support, especially where the :meth:`~.Terminal.keypad`
 context manager is used:
 
 * ``KEY_KP_MULTIPLY``
@@ -528,7 +528,7 @@ context manager is used:
 .. _`cbreak(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
 .. _`curs_getch(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=curs_getch&apropos=0&sektion=3
 .. _`termios(4)`: http://www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4
-.. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
+.. _`terminfo(5)`: http://invisible-island.net/ncurses/man/terminfo.5.html
 .. _tparm: http://www.openbsd.org/cgi-bin/man.cgi?query=tparm&sektion=3
 .. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH
 .. _`API Documentation`: http://blessed.rtfd.org
