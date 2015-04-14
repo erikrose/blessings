@@ -1,29 +1,29 @@
 API Documentation
 =================
 
-terminal
---------
+terminal.py
+-----------
 
 .. automodule:: blessings.terminal
    :members:
    :undoc-members:
 
-formatters
-----------
+formatters.py
+-------------
 
 .. automodule:: blessings.formatters
    :members:
    :undoc-members:
 
-keyboard
---------
+keyboard.py
+-----------
 
 .. automodule:: blessings.keyboard
    :members:
    :undoc-members:
 
-sequences
----------
+sequences.py
+------------
 
 .. automodule:: blessings.sequences
    :members:

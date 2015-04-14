@@ -93,7 +93,7 @@ exclude_patterns = ['_build']
 # default_role = None
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
-# add_function_parentheses = True
+add_function_parentheses = True
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
@@ -167,16 +167,16 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # html_use_index = True
 
 # If true, the index is split into individual pages for each letter.
-# html_split_index = False
+html_split_index = True
 
 # If true, links to the reST sources are added to the pages.
-# html_show_sourcelink = True
+html_show_sourcelink = True
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
-# html_show_sphinx = True
+html_show_sphinx = False
 
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
-# html_show_copyright = True
+html_show_copyright = True
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
@@ -245,3 +245,7 @@ autodoc_member_order = 'bysource'
 # when linking to standard python library, use and prefer python 3
 # documentation.
 intersphinx_mapping = {'http://docs.python.org/3/': None}
+
+# Both the class’ and the __init__ method’s docstring are concatenated and
+# inserted.
+autoclass_content = "both"
