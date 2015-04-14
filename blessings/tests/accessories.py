@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Accessories for automated py.test runner."""
 # standard imports
-from __future__ import with_statement
+from __future__ import with_statement, print_function
 import contextlib
 import subprocess
 import functools
@@ -58,6 +58,7 @@ class as_subprocess(object):
         self.func = func
 
     def __call__(self, *args, **kwargs):
+        pid_testrunner = os.getpid()
         pid, master_fd = pty.fork()
         if pid == self._CHILD_PID:
             # child process executes function, raises exception
@@ -93,6 +94,10 @@ class as_subprocess(object):
                     cov.save()
                 os._exit(0)
 
+        if pid_testrunner != os.getpid():
+            print('TEST RUNNER HAS FORKED, {0}=>{1}: EXIT'
+                  .format(pid_testrunner, os.getpid()), file=sys.stderr)
+            os._exit(1)
         exc_output = six.text_type()
         decoder = codecs.getincrementaldecoder(self.encoding)()
         while True:
