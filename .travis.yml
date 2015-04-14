@@ -27,6 +27,7 @@ install:
 
 script:
   - tox -e $TOXENV
+  - if [[ "${TOXENV}" == "py34" ]]; then tox -e sa; fi
   - if [[ "${TOXENV}" == "py34" ]]; then tox -e docs; fi
 
 after_success:
