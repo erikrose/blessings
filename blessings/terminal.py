@@ -120,8 +120,8 @@ class Terminal(object):
             a pipe or file does not emit terminal sequences.
         :param bool force_styling: Whether to force the emission of
             capabilities even if :obj:`sys.__stdout__` does not seem to be
-            connected to a terminal.  If you want to force styling to not happen,
-            use ``force_styling=None``.
+            connected to a terminal.  If you want to force styling to not
+            happen, use ``force_styling=None``.
 
             This comes in handy if users are trying to pipe your output through
             something like ``less -r`` or build systems which support decoding
