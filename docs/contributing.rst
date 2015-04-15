@@ -6,10 +6,10 @@ do not have one.  If you are opposed to having a GitHub account, you may
 e-mail the maintainers a patch, though it reduces the chance of being
 accepted.
 
-How to make a pull request
---------------------------
+Pull request
+------------
 
-All aspects of using git and GitHub is well-documented by GitHub:
+All aspects of using git and GitHub is well-documented:
 
 - `Fork a Repo <https://help.github.com/articles/fork-a-repo/>`_
 - `Creating a pull request
