@@ -1,9 +1,10 @@
 Contributing
 ============
 
-Contributors should create a GitHub account if they do not have one.
-If you are opposed to having a GitHub account, you may e-mail the
-maintainers a patch, though it reduces the chance of being accepted).
+Contributors should create a `GitHub <https://github.com/>`_ account if they
+do not have one.  If you are opposed to having a GitHub account, you may
+e-mail the maintainers a patch, though it reduces the chance of being
+accepted.
 
 How to make a pull request
 --------------------------
