@@ -697,7 +697,7 @@ class Terminal(object):
         byte = os.read(self._keyboard_fd, 1)
         return self._keyboard_decoder.decode(byte, final=False)
 
-    def _char_is_ready(self, timeout=None, interruptable=True):
+    def _char_is_ready(self, timeout=None):
         """
         Whether a keypress has been detected on the keyboard.
 
@@ -709,25 +709,11 @@ class Terminal(object):
             is detected when None (default).  When ``timeout`` is a
             positive number, returns after ``timeout`` seconds have
             elapsed (float).
-        :param bool interruptable: Normally, when this function is interrupted
-           by a signal, such as the installment of SIGWINCH, this function will
-           ignore this interruption and continue to poll for input up to the
-           ``timeout`` specified. If you'd rather this function return ``u''``
-           early, specify False for ``interruptable``.
-
-           This is an open issue for review to **remove** this parameter,
-           https://github.com/erikrose/blessings/issues/96
         :rtype: bool
         :returns: True if a keypress is awaiting to be read on the keyboard
             attached to this terminal.  If input is not a terminal, False is
             always returned.
         """
-        # Special care is taken to handle a custom SIGWINCH handler, which
-        # causes select() to be interrupted with errno 4 (EAGAIN) --
-        # it is ignored, and a new timeout value is derived from the previous,
-        # unless timeout becomes negative, because signal handler has blocked
-        # beyond timeout, then False is returned. Otherwise, when timeout is 0,
-        # we continue to block indefinitely (default).
         stime = time.time()
         ready_r = [None, ]
         check_r = [self._keyboard_fd] if self._keyboard_fd is not None else []
@@ -736,8 +722,19 @@ class Terminal(object):
             try:
                 ready_r, _, _ = select.select(check_r, [], [], timeout)
             except InterruptedError:
-                if not interruptable:
-                    return u''
+                # Beginning with python3.5, IntrruptError is no longer thrown
+                # https://www.python.org/dev/peps/pep-0475/
+                #
+                # For previous versions of python, we take special care to
+                # retry select on InterruptedError exception, namely to handle
+                # a custom SIGWINCH handler.  When installed, it would cause
+                # select() to be interrupted with errno 4 (EAGAIN).
+                #
+                # Just as in python3.5, it is ignored, and a new timeout value
+                # is derived from the previous unless timeout becomes negative.
+                # because the signal handler has blocked beyond timeout, then
+                # False is returned. Otherwise, when timeout is None, we
+                # continue to block indefinitely (default).
                 if timeout is not None:
                     # subtract time already elapsed,
                     timeout -= time.time() - stime
@@ -823,7 +820,7 @@ class Terminal(object):
         finally:
             self.stream.write(self.rmkx)
 
-    def keystroke(self, timeout=None, esc_delay=0.35, interruptable=True):
+    def keystroke(self, timeout=None, esc_delay=0.35):
         """
         Receive and return next keystroke from keyboard within given timeout.
 
@@ -835,14 +832,6 @@ class Terminal(object):
            specifies the amount of time after receiving the escape character
            (``chr(27)``) to seek for the completion of an application key
            before returning a :class:`~.Keystroke` for ``KEY_ESCAPE``.
-        :param bool interruptable: Normally, when this function is interrupted
-           by a signal, such as the installment of SIGWINCH, this function will
-           ignore this interruption and continue to poll for input up to the
-           ``timeout`` specified. If you'd rather this function return ``u''``
-           early, specify False for ``interruptable``.
-
-           This is an open issue for review to **remove** this parameter,
-           https://github.com/erikrose/blessings/issues/96
         :rtype: :class:`~.Keystroke`.
         :raises NoKeyboard: The :attr:`stream` is not a terminal with
             timeout parameter as the default value of None, which would
@@ -892,7 +881,7 @@ class Terminal(object):
             ucs += self._keyboard_buf.pop()
 
         # receive all immediately available bytes
-        while self._char_is_ready(0):
+        while self._char_is_ready(timeout=0):
             ucs += self._next_char()
 
         # decode keystroke, if any
@@ -902,7 +891,7 @@ class Terminal(object):
         # incomplete, (which may be a multibyte encoding), block until until
         # one is received.
         while (not keystroke and
-               self._char_is_ready(time_left(stime, timeout), interruptable)):
+               self._char_is_ready(timeout=time_left(stime, timeout))):
             ucs += self._next_char()
             keystroke = resolve(text=ucs)
 
@@ -914,7 +903,7 @@ class Terminal(object):
         if keystroke.code == self.KEY_ESCAPE:
             esctime = time.time()
             while (keystroke.code == self.KEY_ESCAPE and
-                   self._char_is_ready(time_left(esctime, esc_delay))):
+                   self._char_is_ready(timeout=time_left(esctime, esc_delay))):
                 ucs += self._next_char()
                 keystroke = resolve(text=ucs)
 
