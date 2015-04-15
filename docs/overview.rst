@@ -469,8 +469,8 @@ The mode entered using :meth:`~.Terminal.keystroke_input` is called
   making characters typed by the user immediately available to the program.
 
 :meth:`~.Terminal.keystroke_input` also accepts optional parameter
-:paramref:`~.Terminal.keystroke_input.raw` which may be set as *True*.  When used,
-the given behavior is described in `raw(3)`_ as follows:
+:paramref:`~.Terminal.keystroke_input.raw` which may be set as *True*.  When
+used, the given behavior is described in `raw(3)`_ as follows:
 
   The raw and noraw routines place the terminal into or out of raw mode.
   Raw mode is similar to cbreak mode, in that characters typed are immediately
