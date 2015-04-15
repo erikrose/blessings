@@ -57,13 +57,6 @@ Here are some recommended readings to help you along:
     <https://github.com/GNOME/vte>`_ (or just 'vte'): Gnome Terminal,
     sakura, Terminator, Lilyterm, ROXTerm, evilvte, Termit, Termite, Tilda,
     tinyterm, lxterminal.
-  - `Thomas E. Dickey <http://invisible-island.net/>`_ has been maintaining
-    `xterm <http://invisible-island.net/xterm/xterm.html>`_, as well as a
-    primary maintainer of many related packages such as `ncurses
-    <http://invisible-island.net/ncurses/ncurses.html>`_ for quite a long
-    while.  There is often speculation and misinformation among developers of
-    terminal emulators and programs that interact with them.  Thomas Dickey's
-    analysis is always thorough and complete.
   - xterm, urxvt, SyncTerm, and EtherTerm.
   - There are far too many to name, Chose one you like!
 
@@ -87,6 +80,13 @@ Here are some recommended readings to help you along:
   critical nature, examples of efficient file I/O, character buffers (often
   implemented as "ring buffers") and even fine-grained kernel locking can be
   found.
+
+- `Thomas E. Dickey <http://invisible-island.net/>`_ has been maintaining
+  `xterm <http://invisible-island.net/xterm/xterm.html>`_, as well as a
+  primary maintainer of many related packages such as `ncurses
+  <http://invisible-island.net/ncurses/ncurses.html>`_ for quite a long
+  while.  There is often speculation and misinformation among developers of
+  terminal emulators and programs that interact with them.
 
 - `termcap & terminfo (O'Reilly Nutshell)
   <http://www.amazon.com/termcap-terminfo-OReilly-Nutshell-Linda/dp/0937175226>`_
