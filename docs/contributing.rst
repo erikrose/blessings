@@ -15,35 +15,34 @@ All aspects of using git and GitHub is well-documented by GitHub:
 - `Creating a pull request
   <https://help.github.com/articles/creating-a-pull-request/>`_
 
-Preparing a Developer Environment
----------------------------------
+Developing
+----------
 
-Install git, python2, python3, pip, then virtualenvwrapper::
+Install git, python2, python3, pip.
+
+Then, from the blessings code folder::
 
     pip install virtualenvwrapper
-
-Then, Load virtualenvwrapper and prepare a developer environment
-for blessings.  From the blessings code folder::
-
     . `which virtualenvwrapper.sh`
     mkvirtualenv blessings
     pip install --editable .
 
 Running tests
--------------
+~~~~~~~~~~~~~
 
 ::
-        tox
+
+    tox
 
 Test Coverage
--------------
+~~~~~~~~~~~~~
 
 Blessings has 99% code coverage.  New features will not be accepted
 without coverage. Bugfixes will not be accepted without a complimentary
 test that demonstrates the bug.
 
 Style, static analysis
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 The test runner (``tox``) ensures all code and documentation complies
 with standard python style guides, pep8 and pep257, as well as various
