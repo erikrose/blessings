@@ -10,6 +10,7 @@ Contents:
 
    intro
    overview
+   examples
    further
    pains
    api
