@@ -107,20 +107,25 @@ class Terminal(object):
         :param str kind: A terminal string as taken by
             :func:`curses.setupterm`.  Defaults to the value of the ``TERM``
             Environment variable.
-        :param stream: A file-like object representing the Terminal. Defaults
-            to the original value of :obj:`sys.__stdout__`, like
-            :func:`curses.initscr` does.  If ``stream`` is not a tty, empty
-            Unicode strings are returned for all capability values, so things
-            like piping your program output to a pipe or file does not emit
-            terminal sequences.
+
+            .. note:: A terminal of only one ``kind`` may be initialized for
+                each process.  See :obj:`_CUR_TERM`.
+
+        :param file stream: A file-like object representing the Terminal
+            output.  Defaults to the original value of :obj:`sys.__stdout__`,
+            like :func:`curses.initscr` does.
+
+            If ``stream`` is not a tty, empty Unicode strings are returned for
+            all capability values, so things like piping your program output to
+            a pipe or file does not emit terminal sequences.
         :param bool force_styling: Whether to force the emission of
             capabilities even if :obj:`sys.__stdout__` does not seem to be
-            connected to a terminal.  This comes in handy if users are trying
-            to pipe your output through something like ``less -r`` or build
-            systems which support decoding of terminal sequences.
+            connected to a terminal.  If you want to force styling to not happen,
+            use ``force_styling=None``.
 
-            If you want to force styling to not happen, pass
-            ``force_styling=None``.
+            This comes in handy if users are trying to pipe your output through
+            something like ``less -r`` or build systems which support decoding
+            of terminal sequences.
         """
         # pylint: disable=global-statement
         #         Using the global statement (col 8)
@@ -223,7 +228,7 @@ class Terminal(object):
 
         For example, ``term.bold`` is a unicode string that may be prepended
         to text to set the video attribute for bold, which should also be
-        terminated with the pairing ``term.normal``.  This capability
+        terminated with the pairing :attr:`normal`.  This capability
         returns a callable, so you can use ``term.bold("hi")`` which
         results in the joining of ``(term.bold, "hi", term.normal)``.
 
@@ -246,47 +251,27 @@ class Terminal(object):
 
     @property
     def kind(self):
-        """
-        Name of this terminal type.
-
-        :rtype: str
-        """
+        """Name of this terminal type."""
         return self._kind
 
     @property
     def does_styling(self):
-        """
-        Whether this instance will emit terminal sequences.
-
-        :rtype: bool
-        """
+        """Whether this instance will emit terminal sequences."""
         return self._does_styling
 
     @property
     def is_a_tty(self):
-        """
-        Whether :attr:`~.stream` is a terminal.
-
-        :rtype: bool
-        """
+        """Whether :attr:`~.stream` is a terminal."""
         return self._is_a_tty
 
     @property
     def height(self):
-        """
-        The height of the terminal (by number of character cells).
-
-        :rtype: int
-        """
+        """The height of the terminal (by number of character cells)."""
         return self._height_and_width().ws_row
 
     @property
     def width(self):
-        """
-        The width of the terminal (by number of character cells).
-
-        :rtype: int
-        """
+        """The width of the terminal (by number of character cells)."""
         return self._height_and_width().ws_col
 
     @staticmethod
@@ -360,12 +345,12 @@ class Terminal(object):
         :rtype: None
 
         Move the cursor to a certain position on entry, let you print stuff
-        there, then return the cursor to its original position:
+        there, then return the cursor to its original position::
 
-        >>> term = Terminal()
-        >>> with term.location(2, 5):
-        ...     print('Hello, world!')
-        >>> print('previous location')
+            term = Terminal()
+            with term.location(2, 5):
+                print('Hello, world!')
+            print('previous location')
 
         This context manager yields no value, its side-effect is to write
         the "save cursor position (sc)" sequence upon entering to
@@ -403,7 +388,7 @@ class Terminal(object):
         the primary screen buffer on entering, and to restore it again
         upon exit.  The secondary screen buffer entered while using the
         context manager also remains, and is faithfully restored again
-        on the next entrance:
+        on the next entrance::
 
             with term.fullscreen(), term.hidden_cursor():
                 main()
@@ -427,7 +412,7 @@ class Terminal(object):
 
         This context manager yields no value, its side-effect is to emit
         the ``hide_cursor`` sequence to :attr:`stream` on entering, and
-        to emit ``normal_cursor`` sequence upon exit:
+        to emit ``normal_cursor`` sequence upon exit::
 
             with term.fullscreen(), term.hidden_cursor():
                 main()
@@ -479,9 +464,9 @@ class Terminal(object):
 
         :rtype: str
 
-        :attr:`~.normal` is an alias for ``sgr0`` or ``exit_attribute_mode``:
-        **any** styling attributes previously applied, such as foreground or
-        background colors, reverse video, or bold are set to default.
+        normal is an alias for ``sgr0`` or ``exit_attribute_mode``: **any**
+        styling attributes previously applied, such as foreground or background
+        colors, reverse video, or bold are set to default.
         """
         if self._normal:
             return self._normal
@@ -792,10 +777,9 @@ class Terminal(object):
         set the :mod:`termios` attributes of the terminal attached to
         :obj:`sys.__stdin__`.
 
-        .. note:: you must explicitly print any input received you'd like it
-            shown on output.  And, if providing any kind of editing, you must
-            also explicitly handle backspacing and other line editing
-            control characters.
+        .. note:: you must explicitly print any input received if you'd like
+            it displayed.  And, if providing any kind of editing, you must
+            also handle backspace and other line editing control characters.
 
         .. note:: :func:`tty.setcbreak` sets ``VMIN = 1`` and ``VTIME = 0``,
             see http://www.unixwiz.net/techtips/termios-vmin-vtime.html
@@ -979,15 +963,15 @@ class WINSZ(collections.namedtuple('WINSZ', (
 #:    setupterm() for each terminal, and saving and restoring cur_term, it
 #:    is possible for a program to use two or more terminals at once."
 #:
-#: However, if you study Python's ./Modules/_cursesmodule.c, you'll find::
+#: However, if you study Python's ``./Modules/_cursesmodule.c``, you'll find::
 #:
 #:   if (!initialised_setupterm && setupterm(termstr,fd,&err) == ERR) {
 #:
 #: Python - perhaps wrongly - will not allow for re-initialisation of new
-#: terminals through setupterm(), so the value of cur_term cannot be changed
-#: once set: subsequent calls to setupterm() have no effect.
+#: terminals through :func:`curses.setupterm`, so the value of cur_term cannot
+#: be changed once set: subsequent calls to :func:`setupterm` have no effect.
 #:
-#: Therefore, the ``kind`` of each Terminal() is, in essence, a singleton.
-#: This global variable reflects that, and a warning is emitted if somebody
-#: expects otherwise.
+#: Therefore, the :attr:`Terminal.kind` of each :class:`Terminal` is
+#: essentially a singleton.  This global variable reflects that, and a warning
+#: is emitted if somebody expects otherwise.
 _CUR_TERM = None

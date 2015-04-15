@@ -24,10 +24,11 @@ class Keystroke(six.text_type):
 
     A class instance describes a single keystroke received on input,
     which may contain multiple characters as a multibyte sequence,
-    which is indicated by properties :attr:`is_sequence: returning
-    ``True``.  When the string is a known sequence, :attr:`code`
-    matches terminal class attributes for comparison, such as
-    ``term.KEY_LEFT``.
+    which is indicated by properties :attr:`is_sequence` returning
+    ``True``.
+
+    When the string is a known sequence, :attr:`code` matches terminal
+    class attributes for comparison, such as ``term.KEY_LEFT``.
 
     The string-name of the sequence, such as ``u'KEY_LEFT'`` is accessed
     by property :attr:`name`, and is used by the :meth:`__repr__` method
@@ -214,10 +215,10 @@ def resolve_sequence(text, mapper, codes):
 
 def _inject_curses_keynames():
     r"""
-    Inject KEY_{names} that we think would be useful into the curses module.
+    Inject KEY_NAMES that we think would be useful into the curses module.
 
     This function compliments the global constant
-    :var:`DEFAULT_SEQUENCE_MIXIN`.  It is important to note that this
+    :obj:`DEFAULT_SEQUENCE_MIXIN`.  It is important to note that this
     function has the side-effect of **injecting** new attributes to the
     curses module, and is called from the global namespace at time of
     import.

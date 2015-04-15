@@ -2,9 +2,6 @@
 import sys
 import os
 
-# local imports
-from blessings import Terminal
-
 # 3rd-party
 import sphinx_rtd_theme
 import sphinx.environment
@@ -32,11 +29,32 @@ github_project_url = "https://github.com/erikrose/blessings"
 #
 # https://github.com/SuperCowPowers/workbench/issues/172
 # https://groups.google.com/forum/#!topic/sphinx-users/GNx7PVXoZIU
-# http://stackoverflow.com/questions/12772927/specifying-an-online-image-in-sphinx-restructuredtext-format
+# http://stackoverflow.com/a/28778969
+#
 def _warn_node(self, msg, node):
     if not msg.startswith('nonlocal image URI found:'):
         self._warnfunc(msg, '%s:%s' % get_source_line(node))
 sphinx.environment.BuildEnvironment.warn_node = _warn_node
+
+# Monkey-patch functools.wraps and contextlib.wraps
+# https://github.com/sphinx-doc/sphinx/issues/1711#issuecomment-93126473
+import functools
+def no_op_wraps(func):
+    """
+    Replaces functools.wraps in order to undo wrapping when generating Sphinx documentation
+    """
+    import sys
+    if func.__module__ is None or 'blessings' not in func.__module__:
+        return functools.orig_wraps(func)
+    def wrapper(decorator):
+        sys.stderr.write('patched for function signature: {0!r}\n'.format(func))
+        return func
+    return wrapper
+functools.orig_wraps = functools.wraps
+functools.wraps = no_op_wraps
+import contextlib
+contextlib.wraps = no_op_wraps
+from blessings.terminal import *
 
 # -- General configuration ----------------------------------------------------
 
@@ -45,8 +63,12 @@ sphinx.environment.BuildEnvironment.warn_node = _warn_node
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx',
-              'sphinx.ext.viewcode', 'github', ]
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.intersphinx',
+              'sphinx.ext.viewcode',
+              'github',
+              'sphinx_paramlinks',
+              ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

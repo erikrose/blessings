@@ -119,7 +119,8 @@ detail and behavior in edge cases make a difference. Here are some ways
 * Outputs to any file-like object (*StringIO*, file), not just *stdout*.
 * Keeps a minimum of internal state, so you can feel free to mix and match with
   calls to curses or whatever other terminal libraries you like.
-* Safely decodes internationalization keyboard input to their unicode equivalents.
+* Safely decodes internationalization keyboard input to their unicod e
+  equivalents.
 * Safely decodes multibyte sequences for application/arrow keys.
 * Allows the printable length of strings containing sequences to be determined.
 * Provides plenty of context managers to safely express various terminal modes,

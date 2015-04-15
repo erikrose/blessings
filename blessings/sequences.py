@@ -383,7 +383,8 @@ class SequenceTextWrapper(textwrap.TextWrapper):
         textwrap.TextWrapper.__init__(self, width, **kwargs)
 
     def _wrap_chunks(self, chunks):
-        """Sequence-aware :meth:`textwrap.TextWrapper._wrap_chunks`.
+        """
+        Sequence-aware variant of :meth:`textwrap.TextWrapper._wrap_chunks`.
 
         This simply ensures that word boundaries are not broken mid-sequence,
         as standard python textwrap would incorrectly determine the length
@@ -477,13 +478,6 @@ class SequenceTextWrapper(textwrap.TextWrapper):
         # main loop of _wrap_chunks(), we'll wind up here again, but
         # cur_len will be zero, so the next line will be entirely
         # devoted to the long word that we can't handle right now.
-
-    # append the built-in docstring to our "sequence-aware" ones.
-    _wrap_chunks.__doc__ += (
-        '\n' + textwrap.TextWrapper._wrap_chunks.__doc__)
-
-    _handle_long_word.__doc__ += (
-        '\n' + textwrap.TextWrapper._handle_long_word.__doc__)
 
 
 SequenceTextWrapper.__doc__ = textwrap.TextWrapper.__doc__

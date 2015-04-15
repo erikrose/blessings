@@ -10,9 +10,9 @@ Contents:
 
    intro
    overview
-   api
    further
    pains
+   api
    history
 
 =======

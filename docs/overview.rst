@@ -1,44 +1,63 @@
 Overview
 ========
 
-Blessings provides just **one** top-level object: *Terminal*. Instantiating a
-*Terminal* figures out whether you're on a terminal at all and, if so, does
-any necessary setup. After that, you can proceed to ask it all sorts of things
-about the terminal, such as its size and color support, and use its styling
-to construct strings containing color and styling. Also, the special sequences
-inserted with application keys (arrow and function keys) are understood and
-decoded, as well as your locale-specific encoded multibyte input, such as
-utf-8 characters.
+Blessings provides just **one** top-level object: :class:`~.Terminal`.
+Instantiating a :class:`~.Terminal` figures out whether you're on a terminal at
+all and, if so, does any necessary setup:
+
+    >>> term = Terminal()
+
+After that, you can proceed to ask it all sorts of things about the terminal,
+such as its size:
+
+    >>> term.height, term.width
+    (34, 102)
+
+Its color support:
+
+    >>> term.number_of_colors
+    256
+
+And use construct strings containing color and styling:
+
+    >>> term.green_reverse('ALL SYSTEMS GO')
+    u'\x1b[32m\x1b[7mALL SYSTEMS GO\x1b[m'
+
+Furthermore, the special sequences inserted with application keys
+(arrow and function keys) are understood and decoded, as well as your
+locale-specific encoded multibyte input, such as utf-8 characters.
 
 
-Simple Formatting
------------------
+Styling and Formatting
+----------------------
 
-Lots of handy formatting codes are available as attributes on a *Terminal* class
-instance. For example::
+Lots of handy formatting codes are available as attributes on a
+:class:`~.Terminal` class instance. For example::
 
     from blessings import Terminal
 
     term = Terminal()
+
     print('I am ' + term.bold + 'bold' + term.normal + '!')
 
 These capabilities (*bold*, *normal*) are translated to their sequences, which
-when displayed simply change the video attributes.  And, when used as a callable,
-automatically wraps the given string with this sequence, and terminates it with
-*normal*.
+when displayed simply change the video attributes.  And, when used as a
+callable, automatically wraps the given string with this sequence, and
+terminates it with *normal*.
 
 The same can be written as::
 
     print('I am' + term.bold('bold') + '!')
 
-You may also use the *Terminal* instance as an argument for ``.format`` string
-method, so that capabilities can be displayed in-line for more complex strings::
+You may also use the :class:`~.Terminal` instance as an argument for
+the :meth:`str.format`` method, so that capabilities can be displayed in-line
+for more complex strings::
 
     print('{t.red_on_yellow}Candy corn{t.normal} for everyone!'.format(t=term))
 
 
 Capabilities
-------------
+~~~~~~~~~~~~
 
 The basic capabilities supported by most terminals are:
 
@@ -68,7 +87,7 @@ The less commonly supported capabilities:
 ``no_shadow``
   Exit shadow text mode.
 ``standout``
-  Enable standout mode (often, an alias for ``reverse``.).
+  Enable standout mode (often, an alias for ``reverse``).
 ``no_standout``
   Exit standout mode.
 ``subscript``
@@ -88,13 +107,13 @@ colors.
 
 Many of these are aliases, their true capability names (such as 'smul' for
 'begin underline mode') may still be used. Any capability in the `terminfo(5)`_
-manual, under column **Cap-name**, may be used as an attribute to a *Terminal*
-instance. If it is not a supported capability, or a non-tty is used as an
-output stream, an empty string is returned.
+manual, under column **Cap-name**, may be used as an attribute of a
+:class:`~.Terminal` instance. If it is not a supported capability, or a non-tty
+is used as an output stream, an empty string is returned.
 
 
 Colors
-------
+~~~~~~
 
 Color terminals are capable of at least 8 basic colors.
 
@@ -110,8 +129,8 @@ Color terminals are capable of at least 8 basic colors.
 The same colors, prefixed with *bright_* (synonymous with *bold_*),
 such as *bright_blue*, provides 16 colors in total.
 
-The same colors, prefixed with *on_* sets the background color, some
-terminals also provide an additional 8 high-intensity versions using
+Prefixed with *on_*, the given color is used as the background color.
+Some terminals also provide an additional 8 high-intensity versions using
 *on_bright*, some example compound formats::
 
     from blessings import Terminal
@@ -119,50 +138,53 @@ terminals also provide an additional 8 high-intensity versions using
     term = Terminal()
 
     print(term.on_bright_blue('Blue skies!'))
+
     print(term.bright_red_on_bright_yellow('Pepperoni Pizza!'))
 
-There is also a numerical interface to colors, which takes an integer from
-0-15.::
+You may also specify the :meth:`~.Terminal.color` index by number, which
+should be within the bounds of value returned by
+:attr:`~.Terminal.number_of_colors`::
 
     from blessings import Terminal
 
     term = Terminal()
 
-    for n in range(16):
-        print(term.color(n)('Color {}'.format(n)))
-
-If the terminal defined by the **TERM** environment variable does not support
-colors, these simply return empty strings, or the string passed as an argument
-when used as a callable, without any video attributes. If the **TERM** defines
-a terminal that does support colors, but actually does not, they are usually
-harmless.
-
-Colorless terminals, such as the amber or green monochrome *vt220*, do not
-support colors but do support reverse video. For this reason, it may be
-desirable in some applications, such as a selection bar, to simply select
-a foreground color, followed by reverse video to achieve the desired
-background color effect::
-
-    from blessings import Terminal
-
-    term = Terminal()
-
-    print('some terminals {standout} more than others'.format(
-        standout=term.green_reverse('standout')))
-
-Which appears as *bright white on green* on color terminals, or *black text
-on amber or green* on monochrome terminals.
+    for idx in range(term.number_of_colors):
+        print(term.color(idx)('Color {0}'.format(idx)))
 
 You can check whether the terminal definition used supports colors, and how
-many, using the ``number_of_colors`` property, which returns any of *0*,
-*8* or *256* for terminal types such as *vt220*, *ansi*, and
+many, using the :attr:`~.Terminal.number_of_colors` property, which returns
+any of *0*, *8* or *256* for terminal types such as *vt220*, *ansi*, and
 *xterm-256color*, respectively.
 
-**NOTE**: On most color terminals, unlink *black*, *bright_black* is not
-invisible -- it is actually a very dark shade of gray!
+Colorless Terminals
+~~~~~~~~~~~~~~~~~~~
+
+If the terminal defined by the Environment variable **TERM** does not support
+colors, these simply return empty strings.  When used as a callable, the string
+passed as an argument is returned as-is.  Most sequences emitted to a terminal
+that does not support them are usually harmless and have no effect.
+
+Colorless terminals (such as the amber or green monochrome *vt220*) do not
+support colors but do support reverse video. For this reason, it may be
+desirable in some applications to simply select a foreground color, followed
+by reverse video to achieve the desired background color effect::
+
+    from blessings import Terminal
+
+    term = Terminal()
+
+    print(term.green_reverse('some terminals standout more than others'))
+
+Which appears as *black on green* on color terminals, but *black text
+on amber or green* on monochrome terminals. Whereas the more declarative
+formatter *black_on_green* would remain colorless.
+
+.. note:: On most color terminals, *bright_black* is not invisible -- it is
+    actually a very dark shade of gray!
 
 Compound Formatting
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 If you want to do lots of crazy formatting all at once, you can just mash it
 all together::
@@ -174,28 +196,30 @@ all together::
     print(term.bold_underline_green_on_yellow('Woo'))
 
 I'd be remiss if I didn't credit couleur_, where I probably got the idea for
-all this mashing.  This compound notation comes in handy if you want to allow
-users to customize formatting, just allow compound formatters, like *bold_green*,
-as a command line argument or configuration item::
+all this mashing.
+
+This compound notation comes in handy if you want to allow users to customize
+formatting, just allow compound formatters, like *bold_green*, as a command
+line argument or configuration item::
 
     #!/usr/bin/env python
     import argparse
+    from blessings import Terminal
 
     parser = argparse.ArgumentParser(
         description='displays argument as specified style')
     parser.add_argument('style', type=str, help='style formatter')
     parser.add_argument('text', type=str, nargs='+')
 
-    from blessings import Terminal
-
     term = Terminal()
+
     args = parser.parse_args()
 
     style = getattr(term, args.style)
 
     print(style(' '.join(args.text)))
 
-Saved as **tprint.py**, this could be called simply::
+Saved as **tprint.py**, this could be used like::
 
     $ ./tprint.py bright_blue_reverse Blue Skies
 
@@ -203,29 +227,34 @@ Saved as **tprint.py**, this could be called simply::
 Moving The Cursor
 -----------------
 
-When you want to move the cursor, you have a few choices, the
-``location(x=None, y=None)`` context manager, ``move(y, x)``, ``move_y(row)``,
-and ``move_x(col)`` attributes.
+When you want to move the cursor, you have a few choices:
 
-**NOTE**: The ``location()`` method receives arguments in form of *(x, y)*,
-whereas the ``move()`` argument receives arguments in form of *(y, x)*.  This
-is a flaw in the original `erikrose/blessings`_ implementation, but remains
-for compatibility.
+- ``location(x=None, y=None)`` context manager.
+- ``move(row, col)`` capability.
+- ``move_y(row)`` capability.
+- ``move_x(col)`` capability.
+
+.. note:: The :meth:`~.Terminal.location` method receives arguments in form
+    of *(x, y)*, whereas the ``move()`` capability receives arguments in form
+    of *(y, x)*.  This will be changed to match in the 2.0 release, :ghissue:`58`.
 
 Moving Temporarily
 ~~~~~~~~~~~~~~~~~~
 
-A context manager, ``location()`` is provided to move the cursor to an
-*(x, y)* screen position and restore the previous position upon exit::
+A context manager, :meth:`~.Terminal.location` is provided to move the cursor
+to an *(x, y)* screen position and restore the previous position upon exit::
 
     from blessings import Terminal
 
     term = Terminal()
+
     with term.location(0, term.height - 1):
         print('Here is the bottom.')
+
     print('This is back where I came from.')
 
-Parameters to ``location()`` are **optional** *x* and/or *y*::
+Parameters to :meth:`~.Terminal.location` are the **optional** *x* and/or *y*
+keyword arguments::
 
     with term.location(y=10):
         print('We changed just the row.')
@@ -236,8 +265,7 @@ When omitted, it saves the cursor position and restore it upon exit::
         print(term.move(1, 1) + 'Hi')
         print(term.move(9, 9) + 'Mom')
 
-**NOTE**: calls to ``location()`` may not be nested, as only one location
-may be saved.
+.. note:: calls to :meth:`~.Terminal.location` may not be nested.
 
 
 Moving Permanently
@@ -269,14 +297,17 @@ cursor one character in various directions:
 * ``move_up``
 * ``move_down``
 
-**NOTE**: *move_down* is often valued as *\\n*, which additionally returns
-the carriage to column 0, depending on your terminal emulator.
+.. note:: *move_down* is often valued as *\\n*, which additionally returns
+   the carriage to column 0, depending on your terminal emulator, and may
+   also destructively destroy any characters at the given position to the
+   end of margin.
 
 
 Height And Width
 ----------------
 
-Use the *height* and *width* properties of the *Terminal* class instance::
+Use the :attr:`~.Terminal.height` and :attr:`~.Terminal.width` properties to
+determine the size of the window::
 
     from blessings import Terminal
 
@@ -285,7 +316,8 @@ Use the *height* and *width* properties of the *Terminal* class instance::
     with term.location(x=term.width / 3, y=term.height / 3):
         print('1/3 ways in!')
 
-These are always current, so they may be used with a callback from SIGWINCH_ signals.::
+These values are always current.  To detect when the size of the window
+changes, you may author a callback for SIGWINCH_ signals::
 
     import signal
     from blessings import Terminal
@@ -297,7 +329,8 @@ These are always current, so they may be used with a callback from SIGWINCH_ sig
 
     signal.signal(signal.SIGWINCH, on_resize)
 
-    term.inkey()
+    # wait for keypress
+    term.keystroke()
 
 
 Clearing The Screen
@@ -336,7 +369,7 @@ There's also a context manager you can use as a shortcut::
     with term.fullscreen():
         print(term.move_y(term.height // 2) +
               term.center('press any key').rstrip())
-        term.inkey()
+        term.keystroke()
 
 
 Pipe Savvy
@@ -344,13 +377,13 @@ Pipe Savvy
 
 If your program isn't attached to a terminal, such as piped to a program
 like *less(1)* or redirected to a file, all the capability attributes on
-*Terminal* will return empty strings. You'll get a nice-looking file without
-any formatting codes gumming up the works.
+:class:`~.Terminal` will return empty strings. You'll get a nice-looking
+file without any formatting codes gumming up the works.
 
-If you want to override this, such as when piping output to ``less -r``, pass
-argument ``force_styling=True`` to the *Terminal* constructor.
+If you want to override this, such as when piping output to *less -r*, pass
+argument value *True* to the :paramref:`~.Terminal.force_styling` parameter.
 
-In any case, there is a *does_styling* attribute on *Terminal* that lets
+In any case, there is a :attr:`~.Terminal.does_styling` attribute that lets
 you see whether the terminal attached to the output stream is capable of
 formatting.  If it is *False*, you may refrain from drawing progress
 bars and other frippery and just stick to content::
@@ -361,34 +394,38 @@ bars and other frippery and just stick to content::
     if term.does_styling:
         with term.location(x=0, y=term.height - 1):
             print('Progress: [=======>   ]')
-    print(term.bold('Important stuff'))
+    print(term.bold("60%"))
 
 
 Sequence Awareness
 ------------------
 
 Blessings may measure the printable width of strings containing sequences,
-providing ``.center``, ``.ljust``, and ``.rjust`` methods, using the
-terminal screen's width as the default *width* value::
+providing :meth:`~.Terminal.center`, :meth:`~.Terminal.ljust`, and
+:meth:`~.Terminal.rjust` methods, using the terminal screen's width as
+the default *width* value::
+
+    from __future__ import division
+    from blessings import Terminal
+
+    term = Terminal()
+    with term.location(y=term.height // 2):
+        print(term.center(term.bold('bold and centered')))
+
+Any string containing sequences may have its printable length measured using
+the :meth:`~.Terminal.length` method.
+
+Additionally, a sequence-aware version of :func:`textwrap.wrap` is supplied as
+class as method :meth:`~.Terminal.wrap` that is also sequence-aware, so now you
+may word-wrap strings containing sequences.  The following example displays a
+poem word-wrapped to 25 columns::
 
     from blessings import Terminal
 
     term = Terminal()
-    with term.location(y=term.height / 2):
-        print (term.center(term.bold('X'))
 
-Any string containing sequences may have its printable length measured using the
-``.length`` method. Additionally, ``textwrap.wrap()`` is supplied on the Terminal
-class as method ``.wrap`` method that is also sequence-aware, so now you may
-word-wrap strings containing sequences.  The following example displays a poem
-from Tao Te Ching, word-wrapped to 25 columns::
-
-    from blessings import Terminal
-
-    term = Terminal()
-
-    poem = (term.bold_blue('Plan difficult tasks'),
-            term.blue('through the simplest tasks'),
+    poem = (term.bold_cyan('Plan difficult tasks'),
+            term.cyan('through the simplest tasks'),
             term.bold_cyan('Achieve large tasks'),
             term.cyan('through the smallest tasks'))
 
@@ -399,64 +436,77 @@ from Tao Te Ching, word-wrapped to 25 columns::
 Keyboard Input
 --------------
 
-The built-in python function ``raw_input`` function does not return a value until
+The built-in python function :func:`raw_input` does not return a value until
 the return key is pressed, and is not suitable for detecting each individual
-keypress, much less arrow or function keys that emit multibyte sequences.
+keypress, much less arrow or function keys.
 
-Special `termios(4)`_ routines are required to enter Non-canonical mode, known
-in curses as `cbreak(3)`_.  When calling read on input stream, only bytes are
-received, which must be decoded to unicode.
+Furthermore, when calling :func:`os.read` on input stream, only bytes are
+received, which must be decoded to unicode using the locale-preferred encoding.
+Finally, multiple bytes may be emitted which must be paired with some verb like
+``KEY_LEFT``: blessings handles all of these special cases for you!
 
-Blessings handles all of these special cases!!
+keystroke_input
+~~~~~~~~~~~~~~~
 
-cbreak
-~~~~~~
-
-The context manager ``cbreak`` can be used to enter *key-at-a-time* mode: Any
-keypress by the user is immediately consumed by read calls::
+The context manager :meth:`~.Terminal.keystroke_input` can be used to enter
+*key-at-a-time* mode: Any keypress by the user is immediately consumed by read
+calls::
 
     from blessings import Terminal
     import sys
 
-    t = Terminal()
+    term = Terminal()
 
-    with t.cbreak():
-        # blocks until any key is pressed.
+    with term.keystroke_input():
+        # block until any single key is pressed.
         sys.stdin.read(1)
 
-raw
-~~~
+The mode entered using :meth:`~.Terminal.keystroke_input` is called
+`cbreak(3)`_ in curses:
 
-The context manager ``raw`` is the same as ``cbreak``, except interrupt (^C),
-quit (^\\), suspend (^Z), and flow control (^S, ^Q) characters are not trapped,
-but instead sent directly as their natural character. This is necessary if you
-actually want to handle the receipt of Ctrl+C
+  The cbreak routine disables line buffering and erase/kill
+  character-processing (interrupt and flow control characters are unaffected),
+  making characters typed by the user immediately available to the program.
 
-inkey
-~~~~~
+:meth:`~.Terminal.keystroke_input` also accepts optional parameter
+:paramref:`~.Terminal.keystroke_input.raw` which may be set as *True*.  When used,
+the given behavior is described in `raw(3)`_ as follows:
 
-The method ``inkey`` resolves many issues with terminal input by returning
-a unicode-derived *Keypress* instance.  Although its return value may be
-printed, joined with, or compared to other unicode strings, it also provides
-the special attributes ``is_sequence`` (bool), ``code`` (int),
-and ``name`` (str)::
+  The raw and noraw routines place the terminal into or out of raw mode.
+  Raw mode is similar to cbreak mode, in that characters typed are immediately
+  passed through to the user program.  The differences are that in raw mode,
+  the interrupt, quit, suspend, and flow control characters are all passed
+  through uninterpreted, instead of generating a signal.
+
+keystroke
+~~~~~~~~~
+
+The method :meth:`~.Terminal.keystroke` combined with `keystroke_input`_
+completes the circle of providing key-at-a-time keyboard input with multibyte
+encoding and awareness of application keys.
+
+:meth:`~.Terminal.keystroke` resolves many issues with terminal input by
+returning a unicode-derived :class:`~.Keystroke` instance.  Its return value
+may be printed, joined with, or compared like any other unicode strings, it
+also provides the special attributes :attr:`~.Keystroke.is_sequence`,
+:attr:`~.Keystroke.code`, and :attr:`~.Keystroke.name`::
 
     from blessings import Terminal
 
-    t = Terminal()
+    term = Terminal()
 
     print("press 'q' to quit.")
-    with t.cbreak():
-        val = None
+    with term.keystroke_input():
+        val = u''
         while val not in (u'q', u'Q',):
-            val = t.inkey(timeout=5)
+            val = term.keystroke(timeout=5)
             if not val:
                # timeout
                print("It sure is quiet in here ...")
             elif val.is_sequence:
-               print("got sequence: {}.".format((str(val), val.name, val.code)))
+               print("got sequence: {0}.".format((str(val), val.name, val.code)))
             elif val:
-               print("got {}.".format(val))
+               print("got {0}.".format(val))
         print('bye!')
 
 Its output might appear as::
@@ -473,45 +523,51 @@ Its output might appear as::
     got q.
     bye!
 
-A ``timeout`` value of *None* (default) will block forever. Any other value
-specifies the length of time to poll for input, if no input is received after
-such time has elapsed, an empty string is returned. A ``timeout`` value of *0*
-is non-blocking.
+A :paramref:`~.Terminal.keystroke.timeout` value of *None* (default) will block
+forever until a keypress is received. Any other value specifies the length of
+time to poll for input: if no input is received after the given time has
+elapsed, an empty string is returned. A
+:paramref:`~.Terminal.keystroke.timeout` value of *0* is non-blocking.
 
 keyboard codes
 ~~~~~~~~~~~~~~
 
-The return value of the *Terminal* method ``inkey`` is an instance of the
-class ``Keystroke``, and may be inspected for its property ``is_sequence``
-(bool).  When *True*, the value is a **multibyte sequence**, representing
-a special non-alphanumeric key of your keyboard.
+When the :attr:`~.Keystroke.is_sequence` property tests *True*, the value
+is a special application key of the keyboard.  The :attr:`~.Keystroke.code`
+attribute may then be compared with attributes of :class:`~.Terminal`,
+which are duplicated from those found in `curs_getch(3)`_, or those
+`constants <https://docs.python.org/3/library/curses.html#constants>`_
+in :mod:`curses` beginning with phrase *KEY_*.
 
-The ``code`` property (int) may then be compared with attributes of
-*Terminal*, which are duplicated from those seen in the manpage
-`curs_getch(3)`_ or the curses_ module, with the following helpful
-aliases:
+Some of these mnemonics are shorthand or predate modern PC terms and
+are difficult to recall. The following helpful aliases are provided
+instead:
 
-* use ``KEY_DELETE`` for ``KEY_DC`` (chr(127)).
-* use ``KEY_TAB`` for chr(9).
-* use ``KEY_INSERT`` for ``KEY_IC``.
-* use ``KEY_PGUP`` for ``KEY_PPAGE``.
-* use ``KEY_PGDOWN`` for ``KEY_NPAGE``.
-* use ``KEY_ESCAPE`` for ``KEY_EXIT``.
-* use ``KEY_SUP`` for ``KEY_SR`` (shift + up).
-* use ``KEY_SDOWN`` for ``KEY_SF`` (shift + down).
-* use ``KEY_DOWN_LEFT`` for ``KEY_C1`` (keypad lower-left).
-* use ``KEY_UP_RIGHT`` for ``KEY_A1`` (keypad upper-left).
-* use ``KEY_DOWN_RIGHT`` for ``KEY_C3`` (keypad lower-left).
-* use ``KEY_UP_RIGHT`` for ``KEY_A3`` (keypad lower-right).
-* use ``KEY_CENTER`` for ``KEY_B2`` (keypad center).
-* use ``KEY_BEGIN`` for ``KEY_BEG``.
+=================== ============= ====================
+blessings           curses        note
+=================== ============= ====================
+``KEY_DELETE``      ``KEY_DC``    chr(127).
+``KEY_TAB``                       chr(9)
+``KEY_INSERT``      ``KEY_IC``
+``KEY_PGUP``        ``KEY_PPAGE``
+``KEY_PGDOWN``      ``KEY_NPAGE``
+``KEY_ESCAPE``      ``KEY_EXIT``
+``KEY_SUP``         ``KEY_SR``    (shift + up)
+``KEY_SDOWN``       ``KEY_SF``    (shift + down)
+``KEY_DOWN_LEFT``   ``KEY_C1``    (keypad lower-left)
+``KEY_UP_RIGHT``    ``KEY_A1``    (keypad upper-left)
+``KEY_DOWN_RIGHT``  ``KEY_C3``    (keypad lower-left)
+``KEY_UP_RIGHT``    ``KEY_A3``    (keypad lower-right)
+``KEY_CENTER``      ``KEY_B2``    (keypad center)
+``KEY_BEGIN``       ``KEY_BEG``
+=================== ============= ====================
 
-The *name* property of the return value of ``inkey()`` will prefer
-these aliases over the built-in curses_ names.
+The :attr:`~.Keystroke.name` property will prefer these
+aliases over the built-in :mod:`curses` names.
 
-The following are **not** available in the curses_ module, but
+The following are **not** available in the :mod:`curses` module, but are
 provided for keypad support, especially where the :meth:`~.Terminal.keypad`
-context manager is used:
+context manager is used with numlock on:
 
 * ``KEY_KP_MULTIPLY``
 * ``KEY_KP_ADD``
@@ -521,11 +577,10 @@ context manager is used:
 * ``KEY_KP_DIVIDE``
 * ``KEY_KP_0`` through ``KEY_KP_9``
 
-.. _`erikrose/blessings`: https://github.com/erikrose/blessings
-.. _curses: https://docs.python.org/library/curses.html
 .. _couleur: https://pypi.python.org/pypi/couleur
 .. _wcwidth: https://pypi.python.org/pypi/wcwidth
 .. _`cbreak(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
+.. _`raw(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=raw&apropos=0&sektion=3
 .. _`curs_getch(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=curs_getch&apropos=0&sektion=3
 .. _`termios(4)`: http://www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4
 .. _`terminfo(5)`: http://invisible-island.net/ncurses/man/terminfo.5.html

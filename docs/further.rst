@@ -6,7 +6,7 @@ that dive deeper into Terminal I/O programming than :class:`~.Terminal` offers.
 Here are some recommended readings to help you along:
 
 - `terminfo(5)
-  <http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5>`_
+  <http://invisible-island.net/ncurses/man/terminfo.5.html>`_
   manpage of your preferred posix-like operating system. The capabilities
   available as attributes of :class:`~.Terminal` are directly mapped to those
   listed in the column **Cap-name**.
@@ -16,8 +16,8 @@ Here are some recommended readings to help you along:
   of your preferred posix-like operating system.
 
 - `The TTY demystified
-  <http://www.linusakesson.net/programming/tty/index.php>`_ by
-  Linus Åkesson.
+  <http://www.linusakesson.net/programming/tty/index.php>`_
+  by Linus Åkesson.
 
 - `A Brief Introduction to Termios
   <https://blog.nelhage.com/2009/12/a-brief-introduction-to-termios/>`_ by
@@ -53,18 +53,19 @@ Here are some recommended readings to help you along:
   terminal types) emitted by most terminal capabilities to an action in a
   series of ``case`` switch statements.
 
-  - Many modern libraries are now based `https://github.com/GNOME/vte
-    <libvte>`_ (or just 'vte'): Gnome Terminal, sakura, Terminator, Lilyterm,
-    ROXTerm, evilvte, Termit, Termite, Tilda, tinyterm, lxterminal.
-  - `Thomas E. Dickey <http://invisible-island.net/>` has been maintaining
+  - Many modern libraries are now based on `libvte
+    <https://github.com/GNOME/vte>`_ (or just 'vte'): Gnome Terminal,
+    sakura, Terminator, Lilyterm, ROXTerm, evilvte, Termit, Termite, Tilda,
+    tinyterm, lxterminal.
+  - `Thomas E. Dickey <http://invisible-island.net/>`_ has been maintaining
     `xterm <http://invisible-island.net/xterm/xterm.html>`_, as well as a
-    primary maintainer of many related packages such as `ncurses 
+    primary maintainer of many related packages such as `ncurses
     <http://invisible-island.net/ncurses/ncurses.html>`_ for quite a long
     while.  There is often speculation and misinformation among developers of
     terminal emulators and programs that interact with them.  Thomas Dickey's
     analysis is always thorough and complete.
   - xterm, urxvt, SyncTerm, and EtherTerm.
-  - There are far too many to name, Chose one you like! Thomas Dickey
+  - There are far too many to name, Chose one you like!
 
 
 - The source code of the tty(4), pty(4), and the given "console driver" for
@@ -76,7 +77,7 @@ Here are some recommended readings to help you along:
 
      - `FreeBSD <https://github.com/freebsd/freebsd/blob/master/sys/kern/tty.c>`_
      - `OpenBSD <http://cvsweb.openbsd.org/cgi-bin/cvsweb/~checkout~/src/sys/kern/tty.c?content-type=text/plain>`_
-     - `Illumos (Solaris) <https://github.com/illumos/illumos-gate/blob/master/usr/src/uts/common/io/tty_common.c>`
+     - `Illumos (Solaris) <https://github.com/illumos/illumos-gate/blob/master/usr/src/uts/common/io/tty_common.c>`_
      - `Minix <https://github.com/minix3/minix/blob/master/minix/drivers/tty/tty/tty.c>`_
      - `Linux <https://github.com/torvalds/linux/blob/master/drivers/tty/n_tty.c>`_
 

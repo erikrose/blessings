@@ -1,4 +1,4 @@
-"""This sub-module provides formatting functions."""
+"""This sub-module provides sequence-formatting functions."""
 # standard imports
 import curses
 
@@ -31,10 +31,11 @@ def _make_compoundables(colors):
     return colors | _compoundables
 
 
-#: Valid colors and their background (on), bright, and bright-bg derivatives.
+#: Valid colors and their background (on), bright,
+#: and bright-background derivatives.
 COLORS = _make_colors()
 
-#: Attributes and colors which may be compounded by underscore (``u'_'``).
+#: Attributes and colors which may be compounded by underscore.
 COMPOUNDABLES = _make_compoundables(COLORS)
 
 
@@ -71,7 +72,7 @@ class ParameterizingString(six.text_type):
 
         Return evaluated terminal capability (self), receiving arguments
         ``*args``, followed by the terminating sequence (self.normal) into
-        a FormattingString capable of being called.
+        a :class:`FormattingString` capable of being called.
 
         :rtype: :class:`FormattingString` or :class:`NullCallableString`
         """
@@ -154,7 +155,6 @@ class ParameterizingProxyString(six.text_type):
         receives two integers.  See documentation in terminfo(5) for the
         given capability.
 
-        :returns: class instance of :class:`FormattingString`.
         :rtype: FormattingString
         """
         return FormattingString(self.format(*self._fmt_args(*args)),
@@ -165,16 +165,13 @@ def get_proxy_string(term, attr):
     """
     Proxy and return callable string for proxied attributes.
 
-    :param blessings.Terminal term: :class:`~.Terminal` instance.
+    :param Terminal term: :class:`~.Terminal` instance.
     :param str attr: terminal capability name that may be proxied.
     :rtype: None or :class:`ParameterizingProxyString`.
     :returns: :class:`ParameterizingProxyString` for some attributes
         of some terminal types that support it, where the terminfo(5)
         database would otherwise come up empty, such as ``move_x``
         attribute for ``term.kind`` of ``screen``.  Otherwise, None.
-
-
-    Returns instance of ParameterizingProxyString or NullCallableString.
     """
     # normalize 'screen-256color', or 'ansi.sys' to its basic names
     term_kind = next(iter(_kind for _kind in ('screen', 'ansi',)
@@ -257,12 +254,12 @@ class NullCallableString(six.text_type):
         Allow empty string to be callable, returning given string, if any.
 
         When called with an int as the first arg, return an empty Unicode. An
-        int is a good hint that I am a ``ParameterizingString``, as there are
-        only about half a dozen string-returning capabilities listed in
+        int is a good hint that I am a :class:`ParameterizingString`, as there
+        are only about half a dozen string-returning capabilities listed in
         terminfo(5) which accept non-int arguments, they are seldom used.
 
         When called with a non-int as the first arg (no no args at all), return
-        the first arg, acting in place of ``FormattingString`` without
+        the first arg, acting in place of :class:`FormattingString` without
         any attributes.
         """
         if len(args) != 1 or isinstance(args[0], int):
@@ -298,7 +295,6 @@ def split_compound(compound):
 
     :param str compound: a string that may contain compounds,
        separated by underline (``_``).
-    :returns: list of at least 1 length containing strings.
     :rtype: list
     """
     merged_segs = []
@@ -316,11 +312,11 @@ def resolve_capability(term, attr):
     """
     Resolve a raw terminal capability using :func:`tigetstr`.
 
-    :param blessings.Terminal term: :class:`~.Terminal` instance.
-    :param str attr: terminal capability name (see terminfo(5)).
+    :param Terminal term: :class:`~.Terminal` instance.
+    :param str attr: terminal capability name.
     :returns: string of the given terminal capability named by ``attr``,
-       which may be empty (``u''``) if not found or not supported by the
-       given ``term.kind``.
+       which may be empty (u'') if not found or not supported by the
+       given :attr:`~.Terminal.kind`.
     :rtype: str
     """
     # Decode sequences as latin1, as they are always 8-bit bytes, so when
@@ -337,13 +333,15 @@ def resolve_color(term, color):
 
     This function supports :func:`resolve_attribute`.
 
-    :param blessings.Terminal term: :class:`~.Terminal` instance.
+    :param Terminal term: :class:`~.Terminal` instance.
     :param str color: any string found in set :const:`COLORS`.
     :returns: a string class instance which emits the terminal sequence
         for the given color, and may be used as a callable to wrap the
         given string with such sequence.
-    :rtype: :class:`NullCallableString` when ``term.number_of_colors`` is 0,
+    :returns: :class:`NullCallableString` when
+        :attr:`~.Terminal.number_of_colors` is 0,
         otherwise :class:`FormattingString`.
+    :rtype: :class:`NullCallableString` or :class:`FormattingString`
     """
     if term.number_of_colors == 0:
         return NullCallableString()
@@ -351,7 +349,8 @@ def resolve_color(term, color):
     # NOTE(erikrose): Does curses automatically exchange red and blue and cyan
     # and yellow when a terminal supports setf/setb rather than setaf/setab?
     # I'll be blasted if I can find any documentation. The following
-    # assumes it does.
+    # assumes it does: to terminfo(5) describes color(1) as COLOR_RED when
+    # using setaf, but COLOR_BLUE when using setf.
     color_cap = (term._background_color if 'on_' in color else
                  term._foreground_color)
 
@@ -369,15 +368,17 @@ def resolve_attribute(term, attr):
     """
     Resolve a terminal attribute name into a capability class.
 
-    :param blessings.Terminal term: :class:`~.Terminal` instance.
+    :param Terminal term: :class:`~.Terminal` instance.
     :param str attr: Sugary, ordinary, or compound formatted terminal
         capability, such as "red_on_white", "normal", "red", or
         "bold_on_black", respectively.
     :returns: a string class instance which emits the terminal sequence
         for the given terminal capability, or may be used as a callable to
         wrap the given string with such sequence.
-    :rtype: :class:`NullCallableString` if the given ``term.number_of_colors``
-        is 0, otherwise :class:`FormattingString`.
+    :returns: :class:`NullCallableString` when
+        :attr:`~.Terminal.number_of_colors` is 0,
+        otherwise :class:`FormattingString`.
+    :rtype: :class:`NullCallableString` or :class:`FormattingString`
     """
     if attr in COLORS:
         return resolve_color(term, attr)
