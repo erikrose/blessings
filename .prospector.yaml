@@ -6,7 +6,6 @@ ignore-patterns:
   - ^docs/
   - ^build/
   # ignore these, their quality does not so much matter.
-  - ^bin/
   - ^blessings/tests/
   - ^tools/
   # not maintained
