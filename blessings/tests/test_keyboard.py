@@ -3,11 +3,6 @@
 # std imports
 import functools
 import tempfile
-try:
-    from StringIO import StringIO
-except ImportError:
-    import io
-    StringIO = io.StringIO
 import platform
 import signal
 import curses
@@ -35,6 +30,7 @@ from .accessories import (
 # 3rd-party
 import pytest
 import mock
+import six
 
 if sys.version_info[0] == 3:
     unichr = chr
@@ -261,7 +257,7 @@ def test_char_is_ready_no_kb():
     "_char_is_ready() always immediately returns False without a keyboard."
     @as_subprocess
     def child():
-        term = TestTerminal(stream=StringIO())
+        term = TestTerminal(stream=six.StringIO())
         stime = time.time()
         assert term._keyboard_fd is None
         assert not term._char_is_ready(timeout=1.1)
@@ -286,7 +282,7 @@ def test_keystroke_0s_keystroke_input_noinput_nokb():
     "0-second keystroke without data in input stream and no keyboard/tty."
     @as_subprocess
     def child():
-        term = TestTerminal(stream=StringIO())
+        term = TestTerminal(stream=six.StringIO())
         with term.keystroke_input():
             stime = time.time()
             inp = term.keystroke(timeout=0)
@@ -312,7 +308,7 @@ def test_keystroke_1s_keystroke_input_noinput_nokb():
     "1-second keystroke without input or keyboard."
     @as_subprocess
     def child():
-        term = TestTerminal(stream=StringIO())
+        term = TestTerminal(stream=six.StringIO())
         with term.keystroke_input():
             stime = time.time()
             inp = term.keystroke(timeout=1)

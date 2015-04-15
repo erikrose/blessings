@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Accessories for automated py.test runner."""
 # standard imports
-from __future__ import with_statement
+from __future__ import with_statement, print_function
 import contextlib
 import subprocess
 import functools
@@ -27,7 +27,7 @@ RECV_SEMAPHORE = b'SEMAPHORE\r\n'
 all_xterms_params = ['xterm', 'xterm-256color']
 many_lines_params = [30, 100]
 many_columns_params = [1, 10]
-from blessings._binterms import binary_terminals
+from blessings._binterms import BINARY_TERMINALS
 default_all_terms = ['screen', 'vt220', 'rxvt', 'cons25', 'linux', 'ansi']
 if os.environ.get('TEST_ALLTERMS'):
     try:
@@ -42,7 +42,7 @@ if os.environ.get('TEST_ALLTERMS'):
 else:
     available_terms = default_all_terms
 all_terms_params = list(set(available_terms) - (
-    set(binary_terminals) if not os.environ.get('TEST_BINTERMS')
+    set(BINARY_TERMINALS) if not os.environ.get('TEST_BINTERMS')
     else set())) or default_all_terms
 
 
@@ -58,6 +58,7 @@ class as_subprocess(object):
         self.func = func
 
     def __call__(self, *args, **kwargs):
+        pid_testrunner = os.getpid()
         pid, master_fd = pty.fork()
         if pid == self._CHILD_PID:
             # child process executes function, raises exception
@@ -93,6 +94,10 @@ class as_subprocess(object):
                     cov.save()
                 os._exit(0)
 
+        if pid_testrunner != os.getpid():
+            print('TEST RUNNER HAS FORKED, {0}=>{1}: EXIT'
+                  .format(pid_testrunner, os.getpid()), file=sys.stderr)
+            os._exit(1)
         exc_output = six.text_type()
         decoder = codecs.getincrementaldecoder(self.encoding)()
         while True:
@@ -206,7 +211,7 @@ def unicode_parm(cap, *parms):
     return u''
 
 
-@pytest.fixture(params=binary_terminals)
+@pytest.fixture(params=BINARY_TERMINALS)
 def unsupported_sequence_terminals(request):
     """Terminals that emit warnings for unsupported sequence-awareness."""
     return request.param

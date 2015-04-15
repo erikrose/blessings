@@ -2,10 +2,6 @@
 "Core blessings Terminal() tests."
 
 # std
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 import collections
 import warnings
 import platform
@@ -13,6 +9,7 @@ import locale
 import sys
 import imp
 import os
+import io
 
 # local
 from .accessories import (
@@ -25,6 +22,7 @@ from .accessories import (
 # 3rd party
 import mock
 import pytest
+import six
 
 
 def test_export_only_Terminal():
@@ -37,7 +35,7 @@ def test_null_location(all_terms):
     "Make sure ``location()`` with no args just does position restoration."
     @as_subprocess
     def child(kind):
-        t = TestTerminal(stream=StringIO(), force_styling=True)
+        t = TestTerminal(stream=six.StringIO(), force_styling=True)
         with t.location():
             pass
         expected_output = u''.join(
@@ -51,7 +49,7 @@ def test_flipped_location_move(all_terms):
     "``location()`` and ``move()`` receive counter-example arguments."
     @as_subprocess
     def child(kind):
-        buf = StringIO()
+        buf = six.StringIO()
         t = TestTerminal(stream=buf, force_styling=True)
         y, x = 10, 20
         with t.location(y, x):
@@ -67,7 +65,7 @@ def test_yield_keypad():
     @as_subprocess
     def child(kind):
         # given,
-        t = TestTerminal(stream=StringIO(), force_styling=True)
+        t = TestTerminal(stream=six.StringIO(), force_styling=True)
         expected_output = u''.join((t.smkx, t.rmkx))
 
         # exercise,
@@ -85,7 +83,7 @@ def test_null_fileno():
     @as_subprocess
     def child():
         # This simulates piping output to another program.
-        out = StringIO()
+        out = six.StringIO()
         out.fileno = None
         t = TestTerminal(stream=out)
         assert (t.save == u'')
@@ -97,12 +95,12 @@ def test_number_of_colors_without_tty():
     "``number_of_colors`` should return 0 when there's no tty."
     @as_subprocess
     def child_256_nostyle():
-        t = TestTerminal(stream=StringIO())
+        t = TestTerminal(stream=six.StringIO())
         assert (t.number_of_colors == 0)
 
     @as_subprocess
     def child_256_forcestyle():
-        t = TestTerminal(stream=StringIO(), force_styling=True)
+        t = TestTerminal(stream=six.StringIO(), force_styling=True)
         assert (t.number_of_colors == 256)
 
     @as_subprocess
@@ -112,13 +110,13 @@ def test_number_of_colors_without_tty():
             # 'ansi' on freebsd returns 0 colors, we use the 'cons25' driver,
             # compatible with its kernel tty.c
             kind = 'cons25'
-        t = TestTerminal(kind=kind, stream=StringIO(),
+        t = TestTerminal(kind=kind, stream=six.StringIO(),
                          force_styling=True)
         assert (t.number_of_colors == 8)
 
     @as_subprocess
     def child_0_forcestyle():
-        t = TestTerminal(kind='vt220', stream=StringIO(),
+        t = TestTerminal(kind='vt220', stream=six.StringIO(),
                          force_styling=True)
         assert (t.number_of_colors == 0)
 
@@ -159,7 +157,7 @@ def test_init_descriptor_always_initted(all_terms):
     "Test height and width with non-tty Terminals."
     @as_subprocess
     def child(kind):
-        t = TestTerminal(kind=kind, stream=StringIO())
+        t = TestTerminal(kind=kind, stream=six.StringIO())
         assert t._init_descriptor == sys.__stdout__.fileno()
         assert (isinstance(t.height, int))
         assert (isinstance(t.width, int))
@@ -300,20 +298,6 @@ def test_python3_2_raises_exception(monkeypatch):
         assert False, 'Exception should have been raised'
 
 
-def test_IOUnsupportedOperation_dummy(monkeypatch):
-    "Ensure dummy exception is used when io is without UnsupportedOperation."
-    import blessings.terminal
-    import io
-    if hasattr(io, 'UnsupportedOperation'):
-        monkeypatch.delattr('io.UnsupportedOperation')
-
-    imp.reload(blessings.terminal)
-    assert blessings.terminal.IOUnsupportedOperation.__doc__.startswith(
-        "A dummy exception to take the place of")
-    monkeypatch.undo()
-    imp.reload(blessings.terminal)
-
-
 def test_without_dunder():
     "Ensure dunder does not remain in module (py2x InterruptedError test."
     import blessings.terminal
@@ -327,7 +311,7 @@ def test_IOUnsupportedOperation():
         import blessings.terminal
 
         def side_effect():
-            raise blessings.terminal.IOUnsupportedOperation
+            raise io.UnsupportedOperation
 
         mock_stream = mock.Mock()
         mock_stream.fileno = side_effect
@@ -361,7 +345,7 @@ def test_yield_fullscreen(all_terms):
     "Ensure ``fullscreen()`` writes enter_fullscreen and exit_fullscreen."
     @as_subprocess
     def child(kind):
-        t = TestTerminal(stream=StringIO(), force_styling=True)
+        t = TestTerminal(stream=six.StringIO(), force_styling=True)
         t.enter_fullscreen = u'BEGIN'
         t.exit_fullscreen = u'END'
         with t.fullscreen():
@@ -376,7 +360,7 @@ def test_yield_hidden_cursor(all_terms):
     "Ensure ``hidden_cursor()`` writes hide_cursor and normal_cursor."
     @as_subprocess
     def child(kind):
-        t = TestTerminal(stream=StringIO(), force_styling=True)
+        t = TestTerminal(stream=six.StringIO(), force_styling=True)
         t.hide_cursor = u'BEGIN'
         t.normal_cursor = u'END'
         with t.hidden_cursor():
@@ -447,7 +431,7 @@ def test_win32_missing_tty_modules(monkeypatch):
                 imp.reload(blessings.terminal)
             except UserWarning:
                 err = sys.exc_info()[1]
-                assert err.args[0] == blessings.terminal.msg_nosupport
+                assert err.args[0] == blessings.terminal._MSG_NOSUPPORT
 
             warnings.filterwarnings("ignore", category=UserWarning)
             import blessings.terminal

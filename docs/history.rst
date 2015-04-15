@@ -1,8 +1,9 @@
 Version History
 ===============
 
-2.0
-  * This release is primarily a set of contributions from
+1.9.5
+  * This release is primarily a set of contributions from the
+    `blessed <https://github.com/jquast/blessed>` fork by
     :ghuser:`jquast` unless otherwise indicated.
 
     **new features**:
@@ -34,7 +35,7 @@ Version History
         this occurs on win32 or other platforms using a limited curses
         implementation, such as PDCurses_, where :func:`curses.tparm` is
         not implemented, or no terminal capability database is available.
-      - New public attribute: :attr:`~.kind`: the very same as given 
+      - New public attribute: :attr:`~.kind`: the very same as given
         by the keyword argument of the same (or, determined by and
         equivalent to the ``TERM`` Environment variable).
       - Some attributes are now properties and raise exceptions when assigned,
@@ -52,9 +53,10 @@ Version History
       - The '2to3' tool is no longer used for python 3 support
       - Converted nose tests to pytest via tox. Added a TeamCity build farm to
         include OSX and FreeBSD testing. ``tox`` is now the primary entry point
-        with which to execute tests, run static analysis, and build documentation.
-      - py.test fixtures and ``@as_subprocess`` decorator for testing of many more
-        terminal types than just 'xterm-256-color' as previously tested.
+        with which to execute tests, run static analysis, and build
+        documentation.
+      - py.test fixtures and ``@as_subprocess`` decorator for testing of many
+        more terminal types than just 'xterm-256-color' as previously tested.
       - ``setup.py develop`` ensures a virtualenv and installs tox.
       - 100% (combined) coverage.
 
@@ -118,10 +120,10 @@ Version History
 1.4
   * Add syntactic sugar for cursor visibility control and single-space-movement
     capabilities.
-  * Endorse the :meth:`~.location` context manager for restoring cursor position
-    after a series of manual movements.
-  * Fix a bug in which :meth:`~.location` that wouldn't do anything when passed
-    zeros.
+  * Endorse the :meth:`~.location` context manager for restoring cursor
+    position after a series of manual movements.
+  * Fix a bug in which :meth:`~.location` that wouldn't do anything when
+    passed zeros.
   * Allow tests to be run with ``python setup.py test``.
 
 1.3
@@ -133,9 +135,9 @@ Version History
     termcap entries for ``setaf`` and ``setab`` are not available.
   * Allowed :attr:`~.color` to act as an unparametrized string, not just a
     callable.
-  * Made :attr:`~.height` and :attr:`~.width` examine any passed-in stream before
-    falling back to stdout (This rarely if ever affects actual behavior; it's
-    mostly philosophical).
+  * Made :attr:`~.height` and :attr:`~.width` examine any passed-in stream
+    before falling back to stdout (This rarely if ever affects actual behavior;
+    it's mostly philosophical).
   * Made caching simpler and slightly more efficient.
   * Got rid of a reference cycle between :class:`~.Terminal` and
     :class:`~.FormattingString`.

@@ -20,9 +20,12 @@
 
 .. image:: https://img.shields.io/pypi/dm/blessings.svg
     :alt: Downloads
+    :target: https://pypi.python.org/pypi/blessings
 
 Introduction
 ============
+
+Blessings is a thin, practical wrapper around terminal capabilities in Python.
 
 Coding with *Blessings* looks like this... ::
 
@@ -36,8 +39,9 @@ Coding with *Blessings* looks like this... ::
     with t.location(0, t.height - 1):
         print(t.center(t.blink('press any key to continue.')))
 
-    with t.cbreak():
-        t.inkey()
+    with t.keystroke_input():
+        inp = t.keystroke()
+    print('You pressed ' + repr(inp))
 
 
 The Pitch
@@ -104,18 +108,19 @@ There are decades of legacy tied up in terminal interaction, so attention to
 detail and behavior in edge cases make a difference. Here are some ways
 *Blessings* has your back:
 
-* Uses the `terminfo(5)`_ database so it works with any terminal type
+* Uses the `terminfo(5)`_ database so it works with any terminal type.
 * Provides up-to-the-moment terminal height and width, so you can respond to
-  terminal size changes (*SIGWINCH* signals). (Most other libraries query the
+  terminal size changes (*SIGWINCH* signals): Most other libraries query the
   ``COLUMNS`` and ``LINES`` environment variables or the ``cols`` or ``lines``
-  terminal capabilities, which don't update promptly, if at all.)
+  terminal capabilities, which don't update promptly, if at all.
 * Avoids making a mess if the output gets piped to a non-terminal.
 * Works great with standard Python string formatting.
 * Provides convenient access to **all** terminal capabilities.
 * Outputs to any file-like object (*StringIO*, file), not just *stdout*.
 * Keeps a minimum of internal state, so you can feel free to mix and match with
-  calls to curses or whatever other terminal libraries you like
-* Safely decodes internationalization keyboard input to their unicode equivalents.
+  calls to curses or whatever other terminal libraries you like.
+* Safely decodes internationalization keyboard input to their unicod e
+  equivalents.
 * Safely decodes multibyte sequences for application/arrow keys.
 * Allows the printable length of strings containing sequences to be determined.
 * Provides plenty of context managers to safely express various terminal modes,
@@ -126,7 +131,8 @@ Blessings does not provide...
 * Native color support on the Windows command prompt.  A PDCurses_ build
   of python for windows provides only partial support at this time -- there
   are plans to merge with the ansi_ module in concert with colorama_ to
-  resolve this.  Patches welcome!
+  resolve this.  `Patches welcome
+  <https://github.com/erikrose/blessings/issues/21>`_!
 
 Further Documentation
 ---------------------
@@ -152,4 +158,4 @@ Blessings is under the MIT License. See the LICENSE file.
 .. _ansi: https://github.com/tehmaze/ansi
 .. _colorama: https://pypi.python.org/pypi/colorama
 .. _PDCurses: http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses
-.. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
+.. _`terminfo(5)`: http://invisible-island.net/ncurses/man/terminfo.5.html
