@@ -14,6 +14,7 @@ Contents:
    further
    pains
    api
+   contributing
    history
 
 =======

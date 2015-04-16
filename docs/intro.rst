@@ -44,19 +44,38 @@ Coding with *Blessings* looks like this... ::
     print('You pressed ' + repr(inp))
 
 
-The Pitch
----------
+Brief Overview
+--------------
 
 *Blessings* is a more simplified wrapper around curses_, providing :
 
 * Styles, color, and maybe a little positioning without necessarily
   clearing the whole screen first.
-* Leave more than one screenful of scrollback in the buffer after your program
-  exits, like a well-behaved command-line application should.
-* No more C-like calls to tigetstr_ and tparm_.
+* Works great with standard Python string formatting.
+* Provides up-to-the-moment terminal height and width, so you can respond to
+  terminal size changes.
+* Avoids making a mess if the output gets piped to a non-terminal:
+  outputs to any file-like object such as *StringIO*, files, or pipes.
+* Uses the `terminfo(5)`_ database so it works with any terminal type
+  and supports any terminal capability: No more C-like calls to tigetstr_
+  and tparm_.
+* Keeps a minimum of internal state, so you can feel free to mix and match with
+  calls to curses or whatever other terminal libraries you like.
+* Provides plenty of context managers to safely express terminal modes,
+  automatically restoring the terminal to a safe state on exit.
 * Act intelligently when somebody redirects your output to a file, omitting
   all of the terminal sequences such as styling, colors, or positioning.
-* Dead-simple keyboard handling, modeled after the Basic language's *INKEY$*
+* Dead-simple keyboard handling: safely decoding unicode input in your
+  system's preferred locale and supports application/arrow keys.
+* Allows the printable length of strings containing sequences to be
+  determined.
+
+Blessings **does not** provide...
+
+* Windows command prompt support.  A PDCurses_ build of python for windows
+  provides only partial support at this time -- there are plans to merge with
+  the ansi_ module in concert with colorama_ to resolve this.  `Patches welcome
+  <https://github.com/erikrose/blessings/issues/21>`_!
 
 
 Before And After
@@ -83,14 +102,22 @@ print some underlined text at the bottom of the screen::
         normal = tigetstr('sgr0')
     else:
         sc = cup = rc = underline = normal = ''
-    print(sc)  # Save cursor position.
+
+    # Save cursor position.
+    print(sc)
+
     if cup:
         # tigetnum('lines') doesn't always update promptly, hence this:
         height = struct.unpack('hhhh', ioctl(0, TIOCGWINSZ, '\000' * 8))[0]
-        print(tparm(cup, height - 1, 0))  # Move cursor to bottom.
-    print('This is {under}underlined{normal}!'.format(under=underline,
-                                                      normal=normal))
-    print(rc)  # Restore cursor position.
+
+        # Move cursor to bottom.
+        print(tparm(cup, height - 1, 0))
+
+    print('This is {under}underlined{normal}!'
+          .format(under=underline, normal=normal))
+
+    # Restore cursor position.
+    print(rc)
 
 The same program with *Blessings* is simply::
 
@@ -98,53 +125,26 @@ The same program with *Blessings* is simply::
 
     term = Terminal()
     with term.location(0, term.height - 1):
-        print('This is' + term.underline('pretty!'))
-
-
-Brief Overview
---------------
-
-There are decades of legacy tied up in terminal interaction, so attention to
-detail and behavior in edge cases make a difference. Here are some ways
-*Blessings* has your back:
-
-* Uses the `terminfo(5)`_ database so it works with any terminal type.
-* Provides up-to-the-moment terminal height and width, so you can respond to
-  terminal size changes (*SIGWINCH* signals): Most other libraries query the
-  ``COLUMNS`` and ``LINES`` environment variables or the ``cols`` or ``lines``
-  terminal capabilities, which don't update promptly, if at all.
-* Avoids making a mess if the output gets piped to a non-terminal.
-* Works great with standard Python string formatting.
-* Provides convenient access to **all** terminal capabilities.
-* Outputs to any file-like object (*StringIO*, file), not just *stdout*.
-* Keeps a minimum of internal state, so you can feel free to mix and match with
-  calls to curses or whatever other terminal libraries you like.
-* Safely decodes internationalization keyboard input to their unicod e
-  equivalents.
-* Safely decodes multibyte sequences for application/arrow keys.
-* Allows the printable length of strings containing sequences to be determined.
-* Provides plenty of context managers to safely express various terminal modes,
-  restoring to a safe state upon exit.
-
-Blessings does not provide...
-
-* Native color support on the Windows command prompt.  A PDCurses_ build
-  of python for windows provides only partial support at this time -- there
-  are plans to merge with the ansi_ module in concert with colorama_ to
-  resolve this.  `Patches welcome
-  <https://github.com/erikrose/blessings/issues/21>`_!
+        print('This is' + term.underline('underlined') + '!')
 
 Further Documentation
 ---------------------
 
 More documentation can be found at http://blessings.readthedocs.org/
 
-Developers, Bugs
-----------------
+Bugs, Contributing, Support
+---------------------------
 
-Bugs or suggestions? Visit the `issue tracker`_.
+**Bugs** or suggestions? Visit the `issue tracker`_ and file an issue.
+We welcome your bug reports and feature suggestions!
 
-Pull requests require test coverage, we aim for 100% test coverage.
+Would you like to **contribute**?  That's awesome!  We've written a
+`guide <http://blessings.readthedocs.org/en/latest/contributing.html>`_
+to help you.
+
+Are you stuck and need **support**?  Give `stackoverflow`_ a try.  If
+you're still having trouble, we'd like to hear about it!  Open an issue
+in the `issue tracker`_ with a well-formed question.
 
 License
 -------
@@ -159,3 +159,4 @@ Blessings is under the MIT License. See the LICENSE file.
 .. _colorama: https://pypi.python.org/pypi/colorama
 .. _PDCurses: http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses
 .. _`terminfo(5)`: http://invisible-island.net/ncurses/man/terminfo.5.html
+.. _`stackoverflow`: http://stackoverflow.com/
