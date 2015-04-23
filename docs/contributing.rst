@@ -1,15 +1,7 @@
 Contributing
 ============
 
-Contributors should create a `GitHub <https://github.com/>`_ account if they
-do not have one.  If you are opposed to having a GitHub account, you may
-e-mail the maintainers a patch, though it reduces the chance of being
-accepted.
-
-Pull request
-------------
-
-All aspects of using git and GitHub is well-documented:
+We welcome contributions via GitHub pull requests:
 
 - `Fork a Repo <https://help.github.com/articles/fork-a-repo/>`_
 - `Creating a pull request
@@ -18,7 +10,7 @@ All aspects of using git and GitHub is well-documented:
 Developing
 ----------
 
-Install git, python2, python3, pip.
+Install git, Python 2, Python 3, pip.
 
 Then, from the blessings code folder::
 
@@ -27,7 +19,7 @@ Then, from the blessings code folder::
     mkvirtualenv blessings
     pip install --editable .
 
-Running tests
+Running Tests
 ~~~~~~~~~~~~~
 
 ::
@@ -37,12 +29,13 @@ Running tests
 Test Coverage
 ~~~~~~~~~~~~~
 
-Blessings has 99% code coverage.  New features will not be accepted
-without coverage. Bugfixes will not be accepted without a complimentary
-test that demonstrates the bug.
+Blessings has 99% code coverage, and we'd like to keep it that way, as
+terminals are fiddly beasts. Thus, when you contribute a new feature, make sure
+it is covered by tests. Likewise, a bug fix should include a test demonstrating
+the bug.
 
-Style, static analysis
-~~~~~~~~~~~~~~~~~~~~~~
+Style and Static Analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The test runner (``tox``) ensures all code and documentation complies
 with standard python style guides, pep8 and pep257, as well as various
