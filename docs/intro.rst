@@ -1,6 +1,6 @@
 .. image:: https://img.shields.io/travis/erikrose/blessings.svg
     :alt: Travis Continous Integration
-    :target: https://travis-ci.orgerikrose/blessings/
+    :target: https://travis-ci.org/erikrose/blessings/
 
 .. image:: https://img.shields.io/teamcity/http/teamcity-master.pexpect.org/s/Blessings_BuildHead.png
     :alt: TeamCity Build status
@@ -130,7 +130,7 @@ The same program with *Blessings* is simply::
 Further Documentation
 ---------------------
 
-More documentation can be found at http://blessings.readthedocs.org/
+More documentation can be found at http://blessings.readthedocs.org/en/latest/
 
 Bugs, Contributing, Support
 ---------------------------
@@ -152,9 +152,9 @@ License
 Blessings is under the MIT License. See the LICENSE file.
 
 .. _`issue tracker`: https://github.com/erikrose/blessings/issues/
-.. _curses: https://docs.python.org/library/curses.html
-.. _tigetstr: http://www.openbsd.org/cgi-bin/man.cgi?query=tigetstr&sektion=3
-.. _tparm: http://www.openbsd.org/cgi-bin/man.cgi?query=tparm&sektion=3
+.. _curses: https://docs.python.org/3/library/curses.html
+.. _tigetstr: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/tigetstr.3
+.. _tparm: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/tparm.3
 .. _ansi: https://github.com/tehmaze/ansi
 .. _colorama: https://pypi.python.org/pypi/colorama
 .. _PDCurses: http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses

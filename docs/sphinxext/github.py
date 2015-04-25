@@ -106,7 +106,7 @@ def ghuser_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     """
     app = inliner.document.settings.env.app
     #app.info('user link %r' % text)
-    ref = 'https://www.github.com/' + text
+    ref = 'https://github.com/' + text
     node = nodes.reference(rawtext, text, refuri=ref, **options)
     return [node], []
 

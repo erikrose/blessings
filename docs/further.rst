@@ -12,7 +12,7 @@ Here are some recommended readings to help you along:
   listed in the column **Cap-name**.
 
 - `termios(4)
-  <http://www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4>`_
+  <http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man4/termios.4>`_
   of your preferred posix-like operating system.
 
 - `The TTY demystified
