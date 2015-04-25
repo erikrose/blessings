@@ -10,20 +10,20 @@ We welcome contributions via GitHub pull requests:
 Developing
 ----------
 
-Install git, Python 2, Python 3, pip.
+Install git, Python 2 and 3, pip, and tox.
 
 Then, from the blessings code folder::
 
-    pip install virtualenvwrapper
-    . `which virtualenvwrapper.sh`
-    mkvirtualenv blessings
     pip install --editable .
 
 Running Tests
 ~~~~~~~~~~~~~
 
+Install and run tox
+
 ::
 
+    pip install --upgrade tox
     tox
 
 Test Coverage
