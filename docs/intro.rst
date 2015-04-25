@@ -152,7 +152,7 @@ License
 Blessings is under the MIT License. See the LICENSE file.
 
 .. _`issue tracker`: https://github.com/erikrose/blessings/issues/
-.. _curses: https://docs.python.org/library/curses.html
+.. _curses: https://docs.python.org/3/library/curses.html
 .. _tigetstr: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/tigetstr.3
 .. _tparm: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/tparm.3
 .. _ansi: https://github.com/tehmaze/ansi
