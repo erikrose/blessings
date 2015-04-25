@@ -1,43 +1,10 @@
 #!/usr/bin/env python
-import subprocess
 import sys
-from os import getenv
 from os.path import dirname, join
 
 import setuptools
 import setuptools.command.develop
 import setuptools.command.test
-
-
-class SetupDevelop(setuptools.command.develop.develop):
-    """Docstring is overwritten."""
-
-    def run(self):
-        """
-        Prepare environment for development.
-
-        - Ensures a virtualenv environmnt is used.
-        - Ensures tox, ipython, wheel is installed for convenience and testing.
-        - Call super()'s run method.
-        """
-        assert getenv('VIRTUAL_ENV'), 'You should be in a virtualenv'
-        subprocess.check_call(('pip', 'install', 'tox', 'ipython', 'wheel'))
-
-        # Call super() (except develop is an old-style class, so we must call
-        # directly). The effect is that the development egg-link is installed.
-        setuptools.command.develop.develop.run(self)
-
-SetupDevelop.__doc__ = setuptools.command.develop.develop.__doc__
-
-
-class SetupTest(setuptools.command.test.test):
-    """Docstring is overwritten."""
-
-    def run(self):
-        """Spawn tox."""
-        self.spawn(('tox',))
-
-SetupTest.__doc__ = setuptools.command.test.test.__doc__
 
 kwargs = {
     'install_requires': [
@@ -88,7 +55,5 @@ setuptools.setup(
     keywords=['terminal', 'sequences', 'tty', 'curses', 'ncurses',
               'formatting', 'style', 'color', 'console', 'keyboard',
               'ansi', 'xterm'],
-    cmdclass={'develop': SetupDevelop,
-              'test': SetupTest},
     **kwargs
 )
