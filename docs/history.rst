@@ -106,9 +106,9 @@ Version History
   * Make ``python setup.py test`` work without spurious errors on 2.6.
   * Work around a tox parsing bug in its config file.
   * Make context managers clean up after themselves even if there's an
-    exception (Vitja Makarov :ghissue:`29`).
+    exception (Vitja Makarov :ghpull:`29`).
   * Parameterizing a capability no longer crashes when there is no tty
-    (Vitja Makarov :ghissue:`31`)
+    (Vitja Makarov :ghpull:`31`)
 
 1.5
   * Add syntactic sugar and documentation for ``enter_fullscreen``
@@ -172,4 +172,4 @@ Version History
 
 .. _`jquast/blessed`: https://github.com/jquast/blessed
 .. _PDCurses: http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses
-.. _`nose-progressive`: http://pypi.python.org/pypi/nose-progressive/
+.. _`nose-progressive`: https://pypi.python.org/pypi/nose-progressive/

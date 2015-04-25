@@ -578,14 +578,8 @@ context manager is used with numlock on:
 * ``KEY_KP_0`` through ``KEY_KP_9``
 
 .. _couleur: https://pypi.python.org/pypi/couleur
-.. _wcwidth: https://pypi.python.org/pypi/wcwidth
-.. _`cbreak(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
-.. _`raw(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=raw&apropos=0&sektion=3
-.. _`curs_getch(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=curs_getch&apropos=0&sektion=3
-.. _`termios(4)`: http://www.openbsd.org/cgi-bin/man.cgi?query=termios&apropos=0&sektion=4
-.. _`terminfo(5)`: http://invisible-island.net/ncurses/man/terminfo.5.html
-.. _tparm: http://www.openbsd.org/cgi-bin/man.cgi?query=tparm&sektion=3
+.. _`cbreak(3)`: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/cbreak.3
+.. _`raw(3)`: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/raw.3
+.. _`curs_getch(3)`: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/curs_getch.3
+.. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man4/termios.3
 .. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH
-.. _`API Documentation`: http://blessed.rtfd.org
-.. _`PDCurses`: http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses
-.. _`ansi`: https://github.com/tehmaze/ansi

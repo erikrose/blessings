@@ -3,7 +3,7 @@ Examples
 
 A few programs are provided with blessings to help interactively
 test the various API features, but also serve as examples of using
-blessings to develop various kinds of applications.
+blessings to develop applications.
 
 These examples are not distributed with the package -- they are
 only available in the github repository.  You can retrieve them
