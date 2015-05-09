@@ -14,8 +14,8 @@ def _make_colors():
     """
     derivatives = ('on', 'bright', 'on_bright',)
     colors = set('black red green yellow blue magenta cyan white'.split())
-    return set(['_'.join((_derivitive, _color))
-                for _derivitive in derivatives
+    return set(['_'.join((_deravitive, _color))
+                for _deravitive in derivatives
                 for _color in colors]) | colors
 
 
