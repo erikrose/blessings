@@ -1,20 +1,20 @@
 # encoding: utf-8
-"""This module contains :class:`Terminal`, the primary API interface."""
-# std imports
+"""This module contains :class:`Terminal`, the primary API entry point."""
+
+import codecs
 import collections
 import contextlib
-import functools
-import warnings
-import platform
-import codecs
 import curses
+import functools
+import io
 import locale
+import os
+import platform
 import select
 import struct
-import time
 import sys
-import os
-import io
+import time
+import warnings
 
 try:
     import termios
@@ -33,8 +33,7 @@ else:
     HAS_TTY = True
 
 try:
-    _ = InterruptedError
-    del _
+    InterruptedError
 except NameError:
     # alias py2 exception to py3
     InterruptedError = select.error
@@ -61,9 +60,14 @@ from .keyboard import (
 
 
 class Terminal(object):
+    """
+    An abstraction for color, style, positioning, and input in the terminal
 
-    """Wrapper for curses and related terminfo(5) terminal capabilities."""
-
+    This keeps the endless calls to ``tigetstr()`` and ``tparm()`` out of your
+    code, acts intelligently when somebody pipes your output to a non-terminal,
+    and abstracts over the complexity of unbuffered keyboard input. It uses the
+    terminfo database to remain portable across terminal types.
+    """
     #: Sugary names for commonly-used capabilities
     _sugar = dict(
         save='sc',
@@ -102,17 +106,17 @@ class Terminal(object):
 
     def __init__(self, kind=None, stream=None, force_styling=False):
         """
-        Class initializer.
+        Initialize the terminal.
 
         :param str kind: A terminal string as taken by
-            :func:`curses.setupterm`.  Defaults to the value of the ``TERM``
-            Environment variable.
+            :func:`curses.setupterm`. Defaults to the value of the ``TERM``
+            environment variable.
 
-            .. note:: A terminal of only one ``kind`` may be initialized for
-                each process.  See :obj:`_CUR_TERM`.
+            .. note:: Terminals withing a single process must share a common
+                ``kind``. See :obj:`_CUR_TERM`.
 
         :param file stream: A file-like object representing the Terminal
-            output.  Defaults to the original value of :obj:`sys.__stdout__`,
+            output. Defaults to the original value of :obj:`sys.__stdout__`,
             like :func:`curses.initscr` does.
 
             If ``stream`` is not a tty, empty Unicode strings are returned for
@@ -120,7 +124,7 @@ class Terminal(object):
             a pipe or file does not emit terminal sequences.
         :param bool force_styling: Whether to force the emission of
             capabilities even if :obj:`sys.__stdout__` does not seem to be
-            connected to a terminal.  If you want to force styling to not
+            connected to a terminal. If you want to force styling to not
             happen, use ``force_styling=None``.
 
             This comes in handy if users are trying to pipe your output through
@@ -133,7 +137,7 @@ class Terminal(object):
         global _CUR_TERM
         self._keyboard_fd = None
 
-        # Default stream is stdout, keyboard only valid as stdin when
+        # Default stream is stdout, keyboard valid as stdin only when
         # output stream is stdout is a tty.
         if stream is None or stream == sys.__stdout__:
             stream = sys.__stdout__
@@ -228,18 +232,21 @@ class Terminal(object):
 
         For example, ``term.bold`` is a unicode string that may be prepended
         to text to set the video attribute for bold, which should also be
-        terminated with the pairing :attr:`normal`.  This capability
+        terminated with the pairing :attr:`normal`. This capability
         returns a callable, so you can use ``term.bold("hi")`` which
         results in the joining of ``(term.bold, "hi", term.normal)``.
 
-        Compound formatters may also be used, for example:
+        Compound formatters may also be used. For example...
 
         >>> term.bold_blink_red_on_green("merry x-mas!").
         u'\x1b[1m\x1b[5m\x1b[31m\x1b[42mmerry x-mas!\x1b[m'
 
-        For a parametrized capability such as ``move`` (cup), pass the
-        parameters as positional arguments ``term.move(line, column)``.  See
-        manual page of terminfo(5) for a complete list of capabilities and
+        For a parametrized capability such as ``move`` (or ``cup``), pass the
+        parameters as positional arguments:
+        
+        >>> term.move(line, column)
+        
+        See the manual page terminfo(5) for a complete list of capabilities and
         their arguments.
         """
         if not self.does_styling:
@@ -251,27 +258,27 @@ class Terminal(object):
 
     @property
     def kind(self):
-        """Name of this terminal type."""
+        """The terminal type this instance was initialized with"""
         return self._kind
 
     @property
     def does_styling(self):
-        """Whether this instance will emit terminal sequences."""
+        """Whether this instance will emit terminal sequences"""
         return self._does_styling
 
     @property
     def is_a_tty(self):
-        """Whether :attr:`~.stream` is a terminal."""
+        """Whether :attr:`~.stream` is a terminal"""
         return self._is_a_tty
 
     @property
     def height(self):
-        """The height of the terminal (by number of character cells)."""
+        """The height of the terminal (in number of lines)"""
         return self._height_and_width().ws_row
 
     @property
     def width(self):
-        """The width of the terminal (by number of character cells)."""
+        """The width of the terminal (in number of columns)"""
         return self._height_and_width().ws_col
 
     @staticmethod
@@ -289,7 +296,7 @@ class Terminal(object):
 
         WINSZ is a :class:`collections.namedtuple` instance, whose structure
         directly maps to the return value of the :const:`termios.TIOCGWINSZ`
-        ioctl return value.  The return parameters are:
+        ioctl return value. The return parameters are:
 
             - ``ws_row``: width of terminal by its number of character cells.
             - ``ws_col``: height of terminal by its number of character cells.
@@ -313,7 +320,7 @@ class Terminal(object):
 
         WINSZ is a :class:`collections.namedtuple` instance, whose structure
         directly maps to the return value of the :const:`termios.TIOCGWINSZ`
-        ioctl return value.  The return parameters are:
+        ioctl return value. The return parameters are:
 
             - ``ws_row``: width of terminal by its number of character cells.
             - ``ws_col``: height of terminal by its number of character cells.
@@ -340,25 +347,24 @@ class Terminal(object):
         """
         Return a context manager for temporarily moving the cursor.
 
-        :param int x: Move to a specific column (optional).
-        :param int y: Move to a specific row (optional).
-        :rtype: None
-
         Move the cursor to a certain position on entry, let you print stuff
         there, then return the cursor to its original position::
 
             term = Terminal()
             with term.location(2, 5):
-                print('Hello, world!')
-            print('previous location')
+                for x in xrange(10):
+                    print('I can do it %i times!' % x)
+            print('We're back to the original location.')
 
-        This context manager yields no value, its side-effect is to write
-        the "save cursor position (sc)" sequence upon entering to
-        :attr:`stream` and "restore cursor position (rc)" upon entering.
+        Specify ``x`` to move to a certain column, ``y`` to move to a certain
+        row, both, or neither. If you specify neither, only the saving and
+        restoration of cursor position will happen. This can be useful if you
+        simply want to restore your place after doing some manual cursor
+        movement.
 
-        .. note:: Store and restore cursor provides no stack: This means that
-            :meth:`location` calls cannot be chained: only one should be
-            entered at a time.
+        .. note:: The store- and restore-cursor capabilities used internally
+            provide no stack. This means that :meth:`location` calls cannot be
+            nested: only one should be entered at a time.
         """
         # pylint: disable=invalid-name
         #         Invalid argument name "x"
@@ -380,21 +386,18 @@ class Terminal(object):
     @contextlib.contextmanager
     def fullscreen(self):
         """
-        Context manager that switches to alternate screen.
+        Return a context manager that enters fullscreen mode while inside it
+        and restores normal mode on leaving.
 
-        :rtype: None
+        Under the hood, this switches between the primary screen buffer and the
+        secondary one. The primary one is saved on entry and restored on exit.
+        Likewise, the secondary contents are also stable and are faithfully
+        restored on the next entry::
 
-        This context manager yields no value, its side-effect is to save
-        the primary screen buffer on entering, and to restore it again
-        upon exit.  The secondary screen buffer entered while using the
-        context manager also remains, and is faithfully restored again
-        on the next entrance::
-
-            with term.fullscreen(), term.hidden_cursor():
+            with term.fullscreen():
                 main()
 
-        .. note:: There is only one primary and secondary screen: This means
-            that :meth:`fullscreen` calls cannot be chained: only one should
+        .. note:: There is only one primary buffer and one secondary one. Thus, :meth:`fullscreen` calls cannot be nested: only one should
             be entered at a time.
         """
         self.stream.write(self.enter_fullscreen)
@@ -406,18 +409,13 @@ class Terminal(object):
     @contextlib.contextmanager
     def hidden_cursor(self):
         """
-        Context manager that hides the cursor.
+        Return a context manager that hides the cursor while inside it and
+        makes it visible on leaving. ::
 
-        :rtype: None
-
-        This context manager yields no value, its side-effect is to emit
-        the ``hide_cursor`` sequence to :attr:`stream` on entering, and
-        to emit ``normal_cursor`` sequence upon exit::
-
-            with term.fullscreen(), term.hidden_cursor():
+            with term.hidden_cursor():
                 main()
 
-        .. note:: :meth:`hidden_cursor` calls cannot be chained: only one
+        .. note:: :meth:`hidden_cursor` calls cannot be nested: only one
             should be entered at a time.
         """
         self.stream.write(self.hide_cursor)
@@ -429,13 +427,14 @@ class Terminal(object):
     @property
     def color(self):
         """
-        Callable string that sets the foreground color.
+        A callable string that sets the foreground color
 
-        :arg int num: The foreground color index.  This should be within the
+        :arg int num: The foreground color index. This should be within the
            bounds of :attr:`~.number_of_colors`.
+        :rtype: ParameterizingString
 
-        The capability is unparameterized until called and passed a number
-        (0-15), at which point it returns another string which represents a
+        The capability is unparameterized until called and passed a number,
+        0-15, at which point it returns another string which represents a
         specific color change. This second string can further be called to
         color a piece of text and set everything back to normal afterward.
         """
@@ -447,7 +446,7 @@ class Terminal(object):
     @property
     def on_color(self):
         """
-        Capability that sets the background color.
+        A capability that sets the background color
 
         :arg int num: The background color index.
         :rtype: ParameterizingString
@@ -460,13 +459,13 @@ class Terminal(object):
     @property
     def normal(self):
         """
-        Capability that resets all video attributes.
+        A capability that resets all video attributes
 
         :rtype: str
 
-        normal is an alias for ``sgr0`` or ``exit_attribute_mode``: **any**
+        normal is an alias for ``sgr0`` or ``exit_attribute_mode``. Any
         styling attributes previously applied, such as foreground or background
-        colors, reverse video, or bold are set to default.
+        colors, reverse video, or bold are reset to defaults.
         """
         if self._normal:
             return self._normal
@@ -476,25 +475,32 @@ class Terminal(object):
     @property
     def stream(self):
         """
-        The output stream connected to the terminal.
+        The stream the terminal outputs to
 
-        This is a convenience attribute.  It is used for implied writes
-        performed by context managers :meth:`~.hidden_cursor`,
-        :meth:`~.fullscreen`, :meth:`~.location` and :meth:`~.keypad`.
+        This is a convenience attribute. It is used internally for implied
+        writes performed by context managers :meth:`~.hidden_cursor`,
+        :meth:`~.fullscreen`, :meth:`~.location`, and :meth:`~.keypad`.
         """
         return self._stream
 
     @property
     def number_of_colors(self):
         """
-        The number of colors the terminal supports.
+        The number of colors the terminal supports
 
-        Common values are 0, 8, 16, 88, and 256. Most commonly
-        this may be used to test whether the terminal supports colors::
+        Common values are 0, 8, 16, 88, and 256. Most commonly, this may be
+        used to test whether the terminal supports colors. Though the
+        underlying capability returns -1 when there is no color support, we
+        return 0. This lets you test more Pythonically::
 
             if term.number_of_colors:
                 ...
         """
+        # This is actually the only remotely useful numeric capability. We
+        # don't name it after the underlying capability, because we deviate
+        # slightly from its behavior, and we might someday wish to give direct
+        # access to it.
+
         # trim value to 0, as tigetnum('colors') returns -1 if no support,
         # and -2 if no such capability.
         return max(0, self.does_styling and curses.tigetnum('colors') or -1)
@@ -502,10 +508,10 @@ class Terminal(object):
     @property
     def _foreground_color(self):
         """
-        Convenience capability to support :attr:`~.on_color`.
+        Convenience capability to support :attr:`~.on_color`
 
         Prefers returning sequence for capability ``setaf``, "Set foreground
-        color to #1, using ANSI escape".  If the given terminal does not
+        color to #1, using ANSI escape". If the given terminal does not
         support such sequence, fallback to returning attribute ``setf``,
         "Set foreground color #1".
         """
@@ -514,10 +520,10 @@ class Terminal(object):
     @property
     def _background_color(self):
         """
-        Convenience capability to support :attr:`~.on_color`.
+        Convenience capability to support :attr:`~.on_color`
 
         Prefers returning sequence for capability ``setab``, "Set background
-        color to #1, using ANSI escape".  If the given terminal does not
+        color to #1, using ANSI escape". If the given terminal does not
         support such sequence, fallback to returning attribute ``setb``,
         "Set background color #1".
         """
@@ -525,30 +531,28 @@ class Terminal(object):
 
     def ljust(self, text, width=None, fillchar=u' '):
         """
-        Return string ``text`` containing sequences, left-adjusted.
+        Left-align ``text``, which may contain terminal sequences.
 
-        :param str text: String of text to be right-adjusted, may contain
-            terminal sequences.
-        :param int width: Total width given to right-adjust ``text``.  If
-            unspecified, the width of the attached terminal is used (default).
-        :param str fillchar: String for padding right-of ``text``.
-        :returns: String of ``text``, right-aligned by ``width``.
+        :arg str text: String to be aligned
+        :arg int width: Total width to fill with aligned text. If
+            unspecified, the whole width of the terminal is filled.
+        :arg str fillchar: String for padding the right of ``text``
         :rtype: str
         """
+        # Left justification is different from left alignment, but we continue
+        # the vocabulary error of the str method for polymorphism.
         if width is None:
             width = self.width
         return Sequence(text, self).ljust(width, fillchar)
 
     def rjust(self, text, width=None, fillchar=u' '):
         """
-        Return string ``text`` containing sequences, right-adjusted.
+        Right-align ``text``, which may contain terminal sequences.
 
-        :param str text: String of text to be right-adjusted, may contain
-            terminal sequences.
-        :param int width: Total width given to right-adjust ``text``.  If
-            unspecified, the width of the attached terminal is used (default).
-        :param str fillchar: String for padding left-of ``text``.
-        :returns: String of ``text``, right-aligned by ``width``.
+        :arg str text: String to be aligned
+        :arg int width: Total width to fill with aligned text. If
+            unspecified, the whole width of the terminal is used.
+        :arg str fillchar: String for padding the left of ``text``
         :rtype: str
         """
         if width is None:
@@ -557,14 +561,12 @@ class Terminal(object):
 
     def center(self, text, width=None, fillchar=u' '):
         """
-        Return string ``text`` containing sequences, centered.
+        Center ``text``, which may contain terminal sequences.
 
-        :param str text: String of text to be centered, may contain terminal
-            sequences.
-        :param int width: Total width given to center ``text``.  If
-            unspecified, the width of the attached terminal is used (default).
-        :param str fillchar: String for padding left and right-of ``text``.
-        :returns: String of ``text``, centered by ``width``.
+        :arg str text: String to be centered
+        :arg int width: Total width in which to center text. If
+            unspecified, the whole width of the terminal is used.
+        :arg str fillchar: String for padding the left and right of ``text``
         :rtype: str
         """
         if width is None:
@@ -573,14 +575,14 @@ class Terminal(object):
 
     def length(self, text):
         u"""
-        Return printable length of string ``text`` containing sequences.
+        Return printable length of a string containing sequences.
 
-        :param str text: String of text to determine printable length, may
-            contain terminal sequences.
+        :arg str text: String to measure. May contain terminal sequences.
         :rtype: int
-        :returns: printable length of string as terminal character cells.
+        :returns: The number of terminal character cells the string will occupy
+            when printed
 
-        Strings containing text that consumes 2 character cells are supported.
+        Wide characters that consume 2 character cells are supported:
 
         >>> term = Terminal()
         >>> term.length(term.clear + term.red(u'コンニチハ'))
@@ -597,10 +599,6 @@ class Terminal(object):
         r"""
         Return ``text`` without sequences and leading or trailing whitespace.
 
-        :param str text: String of text that may contain terminal
-            sequences.
-        :returns: Text stripped of sequences and leading or trailing
-            whitespace.
         :rtype: str
 
         >>> term = blessings.Terminal()
@@ -611,10 +609,8 @@ class Terminal(object):
 
     def rstrip(self, text, chars=None):
         r"""
-        Return ``text`` stripped of terminal sequences and trailing whitespace.
+        Return ``text`` without terminal sequences or trailing whitespace.
 
-        :param str text: String of text that may contain terminal sequences.
-        :returns: Text stripped of sequences and trailing whitespace.
         :rtype: str
 
         >>> term = blessings.Terminal()
@@ -625,10 +621,8 @@ class Terminal(object):
 
     def lstrip(self, text, chars=None):
         r"""
-        Return ``text`` stripped of terminal sequences and leading whitespace.
+        Return ``text`` without terminal sequences or leading whitespace.
 
-        :param str text: String of text that may contain terminal sequences.
-        :returns: Text stripped of sequences and leading whitespace.
         :rtype: str
 
         >>> term = blessings.Terminal()
@@ -639,10 +633,8 @@ class Terminal(object):
 
     def strip_seqs(self, text):
         r"""
-        Return ``text`` stripped only of its terminal sequences.
+        Return ``text`` stripped of only its terminal sequences
 
-        :param str text: String of text that may contain terminal sequences.
-        :returns: Text stripped of sequences.
         :rtype: str
 
         >>> term = blessings.Terminal()
@@ -653,19 +645,18 @@ class Terminal(object):
 
     def wrap(self, text, width=None, **kwargs):
         """
-        Wrap a string of ``text``, returning an array of wrapped lines.
+        Text-wrap a string, returning a list of wrapped lines.
 
-        :param str text: Unlike :func:`textwrap.wrap`, ``text`` may contain
-            terminal sequences, such as colors, bold, or underline.  By
+        :arg str text: Unlike :func:`textwrap.wrap`, ``text`` may contain
+            terminal sequences, such as colors, bold, or underline. By
             default, tabs in ``text`` are expanded by
             :func:`string.expandtabs`.
-        :param int width: Unlike :func:`textwrap.wrap`, ``width`` will
+        :arg int width: Unlike :func:`textwrap.wrap`, ``width`` will
             default to the width of the attached terminal.
         :rtype: list
-        :returns: list of strings that may contain escape sequences.
 
-        See :class:`textwrap.TextWrapper` class for available keyword arguments
-        to customize wrapping behaviour.
+        See :class:`textwrap.TextWrapper` for keyword arguments that can
+        customize wrapping behaviour.
         """
         width = self.width if width is None else width
         lines = []
@@ -679,7 +670,7 @@ class Terminal(object):
 
     def _next_char(self):
         """
-        Read and decode next byte from keyboard stream.
+        Read, decode, and return the next byte from the keyboard stream.
 
         :rtype: unicode
         :returns: a single unicode character, or ``u''`` if a multi-byte
@@ -699,19 +690,19 @@ class Terminal(object):
 
     def _char_is_ready(self, timeout=None):
         """
-        Whether a keypress has been detected on the keyboard.
+        Return whether a keypress has been detected on the keyboard
 
         This method is used by method :meth:`keystroke` to determine if
         a byte may be read using method :meth:`_next_char` without blocking.
 
-        :param float timeout: When ``timeout`` is 0, this call is
+        :arg float timeout: When ``timeout`` is 0, this call is
             non-blocking, otherwise blocking indefinitely until keypress
-            is detected when None (default).  When ``timeout`` is a
+            is detected when None (default). When ``timeout`` is a
             positive number, returns after ``timeout`` seconds have
             elapsed (float).
         :rtype: bool
         :returns: True if a keypress is awaiting to be read on the keyboard
-            attached to this terminal.  If input is not a terminal, False is
+            attached to this terminal. If input is not a terminal, False is
             always returned.
         """
         stime = time.time()
@@ -727,7 +718,7 @@ class Terminal(object):
                 #
                 # For previous versions of python, we take special care to
                 # retry select on InterruptedError exception, namely to handle
-                # a custom SIGWINCH handler.  When installed, it would cause
+                # a custom SIGWINCH handler. When installed, it would cause
                 # select() to be interrupted with errno 4 (EAGAIN).
                 #
                 # Just as in python3.5, it is ignored, and a new timeout value
@@ -751,32 +742,31 @@ class Terminal(object):
     @contextlib.contextmanager
     def keystroke_input(self, raw=False):
         """
-        Context manager that enables key-at-a-time input.
+        Return a context manager that enables key-at-a-time input.
 
         Normally, characters received from the keyboard cannot be read by
-        python until the return key is pressed: this is referred to as
-        "cooked" or "canonical input" mode, allowing the tty driver to perform
-        line editing before being read by your program and is usually the
-        default mode set by your unix shell before executing any programs.
+        Python until the Return key is pressed. This is called
+        "cooked" or "canonical input" mode, and it allows the tty driver to provide
+        line-editing shuttling the input to your program. It is usually the
+        default mode set by a Unix shell before executing a program.
 
-        Also referred to as 'rare' mode, entering this context is the opposite
-        of 'cooked' mode: On entering, :func:`tty.setcbreak` mode is activated,
-        disabling line buffering of keyboard input and turning off automatic
-        echoing of input.  This allows each keystroke to be received
-        immediately after it is pressed.
+        This context manager activates 'rare' mode, the opposite of 'cooked'
+        mode: On entry, :func:`tty.setcbreak` mode is activated, disabling
+        line-buffering of keyboard input and turning off automatic echoing of
+        input. This allows each keystroke to be read immediately after it is
+        pressed.
 
-        :param bool raw: When True, enter :func:`tty.setraw` mode instead.
-           Raw mode differs in that the interrupt, quit, suspend, and flow
-           control characters are all passed through as their raw character
-           values instead of generating a signal.
+        :arg bool raw: When True, enter :func:`tty.setraw` mode instead.
+           Raw mode differs in that the interrupt, quit, suspend, and
+           flow-control characters are all passed through as their raw
+           character values instead of generating signals.
 
-        This context manager yields no value, its side-effect is to
-        set the :mod:`termios` attributes of the terminal attached to
-        :obj:`sys.__stdin__`.
+        Technically, this context manager sets the :mod:`termios` attributes of
+        the terminal attached to :obj:`sys.__stdin__`.
 
-        .. note:: you must explicitly print any input received if you'd like
-            it displayed.  And, if providing any kind of editing, you must
-            also handle backspace and other line editing control characters.
+        .. note:: You must explicitly print any input you would like displayed.
+            If you provide any kind of editing, you must handle backspace and
+            other line-editing control characters.
 
         .. note:: :func:`tty.setcbreak` sets ``VMIN = 1`` and ``VTIME = 0``,
             see http://www.unixwiz.net/techtips/termios-vmin-vtime.html
@@ -799,11 +789,11 @@ class Terminal(object):
     @contextlib.contextmanager
     def keypad(self):
         r"""
-        Context manager that enables keypad input ("keyboard_transmit" mode).
+        Return a context manager that enables directional keypad input.
 
-        This context manager yields no value, its side-effect is to emit
-        capability keypad_xmit (smkx) upon entering, and keypad_local
-        (rmkx) upon exiting.
+        On entrying, this puts the terminal into "keyboard_transmit" mode by
+        emitting the keypad_xmit (smkx) capability. On exit, it emits
+        keypad_local (rmkx).
 
         On an IBM-PC keyboard with numeric keypad of terminal-type *xterm*,
         with numlock off, the lower-left diagonal key transmits sequence
@@ -811,8 +801,8 @@ class Terminal(object):
         ``KEY_END``.
 
         However, upon entering :meth:`keypad`, ``\\x1b[OF`` is transmitted,
-        translating to ``KEY_LL`` (lower-left key), allowing diagonal
-        direction keys to be determined.
+        translating to ``KEY_LL`` (lower-left key), allowing you to determine
+        diagonal direction keys.
         """
         try:
             self.stream.write(self.smkx)
@@ -822,20 +812,22 @@ class Terminal(object):
 
     def keystroke(self, timeout=None, esc_delay=0.35):
         """
-        Receive and return next keystroke from keyboard within given timeout.
+        Read and return the next keystroke within a given timeout.
 
-        :param float timeout: Number of seconds to allow to elapse without
-           keystroke before returning.  When None (default), this
-           method blocks indefinitely.
-        :param float esc_delay: To distinguish between ``KEY_ESCAPE`` and
+        Generally, this should be used inside the :meth:`keystroke_input`
+        context manager.
+
+        :arg float timeout: Number of seconds to wait for a keystroke before
+            returning. When None (default), this method blocks indefinitely.
+        :arg float esc_delay: To distinguish between ``KEY_ESCAPE`` and
            sequences beginning with escape, the parameter ``esc_delay``
            specifies the amount of time after receiving the escape character
            (``chr(27)``) to seek for the completion of an application key
            before returning a :class:`~.Keystroke` for ``KEY_ESCAPE``.
         :rtype: :class:`~.Keystroke`.
-        :raises NoKeyboard: The :attr:`stream` is not a terminal with
-            timeout parameter as the default value of None, which would
-            cause the program to hang indefinitely.
+        :raises NoKeyboard: The :attr:`stream` is not a terminal, and
+            ``timeout`` is None, which would cause the program to hang
+            forever.
         :returns: :class:`~.Keystroke`, which may be empty (``u''``) if
            ``timeout`` is specified and keystroke is not received.
 
@@ -847,8 +839,8 @@ class Terminal(object):
         if timeout is None and self._keyboard_fd is None:
             raise NoKeyboard(
                 'Waiting for a keystroke on a terminal with no keyboard '
-                'attached and no timeout would take a long time. Add a '
-                'timeout and revise your program logic.')
+                'attached and no timeout would hang forever. Add a timeout, '
+                'and revise your program logic.')
 
         def time_left(stime, timeout):
             """
@@ -857,11 +849,11 @@ class Terminal(object):
             This function assists determining the value of ``timeout`` for
             class method :meth:`_char_is_ready`.
 
-            :param float stime: starting time for measurement
-            :param float timeout: timeout period, may be set to None to
+            :arg float stime: starting time for measurement
+            :arg float timeout: timeout period, may be set to None to
                indicate no timeout (where 0 is always returned).
             :rtype: float or int
-            :returns: time remaining as float.  If no time is remaining,
+            :returns: time remaining as float. If no time is remaining,
                then the integer ``0`` is returned.
             """
             if timeout is not None:
@@ -913,13 +905,12 @@ class Terminal(object):
 
 
 class NoKeyboard(Exception):
-
-    """Illegal operation requiring a keyboard without one attached."""
+    """An error raised when an Illegal operation requiring a keyboard without
+    one attached."""
 
 
 class WINSZ(collections.namedtuple('WINSZ', (
         'ws_row', 'ws_col', 'ws_xpixel', 'ws_ypixel'))):
-
     """
     Structure represents return value of :const:`termios.TIOCGWINSZ`.
 
@@ -939,11 +930,11 @@ class WINSZ(collections.namedtuple('WINSZ', (
 
         vertical size, pixels
     """
-
     #: format of termios structure
     _FMT = 'hhhh'
     #: buffer of termios structure appropriate for ioctl argument
     _BUF = '\x00' * struct.calcsize(_FMT)
+
 
 #: From libcurses/doc/ncurses-intro.html (ESR, Thomas Dickey, et. al)::
 #:
@@ -961,6 +952,6 @@ class WINSZ(collections.namedtuple('WINSZ', (
 #: be changed once set: subsequent calls to :func:`setupterm` have no effect.
 #:
 #: Therefore, the :attr:`Terminal.kind` of each :class:`Terminal` is
-#: essentially a singleton.  This global variable reflects that, and a warning
+#: essentially a singleton. This global variable reflects that, and a warning
 #: is emitted if somebody expects otherwise.
 _CUR_TERM = None
