@@ -413,7 +413,7 @@ Blessings does not provide...
 * Native color support on the Windows command prompt. However, it should work
   when used in concert with colorama_.
 
-.. _colorama: http://pypi.python.org/pypi/colorama/0.2.4
+.. _colorama: http://pypi.python.org/pypi/colorama
 
 Bugs
 ====
