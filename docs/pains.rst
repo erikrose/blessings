@@ -233,17 +233,27 @@ A terminal that supports both multibyte encodings (UTF-8) and legacy 8-bit
 code pages (ISO 2022) may instruct the terminal to switch between both
 modes using the following sequences:
 
-  - ``\x1b%@``: Select default character set, that is ISO 8859-1 (ISO 2022).
-  - ``\x1b%G``: Select UTF-8 character set (ISO 2022).
+  - ``\x1b%G`` activates UTF-8 with an unspecified implementation level
+    from ISO 2022 in a way that allows to go back to ISO 2022 again.
+  - ``\x1b%@`` goes back from UTF-8 to ISO 2022 in case UTF-8 had been
+    entered via ``\x1b%G``.
+  - ``\x1b%/G`` switches to UTF-8 Level 1 with no return.
+  - ``\x1b%/H`` switches to UTF-8 Level 2 with no return.
+  - ``\x1b%/I`` switches to UTF-8 Level 3 with no return.
 
 When a terminal is in ISO 2022 mode, you may use a sequence
 to request a terminal to change its `code page`_.  It begins by ``\x1b(``,
 followed by an ASCII character representing a code page selection.  For
-example ``\x1b(U`` on the VGA Linux console switches to the `IBM CP437`_
-`code page`_, allowing MS-DOS artwork to be displayed in its natural
-8-bit byte encoding.  A list of standard codes and the expected code page
-may be found on Thomas E. Dickey's xterm control sequences section on
+example ``\x1b(U`` on the legacy VGA Linux console switches to the `IBM CP437`_
+`code page`_, allowing North American MS-DOS artwork to be displayed in its
+natural 8-bit byte encoding.  A list of standard codes and the expected code
+page may be found on Thomas E. Dickey's xterm control sequences section on
 sequences following the `Control-Sequence-Inducer`_.
+
+For more information, see `What are the issues related to UTF-8 terminal
+emulators? <http://www.cl.cam.ac.uk/~mgk25/unicode.html#term>`_ by
+`Markus Kuhn <http://www.cl.cam.ac.uk/~mgk25/>`_ of the University of
+Cambridge.
 
 Detecting multibyte
 ~~~~~~~~~~~~~~~~~~~
@@ -341,17 +351,10 @@ When people say 'ANSI Sequence', they are discussing:
   and its ability to display colored text further populated the idea that such
   text "is ANSI".
 
-- The `IBM CP437`_ `code page`_ (which provided "block art" characters) paired
-  with `ECMA-48`_ sequences supported by the MS-DOS ANSI.SYS driver to create
-  artwork, known as `ANSI art <http://sixteencolors.net/>`_.
-
-  This is purely an American misnomer, because early IBM PC and clones in the
-  European nations did not ship with the `IBM CP437`_ `code page`_ by default.
-
-  Many people now mistake the difference between "ASCII art" and "ANSI art" to
-  be whether or not block art and other characters from the `IBM CP437`_
-  code page are used.  Where even such "ASCII art" may contain `ECMA-48`_
-  color codes!
+- The various code pages used in MS-DOS Personal Computers,
+  providing "block art" characters in the 8th bit (int 127-255), paired
+  with `ECMA-48`_ sequences supported by the MS-DOS `ANSI.SYS`_ driver
+  to create artwork, known as `ANSI art <http://pc.textmod.es/>`_.
 
 - The ANSI terminal database entry and its many descendants in the
   `terminfo database
@@ -369,11 +372,11 @@ When people say 'ANSI Sequence', they are discussing:
   "Escape Sequence" is so termed because it follows the ASCII character
   for the escape key (ESC, ``\x1b``).
 
-.. _code page: http://en.wikipedia.org/wiki/Code_page
-.. _IBM CP437: http://en.wikipedia.org/wiki/Code_page_437
-.. _CGA Color Palette: http://en.wikipedia.org/wiki/Color_Graphics_Adapter#With_an_RGBI_monitor
+.. _code page: https://en.wikipedia.org/wiki/Code_page
+.. _IBM CP437: https://en.wikipedia.org/wiki/Code_page_437
+.. _CGA Color Palette: https://en.wikipedia.org/wiki/Color_Graphics_Adapter#With_an_RGBI_monitor
 .. _f.lux: https://justgetflux.com/
-.. _ZX Spectrum: http://en.wikipedia.org/wiki/List_of_8-bit_computer_hardware_palettes#ZX_Spectrum
+.. _ZX Spectrum: https://en.wikipedia.org/wiki/List_of_8-bit_computer_hardware_palettes#ZX_Spectrum
 .. _Control-Sequence-Inducer: http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Controls-beginning-with-ESC
 .. _resize.c: http://www.opensource.apple.com/source/X11apps/X11apps-13/xterm/xterm-207/resize.c
 .. _ANSI.SYS: http://www.kegel.com/nansi/

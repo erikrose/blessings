@@ -93,8 +93,8 @@ Here are some recommended readings to help you along:
   by Linda Mui, Tim O'Reilly, and John Strang.
 
 - Note that System-V systems, also known as `Unix98
-  <http://en.wikipedia.org/wiki/Single_UNIX_Specification>`_ (SunOS, HP-UX,
-  AIX and others) use a `Streams <http://en.wikipedia.org/wiki/STREAMS>`_
+  <https://en.wikipedia.org/wiki/Single_UNIX_Specification>`_ (SunOS, HP-UX,
+  AIX and others) use a `Streams <https://en.wikipedia.org/wiki/STREAMS>`_
   interface.  On these systems, the `ioctl(2)
   <http://pubs.opengroup.org/onlinepubs/009695399/functions/ioctl.html>`_
   interface provides the ``PUSH`` and ``POP`` parameters to communicate with
@@ -103,5 +103,3 @@ Here are some recommended readings to help you along:
   Many of these systems provide compatible interfaces for Linux, but they may
   not always be as complete as the counterpart they emulate, most especially
   in regards to managing pseudo-terminals.
-
-
