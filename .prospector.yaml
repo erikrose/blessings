@@ -45,7 +45,7 @@ pyflakes:
 
 pylint:
     # static analysis and then some
-    run: true
+    run: false
     options:
         # pytest module has dynamically assigned functions,
         # raising errors such as: E1101: Module 'pytest' has
