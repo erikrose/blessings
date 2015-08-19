@@ -33,7 +33,7 @@ mccabe:
 
 pep257:
     # docstring checking
-    run: true
+    run: false
 
 pep8:
     # style checking
