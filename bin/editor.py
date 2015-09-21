@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # Dumb full-screen editor. It doesn't save anything but to the screen.
 #
 # "Why wont python let me read memory
@@ -11,8 +11,18 @@ import collections
 import functools
 from blessed import Terminal
 
-echo = lambda text: (
-    functools.partial(print, end='', flush=True)(text))
+try:
+    print(end='', flush=True)
+    echo = lambda text: (
+        functools.partial(print, end='', flush=True)(text))
+except TypeError:
+    # TypeError: 'flush' is an invalid keyword argument for this function
+    # python 2
+    import sys
+
+    def echo(text):
+        sys.stdout.write(text)
+        sys.stdout.flush()
 
 echo_yx = lambda cursor, text: (
     echo(cursor.term.move(cursor.y, cursor.x) + text))
