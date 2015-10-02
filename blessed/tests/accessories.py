@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Accessories for automated py.test runner."""
-# std
-from __future__ import with_statement
+# standard imports
+from __future__ import with_statement, print_function
 import contextlib
 import subprocess
 import functools
@@ -15,15 +15,12 @@ import os
 
 # local
 from blessed import Terminal
-from blessed._binterms import binary_terminals
+from blessed._binterms import BINARY_TERMINALS
 
-# 3rd
+# 3rd-party
 import pytest
+import six
 
-if sys.version_info[0] == 3:
-    text_type = str
-else:
-    text_type = unicode  # noqa
 
 TestTerminal = functools.partial(Terminal, kind='xterm-256color')
 SEND_SEMAPHORE = SEMAPHORE = b'SEMAPHORE\n'
@@ -45,7 +42,7 @@ if os.environ.get('TEST_ALLTERMS'):
 else:
     available_terms = default_all_terms
 all_terms_params = list(set(available_terms) - (
-    set(binary_terminals) if not os.environ.get('TEST_BINTERMS')
+    set(BINARY_TERMINALS) if not os.environ.get('TEST_BINTERMS')
     else set())) or default_all_terms
 
 
@@ -61,8 +58,9 @@ class as_subprocess(object):
         self.func = func
 
     def __call__(self, *args, **kwargs):
+        pid_testrunner = os.getpid()
         pid, master_fd = pty.fork()
-        if pid is self._CHILD_PID:
+        if pid == self._CHILD_PID:
             # child process executes function, raises exception
             # if failed, causing a non-zero exit code, using the
             # protected _exit() function of ``os``; to prevent the
@@ -96,7 +94,11 @@ class as_subprocess(object):
                     cov.save()
                 os._exit(0)
 
-        exc_output = text_type()
+        if pid_testrunner != os.getpid():
+            print('TEST RUNNER HAS FORKED, {0}=>{1}: EXIT'
+                  .format(pid_testrunner, os.getpid()), file=sys.stderr)
+            os._exit(1)
+        exc_output = six.text_type()
         decoder = codecs.getincrementaldecoder(self.encoding)()
         while True:
             try:
@@ -137,7 +139,7 @@ def read_until_semaphore(fd, semaphore=RECV_SEMAPHORE,
     # process will read xyz\\r\\n -- this is how pseudo terminals
     # behave; a virtual terminal requires both carriage return and
     # line feed, it is only for convenience that \\n does both.
-    outp = text_type()
+    outp = six.text_type()
     decoder = codecs.getincrementaldecoder(encoding)()
     semaphore = semaphore.decode('ascii')
     while not outp.startswith(semaphore):
@@ -157,7 +159,7 @@ def read_until_semaphore(fd, semaphore=RECV_SEMAPHORE,
 def read_until_eof(fd, encoding='utf8'):
     """Read file descriptor ``fd`` until EOF. Return decoded string."""
     decoder = codecs.getincrementaldecoder(encoding)()
-    outp = text_type()
+    outp = six.text_type()
     while True:
         try:
             _exc = os.read(fd, 100)
@@ -209,7 +211,7 @@ def unicode_parm(cap, *parms):
     return u''
 
 
-@pytest.fixture(params=binary_terminals)
+@pytest.fixture(params=BINARY_TERMINALS)
 def unsupported_sequence_terminals(request):
     """Terminals that emit warnings for unsupported sequence-awareness."""
     return request.param

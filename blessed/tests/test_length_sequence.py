@@ -1,4 +1,5 @@
 # encoding: utf-8
+# std imports
 import itertools
 import platform
 import termios
@@ -6,12 +7,9 @@ import struct
 import fcntl
 import sys
 import os
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 
-from .accessories import (
+# local
+from blessed.tests.accessories import (
     all_terms,
     as_subprocess,
     TestTerminal,
@@ -19,7 +17,9 @@ from .accessories import (
     many_lines,
 )
 
+# 3rd party
 import pytest
+import six
 
 
 def test_length_cjk():
@@ -204,7 +204,7 @@ def test_env_winsize():
         # set the pty's virtual window size
         os.environ['COLUMNS'] = '99'
         os.environ['LINES'] = '11'
-        t = TestTerminal(stream=StringIO())
+        t = TestTerminal(stream=six.StringIO())
         save_init = t._init_descriptor
         save_stdout = sys.__stdout__
         try:
