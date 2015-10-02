@@ -155,14 +155,13 @@ def display_ctl_chars(index, ctlc):
     print()
 
 
-def display_conf(kind, names, getter):
+def display_pathconf(names, getter):
     """Helper displays results of os.pathconf_names values."""
     col1_width = max(map(len, names))
-    fmt = '{name:>{col1_width}}   {value}'
-    print(fmt.format(name=kind,
-                     value='value',
+    fmt = '{name:>{col1_width}}  {value}'
+    print(fmt.format(name='pathconf'.ljust(col1_width), value='value',
                      col1_width=col1_width))
-    print('{0} {1}'.format('-' * col1_width, '-' * 27))
+    print('{0}  {1}'.format('-' * col1_width, '-' * 27))
     for name in names:
         try:
             value = getter(name)
@@ -181,9 +180,8 @@ def main():
     print('os.isatty({0}) => {1}'.format(fd, os.isatty(fd)))
     print('locale.getpreferredencoding() => {0}'.format(encoding))
 
-    display_conf(kind='pathconf',
-                 names=os.pathconf_names,
-                 getter=lambda name: os.fpathconf(fd, name))
+    display_pathconf(names=os.pathconf_names,
+                     getter=lambda name: os.fpathconf(fd, name))
 
     try:
         (iflag, oflag, cflag, lflag,
@@ -192,16 +190,16 @@ def main():
     except termios.error as err:
         print('stdin is not a typewriter: {0}'.format(err))
     else:
-        display_bitmask(kind='Input Mode',
+        display_bitmask(kind='  Input Mode',
                         bitmap=BITMAP_IFLAG,
                         value=iflag)
-        display_bitmask(kind='Output Mode',
+        display_bitmask(kind=' Output Mode',
                         bitmap=BITMAP_OFLAG,
                         value=oflag)
         display_bitmask(kind='Control Mode',
                         bitmap=BITMAP_CFLAG,
                         value=cflag)
-        display_bitmask(kind='Local Mode',
+        display_bitmask(kind='  Local Mode',
                         bitmap=BITMAP_LFLAG,
                         value=lflag)
         display_ctl_chars(index=CTLCHAR_INDEX,
