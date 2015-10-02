@@ -75,6 +75,15 @@ pylint:
 pyroma:
     # checks setup.py
     run: true
+    disable:
+        # > Setuptools and Distribute support running tests. By specifying a test
+        # > suite, it's easy to find and run tests both for automated tools and humans.
+        #
+        # https://pytest.org/latest/goodpractises.html#integration-with-setuptools-test-commands
+        # > Most often it is better to use tox instead
+        #
+        # we agree.
+        - 'PYR15'
 
 vulture:
     # this tool does a good job of finding unused code.
