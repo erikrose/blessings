@@ -6,7 +6,7 @@
     :alt: TeamCity Build status
     :target: https://teamcity-master.pexpect.org/viewType.html?buildTypeId=Blessed_BuildHead&branch_Blessed=%3Cdefault%3E&tab=buildTypeStatusDiv
 
-.. image:: https://coveralls.io/repos/jquast/blessed/badge.png?branch=master
+.. image:: https://img.shields.io/coveralls/jekyll/jekyll/master.svg
     :alt: Coveralls Code Coverage
     :target: https://coveralls.io/r/jquast/blessed?branch=master
 
@@ -14,7 +14,7 @@
     :alt: Latest Version
     :target: https://pypi.python.org/pypi/blessed
 
-.. image:: https://pypip.in/license/blessed/badge.svg
+.. image:: https://img.shields.io/github/license/jquast/blessed.svg
     :alt: License
     :target: http://opensource.org/licenses/MIT
 
