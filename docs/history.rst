@@ -83,7 +83,7 @@ Version History
     :attr:`~.does_styling` is ``False``.  Resolves issue where piping tests
     output would fail.
   * bugfix: warn and set :attr:`~.does_styling` to ``False`` when the given
-    :attr:`~.kind`` is not found in the terminal capability database.
+    :attr:`~.kind` is not found in the terminal capability database.
   * bugfix: allow unsupported terminal capabilities to be callable just as
     supported capabilities, so that the return value of
     :attr:`~.color`\(n) may be called on terminals without color
