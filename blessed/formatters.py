@@ -178,14 +178,15 @@ def get_proxy_string(term, attr):
                           if term.kind.startswith(_kind)), term)
     return {
         'screen': {
-            # proxy move_x/move_y for 'screen' terminal type.
+            # proxy move_x/move_y for 'screen' terminal type, used by tmux(1).
             'hpa': ParameterizingProxyString(
                 (u'\x1b[{0}G', lambda *arg: (arg[0] + 1,)), term.normal, attr),
             'vpa': ParameterizingProxyString(
                 (u'\x1b[{0}d', lambda *arg: (arg[0] + 1,)), term.normal, attr),
         },
         'ansi': {
-            # proxy show/hide cursor for 'ansi' terminal type.
+            # proxy show/hide cursor for 'ansi' terminal type.  There is some
+            # demand for a richly working ANSI terminal type for some reason.
             'civis': ParameterizingProxyString(
                 (u'\x1b[?25l', lambda *arg: ()), term.normal, attr),
             'cnorm': ParameterizingProxyString(
@@ -194,6 +195,8 @@ def get_proxy_string(term, attr):
                 (u'\x1b[{0}G', lambda *arg: (arg[0] + 1,)), term.normal, attr),
             'vpa': ParameterizingProxyString(
                 (u'\x1b[{0}d', lambda *arg: (arg[0] + 1,)), term.normal, attr),
+            'sc': '\x1b[s',
+            'rc': '\x1b[u',
         }
     }.get(term_kind, {}).get(attr, None)
 

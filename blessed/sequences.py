@@ -109,7 +109,7 @@ def get_movement_sequence_patterns(term):
     """
     bnc = functools.partial(_build_numeric_capability, term)
 
-    return set([
+    return set(filter(None, [
         # carriage_return
         re.escape(term.cr),
         # column_address: Horizontal position, absolute
@@ -141,7 +141,7 @@ def get_movement_sequence_patterns(term):
         term._cuf,
         # backward cursor
         term._cub,
-    ])
+    ]))
 
 
 def get_wontmove_sequence_patterns(term):
@@ -156,7 +156,7 @@ def get_wontmove_sequence_patterns(term):
 
     # pylint: disable=bad-builtin
     #         Used builtin function 'map'
-    return list([
+    return set(filter(None, [
         # print_screen: Print contents of screen
         re.escape(term.mc0),
         # prtr_off: Turn off printer
@@ -266,7 +266,7 @@ def get_wontmove_sequence_patterns(term):
         # ( not *exactly* legal, being extra forgiving. )
         bna(cap='sgr', nparams=_num) for _num in range(1, 10)
         # reset_{1,2,3}string: Reset string
-    ] + list(map(re.escape, (term.r1, term.r2, term.r3,))))
+    ] + list(map(re.escape, (term.r1, term.r2, term.r3,)))))
 
 
 def init_sequence_patterns(term):

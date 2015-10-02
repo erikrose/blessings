@@ -1,5 +1,14 @@
 Version History
 ===============
+1.10
+  * workaround: provide ``sc`` and ``rc`` for Terminals of ``kind='ansi'``,
+    repairing :meth:`~.Terminal.location` :ghissue:`44`.
+  * bugfix: length of simple SGR reset sequence ``\x1b[m`` was not correctly
+    determined on all terminal types, :ghissue:`45`.
+  * deprecated: ``_intr_continue`` arguments introduced in 1.8 are now marked
+    deprecated in 1.10: beginning with python 3.5, the default behavior is as
+    though this argument is always True, `PEP-475
+    <https://www.python.org/dev/peps/pep-0475/>`_, blessed does the same.
 
 1.9
   * enhancement: :paramref:`~.Terminal.wrap.break_long_words` now supported by
@@ -18,10 +27,6 @@ Version History
   * enhancement: new public attribute: :attr:`~.kind`: the very same as given
     :paramref:`Terminal.__init__.kind` keyword argument.  Or, when not given,
     determined by and equivalent to the ``TERM`` Environment variable.
-  * deprecated: ``_intr_continue`` arguments introduced in 1.8 are now marked
-    deprecated in 1.9.6: beginning with python 3.5, the default behavior is as
-    though this argument is always True, `PEP-475
-    <https://www.python.org/dev/peps/pep-0475/>`_.
 
 1.8
   * enhancement: export keyboard-read function as public method ``getch()``,
