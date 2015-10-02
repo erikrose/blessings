@@ -1,5 +1,5 @@
 .. image:: https://img.shields.io/travis/jquast/blessed.svg
-    :alt: Travis Continous Integration
+    :alt: Travis Continuous Integration
     :target: https://travis-ci.org/jquast/blessed/
 
 .. image:: https://img.shields.io/teamcity/http/teamcity-master.pexpect.org/s/Blessed_BuildHead.png
@@ -13,10 +13,6 @@
 .. image:: https://img.shields.io/pypi/v/blessed.svg
     :alt: Latest Version
     :target: https://pypi.python.org/pypi/blessed
-
-.. image:: https://img.shields.io/github/license/jquast/blessed.svg
-    :alt: License
-    :target: http://opensource.org/licenses/MIT
 
 .. image:: https://img.shields.io/pypi/dm/blessed.svg
     :alt: Downloads
