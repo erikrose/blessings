@@ -340,7 +340,7 @@ def init_sequence_patterns(term):
             re.escape(u'\x1b') + r'\[(\d+)\;(\d+)\;(\d+)\;(\d+)m',
             re.escape(u'\x1b') + r'\[(\d+)\;(\d+)\;(\d+)m',
             re.escape(u'\x1b') + r'\[(\d+)\;(\d+)m',
-            re.escape(u'\x1b') + r'\[(\d+)m',
+            re.escape(u'\x1b') + r'\[(\d+)?m',
             re.escape(u'\x1b(B'),
         ]
 
