@@ -147,6 +147,16 @@ License
 
 Blessed is under the MIT License. See the LICENSE file.
 
+Forked
+------
+
+Blessed is a fork of `blessings <https://github.com/erikrose/blessings>`_.
+Changes since 1.7 have all been proposed but unaccepted upstream.
+
+Furthermore, a project in the node.js language of the `same name
+<https://github.com/chjj/blessed>`_ is **not** related, or a fork
+of each other in any way.
+
 .. _`issue tracker`: https://github.com/jquast/blessed/issues/
 .. _curses: https://docs.python.org/3/library/curses.html
 .. _tigetstr: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/tigetstr.3
