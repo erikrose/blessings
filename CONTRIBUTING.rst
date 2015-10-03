@@ -56,6 +56,11 @@ static analysis tools through the **sa** target, invoked using::
 
     tox -esa
 
+Similarly, positional arguments can be used, for example to verify URL
+links::
+
+    tox -esa -- -blinkcheck
+
 All standards enforced by the underlying tools are adhered to by the blessed
 project, with the declarative exception of those found in `landscape.yml
 <https://github.com/jquast/blessed/blob/master/.landscape.yml>`_, or inline
