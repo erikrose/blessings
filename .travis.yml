@@ -30,7 +30,7 @@ notifications:
     on_failure: change
   irc:
     channels:
-      - "irc.Prison.NET#1984"
+      - "irc.servercentral.net#1984"
     template:
       - "%{repository}(%{branch}): %{message} (%{duration}) %{build_url}"
     skip_join: true
