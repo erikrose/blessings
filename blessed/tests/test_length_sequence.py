@@ -340,3 +340,13 @@ def test_sequence_is_movement_true(all_terms):
                                measure_length(t.clear, t))
 
     child_mnemonics_willmove(all_terms)
+
+
+def test_foreign_sequences():
+    """Test parsers about sequences received from foreign sources."""
+    @as_subprocess
+    def child(kind):
+        from blessed.sequences import measure_length
+        t = TestTerminal(kind=kind)
+        assert measure_length(u'\x1b[m', t) == len('\x1b[m')
+    child(kind='ansi')

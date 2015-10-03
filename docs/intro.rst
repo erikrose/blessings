@@ -1,22 +1,18 @@
 .. image:: https://img.shields.io/travis/jquast/blessed.svg
-    :alt: Travis Continous Integration
+    :alt: Travis Continuous Integration
     :target: https://travis-ci.org/jquast/blessed/
 
 .. image:: https://img.shields.io/teamcity/http/teamcity-master.pexpect.org/s/Blessed_BuildHead.png
     :alt: TeamCity Build status
     :target: https://teamcity-master.pexpect.org/viewType.html?buildTypeId=Blessed_BuildHead&branch_Blessed=%3Cdefault%3E&tab=buildTypeStatusDiv
 
-.. image:: https://coveralls.io/repos/jquast/blessed/badge.png?branch=master
+.. image:: https://img.shields.io/coveralls/jekyll/jekyll/master.svg
     :alt: Coveralls Code Coverage
     :target: https://coveralls.io/r/jquast/blessed?branch=master
 
 .. image:: https://img.shields.io/pypi/v/blessed.svg
     :alt: Latest Version
     :target: https://pypi.python.org/pypi/blessed
-
-.. image:: https://pypip.in/license/blessed/badge.svg
-    :alt: License
-    :target: http://opensource.org/licenses/MIT
 
 .. image:: https://img.shields.io/pypi/dm/blessed.svg
     :alt: Downloads
@@ -150,6 +146,16 @@ License
 -------
 
 Blessed is under the MIT License. See the LICENSE file.
+
+Forked
+------
+
+Blessed is a fork of `blessings <https://github.com/erikrose/blessings>`_.
+Changes since 1.7 have all been proposed but unaccepted upstream.
+
+Furthermore, a project in the node.js language of the `same name
+<https://github.com/chjj/blessed>`_ is **not** related, or a fork
+of each other in any way.
 
 .. _`issue tracker`: https://github.com/jquast/blessed/issues/
 .. _curses: https://docs.python.org/3/library/curses.html

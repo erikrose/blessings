@@ -1,10 +1,8 @@
-import platform
+# std
+import os
 import textwrap
-import termios
-import struct
-import fcntl
-import sys
 
+# local
 from .accessories import (
     as_subprocess,
     TestTerminal,
@@ -12,7 +10,42 @@ from .accessories import (
     all_terms,
 )
 
+# 3rd party
 import pytest
+
+TEXTWRAP_KEYWORD_COMBINATIONS = [
+    dict(break_long_words=False,
+         drop_whitespace=False,
+         subsequent_indent=''),
+    dict(break_long_words=False,
+         drop_whitespace=True,
+         subsequent_indent=''),
+    dict(break_long_words=False,
+         drop_whitespace=False,
+         subsequent_indent=' '),
+    dict(break_long_words=False,
+         drop_whitespace=True,
+         subsequent_indent=' '),
+    dict(break_long_words=True,
+         drop_whitespace=False,
+         subsequent_indent=''),
+    dict(break_long_words=True,
+         drop_whitespace=True,
+         subsequent_indent=''),
+    dict(break_long_words=True,
+         drop_whitespace=False,
+         subsequent_indent=' '),
+    dict(break_long_words=True,
+         drop_whitespace=True,
+         subsequent_indent=' '),
+]
+if os.environ.get('TEST_QUICK', None) is not None:
+    # test only one feature: everything on
+    TEXTWRAP_KEYWORD_COMBINATIONS = [
+        dict(break_long_words=True,
+             drop_whitespace=True,
+             subsequent_indent=' ')
+    ]
 
 
 def test_SequenceWrapper_invalid_width():
@@ -35,32 +68,7 @@ def test_SequenceWrapper_invalid_width():
     child()
 
 
-@pytest.mark.parametrize("kwargs", [
-    dict(break_long_words=False,
-         drop_whitespace=False,
-         subsequent_indent=''),
-    dict(break_long_words=False,
-         drop_whitespace=True,
-         subsequent_indent=''),
-    dict(break_long_words=False,
-         drop_whitespace=False,
-         subsequent_indent=' '),
-    dict(break_long_words=False,
-         drop_whitespace=True,
-         subsequent_indent=' '),
-    dict(break_long_words=True,
-         drop_whitespace=False,
-         subsequent_indent=''),
-    dict(break_long_words=True,
-         drop_whitespace=True,
-         subsequent_indent=''),
-    dict(break_long_words=True,
-         drop_whitespace=False,
-         subsequent_indent=' '),
-    dict(break_long_words=True,
-         drop_whitespace=True,
-         subsequent_indent=' '),
-])
+@pytest.mark.parametrize("kwargs", TEXTWRAP_KEYWORD_COMBINATIONS)
 def test_SequenceWrapper(all_terms, many_columns, kwargs):
     """Test that text wrapping matches internal extra options."""
     @as_subprocess

@@ -157,9 +157,10 @@ def test_location_with_styling(all_terms):
         with t.location(3, 4):
             t.stream.write(u'hi')
         expected_output = u''.join(
-            (unicode_cap('sc'),
+            (unicode_cap('sc') or u'\x1b[s',
              unicode_parm('cup', 4, 3),
-             u'hi', unicode_cap('rc')))
+             u'hi',
+             unicode_cap('rc') or u'\x1b[u'))
         assert (t.stream.getvalue() == expected_output)
 
     child_with_styling(all_terms)
@@ -187,16 +188,18 @@ def test_horizontal_location(all_terms):
         t = TestTerminal(kind=kind, stream=six.StringIO(), force_styling=True)
         with t.location(x=5):
             pass
+        _hpa = unicode_parm('hpa', 5)
+        if not _hpa and (kind.startswith('screen') or
+                         kind.startswith('ansi')):
+            _hpa = u'\x1b[6G'
         expected_output = u''.join(
-            (unicode_cap('sc'),
-             unicode_parm('hpa', 5),
-             unicode_cap('rc')))
+            (unicode_cap('sc') or u'\x1b[s',
+             _hpa,
+             unicode_cap('rc') or u'\x1b[u'))
         assert (t.stream.getvalue() == expected_output), (
             repr(t.stream.getvalue()), repr(expected_output))
 
-    # skip 'screen', 'ansi': hpa is proxied (see later tests)
-    if all_terms not in ('screen', 'ansi'):
-        child(all_terms)
+    child(all_terms)
 
 
 def test_vertical_location(all_terms):
@@ -206,15 +209,18 @@ def test_vertical_location(all_terms):
         t = TestTerminal(kind=kind, stream=six.StringIO(), force_styling=True)
         with t.location(y=5):
             pass
+        _vpa = unicode_parm('vpa', 5)
+        if not _vpa and (kind.startswith('screen') or
+                         kind.startswith('ansi')):
+            _vpa = u'\x1b[6d'
+
         expected_output = u''.join(
-            (unicode_cap('sc'),
-             unicode_parm('vpa', 5),
-             unicode_cap('rc')))
+            (unicode_cap('sc') or u'\x1b[s',
+             _vpa,
+             unicode_cap('rc') or u'\x1b[u'))
         assert (t.stream.getvalue() == expected_output)
 
-    # skip 'screen', vpa is proxied (see later tests)
-    if all_terms not in ('screen', 'ansi'):
-        child(all_terms)
+    child(all_terms)
 
 
 def test_inject_move_x():
@@ -226,9 +232,9 @@ def test_inject_move_x():
         with t.location(x=COL):
             pass
         expected_output = u''.join(
-            (unicode_cap('sc'),
+            (unicode_cap('sc') or u'\x1b[s',
              u'\x1b[{0}G'.format(COL + 1),
-             unicode_cap('rc')))
+             unicode_cap('rc') or u'\x1b[u'))
         assert (t.stream.getvalue() == expected_output)
         assert (t.move_x(COL) == u'\x1b[{0}G'.format(COL + 1))
 
@@ -246,9 +252,9 @@ def test_inject_move_y():
         with t.location(y=ROW):
             pass
         expected_output = u''.join(
-            (unicode_cap('sc'),
+            (unicode_cap('sc') or u'\x1b[s',
              u'\x1b[{0}d'.format(ROW + 1),
-             unicode_cap('rc')))
+             unicode_cap('rc') or u'\x1b[u'))
         assert (t.stream.getvalue() == expected_output)
         assert (t.move_y(ROW) == u'\x1b[{0}d'.format(ROW + 1))
 
@@ -264,10 +270,20 @@ def test_inject_civis_and_cnorm_for_ansi():
         t = TestTerminal(kind=kind, stream=six.StringIO(), force_styling=True)
         with t.hidden_cursor():
             pass
-        expected_output = u''.join(
-            (unicode_cap('sc'),
-             u'\x1b[?25l\x1b[?25h',
-             unicode_cap('rc')))
+        expected_output = u'\x1b[?25l\x1b[?25h'
+        assert (t.stream.getvalue() == expected_output)
+
+    child('ansi')
+
+
+def test_inject_sc_and_rc_for_ansi():
+    """Test injection of sc and rc (save and restore cursor) for ansi."""
+    @as_subprocess
+    def child(kind):
+        t = TestTerminal(kind=kind, stream=six.StringIO(), force_styling=True)
+        with t.location():
+            pass
+        expected_output = u'\x1b[s\x1b[u'
         assert (t.stream.getvalue() == expected_output)
 
     child('ansi')
@@ -281,9 +297,9 @@ def test_zero_location(all_terms):
         with t.location(0, 0):
             pass
         expected_output = u''.join(
-            (unicode_cap('sc'),
+            (unicode_cap('sc') or u'\x1b[s',
              unicode_parm('cup', 0, 0),
-             unicode_cap('rc')))
+             unicode_cap('rc') or u'\x1b[u'))
         assert (t.stream.getvalue() == expected_output)
 
     child(all_terms)

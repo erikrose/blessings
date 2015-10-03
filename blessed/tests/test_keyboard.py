@@ -3,7 +3,6 @@
 # std imports
 import functools
 import tempfile
-import platform
 import signal
 import curses
 import time
@@ -24,7 +23,6 @@ from .accessories import (
     SEMAPHORE,
     all_terms,
     echo_off,
-    xterms,
 )
 
 # 3rd-party
@@ -36,6 +34,8 @@ if sys.version_info[0] == 3:
     unichr = chr
 
 
+@pytest.mark.skipif(os.environ.get('TEST_QUICK', None) is not None,
+                    reason="TEST_QUICK specified")
 def test_kbhit_interrupted():
     "kbhit() should not be interrupted with a signal handler."
     pid, master_fd = pty.fork()
@@ -79,6 +79,8 @@ def test_kbhit_interrupted():
     assert math.floor(time.time() - stime) == 1.0
 
 
+@pytest.mark.skipif(os.environ.get('TEST_QUICK', None) is not None,
+                    reason="TEST_QUICK specified")
 def test_kbhit_interrupted_nonetype():
     "kbhit() should also allow interruption with timeout of None."
     pid, master_fd = pty.fork()
@@ -201,6 +203,8 @@ def test_keystroke_0s_cbreak_noinput_nokb():
     child()
 
 
+@pytest.mark.skipif(os.environ.get('TEST_QUICK', None) is not None,
+                    reason="TEST_QUICK specified")
 def test_keystroke_1s_cbreak_noinput():
     "1-second keystroke without input; '' should be returned after ~1 second."
     @as_subprocess
@@ -214,6 +218,8 @@ def test_keystroke_1s_cbreak_noinput():
     child()
 
 
+@pytest.mark.skipif(os.environ.get('TEST_QUICK', None) is not None,
+                    reason="TEST_QUICK specified")
 def test_keystroke_1s_cbreak_noinput_nokb():
     "1-second keystroke without input or keyboard."
     @as_subprocess
@@ -399,6 +405,8 @@ def test_keystroke_0s_cbreak_sequence():
     assert math.floor(time.time() - stime) == 0.0
 
 
+@pytest.mark.skipif(os.environ.get('TEST_QUICK', None) is not None,
+                    reason="TEST_QUICK specified")
 def test_keystroke_1s_cbreak_with_input():
     "1-second keystroke w/multibyte sequence; should return after ~1 second."
     pid, master_fd = pty.fork()
@@ -431,6 +439,8 @@ def test_keystroke_1s_cbreak_with_input():
     assert math.floor(time.time() - stime) == 1.0
 
 
+@pytest.mark.skipif(os.environ.get('TEST_QUICK', None) is not None,
+                    reason="TEST_QUICK specified")
 def test_esc_delay_cbreak_035():
     "esc_delay will cause a single ESC (\\x1b) to delay for 0.35."
     pid, master_fd = pty.fork()
@@ -466,6 +476,8 @@ def test_esc_delay_cbreak_035():
     assert 34 <= int(duration_ms) <= 45, duration_ms
 
 
+@pytest.mark.skipif(os.environ.get('TEST_QUICK', None) is not None,
+                    reason="TEST_QUICK specified")
 def test_esc_delay_cbreak_135():
     "esc_delay=1.35 will cause a single ESC (\\x1b) to delay for 1.35."
     pid, master_fd = pty.fork()
@@ -616,18 +628,18 @@ def test_cuf1_and_cub1_as_RIGHT_LEFT(all_terms):
     child(all_terms)
 
 
-def test_get_keyboard_sequences_sort_order(xterms):
+def test_get_keyboard_sequences_sort_order():
     "ordereddict ensures sequences are ordered longest-first."
     @as_subprocess
-    def child():
-        term = TestTerminal(force_styling=True)
+    def child(kind):
+        term = TestTerminal(kind=kind, force_styling=True)
         maxlen = None
         for sequence, code in term._keymap.items():
             if maxlen is not None:
                 assert len(sequence) <= maxlen
             assert sequence
             maxlen = len(sequence)
-    child()
+    child(kind='xterm-256color')
 
 
 def test_get_keyboard_sequence(monkeypatch):
