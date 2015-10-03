@@ -33,10 +33,8 @@ setuptools.setup(
         fname=os.path.join(HERE, 'version.json')),
     install_requires=_get_install_requires(
         fname=os.path.join(HERE, 'requirements.txt')),
-    long_description='{0}\n\n{1}'.format(
-        _get_long_description(os.path.join(HERE, 'docs', 'intro.rst')),
-        _get_long_description(os.path.join(HERE, 'docs', 'history.rst')),
-    ),
+    long_description=_get_long_description(
+        fname=os.path.join(HERE, 'docs', 'intro.rst')),
     description=('A thin, practical wrapper around terminal styling, '
                  'screen positioning, and keyboard input.'),
     author='Jeff Quast, Erik Rose',
