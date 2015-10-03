@@ -562,6 +562,8 @@ def test_padd():
         from blessed import Terminal
         term = Terminal('xterm-256color')
         assert Sequence('xyz\b', term).padd() == u'xy'
+        assert Sequence('xyz\b-', term).padd() == u'xy-'
         assert Sequence('xxxx\x1b[3Dzz', term).padd() == u'xzz'
+        assert Sequence('\x1b[3D', term).padd() == u''  # "Trim left"
 
     child()
