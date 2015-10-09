@@ -107,7 +107,7 @@ def test_parameterizing_string_type_error(monkeypatch):
 
 def test_formattingstring(monkeypatch):
     """Test formatters.FormattingString"""
-    from blessed.formatters import (FormattingString)
+    from blessed.formatters import FormattingString
 
     # given, with arg
     pstr = FormattingString(u'attr', u'norm')
@@ -184,8 +184,8 @@ def test_resolve_capability(monkeypatch):
 def test_resolve_color(monkeypatch):
     """Test formatters.resolve_color."""
     from blessed.formatters import (resolve_color,
-                                    FormattingString,
-                                    NullCallableString)
+                                      FormattingString,
+                                      NullCallableString)
 
     color_cap = lambda digit: 'seq-%s' % (digit,)
     monkeypatch.setattr(curses, 'COLOR_RED', 1984)
@@ -247,7 +247,9 @@ def test_resolve_attribute_as_compoundable(monkeypatch):
 
     resolve_cap = lambda term, digit: 'seq-%s' % (digit,)
     COMPOUNDABLES = set(['JOINT', 'COMPOUND'])
-    monkeypatch.setattr(blessed.formatters, 'resolve_capability', resolve_cap)
+    monkeypatch.setattr(blessed.formatters,
+                        'resolve_capability',
+                        resolve_cap)
     monkeypatch.setattr(blessed.formatters, 'COMPOUNDABLES', COMPOUNDABLES)
     term = mock.Mock()
     term.normal = 'seq-normal'
@@ -264,8 +266,12 @@ def test_resolve_attribute_non_compoundables(monkeypatch):
     from blessed.formatters import resolve_attribute, ParameterizingString
     uncompoundables = lambda attr: ['split', 'compound']
     resolve_cap = lambda term, digit: 'seq-%s' % (digit,)
-    monkeypatch.setattr(blessed.formatters, 'split_compound', uncompoundables)
-    monkeypatch.setattr(blessed.formatters, 'resolve_capability', resolve_cap)
+    monkeypatch.setattr(blessed.formatters,
+                        'split_compound',
+                        uncompoundables)
+    monkeypatch.setattr(blessed.formatters,
+                        'resolve_capability',
+                        resolve_cap)
     tparm = lambda *args: u'~'.join(
         arg.decode('latin1') if not num else '%s' % (arg,)
         for num, arg in enumerate(args)).encode('latin1')
@@ -291,7 +297,9 @@ def test_resolve_attribute_recursive_compoundables(monkeypatch):
 
     # patch,
     resolve_cap = lambda term, digit: 'seq-%s' % (digit,)
-    monkeypatch.setattr(blessed.formatters, 'resolve_capability', resolve_cap)
+    monkeypatch.setattr(blessed.formatters,
+                        'resolve_capability',
+                        resolve_cap)
     tparm = lambda *args: u'~'.join(
         arg.decode('latin1') if not num else '%s' % (arg,)
         for num, arg in enumerate(args)).encode('latin1')
