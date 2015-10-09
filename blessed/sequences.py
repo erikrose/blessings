@@ -374,7 +374,6 @@ def init_sequence_patterns(term):
 
 
 class SequenceTextWrapper(textwrap.TextWrapper):
-
     """This docstring overridden."""
 
     def __init__(self, width, term, **kwargs):
@@ -488,7 +487,6 @@ SequenceTextWrapper.__doc__ = textwrap.TextWrapper.__doc__
 
 
 class Sequence(six.text_type):
-
     """
     A "sequence-aware" version of the base :class:`str` class.
 

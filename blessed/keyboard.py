@@ -18,7 +18,6 @@ except ImportError:
 
 
 class Keystroke(six.text_type):
-
     """
     A unicode-derived class for describing a single keystroke.
 
