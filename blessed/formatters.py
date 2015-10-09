@@ -40,7 +40,6 @@ COMPOUNDABLES = _make_compoundables(COLORS)
 
 
 class ParameterizingString(six.text_type):
-
     r"""
     A Unicode string which can be called as a parameterizing termcap.
 
@@ -104,7 +103,6 @@ class ParameterizingString(six.text_type):
 
 
 class ParameterizingProxyString(six.text_type):
-
     r"""
     A Unicode string which can be called to proxy missing termcap entries.
 
@@ -203,7 +201,6 @@ def get_proxy_string(term, attr):
 
 
 class FormattingString(six.text_type):
-
     r"""
     A Unicode string which doubles as a callable.
 
@@ -240,7 +237,6 @@ class FormattingString(six.text_type):
 
 
 class NullCallableString(six.text_type):
-
     """
     A dummy callable Unicode alternative to :class:`FormattingString`.
 
