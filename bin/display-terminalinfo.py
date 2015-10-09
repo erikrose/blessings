@@ -166,7 +166,7 @@ def display_pathconf(names, getter):
         try:
             value = getter(name)
         except OSError as err:
-            value = err
+            value = 'OSErrno {err.errno}'.format(err=err)
         print(fmt.format(name=name, value=value, col1_width=col1_width))
     print()
 
