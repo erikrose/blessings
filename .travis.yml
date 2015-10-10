@@ -25,11 +25,11 @@ notifications:
       - contact@jeffquast.com
     on_success: change
     on_failure: change
-  irc:
-    channels:
-      - "irc.servercentral.net#1984"
-    template:
-      - "%{repository}(%{branch}): %{message} (%{duration}) %{build_url}"
-    skip_join: true
-    on_success: change
-    on_failure: change
+#  irc:
+#    channels:
+#      - "irc.servercentral.net#1984"
+#    template:
+#      - "%{repository}(%{branch}): %{message} (%{duration}) %{build_url}"
+#    skip_join: true
+#    on_success: change
+#    on_failure: change
