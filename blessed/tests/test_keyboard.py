@@ -832,12 +832,12 @@ def test_resolve_sequence():
     assert repr(ks) in (u"KEY_L", "KEY_L")
 
 
-def test_prefixes():
-    "Test prefixes"
-    from blessed.keyboard import prefixes
-    keys = {u'abc': '1', u'abdf': '2', u'e': '3'}
-    pfs = prefixes(keys)
-    assert pfs == set([u'a', u'ab', u'abd'])
+def test_keyboard_prefixes():
+    "Test keyboard.prefixes"
+    from blessed.keyboard import get_leading_prefixes
+    keys = ['abc', 'abdf', 'e', 'jkl']
+    pfs = get_leading_prefixes(keys)
+    assert pfs == set([u'a', u'ab', u'abd', u'j', u'jk'])
 
 
 def test_keypad_mixins_and_aliases():

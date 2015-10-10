@@ -189,12 +189,24 @@ def get_keyboard_sequences(term):
         (seq, sequence_map[seq]) for seq in sorted(
             sequence_map.keys(), key=len, reverse=True)))
 
-def prefixes(sequences):
-    """prefixes(iterable of strings) -> (set)
 
-    Returns a set of proper prefixes of an iterable of strings
+def get_leading_prefixes(sequences):
+    """
+    Return a set of proper prefixes for given sequence of strings.
+
+    :param iterable sequences
+    :rtype: set
+
+    Given an iterable of strings, all textparts leading up to the final
+    string is returned as a unique set.  This function supports the
+    :meth:`~.Terminal.inkey` method by determining whether the given
+    input is a sequence that **may** lead to a final matching pattern.
+
+    >>> prefixes(['abc', 'abdf', 'e', 'jkl'])
+    set([u'a', u'ab', u'abd', u'j', u'jk'])
     """
     return set(seq[:i] for seq in sequences for i in range(1, len(seq)))
+
 
 def resolve_sequence(text, mapper, codes):
     r"""

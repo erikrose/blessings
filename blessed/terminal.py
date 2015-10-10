@@ -50,9 +50,9 @@ from .sequences import (init_sequence_patterns,
                         )
 
 from .keyboard import (get_keyboard_sequences,
+                       get_leading_prefixes,
                        get_keyboard_codes,
                        resolve_sequence,
-                       prefixes,
                        )
 
 
@@ -209,7 +209,7 @@ class Terminal(object):
         # Build database of sequence <=> KEY_NAME.
         self._keymap = get_keyboard_sequences(self)
         # build set of prefixes of sequences
-        self._keymap_prefixes = prefixes(self._keymap)
+        self._keymap_prefixes = get_leading_prefixes(self._keymap)
 
         self._keyboard_buf = collections.deque()
         if self._keyboard_fd is not None:
