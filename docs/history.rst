@@ -1,5 +1,10 @@
 Version History
 ===============
+1.11
+  * enhancement: :meth:`~.Terminal.inkey` can return more quickly for
+    combinations such as ``Alt + Z`` when ``MetaSendsEscape`` is enabled,
+    :ghissue:`30`.
+
 1.10
   * workaround: provide ``sc`` and ``rc`` for Terminals of ``kind='ansi'``,
     repairing :meth:`~.Terminal.location` :ghissue:`44`.
