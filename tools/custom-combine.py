@@ -50,6 +50,7 @@ def main():
 
     _, no_stmts, no_miss, _ = total_line.split(None, 3)
     no_covered = int(no_stmts) - int(no_miss)
+    print(fout.getvalue())
     print("##teamcity[buildStatisticValue "
           "key='CodeCoverageAbsLTotal' "
           "value='{0}']".format(no_stmts))

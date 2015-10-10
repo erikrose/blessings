@@ -764,8 +764,8 @@ class Terminal(object):
                     if timeout > 0:
                         continue
                     # no time remains after handling exception (rare)
-                    ready_r = []
-                    break
+                    ready_r = []        # pragma: no cover
+                    break               # pragma: no cover
             else:
                 break
 
