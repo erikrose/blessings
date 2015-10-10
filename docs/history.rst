@@ -4,6 +4,8 @@ Version History
   * enhancement: :meth:`~.Terminal.inkey` can return more quickly for
     combinations such as ``Alt + Z`` when ``MetaSendsEscape`` is enabled,
     :ghissue:`30`.
+  * enhancement: :class:`~.FormattingString` may now be nested, such as
+    ``t.red('red', t.underline('rum'))``, :ghissue:`61`
 
 1.10
   * workaround: provide ``sc`` and ``rc`` for Terminals of ``kind='ansi'``,
