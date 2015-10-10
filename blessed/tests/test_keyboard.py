@@ -14,6 +14,7 @@ import os
 
 # local
 from .accessories import (
+    init_subproc_coverage,
     read_until_eof,
     read_until_semaphore,
     SEND_SEMAPHORE,
@@ -40,10 +41,7 @@ def test_kbhit_interrupted():
     "kbhit() should not be interrupted with a signal handler."
     pid, master_fd = pty.fork()
     if pid == 0:
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_kbhit_interrupted')
 
         # child pauses, writes semaphore and begins awaiting input
         global got_sigwinch
@@ -85,10 +83,7 @@ def test_kbhit_interrupted_nonetype():
     "kbhit() should also allow interruption with timeout of None."
     pid, master_fd = pty.fork()
     if pid == 0:
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_kbhit_interrupted_nonetype')
 
         # child pauses, writes semaphore and begins awaiting input
         global got_sigwinch
@@ -249,10 +244,7 @@ def test_keystroke_0s_cbreak_with_input():
     "0-second keystroke with input; Keypress should be immediately returned."
     pid, master_fd = pty.fork()
     if pid == 0:
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_keystroke_0s_cbreak_with_input')
         # child pauses, writes semaphore and begins awaiting input
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
@@ -282,10 +274,7 @@ def test_keystroke_cbreak_with_input_slowly():
     "0-second keystroke with input; Keypress should be immediately returned."
     pid, master_fd = pty.fork()
     if pid == 0:
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_keystroke_cbreak_with_input_slowly')
         # child pauses, writes semaphore and begins awaiting input
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
@@ -325,10 +314,7 @@ def test_keystroke_0s_cbreak_multibyte_utf8():
     # utf-8 bytes represent "latin capital letter upsilon".
     pid, master_fd = pty.fork()
     if pid == 0:  # child
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_keystroke_0s_cbreak_multibyte_utf8')
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
@@ -358,10 +344,7 @@ def test_keystroke_0s_raw_input_ctrl_c():
     "0-second keystroke with raw allows receiving ^C."
     pid, master_fd = pty.fork()
     if pid == 0:  # child
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_keystroke_0s_raw_input_ctrl_c')
         term = TestTerminal()
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         with term.raw():
@@ -391,10 +374,7 @@ def test_keystroke_0s_cbreak_sequence():
     "0-second keystroke with multibyte sequence; should decode immediately."
     pid, master_fd = pty.fork()
     if pid == 0:  # child
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_keystroke_0s_cbreak_sequence')
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
@@ -423,10 +403,7 @@ def test_keystroke_1s_cbreak_with_input():
     "1-second keystroke w/multibyte sequence; should return after ~1 second."
     pid, master_fd = pty.fork()
     if pid == 0:  # child
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_keystroke_1s_cbreak_with_input')
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
@@ -457,10 +434,7 @@ def test_esc_delay_cbreak_035():
     "esc_delay will cause a single ESC (\\x1b) to delay for 0.35."
     pid, master_fd = pty.fork()
     if pid == 0:  # child
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_esc_delay_cbreak_035')
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
@@ -494,10 +468,7 @@ def test_esc_delay_cbreak_135():
     "esc_delay=1.35 will cause a single ESC (\\x1b) to delay for 1.35."
     pid, master_fd = pty.fork()
     if pid == 0:  # child
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_esc_delay_cbreak_135')
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
@@ -529,10 +500,7 @@ def test_esc_delay_cbreak_timout_0():
     """esc_delay still in effect with timeout of 0 ("nonblocking")."""
     pid, master_fd = pty.fork()
     if pid == 0:  # child
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_esc_delay_cbreak_timout_0')
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
@@ -564,10 +532,7 @@ def test_esc_delay_cbreak_nonprefix_sequence():
     "ESC a (\\x1ba) will return an ESC immediately"
     pid, master_fd = pty.fork()
     if pid is 0:  # child
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_esc_delay_cbreak_nonprefix_sequence')
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():
@@ -601,10 +566,7 @@ def test_esc_delay_cbreak_prefix_sequence():
     "An unfinished multibyte sequence (\\x1b[) will delay an ESC by .35 "
     pid, master_fd = pty.fork()
     if pid is 0:  # child
-        try:
-            cov = __import__('cov_core_init').init()
-        except ImportError:
-            cov = None
+        cov = init_subproc_coverage('test_esc_delay_cbreak_prefix_sequence')
         term = TestTerminal()
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
         with term.cbreak():

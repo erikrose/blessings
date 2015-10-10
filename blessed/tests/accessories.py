@@ -49,6 +49,21 @@ elif os.environ.get('TEST_QUICK'):
     all_terms_params = 'xterm screen ansi linux'.split()
 
 
+def init_subproc_coverage(run_note):
+        try:
+            import coverage
+        except ImportError:
+            return None
+        _coveragerc = os.path.join(
+            os.path.dirname(__file__),
+            os.pardir, os.pardir,
+            '.coveragerc')
+        cov = coverage.Coverage(config_file=_coveragerc)
+        cov.set_option("run:note", run_note)
+        cov.start()
+        return cov
+
+
 class as_subprocess(object):
     """This helper executes test cases in a child process,
        avoiding a python-internal bug of _curses: setupterm()
@@ -68,19 +83,10 @@ class as_subprocess(object):
             # if failed, causing a non-zero exit code, using the
             # protected _exit() function of ``os``; to prevent the
             # 'SystemExit' exception from being thrown.
-            cov = None
-            try:
-                import coverage
-                _coveragerc = os.path.join(os.path.dirname(__file__),
-                                           os.pardir, os.pardir,
-                                           '.coveragerc')
-                cov = coverage.Coverage(config_file=_coveragerc)
-                cov.set_option("run:note",
-                               "@as_subprocess-{0};{1}(*{2}, **{3})".format(
-                                   os.getpid(), self.func, args, kwargs))
-                cov.start()
-            except ImportError:
-                pass
+            cov = init_subproc_coverage(
+                "@as_subprocess-{pid};{func_name}(*{args}, **{kwargs})"
+                .format(pid=os.getpid(), func_name=self.func,
+                        args=args, kwargs=kwargs))
             try:
                 self.func(*args, **kwargs)
             except Exception:
