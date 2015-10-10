@@ -123,6 +123,12 @@ The same program with *Blessed* is simply::
     with term.location(0, term.height - 1):
         print('This is' + term.underline('underlined') + '!')
 
+Requirements
+------------
+
+Blessed is compatible with Python 2.7, 3.4, and 3.5 on Debian Linux, Mac OSX,
+and FreeBSD.
+
 Further Documentation
 ---------------------
 
