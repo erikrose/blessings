@@ -109,25 +109,24 @@ class Terminal(object):
         """
         Initialize the terminal.
 
-        :param str kind: A terminal string as taken by
-            :func:`curses.setupterm`. Defaults to the value of the ``TERM``
-            environment variable.
+        :arg str kind: A terminal string as taken by :func:`curses.setupterm`.
+            Defaults to the value of the ``TERM`` environment variable.
 
             .. note:: Terminals withing a single process must share a common
                 ``kind``. See :obj:`_CUR_TERM`.
 
-        :param file stream: A file-like object representing the Terminal
-            output. Defaults to the original value of :obj:`sys.__stdout__`,
-            like :func:`curses.initscr` does.
+        :arg file stream: A file-like object representing the Terminal output.
+            Defaults to the original value of :obj:`sys.__stdout__`, like
+            :func:`curses.initscr` does.
 
             If ``stream`` is not a tty, empty Unicode strings are returned for
             all capability values, so things like piping your program output to
             a pipe or file does not emit terminal sequences.
 
-        :param bool force_styling: Whether to force the emission of
-            capabilities even if :obj:`sys.__stdout__` does not seem to be
-            connected to a terminal. If you want to force styling to not
-            happen, use ``force_styling=None``.
+        :arg bool force_styling: Whether to force the emission of capabilities
+            even if :obj:`sys.__stdout__` does not seem to be connected to a
+            terminal. If you want to force styling to not happen, use
+            ``force_styling=None``.
 
             This comes in handy if users are trying to pipe your output through
             something like ``less -r`` or build systems which support decoding
@@ -253,7 +252,8 @@ class Terminal(object):
         if not self.does_styling:
             return NullCallableString()
         val = resolve_attribute(self, attr)
-        # Cache capability codes.
+        # Cache capability resolution: note this will prevent this
+        # __getattr__ method for being called again.  That's the idea!
         setattr(self, attr, val)
         return val
 
@@ -311,7 +311,7 @@ class Terminal(object):
         :mod:`fcntl`, or :mod:`tty`, window size of 80 columns by 25
         rows is always returned.
 
-        :param int fd: file descriptor queries for its window size.
+        :arg int fd: file descriptor queries for its window size.
         :raises IOError: the file descriptor ``fd`` is not a terminal.
         :rtype: WINSZ
 
