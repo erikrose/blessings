@@ -30,7 +30,7 @@ Install and run tox
 
 Py.test is used as the test runner, supporting positional arguments, you may
 for example use `looponfailing
-<https://pytest.org/latest/xdist.html#running-tests-in-looponfailing-mode>`
+<https://pytest.org/latest/xdist.html#running-tests-in-looponfailing-mode>`_
 with python 3.5, stopping at the first failing test case, and looping
 (retrying) after a filesystem save is detected::
 
