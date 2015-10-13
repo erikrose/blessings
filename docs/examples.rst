@@ -16,8 +16,7 @@ https://github.com/jquast/blessed/blob/master/bin/editor.py
 
 This program demonstrates using the directional keys and noecho input
 mode. It acts as a (very dumb) fullscreen editor, with support for
-saving a file, which demonstrates how to provide a line-editor
-rudimentary line-editor as well.
+saving a file, as well as including a rudimentary line-editor.
 
 keymatrix.py
 ------------
@@ -46,6 +45,8 @@ to stderr, to avoid the need to "flush" or emit newlines, and makes
 use of the move_x (hpa) capability to "overstrike" the display a
 scrolling progress bar.
 
+.. _tprint.py:
+
 tprint.py
 ---------
 https://github.com/jquast/blessed/blob/master/bin/tprint.py
@@ -62,7 +63,27 @@ worms.py
 https://github.com/jquast/blessed/blob/master/bin/worms.py
 
 This program demonstrates how an interactive game could be made
-with blessed.  It is designed after the class game of WORMS.BAS,
-distributed with early Microsoft Q-BASIC for PC-DOS, and later
-more popularly known as "snake" as it was named on early mobile
-platforms.
+with blessed.  It is similar to `NIBBLES.BAS
+<https://github.com/tangentstorm/tangentlabs/blob/master/qbasic/NIBBLES.BAS>`_
+or "snake" of early mobile platforms.
+
+resize.py
+---------
+https://github.com/jquast/blessed/blob/master/bin/resize.py
+
+This program demonstrates the :meth:`~.get_location` method,
+behaving similar to `resize(1)
+<https://github.com/joejulian/xterm/blob/master/resize.c>`_
+: set environment and terminal settings to current window size.
+The window size is determined by eliciting an answerback
+sequence from the connecting terminal emulator.
+
+.. _detect-multibyte.py:
+
+detect-multibyte.py
+-------------------
+https://github.com/jquast/blessed/blob/master/bin/detect-multibyte.py
+
+This program also demonstrates how the :meth:`~.get_location` method
+can be used to reliably test whether the terminal emulator of the connecting
+client is capable of rendering multibyte characters as a single cell.

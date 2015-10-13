@@ -18,6 +18,10 @@
     :alt: Downloads
     :target: https://pypi.python.org/pypi/blessed
 
+.. image:: https://badges.gitter.im/Join%20Chat.svg
+    :alt: Join Chat
+    :target: https://gitter.im/jquast/blessed
+
 Introduction
 ============
 
@@ -126,8 +130,8 @@ The same program with *Blessed* is simply::
 Requirements
 ------------
 
-Blessed is compatible with Python 2.7, 3.4, and 3.5 on Debian Linux, Mac OSX,
-and FreeBSD.
+Blessed is tested with Python 2.7, 3.4, and 3.5 on Debian Linux, Mac, and
+FreeBSD.
 
 Further Documentation
 ---------------------

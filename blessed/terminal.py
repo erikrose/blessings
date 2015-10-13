@@ -15,6 +15,7 @@ import struct
 import sys
 import time
 import warnings
+import re
 
 try:
     import termios
@@ -45,6 +46,7 @@ from .formatters import (ParameterizingString,
                          )
 
 from .sequences import (init_sequence_patterns,
+                        _build_any_numeric_capability,
                         SequenceTextWrapper,
                         Sequence,
                         )
@@ -53,6 +55,8 @@ from .keyboard import (get_keyboard_sequences,
                        get_leading_prefixes,
                        get_keyboard_codes,
                        resolve_sequence,
+                       _read_until,
+                       _time_left,
                        )
 
 
@@ -137,10 +141,16 @@ class Terminal(object):
         self._keyboard_fd = None
 
         # Default stream is stdout, keyboard valid as stdin only when
-        # output stream is stdout is a tty.
-        if stream is None or stream == sys.__stdout__:
+        # output stream is stdout or stderr and is a tty.
+        if stream is None:
             stream = sys.__stdout__
+        if stream in (sys.__stdout__, sys.__stderr__):
             self._keyboard_fd = sys.__stdin__.fileno()
+
+        # we assume our input stream to be line-buffered until either the
+        # cbreak of raw context manager methods are entered with an
+        # attached tty.
+        self._line_buffered = True
 
         try:
             stream_fd = (stream.fileno() if hasattr(stream, 'fileno') and
@@ -401,10 +411,109 @@ class Terminal(object):
         elif y is not None:
             self.stream.write(self.move_y(y))
         try:
+            self.stream.flush()
             yield
         finally:
             # Restore original cursor position:
             self.stream.write(self.restore)
+            self.stream.flush()
+
+    def get_location(self, timeout=None):
+        r"""
+        Return tuple (row, column) of cursor position.
+
+        :arg float timeout: Return after time elapsed in seconds with value
+            ``(-1, -1)`` indicating that the remote end did not respond.
+        :rtype: tuple
+        :returns: cursor position as tuple in form of (row, column).
+
+        The location of the cursor is determined by emitting the ``u7``
+        terminal capability, or VT100 `Query Cursor Position
+        <http://www.termsys.demon.co.uk/vtansi.htm#status>`_ when such
+        capability is undefined, which elicits a response from a reply string
+        described by capability ``u6``, or again VT100's definition of
+        ``\x1b[%i%d;%dR`` when undefined.
+
+        The ``(row, col)`` return value matches the parameter order of the
+        ``move`` capability, so that the following sequence should cause the
+        cursor to not move at all::
+
+            >>> term = Terminal()
+            >>> term.move(*term.get_location()))
+
+         .. warning:: You might first test that a terminal is capable of
+             informing you of its location, while using a timeout, before
+             later calling.  When a timeout is specified, always ensure the
+             return value is conditionally checked for ``(-1, -1)``.
+        """
+        # Local lines attached by termios and remote login protocols such as
+        # ssh and telnet both provide a means to determine the window
+        # dimensions of a connected client, but **no means to determine the
+        # location of the cursor**.
+        #
+        # from http://invisible-island.net/ncurses/terminfo.src.html,
+        #
+        # > The System V Release 4 and XPG4 terminfo format defines ten string
+        # > capabilities for use by applications, <u0>...<u9>.   In this file,
+        # > we use certain of these capabilities to describe functions which
+        # > are not covered by terminfo.  The mapping is as follows:
+        # >
+        # >  u9   terminal enquire string (equiv. to ANSI/ECMA-48 DA)
+        # >  u8   terminal answerback description
+        # >  u7   cursor position request (equiv. to VT100/ANSI/ECMA-48 DSR 6)
+        # >  u6   cursor position report (equiv. to ANSI/ECMA-48 CPR)
+        query_str = self.u7 or u'\x1b[6n'
+
+        # determine response format as a regular expression
+        response_re = re.escape(u'\x1b') + r'\[(\d+)\;(\d+)R'
+
+        if self.u6:
+            with warnings.catch_warnings():
+                response_re = _build_any_numeric_capability(
+                    term=self, cap='u6', nparams=2
+                ) or response_re
+
+        # Avoid changing user's desired raw or cbreak mode if already entered,
+        # by entering cbreak mode ourselves.  This is necessary to receive user
+        # input without awaiting a human to press the return key.   This mode
+        # also disables echo, which we should also hide, as our input is an
+        # sequence that is not meaningful for display as an output sequence.
+
+        ctx = None
+        try:
+            if self._line_buffered:
+                ctx = self.cbreak()
+                ctx.__enter__()
+
+            # emit the 'query cursor position' sequence,
+            self.stream.write(query_str)
+            self.stream.flush()
+
+            # expect a response,
+            match, data = _read_until(term=self,
+                                      pattern=response_re,
+                                      timeout=timeout)
+
+            # ensure response sequence is excluded from subsequent input,
+            if match:
+                data = (data[:match.start()] + data[match.end():])
+
+            # re-buffer keyboard data, if any
+            self.ungetch(data)
+
+            if match:
+                # return matching sequence response, the cursor location.
+                row, col = match.groups()
+                return int(row), int(col)
+
+        finally:
+            if ctx is not None:
+                ctx.__exit__(None, None, None)
+
+        # We chose to return an illegal value rather than an exception,
+        # favoring that users author function filters, such as max(0, y),
+        # rather than crowbarring such logic into an exception handler.
+        return -1, -1
 
     @contextlib.contextmanager
     def fullscreen(self):
@@ -711,6 +820,14 @@ class Terminal(object):
         byte = os.read(self._keyboard_fd, 1)
         return self._keyboard_decoder.decode(byte, final=False)
 
+    def ungetch(self, text):
+        """
+        Buffer input data to be discovered by next call to :meth:`~.inkey`.
+
+        :param str ucs: String to be buffered as keyboard input.
+        """
+        self._keyboard_buf.extendleft(text)
+
     def kbhit(self, timeout=None, **_kwargs):
         """
         Return whether a keypress has been detected on the keyboard.
@@ -804,14 +921,17 @@ class Terminal(object):
         if HAS_TTY and self._keyboard_fd is not None:
             # Save current terminal mode:
             save_mode = termios.tcgetattr(self._keyboard_fd)
+            save_line_buffered = self._line_buffered
             tty.setcbreak(self._keyboard_fd, termios.TCSANOW)
             try:
+                self._line_buffered = False
                 yield
             finally:
                 # Restore prior mode:
                 termios.tcsetattr(self._keyboard_fd,
                                   termios.TCSAFLUSH,
                                   save_mode)
+                self._line_buffered = save_line_buffered
         else:
             yield
 
@@ -839,14 +959,17 @@ class Terminal(object):
         if HAS_TTY and self._keyboard_fd is not None:
             # Save current terminal mode:
             save_mode = termios.tcgetattr(self._keyboard_fd)
+            save_line_buffered = self._line_buffered
             tty.setraw(self._keyboard_fd, termios.TCSANOW)
             try:
+                self._line_buffered = False
                 yield
             finally:
                 # Restore prior mode:
                 termios.tcsetattr(self._keyboard_fd,
                                   termios.TCSAFLUSH,
                                   save_mode)
+                self._line_buffered = save_line_buffered
         else:
             yield
 
@@ -912,25 +1035,6 @@ class Terminal(object):
                 'Terminal.inkey() called, but no terminal with keyboard '
                 'attached to process.  This call would hang forever.')
 
-        def time_left(stime, timeout):
-            """
-            Return time remaining since ``stime`` before given ``timeout``.
-
-            This function assists determining the value of ``timeout`` for
-            class method :meth:`kbhit`.
-
-            :arg float stime: starting time for measurement
-            :arg float timeout: timeout period, may be set to None to
-               indicate no timeout (where 0 is always returned).
-            :rtype: float or int
-            :returns: time remaining as float. If no time is remaining,
-               then the integer ``0`` is returned.
-            """
-            if timeout is not None:
-                if timeout == 0:
-                    return 0
-                return max(0, timeout - (time.time() - stime))
-
         resolve = functools.partial(resolve_sequence,
                                     mapper=self._keymap,
                                     codes=self._keycodes)
@@ -952,25 +1056,30 @@ class Terminal(object):
         # so long as the most immediately received or buffered keystroke is
         # incomplete, (which may be a multibyte encoding), block until until
         # one is received.
-        while not ks and self.kbhit(timeout=time_left(stime, timeout)):
+        while not ks and self.kbhit(timeout=_time_left(stime, timeout)):
             ucs += self.getch()
             ks = resolve(text=ucs)
 
         # handle escape key (KEY_ESCAPE) vs. escape sequence (like those
         # that begin with \x1b[ or \x1bO) up to esc_delay when
         # received. This is not optimal, but causes least delay when
-        # "meta sends escape" is used,
-        # or when an unsupported sequence is sent.
+        # "meta sends escape" is used, or when an unsupported sequence is
+        # sent.
+        #
+        # The statement, "ucs in self._keymap_prefixes" has an effect on
+        # keystrokes such as Alt + Z ("\x1b[z" with metaSendsEscape): because
+        # no known input sequences begin with such phrasing to allow it to be
+        # returned more quickly than esc_delay otherwise blocks for.
         if ks.code == self.KEY_ESCAPE:
             esctime = time.time()
             while (ks.code == self.KEY_ESCAPE and
                    ucs in self._keymap_prefixes and
-                   self.kbhit(timeout=time_left(esctime, esc_delay))):
+                   self.kbhit(timeout=_time_left(esctime, esc_delay))):
                 ucs += self.getch()
                 ks = resolve(text=ucs)
 
         # buffer any remaining text received
-        self._keyboard_buf.extendleft(ucs[len(ks):])
+        self.ungetch(ucs[len(ks):])
         return ks
 
 
