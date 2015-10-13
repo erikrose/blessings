@@ -4,7 +4,7 @@ Version History
   * enhancement: :meth:`~.Terminal.get_location` returns the ``(row, col)``
     position of the cursor at the time of call for attached terminal.
   * enhancement: a keyboard now detected as *stdin* when
-    :paramref:`~.Terminal.__init__.stream` is :obj:`sys.stdin`.
+    :paramref:`~.Terminal.__init__.stream` is :obj:`sys.stderr`.
 
 1.11
   * enhancement: :meth:`~.Terminal.inkey` can return more quickly for
