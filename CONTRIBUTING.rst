@@ -14,8 +14,8 @@ Prepare a developer environment.  Then, from the blessed code folder::
 
     pip install --editable .
 
-Any changes made are automatically made available to the python interpreter
-matching pip as the 'blessed' module path irregardless of the current working
+Any changes made in this project folder are then made available to the python
+interpreter as the 'telnetlib3' module irregardless of the current working
 directory.
 
 Running Tests
@@ -56,12 +56,7 @@ static analysis tools through the **sa** target, invoked using::
 
     tox -esa
 
-Similarly, positional arguments can be used, for example to verify URL
-links::
-
-    tox -esa -- -blinkcheck
-
-All standards enforced by the underlying tools are adhered to by the blessed
-project, with the declarative exception of those found in `landscape.yml
+All standards enforced by the underlying style checker tools are adhered to,
+with the declarative exception of those found in `landscape.yml
 <https://github.com/jquast/blessed/blob/master/.landscape.yml>`_, or inline
 using ``pylint: disable=`` directives.
