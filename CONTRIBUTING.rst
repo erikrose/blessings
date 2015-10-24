@@ -15,7 +15,7 @@ Prepare a developer environment.  Then, from the blessed code folder::
     pip install --editable .
 
 Any changes made in this project folder are then made available to the python
-interpreter as the 'telnetlib3' module irregardless of the current working
+interpreter as the 'blessed' package regardless of the current working
 directory.
 
 Running Tests
