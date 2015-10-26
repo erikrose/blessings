@@ -44,8 +44,6 @@ def _sort_sequences(regex_seqlist):
     # types, it is feasible.
     # pylint: disable=bad-builtin
     #         Used builtin function 'filter'
-    for el in regex_seqlist:
-        assert isinstance(el, tuple)
     return sorted(list(filter(lambda x: x and x[1], regex_seqlist)), key=lambda x: len(x[1]), reverse=True)
 
 
