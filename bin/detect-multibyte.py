@@ -20,9 +20,10 @@ rendering in utf8 by making an inquiry of their cursor position:
 If the horizontal distance of (p0, p1) is 1 cell, we know the connecting
 client is certainly matching our intended encoding.
 
-As an exercise, it may be possible to use this technique to accurately
-determine to the remote encoding without protocol negotiation using cursor
-positioning alone, as demonstrated by the following diagram,
+As a (tough!) exercise, it may be possible to use this technique to accurately
+determine the remote encoding without protocol negotiation using cursor
+positioning alone through a complex state decision tree, as demonstrated
+by the following diagram:
 
 .. image:: _static/soulburner-ru-family-encodings.jpg
     :alt: Cyrillic encodings flowchart
