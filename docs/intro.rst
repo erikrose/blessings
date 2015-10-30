@@ -1,4 +1,4 @@
-.. image:: https://img.shields.io/travis/jquast/blessed.svg
+.. image:: https://img.shields.io/travis/jquast/blessed/master.svg
     :alt: Travis Continuous Integration
     :target: https://travis-ci.org/jquast/blessed/
 

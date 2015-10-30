@@ -107,7 +107,7 @@ def _build_numeric_capability(term, cap, optional=False,
 
     :arg blessed.Terminal term: :class:`~.Terminal` instance.
     :arg str cap: terminal capability name.
-    :arg int num: the numeric to use for parameterized capability.
+    :arg int base_num: the numeric to use for parameterized capability.
     :arg int nparams: the number of parameters to use for capability.
     :rtype: tuple
     :returns: tuple of
