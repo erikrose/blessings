@@ -16,10 +16,35 @@ from blessed._binterms import BINARY_TERMINALS, BINTERM_UNSUPPORTED_MSG
 import wcwidth
 import six
 
-__all__ = ('init_sequence_patterns', 'Sequence', 'SequenceTextWrapper', 'iter_parse')
+__all__ = ('init_sequence_patterns',
+           'Sequence',
+           'SequenceTextWrapper',
+           'iter_parse')
 
 
-TextFragment = collections.namedtuple('TextFragment', ['ucs', 'is_sequence', 'capname', 'params'])
+class TextPart(collections.namedtuple('TextPart', (
+        'ucs', 'is_sequence', 'name', 'params'))):
+    """
+    Describes either a terminal sequence or a series of printable characters.
+
+    .. py:attribute:: ucs
+
+        ucs str of terminal sequence or printable characters
+
+    .. py:attribute:: is_sequence
+
+        bool of whether this is a terminal sequence
+
+    .. py:attribute:: name
+
+        str of capability name or descriptive name of the terminal
+        sequence, or None if not a terminal sequence
+
+    .. py:attribute:: params
+
+        a tuple of str parameters in the terminal sequence,
+        or None if not a terminal sequence
+    """
 
 
 def _sort_sequences(regex_seqlist):
@@ -42,15 +67,27 @@ def _sort_sequences(regex_seqlist):
     # typically occur for output sequences, though with so many
     # programmatically generated regular expressions for so many terminal
     # types, it is feasible.
-    # pylint: disable=bad-builtin
-    #         Used builtin function 'filter'
-    return sorted(list(filter(lambda x: x and x[1], regex_seqlist)), key=lambda x: len(x[1]), reverse=True)
+    return sorted((x for x in regex_seqlist if x and x[1]),
+                  key=lambda x: len(x[1]),
+                  reverse=True)
+
+def _differentiate_duplicate_sequences(regex_seqlist):
+    """
+    annotate with unique ids per list
+    """
+    counter = collections.Counter()
+    def inc_get(key):
+        counter[key] += 1
+        return counter[key]
+
+    return [(u"{}_{}".format(name, inc_get(name)), pattern)
+            for name, pattern in regex_seqlist]
 
 
 def _build_numeric_capability(term, cap, optional=False,
                               base_num=99, nparams=1):
     r"""
-    Return regular expression for capabilities containing specified digits.
+    Return regular expressions for capabilities containing specified digits.
 
     This differs from function :func:`_build_any_numeric_capability`
     in that, for the given ``base_num`` and ``nparams``, the value of
@@ -62,8 +99,11 @@ def _build_numeric_capability(term, cap, optional=False,
     :arg str cap: terminal capability name.
     :arg int num: the numeric to use for parameterized capability.
     :arg int nparams: the number of parameters to use for capability.
-    :rtype: str
-    :returns: regular expression for the given capability.
+    :rtype: tuple
+    :returns: tuple of
+        - str name of capture group used in identifying regular expression
+        - str regular expression for extracting the params of a capability
+
     """
     _cap = getattr(term, cap)
     opt = '?' if optional else ''
@@ -89,8 +129,10 @@ def _build_any_numeric_capability(term, cap, num=99, nparams=1):
     :arg str cap: terminal capability name.
     :arg int num: the numeric to use for parameterized capability.
     :arg int nparams: the number of parameters to use for capability.
-    :rtype: str
-    :returns: regular expression for the given capability.
+    :rtype: tuple
+    :returns: tuple of
+        - str name of capture group used in
+        - str regular expression for extracting the params of a capability
 
     Build regular expression from capabilities having *any* digit parameters:
     substitute any matching ``\d`` with literal ``\d`` and return.
@@ -107,12 +149,19 @@ def _build_any_numeric_capability(term, cap, num=99, nparams=1):
 
 
 def _build_simple_capability(term, cap):
-    """Build terminal capability for capname"""
+    r"""
+    Return regular expression for capabilities which do not take parameters.
+
+    :arg blessed.Terminal term: :class:`~.Terminal` instance.
+    :arg str cap: terminal capability name.
+    :rtype: str
+    :returns: regular expression for the given capability.
+    """
     _cap = getattr(term, cap)
     if _cap:
-        return cap, re.escape(_cap)
+        cap_re = re.escape(_cap)
+        return cap, cap_re
     return None
-
 
 
 def get_movement_sequence_patterns(term):
@@ -122,10 +171,11 @@ def get_movement_sequence_patterns(term):
     :arg blessed.Terminal term: :class:`~.Terminal` instance.
     :rtype: list
     """
+
     bnc = functools.partial(_build_numeric_capability, term)
     bsc = functools.partial(_build_simple_capability, term)
 
-    return set(filter(None, [
+    return list(filter(None, [
         # carriage_return
         bsc(cap='cr'),
         # column_address: Horizontal position, absolute
@@ -171,10 +221,9 @@ def get_wontmove_sequence_patterns(term):
     bna = functools.partial(_build_any_numeric_capability, term)
     bsc = functools.partial(_build_simple_capability, term)
 
-
     # pylint: disable=bad-builtin
     #         Used builtin function 'map'
-    return set(filter(None, [
+    return list(filter(None, [
         # print_screen: Print contents of screen
         bsc(cap='mc0'),
         # prtr_off: Turn off printer
@@ -336,15 +385,16 @@ def init_sequence_patterns(term):
     if term.kind in BINARY_TERMINALS:
         warnings.warn(BINTERM_UNSUPPORTED_MSG.format(term.kind))
 
+
     # Build will_move, a list of terminal capabilities that have
     # indeterminate effects on the terminal cursor position.
-    _will_move = set()
+    _will_move = []
     if term.does_styling:
         _will_move = _sort_sequences(get_movement_sequence_patterns(term))
 
     # Build wont_move, a list of terminal capabilities that mainly affect
     # video attributes, for use with measure_length().
-    _wont_move = set()
+    _wont_move = []
     if term.does_styling:
         _wont_move = _sort_sequences(get_wontmove_sequence_patterns(term))
         _wont_move += [
@@ -355,11 +405,11 @@ def init_sequence_patterns(term):
             # recognize blue_on_red, even if it didn't cause it to be
             # generated.  These are final "ok, i will match this, anyway" for
             # basic SGR sequences.
-            ('?', re.escape(u'\x1b') + r'\[(\d+)\;(\d+)\;(\d+)\;(\d+)m'),
-            ('?', re.escape(u'\x1b') + r'\[(\d+)\;(\d+)\;(\d+)m'),
-            ('?', re.escape(u'\x1b') + r'\[(\d+)\;(\d+)m'),
-            ('?', re.escape(u'\x1b') + r'\[(\d+)?m'),
-            ('?', re.escape(u'\x1b(B')),
+            ('sgr4', re.escape(u'\x1b') + r'\[(\d+)\;(\d+)\;(\d+)\;(\d+)m'),
+            ('sgr3', re.escape(u'\x1b') + r'\[(\d+)\;(\d+)\;(\d+)m'),
+            ('sgr2', re.escape(u'\x1b') + r'\[(\d+)\;(\d+)m'),
+            ('sgr1', re.escape(u'\x1b') + r'\[(\d+)?m'),
+            ('sgr0', re.escape(u'\x1b(B')),
         ]
 
     # compile as regular expressions, OR'd.
@@ -474,8 +524,9 @@ class SequenceTextWrapper(textwrap.TextWrapper):
         if self.break_long_words:
             term = self.term
             chunk = reversed_chunks[-1]
-            for idx, part in i_and_split_nonsequences(iter_parse(term, chunk)):
-                if Sequence(chunk[:idx + len(part.ucs)], term).length() > space_left:
+            for idx, part in enumerate_by_position(iter_parse(term, chunk)):
+                nxt = idx + len(part.ucs)
+                if Sequence(chunk[:nxt], term).length() > space_left:
                     break
             else:
                 # our text ends with a sequence, such as in text
@@ -649,8 +700,9 @@ class Sequence(six.text_type):
         # nxt: points to first character beyond current escape sequence.
         # width: currently estimated display length.
         inp = self.padd()
-        return ''.join(f.ucs for f in iter_parse(self._term, inp) if not f.is_sequence)
-        # this implementation is slow because we have to build the sequences
+        return ''.join(f.ucs
+                       for f in iter_parse(self._term, inp)
+                       if not f.is_sequence)
 
     def padd(self):
         r"""
@@ -674,13 +726,8 @@ class Sequence(six.text_type):
         detected, those last-most characters are destroyed.
         """
         outp = u''
-        for ucs, is_sequence, _, _ in iter_parse(self._term, self):
+        for ucs, _, _, _ in iter_parse(self._term, self):
             width = horizontal_distance(ucs, self._term)
-            #TODO this fails on a tab in a test
-            #assert not (width and not is_sequence), (
-            #    'only sequences should have non-zero width, but nonsequence ' +
-            #    repr((ucs, is_sequence)) + ' has width of ' + str(width) +
-            #    ' while parsing ' + repr(self))
             if width > 0:
                 outp += u' ' * width
             elif width < 0:
@@ -732,7 +779,7 @@ def measure_length(ucs, term):
 
     if matching_seq:
         _, end = matching_seq.span()
-        assert identify_fragment(term, ucs[:end])
+        assert identify_part(term, ucs[:end])
         return end
 
     # none found, must be printable!
@@ -820,12 +867,32 @@ def horizontal_distance(ucs, term):
             0)
 
 
-def identify_fragment(term, ucs):
+def identify_part(term, ucs):
+    """
+    Return a TextPart instance describing the terminal sequence in ucs.
+
+    :arg str ucs: text beginning with a terminal sequence
+    :arg blessed.Terminal term: :class:`~.Terminal` instance.
+    :raises ValueError: ucs is not a valid terminal sequence.
+    :rtype: TextPart
+
+    TextPart is a :class:`collections.namedtuple` instance describing
+    either a terminal sequence or a series of printable characters.
+    Its parameters are:
+
+        - ``ucs``: str of terminal sequence or printable characters
+        - ``is_sequence``: bool for whether this is a terminal sequence
+        - ``name``: str of capability name or descriptive name of the
+            terminal sequence, or None if not a terminal sequence
+        - ``params``: a tuple of str parameters in the terminal sequence,
+            or None if not a terminal sequence
+
+    """
     # simple terminal control characters,
     ctrl_seqs = u'\a\b\r\n\x0e\x0f'
 
     if any([ucs.startswith(_ch) for _ch in ctrl_seqs]):
-        return TextFragment(ucs[:1], True, '?', None)
+        return TextPart(ucs[:1], True, '?', None)
 
     ret = term and (
         regex_or_match(term._will_move, ucs) or
@@ -841,10 +908,10 @@ def identify_fragment(term, ucs):
     )
 
     if matching_seq:
-        return TextFragment(matching_seq.group(), True, '?', None)
+        return TextPart(matching_seq.group(), True, '?', None)
 
-    raise ValueError("not a sequence!: "+repr(ucs))
-
+    raise ValueError("identify_part called on nonsequence "
+                     "{!r}".format(ucs))
 
 def regex_or_match(patterns, ucs):
     for cap, pat in patterns:
@@ -852,24 +919,55 @@ def regex_or_match(patterns, ucs):
         if matching_seq is None:
             continue
         params = matching_seq.groups()[1:]
-        return TextFragment(matching_seq.group(), True, cap, params if params else None)
+        return TextPart(matching_seq.group(), True, cap, params if params else None)
     return None
 
-def i_and_split_nonsequences(fragments):
-    """Yields simple unicode characters or sequences with index"""
+def enumerate_by_position(parts):
+    """Iterate over TextParts with an index, subdividing printable strings.
+
+    The index is the length of characters preceding that TextPart, in other
+    words the cumulative sum of lengths of TextParts before the current one.
+    TextPart instances composed of multiple printable characters (those not
+    part of a terminal sequence) will be broken into multiple TextPart
+    instances, one per character.
+
+    This is useful for splitting text into its smallest indivisible TextPart
+    units: splitting strings into characters while not breaking up terminal
+    sequences.
+
+    :arg: parts: iterable of TextPart instances
+    :rtype: iterator of tuple pairs of (int, TextPart)
+
+    """
     idx = 0
-    for part in fragments:
+    for part in parts:
         if part.is_sequence:
             yield idx, part
             idx += len(part.ucs)
         else:
-            for c in part.ucs:
-                yield idx, TextFragment(c, False, None, None)
+            for char in part.ucs:
+                yield idx, TextPart(char, False, None, None)
                 idx += 1
+
 
 def iter_parse(term, ucs):
     r"""
+    Return an iterator TextPart instances: terminal sequences or strings.
 
+    :arg ucs: str which may contain terminal sequences
+    :arg blessed.Terminal term: :class:`~.Terminal` instance.
+    :rtype: iterator of TextPart instances
+
+    TextPart is a :class:`collections.namedtuple` instance describing
+    either a terminal sequence or a series of printable characters.
+    Its parameters are:
+
+        - ``ucs``: str of terminal sequence or printable characters
+        - ``is_sequence``: bool for whether this is a terminal sequence
+        - ``name``: str of capability name or descriptive name of the terminal
+            sequence, or None if not a terminal sequence
+        - ``params``: a tuple of str parameters in the terminal sequence,
+            or None if not a terminal sequence
 
     """
     outp = u''
@@ -882,9 +980,10 @@ def iter_parse(term, ucs):
                 nxt += 1
             else:
                 if outp:
-                    yield TextFragment(outp, False, None, None)
+                    yield TextPart(outp, False, None, None)
                     outp = u''
-                yield identify_fragment(term, ucs[idx:idx+l])
+                yield identify_part(term, ucs[idx:idx+l])
                 nxt += l
     if outp:
-        yield TextFragment(outp, False, None, None)
+        # ucs ends with printable characters
+        yield TextPart(outp, False, None, None)
