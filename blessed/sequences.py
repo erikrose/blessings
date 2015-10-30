@@ -1,6 +1,7 @@
 # encoding: utf-8
 """This module provides 'sequence awareness'."""
-
+# pylint: disable=too-many-lines
+#         Too many lines in module (1027/1000)
 # std imports
 import collections
 import functools
@@ -71,11 +72,20 @@ def _sort_sequences(regex_seqlist):
                   key=lambda x: len(x[1]),
                   reverse=True)
 
-def _differentiate_duplicate_sequences(regex_seqlist):
+
+def _unique_names(regex_seqlist):
     """
-    annotate with unique ids per list
+    Return a list of (name, pattern) pairs liki input but with names unique.
+
+    By adding _1, _2, _3 etc. to the name of each name_pair sequence the
+    first element of each tuple
+
+    :arg list regex_seqlist: list of tuples of (str name, str pattern)
+    :rtype: list
+    :returns: a copy of the input list with names modified to be unique
     """
     counter = collections.Counter()
+
     def inc_get(key):
         counter[key] += 1
         return counter[key]
@@ -171,7 +181,6 @@ def get_movement_sequence_patterns(term):
     :arg blessed.Terminal term: :class:`~.Terminal` instance.
     :rtype: list
     """
-
     bnc = functools.partial(_build_numeric_capability, term)
     bsc = functools.partial(_build_simple_capability, term)
 
@@ -336,6 +345,13 @@ def get_wontmove_sequence_patterns(term):
     ] + list(map(bsc, ('r1', 'r2', 'r3')))))
 
 
+def strip_groups(pattern):
+    """Return version of str regex without unnamed capture groups."""
+    # make capture groups non-capturing
+    # TODO this incorrectly replaces () in r'[()]' -> [(?:)]
+    return re.sub(r'(?<![\\])\((?![?])', '(?:', pattern)
+
+
 def init_sequence_patterns(term):
     """
     Build database of regular expressions of terminal sequences.
@@ -385,18 +401,19 @@ def init_sequence_patterns(term):
     if term.kind in BINARY_TERMINALS:
         warnings.warn(BINTERM_UNSUPPORTED_MSG.format(term.kind))
 
-
     # Build will_move, a list of terminal capabilities that have
     # indeterminate effects on the terminal cursor position.
     _will_move = []
     if term.does_styling:
-        _will_move = _sort_sequences(get_movement_sequence_patterns(term))
+        _will_move = _sort_sequences(_unique_names(
+            get_movement_sequence_patterns(term)))
 
     # Build wont_move, a list of terminal capabilities that mainly affect
     # video attributes, for use with measure_length().
     _wont_move = []
     if term.does_styling:
-        _wont_move = _sort_sequences(get_wontmove_sequence_patterns(term))
+        _wont_move = _sort_sequences(_unique_names(
+            get_wontmove_sequence_patterns(term)))
         _wont_move += [
             # some last-ditch match efforts; well, xterm and aixterm is going
             # to throw \x1b(B and other oddities all around, so, when given
@@ -413,8 +430,18 @@ def init_sequence_patterns(term):
         ]
 
     # compile as regular expressions, OR'd.
-    _re_will_move = re.compile(u'({0})'.format(u'|'.join(s for c, s in _will_move if s)))
-    _re_wont_move = re.compile(u'({0})'.format(u'|'.join(s for c, s in _wont_move if s)))
+    _re_will_move = re.compile(u'|'.join(
+        u"(?P<{}>{})".format(c, strip_groups(s))
+        for c, s in _will_move if s))
+    _re_wont_move = re.compile(u'|'.join(
+        u"(?P<{}>{})".format(c, strip_groups(s))
+        for c, s in _wont_move if s))
+    if (_will_move and _wont_move and set(list(zip(*_will_move))[0]) &
+            set(list(zip(*_wont_move))[0])):
+        # _param_extractors requires names be unique
+        raise ValueError("will_move and wont_move contain same capname")
+    _param_extractors = dict((c, re.compile(s))
+                             for c, s in _will_move + _wont_move)
 
     # static pattern matching for horizontal_distance(ucs, term)
     bnc = functools.partial(_build_numeric_capability, term)
@@ -435,8 +462,7 @@ def init_sequence_patterns(term):
 
     return {'_re_will_move': _re_will_move,
             '_re_wont_move': _re_wont_move,
-            '_will_move': _will_move,
-            '_wont_move': _wont_move,
+            '_param_extractors': _param_extractors,
             '_re_cuf': _re_cuf,
             '_re_cub': _re_cub,
             '_cuf1': _cuf1,
@@ -894,12 +920,17 @@ def identify_part(term, ucs):
     if any([ucs.startswith(_ch) for _ch in ctrl_seqs]):
         return TextPart(ucs[:1], True, '?', None)
 
-    ret = term and (
-        regex_or_match(term._will_move, ucs) or
-        regex_or_match(term._wont_move, ucs)
+    matching_seq = term and (
+        term._re_will_move.match(ucs) or
+        term._re_wont_move.match(ucs)
     )
-    if ret:
-        return ret
+    if matching_seq:
+        (identifier, ) = (k for k, v in matching_seq.groupdict().items()
+                          if v is not None)
+        name = identifier
+        params = term._param_extractors[identifier].match(ucs).groups()
+        return TextPart(matching_seq.group(), True,
+                        name, params if params else None)
 
     # known multibyte sequences,
     matching_seq = term and (
@@ -913,14 +944,6 @@ def identify_part(term, ucs):
     raise ValueError("identify_part called on nonsequence "
                      "{!r}".format(ucs))
 
-def regex_or_match(patterns, ucs):
-    for cap, pat in patterns:
-        matching_seq = re.match(pat, ucs)
-        if matching_seq is None:
-            continue
-        params = matching_seq.groups()[1:]
-        return TextPart(matching_seq.group(), True, cap, params if params else None)
-    return None
 
 def enumerate_by_position(parts):
     """Iterate over TextParts with an index, subdividing printable strings.
@@ -952,7 +975,7 @@ def enumerate_by_position(parts):
 
 def iter_parse(term, ucs):
     r"""
-    Return an iterator TextPart instances: terminal sequences or strings.
+    Return an iterator of TextPart instances: terminal sequences or strings.
 
     :arg ucs: str which may contain terminal sequences
     :arg blessed.Terminal term: :class:`~.Terminal` instance.
@@ -968,22 +991,21 @@ def iter_parse(term, ucs):
             sequence, or None if not a terminal sequence
         - ``params``: a tuple of str parameters in the terminal sequence,
             or None if not a terminal sequence
-
     """
     outp = u''
-    nxt = 0
-    for idx in range(0, six.text_type.__len__(ucs)):
-        if idx == nxt:
-            l = measure_length(ucs[idx:], term)
-            if l == 0:
-                outp += ucs[idx]
-                nxt += 1
-            else:
-                if outp:
-                    yield TextPart(outp, False, None, None)
-                    outp = u''
-                yield identify_part(term, ucs[idx:idx+l])
-                nxt += l
+    idx = 0
+    while idx < six.text_type.__len__(ucs):
+        length = measure_length(ucs[idx:], term)
+        if length == 0:
+            outp += ucs[idx]
+            idx += 1
+            continue
+        if outp:
+            yield TextPart(outp, False, None, None)
+            outp = u''
+        yield identify_part(term, ucs[idx:idx + length])
+        idx += length
+
     if outp:
         # ucs ends with printable characters
         yield TextPart(outp, False, None, None)

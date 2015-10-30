@@ -1084,6 +1084,23 @@ class Terminal(object):
         return ks
 
     def iter_parse(self, text):
+        r"""
+        Return iterator of TextPart instances: terminal sequences or strings.
+
+        :arg ucs: str which may contain terminal sequences
+        :rtype: iterator of TextPart instances
+
+        TextPart is a :class:`collections.namedtuple` instance describing
+        either a terminal sequence or a series of printable characters.
+        Its parameters are:
+
+            - ``ucs``: str of terminal sequence or printable characters
+            - ``is_sequence``: bool for whether this is a terminal sequence
+            - ``name``: str of capability name or descriptive name of the
+                terminal sequence, or None if not a terminal sequence
+            - ``params``: a tuple of str parameters in the terminal sequence,
+                or None if not a terminal sequence
+        """
         return iter_parse(self, text)
 
 
