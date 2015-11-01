@@ -1,19 +1,13 @@
 # encoding: utf-8
 """This module provides 'sequence awareness'."""
 # std imports
-import collections
 import functools
+import textwrap
 import math
 import re
-import textwrap
-import warnings
 
 # local
-from blessed._capabilities import (
-    CAPABILITIES_CAUSE_MOVEMENT,
-    CAPABILITIES_RAW_MIXIN,
-    CAPABILITY_DATABASE,
-)
+from blessed._capabilities import CAPABILITIES_CAUSE_MOVEMENT
 
 # 3rd party
 import wcwidth
@@ -21,9 +15,13 @@ import six
 
 __all__ = ('Sequence', 'SequenceTextWrapper')
 
-class Termcap():
+
+class Termcap(object):
+    """Terminal capability of given variable name and pattern."""
     def __init__(self, name, pattern, attribute):
         """
+        Class initializer.
+
         :param str name: name describing capability.
         :param str pattern: regular expression string.
         :param str attribute: :class:`~.Terminal` attribute used to build
@@ -35,7 +33,13 @@ class Termcap():
         self._re_compiled = None
 
     def __repr__(self):
+        # pylint: disable=redundant-keyword-arg
         return '<Termcap {self.name}:{self.pattern!r}>'.format(self=self)
+
+    @property
+    def named_pattern(self):
+        # pylint: disable=redundant-keyword-arg
+        return '(?P<{self.name}>{self.pattern})'.format(self=self)
 
     @property
     def re_compiled(self):
@@ -44,17 +48,13 @@ class Termcap():
         return self._re_compiled
 
     @property
-    def named_pattern(self):
-        return '(?P<{self.name}>{self.pattern})'.format(self=self)
-
-    @property
     def will_move(self):
         """Whether capability causes cursor movement."""
         return self.name in CAPABILITIES_CAUSE_MOVEMENT
 
     def horizontal_distance(self, text):
         """
-        Horizontal carriage adjusted by capability, may be negative!
+        Horizontal carriage adjusted by capability, may be negative.
 
         :rtype: int
         :param str text: for capabilities *parm_left_cursor*,
@@ -83,11 +83,14 @@ class Termcap():
 
         return 0
 
+    # pylint: disable=too-many-arguments
     @classmethod
     def build(cls, name, capability, attribute, nparams=0,
               numeric=99, match_grouped=False, match_any=False,
               match_optional=False):
-        """
+        r"""
+        Class factory builder for given capability definition.
+
         :param str name: Variable name given for this pattern.
         :param str capability: A unicode string representing a terminal
             capability to build for. When ``nparams`` is non-zero, it
@@ -214,7 +217,7 @@ class SequenceTextWrapper(textwrap.TextWrapper):
             term = self.term
             chunk = reversed_chunks[-1]
             idx = nxt = 0
-            for text, cap in iter_parse(term, chunk):
+            for text, _ in iter_parse(term, chunk):
                 nxt += len(text)
                 if Sequence(chunk[:nxt], term).length() > space_left:
                     break
@@ -236,6 +239,7 @@ class SequenceTextWrapper(textwrap.TextWrapper):
 
 
 SequenceTextWrapper.__doc__ = textwrap.TextWrapper.__doc__
+
 
 class Sequence(six.text_type):
     """
@@ -406,11 +410,19 @@ class Sequence(six.text_type):
                 outp += text
         return outp
 
-def iter_parse(term, ucs):
-    for match in re.finditer(term._caps_compiled_any, ucs):
+
+def iter_parse(term, text):
+    """
+    Generator yields (text, capability) for characters of ``text``.
+
+    value for ``capability`` may be ``None``, where ``text`` is
+    :class:`str` of length 1.  Otherwise, ``text`` is a full
+    matching sequence of given capability.
+    """
+    for match in re.finditer(term._caps_compiled_any, text):
         name = match.lastgroup
         value = match.group(name)
         if name == 'MISMATCH':
             yield (value, None)
-            continue
-        yield value, term.caps[name]
+        else:
+            yield value, term.caps[name]

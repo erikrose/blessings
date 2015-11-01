@@ -54,8 +54,6 @@ from .formatters import (ParameterizingString,
                          resolve_attribute,
                          )
 
-#_build_any_numeric_capability, XXX wtf?
-
 from ._capabilities import (
     CAPABILITIES_RAW_MIXIN,
     CAPABILITIES_ADDITIVES,
@@ -63,7 +61,6 @@ from ._capabilities import (
 )
 
 from .sequences import (SequenceTextWrapper,
-                        iter_parse,
                         Sequence,
                         Termcap,
                         )
@@ -289,8 +286,6 @@ class Terminal(object):
                 self._encoding = 'ascii'
                 self._keyboard_decoder = codecs.getincrementaldecoder(
                     self._encoding)()
-
-
 
     def __getattr__(self, attr):
         r"""
@@ -837,9 +832,6 @@ class Terminal(object):
         return list(filter(None, re.split(self.caps_compiled, text,
                                           maxsplit=maxsplit, flags=flags)))
 
-    def iter_parse(self, text):
-        return iter_parse(text)
-
     def wrap(self, text, width=None, **kwargs):
         """
         Text-wrap a string, returning a list of wrapped lines.
@@ -1146,6 +1138,7 @@ class Terminal(object):
         # buffer any remaining text received
         self.ungetch(ucs[len(ks):])
         return ks
+
 
 class WINSZ(collections.namedtuple('WINSZ', (
         'ws_row', 'ws_col', 'ws_xpixel', 'ws_ypixel'))):
