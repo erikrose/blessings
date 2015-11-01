@@ -87,71 +87,6 @@ def test_stream_attr():
     child()
 
 
-@pytest.mark.skipif(os.environ.get('TRAVIS', None) is not None,
-                    reason="travis-ci does not have binary-packed terminals.")
-def test_emit_warnings_about_binpacked():
-    """Test known binary-packed terminals (kermit, avatar) emit a warning."""
-    from blessed._binterms import BINTERM_UNSUPPORTED_MSG
-
-    @as_subprocess
-    def child(kind):
-        import warnings
-        warnings.filterwarnings("error", category=RuntimeWarning)
-        warnings.filterwarnings("error", category=UserWarning)
-
-        try:
-            TestTerminal(kind=kind, force_styling=True)
-        except UserWarning:
-            err = sys.exc_info()[1]
-            assert (err.args[0] == BINTERM_UNSUPPORTED_MSG.format(kind) or
-                    err.args[0].startswith('Unknown parameter in ') or
-                    err.args[0].startswith('Failed to setupterm(')
-                    ), err
-        else:
-            assert 'warnings should have been emitted.'
-        warnings.resetwarnings()
-
-    # Although any binary terminal should do, FreeBSD has "termcap entry bugs"
-    # that cause false negatives, because their underlying curses library emits
-    # some kind of "warning" to stderr, which our @as_subprocess decorator
-    # determines to be noteworthy enough to fail the test:
-    #
-    #     https://gist.github.com/jquast/7b90af251fe4000baa09
-    #
-    # so we chose only one, known good value, of beautiful lineage:
-    #
-    #    http://terminals.classiccmp.org/wiki/index.php/Tektronix_4207
-
-    child(kind='tek4207-s')
-
-
-def test_unit_binpacked_unittest():
-    """Unit Test known binary-packed terminals emit a warning (travis-safe)."""
-    import warnings
-    from blessed._binterms import BINTERM_UNSUPPORTED_MSG
-    from blessed.sequences import init_sequence_patterns
-    warnings.filterwarnings("error", category=UserWarning)
-    term = mock.Mock()
-    term.kind = 'tek4207-s'
-
-    try:
-        init_sequence_patterns(term)
-    except UserWarning:
-        err = sys.exc_info()[1]
-        assert err.args[0] == BINTERM_UNSUPPORTED_MSG.format(term.kind)
-    else:
-        assert False, 'Previous stmt should have raised exception.'
-    warnings.resetwarnings()
-
-
-def test_sort_sequence_pairs():
-    """Test sequences are filtered and ordered longest-first."""
-    from blessed.sequences import _sort_sequences
-    input_list = [(1, u'a'), (2, u'aa'), (3, u'aaa'), (4, u'')]
-    output_expected = [(3, u'aaa'), (2, u'aa'), (1, u'a')]
-    assert (_sort_sequences(input_list) == output_expected)
-
-
 def test_location_with_styling(all_terms):
     """Make sure ``location()`` works on all terminals."""
     @as_subprocess
@@ -550,50 +485,6 @@ def test_null_callable_string(all_terms):
         assert (t.clear('x') == 'x')
 
     child(all_terms)
-
-
-def test_bnc_parameter_emits_warning():
-    """A fake capability without target digits emits a warning."""
-    import warnings
-    from blessed.sequences import _build_numeric_capability
-
-    # given,
-    warnings.filterwarnings("error", category=UserWarning)
-    term = mock.Mock()
-    fake_cap = lambda *args: u'NO-DIGIT'
-    term.fake_cap = fake_cap
-
-    # exercise,
-    try:
-        _build_numeric_capability(term, 'fake_cap', base_num=1984)
-    except UserWarning:
-        err = sys.exc_info()[1]
-        assert err.args[0].startswith('Unknown parameter in ')
-    else:
-        assert False, 'Previous stmt should have raised exception.'
-    warnings.resetwarnings()
-
-
-def test_bna_parameter_emits_warning():
-    """A fake capability without any digits emits a warning."""
-    import warnings
-    from blessed.sequences import _build_any_numeric_capability
-
-    # given,
-    warnings.filterwarnings("error", category=UserWarning)
-    term = mock.Mock()
-    fake_cap = lambda *args: 'NO-DIGIT'
-    term.fake_cap = fake_cap
-
-    # exercise,
-    try:
-        _build_any_numeric_capability(term, 'fake_cap')
-    except UserWarning:
-        err = sys.exc_info()[1]
-        assert err.args[0].startswith('Missing numerics in ')
-    else:
-        assert False, 'Previous stmt should have raised exception.'
-    warnings.resetwarnings()
 
 
 def test_padd():
