@@ -8,7 +8,6 @@ import os
 
 # local
 from .accessories import (
-    unsupported_sequence_terminals,
     all_terms,
     as_subprocess,
     TestTerminal,

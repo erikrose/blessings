@@ -85,7 +85,8 @@ class Termcap():
 
     @classmethod
     def build(cls, name, capability, attribute, nparams=0,
-              numeric=99, match_any=False, match_optional=False):
+              numeric=99, match_grouped=False, match_any=False,
+              match_optional=False):
         """
         :param str name: Variable name given for this pattern.
         :param str capability: A unicode string representing a terminal
@@ -95,6 +96,8 @@ class Termcap():
         :param attribute: The terminfo(5) capability name by which this
             pattern is known.
         :param int nparams: number of positional arguments for callable.
+        :param bool match_grouped: If the numeric pattern should be
+            grouped, ``(\d+)`` when ``True``, ``\d+`` default.
         :param bool match_any: When keyword argument ``nparams`` is given,
             *any* numeric found in output is suitable for building as
             pattern ``(\d+)``.  Otherwise, only the first matching value of
@@ -103,9 +106,11 @@ class Termcap():
         :param bool match_optional: When ``True``, building of numeric patterns
             containing ``(\d+)`` will be built as optional, ``(\d+)?``.
         """
-        _numeric_regex = r'(\d+)'
+        _numeric_regex = r'\d+'
+        if match_grouped:
+            _numeric_regex = r'(\d+)'
         if match_optional:
-            _numeric_regex += '?'
+            _numeric_regex = r'(\d+)?'
         numeric = 99 if numeric is None else numeric
 
         # basic capability attribute, not used as a callable
@@ -120,7 +125,10 @@ class Termcap():
                     pattern = _outp.replace(str(num), _numeric_regex)
                     return cls(name, pattern, attribute)
 
-        pattern = re.sub(r'(\d+)', _numeric_regex, _outp)
+        if match_grouped:
+            pattern = re.sub(r'(\d+)', _numeric_regex, _outp)
+        else:
+            pattern = re.sub(r'\d+', _numeric_regex, _outp)
         return cls(name, pattern, attribute)
 
 
@@ -399,7 +407,7 @@ class Sequence(six.text_type):
         return outp
 
 def iter_parse(term, ucs):
-    for match in re.finditer(term._caps_compiled_any, text):
+    for match in re.finditer(term._caps_compiled_any, ucs):
         name = match.lastgroup
         value = match.group(name)
         if name == 'MISMATCH':

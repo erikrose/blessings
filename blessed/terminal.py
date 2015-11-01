@@ -255,7 +255,7 @@ class Terminal(object):
         # make a compiled named regular expression table, the matching
         # '.lastgroup' is the primary lookup key for 'self.caps'.
         self.caps_compiled = re.compile(
-            '|'.join(cap.named_pattern for name, cap in self.caps.items()))
+            '|'.join(cap.pattern for name, cap in self.caps.items()))
 
         # for tokenizer
         self._caps_compiled_any = re.compile('|'.join(
