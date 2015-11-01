@@ -249,12 +249,12 @@ class Terminal(object):
             if pattern:
                 self.caps[name] = Termcap(name, pattern, attribute)
 
-        # make a compiled named regular expression table, the matching
-        # '.lastgroup' is the primary lookup key for 'self.caps'.
+        # make a compiled named regular expression table
         self.caps_compiled = re.compile(
             '|'.join(cap.pattern for name, cap in self.caps.items()))
 
-        # for tokenizer
+        # for tokenizer, the '.lastgroup' is the primary lookup key for
+        # 'self.caps', unless 'MISMATCH'; then it is an unmatched character.
         self._caps_compiled_any = re.compile('|'.join(
             cap.named_pattern for name, cap in self.caps.items()
         ) + '|(?P<MISMATCH>.)')
