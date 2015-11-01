@@ -288,82 +288,83 @@ def test_Sequence_alignment(all_terms):
 
     child(kind=all_terms)
 
-
-def test_sequence_is_movement_false(all_terms):
-    """Test parser about sequences that do not move the cursor."""
-    @as_subprocess
-    def child_mnemonics_wontmove(kind):
-        from blessed.sequences import measure_length
-        t = TestTerminal(kind=kind)
-        assert (0 == measure_length(u'', t))
-        # not even a mbs
-        assert (0 == measure_length(u'xyzzy', t))
-        # negative numbers, though printable as %d, do not result
-        # in movement; just garbage. Also not a valid sequence.
-        assert (0 == measure_length(t.cuf(-333), t))
-        assert (len(t.clear_eol) == measure_length(t.clear_eol, t))
-        # various erases don't *move*
-        assert (len(t.clear_bol) == measure_length(t.clear_bol, t))
-        assert (len(t.clear_eos) == measure_length(t.clear_eos, t))
-        assert (len(t.bold) == measure_length(t.bold, t))
-        # various paints don't move
-        assert (len(t.red) == measure_length(t.red, t))
-        assert (len(t.civis) == measure_length(t.civis, t))
-        if t.cvvis:
-            assert (len(t.cvvis) == measure_length(t.cvvis, t))
-        assert (len(t.underline) == measure_length(t.underline, t))
-        assert (len(t.reverse) == measure_length(t.reverse, t))
-        for _num in range(t.number_of_colors):
-            assert (len(t.color(_num)) == measure_length(t.color(_num), t))
-        assert (len(t.normal) == measure_length(t.normal, t))
-        assert (len(t.normal_cursor) == measure_length(t.normal_cursor, t))
-        assert (len(t.hide_cursor) == measure_length(t.hide_cursor, t))
-        assert (len(t.save) == measure_length(t.save, t))
-        assert (len(t.italic) == measure_length(t.italic, t))
-        assert (len(t.standout) == measure_length(t.standout, t)
-                ), (t.standout, t._wont_move)
-
-    child_mnemonics_wontmove(all_terms)
-
-
-def test_sequence_is_movement_true(all_terms):
-    """Test parsers about sequences that move the cursor."""
-    @as_subprocess
-    def child_mnemonics_willmove(kind):
-        from blessed.sequences import measure_length
-        t = TestTerminal(kind=kind)
-        # movements
-        assert (len(t.move(98, 76)) ==
-                measure_length(t.move(98, 76), t))
-        assert (len(t.move(54)) ==
-                measure_length(t.move(54), t))
-        assert not t.cud1 or (len(t.cud1) ==
-                              measure_length(t.cud1, t))
-        assert not t.cub1 or (len(t.cub1) ==
-                              measure_length(t.cub1, t))
-        assert not t.cuf1 or (len(t.cuf1) ==
-                              measure_length(t.cuf1, t))
-        assert not t.cuu1 or (len(t.cuu1) ==
-                              measure_length(t.cuu1, t))
-        assert not t.cub or (len(t.cub(333)) ==
-                             measure_length(t.cub(333), t))
-        assert not t.cuf or (len(t.cuf(333)) ==
-                             measure_length(t.cuf(333), t))
-        assert not t.home or (len(t.home) ==
-                              measure_length(t.home, t))
-        assert not t.restore or (len(t.restore) ==
-                                 measure_length(t.restore, t))
-        assert not t.clear or (len(t.clear) ==
-                               measure_length(t.clear, t))
-
-    child_mnemonics_willmove(all_terms)
-
-
-def test_foreign_sequences():
-    """Test parsers about sequences received from foreign sources."""
-    @as_subprocess
-    def child(kind):
-        from blessed.sequences import measure_length
-        t = TestTerminal(kind=kind)
-        assert measure_length(u'\x1b[m', t) == len('\x1b[m')
-    child(kind='ansi')
+# TODO: next(term.iter_parse('sequence')).horizontal_distance('sequence')
+#
+#def test_sequence_is_movement_false(all_terms):
+#    """Test parser about sequences that do not move the cursor."""
+#    @as_subprocess
+#    def child_mnemonics_wontmove(kind):
+#        from blessed.sequences import measure_length
+#        t = TestTerminal(kind=kind)
+#        assert (0 == measure_length(u'', t))
+#        # not even a mbs
+#        assert (0 == measure_length(u'xyzzy', t))
+#        # negative numbers, though printable as %d, do not result
+#        # in movement; just garbage. Also not a valid sequence.
+#        assert (0 == measure_length(t.cuf(-333), t))
+#        assert (len(t.clear_eol) == measure_length(t.clear_eol, t))
+#        # various erases don't *move*
+#        assert (len(t.clear_bol) == measure_length(t.clear_bol, t))
+#        assert (len(t.clear_eos) == measure_length(t.clear_eos, t))
+#        assert (len(t.bold) == measure_length(t.bold, t))
+#        # various paints don't move
+#        assert (len(t.red) == measure_length(t.red, t))
+#        assert (len(t.civis) == measure_length(t.civis, t))
+#        if t.cvvis:
+#            assert (len(t.cvvis) == measure_length(t.cvvis, t))
+#        assert (len(t.underline) == measure_length(t.underline, t))
+#        assert (len(t.reverse) == measure_length(t.reverse, t))
+#        for _num in range(t.number_of_colors):
+#            assert (len(t.color(_num)) == measure_length(t.color(_num), t))
+#        assert (len(t.normal) == measure_length(t.normal, t))
+#        assert (len(t.normal_cursor) == measure_length(t.normal_cursor, t))
+#        assert (len(t.hide_cursor) == measure_length(t.hide_cursor, t))
+#        assert (len(t.save) == measure_length(t.save, t))
+#        assert (len(t.italic) == measure_length(t.italic, t))
+#        assert (len(t.standout) == measure_length(t.standout, t)
+#                ), (t.standout, t._wont_move)
+#
+#    child_mnemonics_wontmove(all_terms)
+#
+#
+#def test_sequence_is_movement_true(all_terms):
+#    """Test parsers about sequences that move the cursor."""
+#    @as_subprocess
+#    def child_mnemonics_willmove(kind):
+#        from blessed.sequences import measure_length
+#        t = TestTerminal(kind=kind)
+#        # movements
+#        assert (len(t.move(98, 76)) ==
+#                measure_length(t.move(98, 76), t))
+#        assert (len(t.move(54)) ==
+#                measure_length(t.move(54), t))
+#        assert not t.cud1 or (len(t.cud1) ==
+#                              measure_length(t.cud1, t))
+#        assert not t.cub1 or (len(t.cub1) ==
+#                              measure_length(t.cub1, t))
+#        assert not t.cuf1 or (len(t.cuf1) ==
+#                              measure_length(t.cuf1, t))
+#        assert not t.cuu1 or (len(t.cuu1) ==
+#                              measure_length(t.cuu1, t))
+#        assert not t.cub or (len(t.cub(333)) ==
+#                             measure_length(t.cub(333), t))
+#        assert not t.cuf or (len(t.cuf(333)) ==
+#                             measure_length(t.cuf(333), t))
+#        assert not t.home or (len(t.home) ==
+#                              measure_length(t.home, t))
+#        assert not t.restore or (len(t.restore) ==
+#                                 measure_length(t.restore, t))
+#        assert not t.clear or (len(t.clear) ==
+#                               measure_length(t.clear, t))
+#
+#    child_mnemonics_willmove(all_terms)
+#
+#
+#def test_foreign_sequences():
+#    """Test parsers about sequences received from foreign sources."""
+#    @as_subprocess
+#    def child(kind):
+#        from blessed.sequences import measure_length
+#        t = TestTerminal(kind=kind)
+#        assert measure_length(u'\x1b[m', t) == len('\x1b[m')
+#    child(kind='ansi')
