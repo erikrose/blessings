@@ -15,7 +15,6 @@ import os
 
 # local
 from blessed import Terminal
-from blessed._binterms import BINARY_TERMINALS
 
 # 3rd-party
 import pytest
@@ -229,12 +228,6 @@ def unicode_parm(cap, *parms):
         if val:
             return val.decode('latin1')
     return u''
-
-
-@pytest.fixture(params=BINARY_TERMINALS)
-def unsupported_sequence_terminals(request):
-    """Terminals that emit warnings for unsupported sequence-awareness."""
-    return request.param
 
 
 @pytest.fixture(params=all_terms_params)

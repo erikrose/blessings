@@ -70,8 +70,9 @@ pylint:
         good-names: _,ks,fd
 
     disable:
-        # Access to a protected member _sugar of a client class
         - protected-access
+        - too-few-public-methods
+        - start-args
 
 pyroma:
     # checks setup.py
