@@ -808,8 +808,8 @@ class Terminal(object):
         :returns: a single unicode character, or ``u''`` if a multi-byte
             sequence has not yet been fully received.
 
-        This method name and behavior mimics curses ``getch(void)``, and is
-        supports supports :meth:`inkey`, reading only one byte from
+        This method name and behavior mimics curses ``getch(void)``, and
+        it supports :meth:`inkey`, reading only one byte from
         the keyboard string at a time. This method should always return
         without blocking if called after :meth:`kbhit` has returned True.
 
