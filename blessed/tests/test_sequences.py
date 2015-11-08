@@ -487,7 +487,7 @@ def test_null_callable_string(all_terms):
 
 
 def test_padd():
-    """ Test terminal.padd(seq). """
+    """ Test Terminal.padd(seq). """
     @as_subprocess
     def child():
         from blessed.sequences import Sequence
@@ -499,3 +499,24 @@ def test_padd():
         assert Sequence('\x1b[3D', term).padd() == u''  # "Trim left"
 
     child()
+
+def test_split_seqs(all_terms):
+    """Test Terminal.split_seqs."""
+    @as_subprocess
+    def child(kind):
+        from blessed import Terminal
+        term = Terminal(kind)
+
+        if term.sc and term.rc:
+            given_text = term.sc + 'AB' + term.rc + 'CD'
+            expected = [term.sc, 'A', 'B', term.rc, 'C', 'D']
+            result = list(term.split_seqs(given_text))
+            assert result == expected
+
+        if term.bold:
+            given_text = term.bold + 'bbq'
+            expected = [term.bold, 'b', 'b', 'q']
+            result = list(term.split_seqs(given_text))
+            assert result == expected
+
+    child(all_terms)

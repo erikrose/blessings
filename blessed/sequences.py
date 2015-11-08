@@ -22,9 +22,9 @@ class Termcap(object):
         """
         Class initializer.
 
-        :param str name: name describing capability.
-        :param str pattern: regular expression string.
-        :param str attribute: :class:`~.Terminal` attribute used to build
+        :arg str name: name describing capability.
+        :arg str pattern: regular expression string.
+        :arg str attribute: :class:`~.Terminal` attribute used to build
             this terminal capability.
         """
         self.name = name
@@ -57,7 +57,7 @@ class Termcap(object):
         Horizontal carriage adjusted by capability, may be negative.
 
         :rtype: int
-        :param str text: for capabilities *parm_left_cursor*,
+        :arg str text: for capabilities *parm_left_cursor*,
             *parm_right_cursor*, provide the matching sequence
             text, its interpreted distance is returned.
 
@@ -91,22 +91,22 @@ class Termcap(object):
         r"""
         Class factory builder for given capability definition.
 
-        :param str name: Variable name given for this pattern.
-        :param str capability: A unicode string representing a terminal
+        :arg str name: Variable name given for this pattern.
+        :arg str capability: A unicode string representing a terminal
             capability to build for. When ``nparams`` is non-zero, it
             must be a callable unicode string (such as the result from
             ``getattr(term, 'bold')``.
-        :param attribute: The terminfo(5) capability name by which this
+        :arg attribute: The terminfo(5) capability name by which this
             pattern is known.
-        :param int nparams: number of positional arguments for callable.
-        :param bool match_grouped: If the numeric pattern should be
+        :arg int nparams: number of positional arguments for callable.
+        :arg bool match_grouped: If the numeric pattern should be
             grouped, ``(\d+)`` when ``True``, ``\d+`` default.
-        :param bool match_any: When keyword argument ``nparams`` is given,
+        :arg bool match_any: When keyword argument ``nparams`` is given,
             *any* numeric found in output is suitable for building as
             pattern ``(\d+)``.  Otherwise, only the first matching value of
             range *(numeric - 1)* through *(numeric + 1)* will be replaced by
             pattern ``(\d+)`` in builder.
-        :param bool match_optional: When ``True``, building of numeric patterns
+        :arg bool match_optional: When ``True``, building of numeric patterns
             containing ``(\d+)`` will be built as optional, ``(\d+)?``.
         """
         _numeric_regex = r'\d+'
@@ -254,8 +254,8 @@ class Sequence(six.text_type):
         """
         Class constructor.
 
-        :param sequence_text: A string that may contain sequences.
-        :param blessed.Terminal term: :class:`~.Terminal` instance.
+        :arg sequence_text: A string that may contain sequences.
+        :arg blessed.Terminal term: :class:`~.Terminal` instance.
         """
         new = six.text_type.__new__(cls, sequence_text)
         new._term = term
@@ -265,9 +265,9 @@ class Sequence(six.text_type):
         """
         Return string containing sequences, left-adjusted.
 
-        :param int width: Total width given to right-adjust ``text``.  If
+        :arg int width: Total width given to right-adjust ``text``.  If
             unspecified, the width of the attached terminal is used (default).
-        :param str fillchar: String for padding right-of ``text``.
+        :arg str fillchar: String for padding right-of ``text``.
         :returns: String of ``text``, right-aligned by ``width``.
         :rtype: str
         """
@@ -279,9 +279,9 @@ class Sequence(six.text_type):
         """
         Return string containing sequences, right-adjusted.
 
-        :param int width: Total width given to right-adjust ``text``.  If
+        :arg int width: Total width given to right-adjust ``text``.  If
             unspecified, the width of the attached terminal is used (default).
-        :param str fillchar: String for padding left-of ``text``.
+        :arg str fillchar: String for padding left-of ``text``.
         :returns: String of ``text``, right-aligned by ``width``.
         :rtype: str
         """
@@ -293,9 +293,9 @@ class Sequence(six.text_type):
         """
         Return string containing sequences, centered.
 
-        :param int width: Total width given to center ``text``.  If
+        :arg int width: Total width given to center ``text``.  If
             unspecified, the width of the attached terminal is used (default).
-        :param str fillchar: String for padding left and right-of ``text``.
+        :arg str fillchar: String for padding left and right-of ``text``.
         :returns: String of ``text``, centered by ``width``.
         :rtype: str
         """
@@ -344,7 +344,7 @@ class Sequence(six.text_type):
         """
         Return string of sequences, leading, and trailing whitespace removed.
 
-        :param str chars: Remove characters in chars instead of whitespace.
+        :arg str chars: Remove characters in chars instead of whitespace.
         :rtype: str
         """
         return self.strip_seqs().strip(chars)
@@ -353,7 +353,7 @@ class Sequence(six.text_type):
         """
         Return string of all sequences and leading whitespace removed.
 
-        :param str chars: Remove characters in chars instead of whitespace.
+        :arg str chars: Remove characters in chars instead of whitespace.
         :rtype: str
         """
         return self.strip_seqs().lstrip(chars)
@@ -362,29 +362,16 @@ class Sequence(six.text_type):
         """
         Return string of all sequences and trailing whitespace removed.
 
-        :param str chars: Remove characters in chars instead of whitespace.
+        :arg str chars: Remove characters in chars instead of whitespace.
         :rtype: str
         """
         return self.strip_seqs().rstrip(chars)
 
     def strip_seqs(self):
-        r"""
-        Return string of all sequences removed.
-
-            >>> from blessed import Terminal
-            >>> from blessed.sequences import Sequence
-            >>> term = Terminal()
-            >>> Sequence(term.cuf(5) + term.red(u'test'), term).strip_seqs()
-            u'     test'
+        """
+        Return ``text`` stripped of only its terminal sequences.
 
         :rtype: str
-
-        This method is used to determine the printable width of a string,
-        and is the first pass of :meth:`length`.
-
-        .. note:: Non-destructive sequences that adjust horizontal distance
-            (such as ``\b`` or ``term.cuf(5)``) are replaced by destructive
-            space or erasing.
         """
         gen = iter_parse(self._term, self.padd())
         return u''.join(text for text, cap in gen if not cap)
@@ -430,7 +417,7 @@ def iter_parse(term, text):
 
 def measure_length(text, term):
     """
-    .. deprecated:: 1.12.0
+    .. deprecated:: 1.12.0.
 
     :rtype: int
     """

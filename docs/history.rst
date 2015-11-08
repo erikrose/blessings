@@ -1,5 +1,11 @@
 Version History
 ===============
+1.13
+  * enhancement: :meth:`~.Terminal.split_seqs` introduced, and 4x cost
+    reduction in related sequence-aware functions.
+  * deprecated: ``blessed.sequences.measure_length`` function superseded by
+    :func:`~.iter_parse` if necessary.
+
 1.12
   * enhancement: :meth:`~.Terminal.get_location` returns the ``(row, col)``
     position of the cursor at the time of call for attached terminal.
@@ -107,8 +113,8 @@ Version History
     :attr:`~.color`\(n) may be called on terminals without color
     capabilities.
   * bugfix: for terminals without underline, such as vt220,
-    ``term.underline('text')`` would emit ``u'text' + term.normal``.
-    Now it emits only ``u'text'``.
+    ``term.underline('text')`` would emit ``'text' + term.normal``.
+    Now it emits only ``'text'``.
   * enhancement: some attributes are now properties, raise exceptions when
     assigned.
   * enhancement: pypy is now a supported python platform implementation.

@@ -94,24 +94,14 @@ CAPABILITY_DATABASE = OrderedDict((
     # than set_a_attributes1 or set_a_foreground.
     ('color', ('_foreground_color', {'nparams': 1, 'match_any': True,
                                      'numeric': 1})),
-
-    # very likely, this will be the most commonly matched inward attribute.
-    ('set_a_attributes1', ('sgr1', {'nparams': 1, 'match_any': True,
-                                    'match_optional': True})),
-    ('set_a_attributes2', ('sgr1', {'nparams': 2, 'match_any': True})),
-    ('set_a_attributes3', ('sgr1', {'nparams': 3, 'match_any': True})),
-    ('set_a_attributes4', ('sgr1', {'nparams': 4, 'match_any': True})),
-    ('set_a_attributes5', ('sgr1', {'nparams': 5, 'match_any': True})),
-    ('set_a_attributes6', ('sgr1', {'nparams': 6, 'match_any': True})),
-    ('set_a_attributes7', ('sgr1', {'nparams': 7, 'match_any': True})),
-    ('set_a_attributes8', ('sgr1', {'nparams': 8, 'match_any': True})),
-    ('set_a_attributes9', ('sgr1', {'nparams': 9, 'match_any': True})),
     ('set_a_foreground', ('color', {'nparams': 1, 'match_any': True,
                                     'numeric': 1})),
     ('set_a_background', ('on_color', {'nparams': 1, 'match_any': True,
                                        'numeric': 1})),
     ('set_tab', ('hts', {})),
     ('tab', ('ht', {})),
+    ('italic', ('sitm', {})),
+    ('no_italic', ('sitm', {})),
 ))
 
 CAPABILITIES_RAW_MIXIN = {
@@ -123,22 +113,30 @@ CAPABILITIES_RAW_MIXIN = {
     'exit_attribute_mode': re.escape('\x1b') + r'\[m',
     'parm_left_cursor': re.escape('\x1b') + r'\[(\d+)D',
     'parm_right_cursor': re.escape('\x1b') + r'\[(\d+)C',
+    'restore_cursor': re.escape(r'\x1b\[u'),
+    'save_cursor': re.escape(r'\x1b\[s'),
     'scroll_forward': re.escape('\n'),
     'set0_des_seq': re.escape('\x1b(B'),
-    'set_a_attributes1': re.escape('\x1b') + r'\[(\d+)?m',
-    'set_a_attributes2': re.escape('\x1b') + r'\[(\d+)\;(\d+)m',
-    'set_a_attributes3': re.escape('\x1b') + r'\[(\d+)\;(\d+)\;(\d+)m',
-    'set_a_attributes4': re.escape('\x1b') + r'\[(\d+)\;(\d+)\;(\d+)\;(\d+)m',
     'tab': re.escape('\t'),
     # one could get carried away, such as by adding '\x1b#8' (dec tube
     # alignment test) by reversing basic vt52, ansi, and xterm sequence
     # parsers.  There is plans to do just that for ANSI.SYS support.
 }
 
+
 CAPABILITIES_ADDITIVES = {
     'color256': ('color', re.escape('\x1b') + r'\[38;5;(\d+)m'),
     'shift_in': ('', re.escape('\x0f')),
     'shift_out': ('', re.escape('\x0e')),
+    # sgr(...) outputs strangely, use the basic ANSI/EMCA-48 codes here.
+    'set_a_attributes1': (
+        'sgr', re.escape('\x1b') + r'\[\d+m'),
+    'set_a_attributes2': (
+        'sgr', re.escape('\x1b') + r'\[\d+\;\d+m'),
+    'set_a_attributes3': (
+        'sgr', re.escape('\x1b') + r'\[\d+\;\d+\;\d+m'),
+    'set_a_attributes4': (
+        'sgr', re.escape('\x1b') + r'\[\d+\;\d+\;\d+\;\d+m'),
     # this helps where xterm's sgr0 includes set0_des_seq, we'd
     # rather like to also match this immediate substring.
     'sgr0': ('sgr0', re.escape('\x1b') + r'\[m'),
@@ -148,7 +146,7 @@ CAPABILITIES_ADDITIVES = {
 
 CAPABILITIES_CAUSE_MOVEMENT = (
     'ascii_tab',
-    'backspace'
+    'backspace',
     'carriage_return',
     'clear_screen',
     'column_address',

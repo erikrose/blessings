@@ -258,6 +258,9 @@ class Terminal(object):
         self._caps_compiled_any = re.compile('|'.join(
             cap.named_pattern for name, cap in self.caps.items()
         ) + '|(?P<MISMATCH>.)')
+        self._caps_unnamed_any = re.compile('|'.join(
+            '({0})'.format(cap.pattern) for name, cap in self.caps.items()
+        ) + '|(.)')
 
     def __init__keycodes(self):
         # Initialize keyboard data determined by capability.
@@ -778,9 +781,8 @@ class Terminal(object):
 
         :rtype: str
 
-        >>> term = blessed.Terminal()
-        >>> term.strip(u' \x1b[0;3m XXX ')
-        u'XXX'
+        >>> term.strip(u' \x1b[0;3m xyz ')
+        u'xyz'
         """
         return Sequence(text, self).strip(chars)
 
@@ -790,9 +792,8 @@ class Terminal(object):
 
         :rtype: str
 
-        >>> term = blessed.Terminal()
-        >>> term.rstrip(u' \x1b[0;3m XXX ')
-        u'  XXX'
+        >>> term.rstrip(u' \x1b[0;3m xyz ')
+        u'  xyz'
         """
         return Sequence(text, self).rstrip(chars)
 
@@ -802,9 +803,8 @@ class Terminal(object):
 
         :rtype: str
 
-        >>> term = blessed.Terminal()
-        >>> term.lstrip(u' \x1b[0;3m XXX ')
-        u'XXX '
+        >>> term.lstrip(u' \x1b[0;3m xyz ')
+        u'xyz '
         """
         return Sequence(text, self).lstrip(chars)
 
@@ -814,22 +814,30 @@ class Terminal(object):
 
         :rtype: str
 
-        >>> term = blessed.Terminal()
-        >>> term.strip_seqs(u'\x1b[0;3mXXX')
-        u'XXX'
+        >>> term.strip_seqs(u'\x1b[0;3mxyz')
+        u'xyz'
+        >>> term.strip_seqs(term.cuf(5) + term.red(u'test'))
+        u'     test'
+
+        .. note:: Non-destructive sequences that adjust horizontal distance
+            (such as ``\b`` or ``term.cuf(5)``) are replaced by destructive
+            space or erasing.
         """
         return Sequence(text, self).strip_seqs()
 
     def split_seqs(self, text, maxsplit=0, flags=0):
         r"""
-        Return ``text`` split by terminal sequences.
+        Return ``text`` split by individual character elements and sequences.
 
-        :param int maxpslit: If maxsplit is nonzero, at most ``maxsplit``
+        :arg int maxpslit: If maxsplit is nonzero, at most ``maxsplit``
             splits occur, and the remainder of the string is returned as
             the final element of the list.
         :rtype: list[str]
+
+        >>> term.split_seqs(term.underline(u'xyz'))
+        ['\x1b[4m', 'x', 'y', 'z', '\x1b(B', '\x1b[m']
         """
-        return list(filter(None, re.split(self.caps_compiled, text,
+        return list(filter(None, re.split(self._caps_unnamed_any, text,
                                           maxsplit=maxsplit, flags=flags)))
 
     def wrap(self, text, width=None, **kwargs):
@@ -881,7 +889,7 @@ class Terminal(object):
         """
         Buffer input data to be discovered by next call to :meth:`~.inkey`.
 
-        :param str ucs: String to be buffered as keyboard input.
+        :arg str ucs: String to be buffered as keyboard input.
         """
         self._keyboard_buf.extendleft(text)
 
