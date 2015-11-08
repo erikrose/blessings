@@ -382,7 +382,7 @@ def test_no_preferredencoding_fallback_ascii():
 
 
 def test_unknown_preferredencoding_warned_and_fallback_ascii():
-    "Ensure a locale without a codecs incrementaldecoder emits a warning."
+    """Ensure a locale without a codec emits a warning."""
     @as_subprocess
     def child():
         with mock.patch('locale.getpreferredencoding') as get_enc:
@@ -472,3 +472,21 @@ def test_time_left_infinite_None():
     """keyboard '_time_left' routine returns None when given None."""
     from blessed.keyboard import _time_left
     assert _time_left(stime=time.time(), timeout=None) is None
+
+
+def test_termcap_repr():
+    "Ensure ``hidden_cursor()`` writes hide_cursor and normal_cursor."
+
+    given_ttype='vt220'
+    given_capname = 'cursor_up'
+    expected = [r"<Termcap cursor_up:'\\\x1b\\[A'>",
+                r"<Termcap cursor_up:u'\\\x1b\\[A'>"]
+
+    @as_subprocess
+    def child():
+        import blessed
+        term = blessed.Terminal(given_ttype)
+        given = repr(term.caps[given_capname])
+        assert given in expected
+
+    child()

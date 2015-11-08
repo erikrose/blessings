@@ -38,6 +38,15 @@ except NameError:
     # alias py2 exception to py3
     InterruptedError = select.error
 
+try:
+    from collections import OrderedDict
+except ImportError:
+    # python 2.6 requires 3rd party library (backport)
+    #
+    # pylint: disable=import-error
+    #         Unable to import 'ordereddict'
+    from ordereddict import OrderedDict
+
 # local imports
 from .formatters import (ParameterizingString,
                          NullCallableString,
@@ -45,10 +54,15 @@ from .formatters import (ParameterizingString,
                          resolve_attribute,
                          )
 
-from .sequences import (init_sequence_patterns,
-                        _build_any_numeric_capability,
-                        SequenceTextWrapper,
+from ._capabilities import (
+    CAPABILITIES_RAW_MIXIN,
+    CAPABILITIES_ADDITIVES,
+    CAPABILITY_DATABASE,
+)
+
+from .sequences import (SequenceTextWrapper,
                         Sequence,
+                        Termcap,
                         )
 
 from .keyboard import (get_keyboard_sequences,
@@ -107,7 +121,12 @@ class Terminal(object):
         superscript='ssupm',
         no_superscript='rsupm',
         underline='smul',
-        no_underline='rmul')
+        no_underline='rmul',
+        cursor_report='u6',
+        cursor_request='u7',
+        terminal_answerback='u8',
+        terminal_enquire='u9',
+    )
 
     def __init__(self, kind=None, stream=None, force_styling=False):
         """
@@ -158,6 +177,7 @@ class Terminal(object):
         except io.UnsupportedOperation:
             stream_fd = None
 
+        self._stream = stream
         self._is_a_tty = stream_fd is not None and os.isatty(stream_fd)
         self._does_styling = ((self.is_a_tty or force_styling) and
                               force_styling is not None)
@@ -201,13 +221,49 @@ class Terminal(object):
                         ' returned for the remainder of this process.' % (
                             self._kind, _CUR_TERM,))
 
-        # Initialize keyboard data determined by capability.
-        #
-        # The following attributes are initialized: _keycodes,
-        # _keymap, _keyboard_buf, _encoding, and _keyboard_decoder.
-        for re_name, re_val in init_sequence_patterns(self).items():
-            setattr(self, re_name, re_val)
+        # initialize capabilities database
+        self.__init__capabilities()
 
+        self.__init__keycodes()
+
+    def __init__capabilities(self):
+        # important that we lay these in their ordered direction, so that our
+        # preferred, 'color' over 'set_a_attributes1', for example.
+        self.caps = OrderedDict()
+
+        # some static injected patterns, esp. without named attribute access.
+        for name, (attribute, pattern) in CAPABILITIES_ADDITIVES.items():
+            self.caps[name] = Termcap(name, pattern, attribute)
+
+        for name, (attribute, kwds) in CAPABILITY_DATABASE.items():
+            if self.does_styling:
+                # attempt dynamic lookup
+                cap = getattr(self, attribute)
+                if cap:
+                    self.caps[name] = Termcap.build(
+                        name, cap, attribute, **kwds)
+                    continue
+
+            # fall-back
+            pattern = CAPABILITIES_RAW_MIXIN.get(name)
+            if pattern:
+                self.caps[name] = Termcap(name, pattern, attribute)
+
+        # make a compiled named regular expression table
+        self.caps_compiled = re.compile(
+            '|'.join(cap.pattern for name, cap in self.caps.items()))
+
+        # for tokenizer, the '.lastgroup' is the primary lookup key for
+        # 'self.caps', unless 'MISMATCH'; then it is an unmatched character.
+        self._caps_compiled_any = re.compile('|'.join(
+            cap.named_pattern for name, cap in self.caps.items()
+        ) + '|(?P<MISMATCH>.)')
+        self._caps_unnamed_any = re.compile('|'.join(
+            '({0})'.format(cap.pattern) for name, cap in self.caps.items()
+        ) + '|(.)')
+
+    def __init__keycodes(self):
+        # Initialize keyboard data determined by capability.
         # Build database of int code <=> KEY_NAME.
         self._keycodes = get_keyboard_codes()
 
@@ -233,8 +289,6 @@ class Terminal(object):
                 self._encoding = 'ascii'
                 self._keyboard_decoder = codecs.getincrementaldecoder(
                     self._encoding)()
-
-        self._stream = stream
 
     def __getattr__(self, attr):
         r"""
@@ -465,13 +519,7 @@ class Terminal(object):
         query_str = self.u7 or u'\x1b[6n'
 
         # determine response format as a regular expression
-        response_re = re.escape(u'\x1b') + r'\[(\d+)\;(\d+)R'
-
-        if self.u6:
-            with warnings.catch_warnings():
-                response_re = _build_any_numeric_capability(
-                    term=self, cap='u6', nparams=2
-                ) or response_re
+        response_re = self.caps['cursor_report'].re_compiled
 
         # Avoid changing user's desired raw or cbreak mode if already entered,
         # by entering cbreak mode ourselves.  This is necessary to receive user
@@ -733,9 +781,8 @@ class Terminal(object):
 
         :rtype: str
 
-        >>> term = blessed.Terminal()
-        >>> term.strip(u' \x1b[0;3m XXX ')
-        u'XXX'
+        >>> term.strip(u' \x1b[0;3m xyz ')
+        u'xyz'
         """
         return Sequence(text, self).strip(chars)
 
@@ -745,9 +792,8 @@ class Terminal(object):
 
         :rtype: str
 
-        >>> term = blessed.Terminal()
-        >>> term.rstrip(u' \x1b[0;3m XXX ')
-        u'  XXX'
+        >>> term.rstrip(u' \x1b[0;3m xyz ')
+        u'  xyz'
         """
         return Sequence(text, self).rstrip(chars)
 
@@ -757,9 +803,8 @@ class Terminal(object):
 
         :rtype: str
 
-        >>> term = blessed.Terminal()
-        >>> term.lstrip(u' \x1b[0;3m XXX ')
-        u'XXX '
+        >>> term.lstrip(u' \x1b[0;3m xyz ')
+        u'xyz '
         """
         return Sequence(text, self).lstrip(chars)
 
@@ -769,11 +814,29 @@ class Terminal(object):
 
         :rtype: str
 
-        >>> term = blessed.Terminal()
-        >>> term.strip_seqs(u'\x1b[0;3mXXX')
-        u'XXX'
+        >>> term.strip_seqs(u'\x1b[0;3mxyz')
+        u'xyz'
+        >>> term.strip_seqs(term.cuf(5) + term.red(u'test'))
+        u'     test'
+
+        .. note:: Non-destructive sequences that adjust horizontal distance
+            (such as ``\b`` or ``term.cuf(5)``) are replaced by destructive
+            space or erasing.
         """
         return Sequence(text, self).strip_seqs()
+
+    def split_seqs(self, text, **kwds):
+        r"""
+        Return ``text`` split by individual character elements and sequences.
+
+        :arg kwds: remaining keyword arguments for :func:`re.split`.
+        :rtype: list[str]
+
+        >>> term.split_seqs(term.underline(u'xyz'))
+        ['\x1b[4m', 'x', 'y', 'z', '\x1b(B', '\x1b[m']
+        """
+        pattern = self._caps_unnamed_any
+        return list(filter(None, re.split(pattern, text, **kwds)))
 
     def wrap(self, text, width=None, **kwargs):
         """
@@ -824,7 +887,7 @@ class Terminal(object):
         """
         Buffer input data to be discovered by next call to :meth:`~.inkey`.
 
-        :param str ucs: String to be buffered as keyboard input.
+        :arg str ucs: String to be buffered as keyboard input.
         """
         self._keyboard_buf.extendleft(text)
 
@@ -1123,7 +1186,8 @@ class WINSZ(collections.namedtuple('WINSZ', (
 #:
 #: Python - perhaps wrongly - will not allow for re-initialisation of new
 #: terminals through :func:`curses.setupterm`, so the value of cur_term cannot
-#: be changed once set: subsequent calls to :func:`setupterm` have no effect.
+#: be changed once set: subsequent calls to :func:`curses.setupterm` have no
+#: effect.
 #:
 #: Therefore, the :attr:`Terminal.kind` of each :class:`Terminal` is
 #: essentially a singleton. This global variable reflects that, and a warning

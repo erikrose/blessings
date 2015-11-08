@@ -41,6 +41,3 @@ sequences.py
    :members:
    :undoc-members:
    :private-members:
-.. autofunction:: _sort_sequences
-.. autofunction:: _build_numeric_capability
-.. autofunction:: _build_any_numeric_capability

@@ -57,141 +57,141 @@ def test_length_ansiart():
 
 
 def test_sequence_length(all_terms):
-    """Ensure T.length(string containing sequence) is correct."""
+    """Ensure T.length(string containing sequence) is correcterm."""
     @as_subprocess
     def child(kind):
-        t = TestTerminal(kind=kind)
+        term = TestTerminal(kind=kind)
         # Create a list of ascii characters, to be separated
         # by word, to be zipped up with a cycling list of
         # terminal sequences. Then, compare the length of
-        # each, the basic plain_text.__len__ vs. the Terminal
+        # each, the basic plain_texterm.__len__ vs. the Terminal
         # method length. They should be equal.
         plain_text = (u'The softest things of the world '
                       u'Override the hardest things of the world '
                       u'That which has no substance '
                       u'Enters into that which has no openings')
-        if t.bold:
-            assert (t.length(t.bold) == 0)
-            assert (t.length(t.bold(u'x')) == 1)
-            assert (t.length(t.bold_red) == 0)
-            assert (t.length(t.bold_red(u'x')) == 1)
-            assert (t.strip(t.bold) == u'')
-            assert (t.rstrip(t.bold) == u'')
-            assert (t.lstrip(t.bold) == u'')
-            assert (t.strip(t.bold(u'  x  ')) == u'x')
-            assert (t.strip(t.bold(u'z  x  q'), 'zq') == u'  x  ')
-            assert (t.rstrip(t.bold(u'  x  ')) == u'  x')
-            assert (t.lstrip(t.bold(u'  x  ')) == u'x  ')
-            assert (t.strip(t.bold_red) == u'')
-            assert (t.rstrip(t.bold_red) == u'')
-            assert (t.lstrip(t.bold_red) == u'')
-            assert (t.strip(t.bold_red(u'  x  ')) == u'x')
-            assert (t.rstrip(t.bold_red(u'  x  ')) == u'  x')
-            assert (t.lstrip(t.bold_red(u'  x  ')) == u'x  ')
-            assert (t.strip_seqs(t.bold) == u'')
-            assert (t.strip_seqs(t.bold(u'  x  ')) == u'  x  ')
-            assert (t.strip_seqs(t.bold_red) == u'')
-            assert (t.strip_seqs(t.bold_red(u'  x  ')) == u'  x  ')
+        if term.bold:
+            assert (term.length(term.bold) == 0)
+            assert (term.length(term.bold(u'x')) == 1)
+            assert (term.length(term.bold_red) == 0)
+            assert (term.length(term.bold_red(u'x')) == 1)
+            assert (term.strip(term.bold) == u'')
+            assert (term.rstrip(term.bold) == u'')
+            assert (term.lstrip(term.bold) == u'')
+            assert (term.strip(term.bold(u'  x  ')) == u'x')
+            assert (term.strip(term.bold(u'z  x  q'), 'zq') == u'  x  ')
+            assert (term.rstrip(term.bold(u'  x  ')) == u'  x')
+            assert (term.lstrip(term.bold(u'  x  ')) == u'x  ')
+            assert (term.strip(term.bold_red) == u'')
+            assert (term.rstrip(term.bold_red) == u'')
+            assert (term.lstrip(term.bold_red) == u'')
+            assert (term.strip(term.bold_red(u'  x  ')) == u'x')
+            assert (term.rstrip(term.bold_red(u'  x  ')) == u'  x')
+            assert (term.lstrip(term.bold_red(u'  x  ')) == u'x  ')
+            assert (term.strip_seqs(term.bold) == u'')
+            assert (term.strip_seqs(term.bold(u'  x  ')) == u'  x  ')
+            assert (term.strip_seqs(term.bold_red) == u'')
+            assert (term.strip_seqs(term.bold_red(u'  x  ')) == u'  x  ')
 
-        if t.underline:
-            assert (t.length(t.underline) == 0)
-            assert (t.length(t.underline(u'x')) == 1)
-            assert (t.length(t.underline_red) == 0)
-            assert (t.length(t.underline_red(u'x')) == 1)
-            assert (t.strip(t.underline) == u'')
-            assert (t.strip(t.underline(u'  x  ')) == u'x')
-            assert (t.strip(t.underline_red) == u'')
-            assert (t.strip(t.underline_red(u'  x  ')) == u'x')
-            assert (t.rstrip(t.underline_red(u'  x  ')) == u'  x')
-            assert (t.lstrip(t.underline_red(u'  x  ')) == u'x  ')
-            assert (t.strip_seqs(t.underline) == u'')
-            assert (t.strip_seqs(t.underline(u'  x  ')) == u'  x  ')
-            assert (t.strip_seqs(t.underline_red) == u'')
-            assert (t.strip_seqs(t.underline_red(u'  x  ')) == u'  x  ')
+        if term.underline:
+            assert (term.length(term.underline) == 0)
+            assert (term.length(term.underline(u'x')) == 1)
+            assert (term.length(term.underline_red) == 0)
+            assert (term.length(term.underline_red(u'x')) == 1)
+            assert (term.strip(term.underline) == u'')
+            assert (term.strip(term.underline(u'  x  ')) == u'x')
+            assert (term.strip(term.underline_red) == u'')
+            assert (term.strip(term.underline_red(u'  x  ')) == u'x')
+            assert (term.rstrip(term.underline_red(u'  x  ')) == u'  x')
+            assert (term.lstrip(term.underline_red(u'  x  ')) == u'x  ')
+            assert (term.strip_seqs(term.underline) == u'')
+            assert (term.strip_seqs(term.underline(u'  x  ')) == u'  x  ')
+            assert (term.strip_seqs(term.underline_red) == u'')
+            assert (term.strip_seqs(term.underline_red(u'  x  ')) == u'  x  ')
 
-        if t.reverse:
-            assert (t.length(t.reverse) == 0)
-            assert (t.length(t.reverse(u'x')) == 1)
-            assert (t.length(t.reverse_red) == 0)
-            assert (t.length(t.reverse_red(u'x')) == 1)
-            assert (t.strip(t.reverse) == u'')
-            assert (t.strip(t.reverse(u'  x  ')) == u'x')
-            assert (t.strip(t.reverse_red) == u'')
-            assert (t.strip(t.reverse_red(u'  x  ')) == u'x')
-            assert (t.rstrip(t.reverse_red(u'  x  ')) == u'  x')
-            assert (t.lstrip(t.reverse_red(u'  x  ')) == u'x  ')
-            assert (t.strip_seqs(t.reverse) == u'')
-            assert (t.strip_seqs(t.reverse(u'  x  ')) == u'  x  ')
-            assert (t.strip_seqs(t.reverse_red) == u'')
-            assert (t.strip_seqs(t.reverse_red(u'  x  ')) == u'  x  ')
+        if term.reverse:
+            assert (term.length(term.reverse) == 0)
+            assert (term.length(term.reverse(u'x')) == 1)
+            assert (term.length(term.reverse_red) == 0)
+            assert (term.length(term.reverse_red(u'x')) == 1)
+            assert (term.strip(term.reverse) == u'')
+            assert (term.strip(term.reverse(u'  x  ')) == u'x')
+            assert (term.strip(term.reverse_red) == u'')
+            assert (term.strip(term.reverse_red(u'  x  ')) == u'x')
+            assert (term.rstrip(term.reverse_red(u'  x  ')) == u'  x')
+            assert (term.lstrip(term.reverse_red(u'  x  ')) == u'x  ')
+            assert (term.strip_seqs(term.reverse) == u'')
+            assert (term.strip_seqs(term.reverse(u'  x  ')) == u'  x  ')
+            assert (term.strip_seqs(term.reverse_red) == u'')
+            assert (term.strip_seqs(term.reverse_red(u'  x  ')) == u'  x  ')
 
-        if t.blink:
-            assert (t.length(t.blink) == 0)
-            assert (t.length(t.blink(u'x')) == 1)
-            assert (t.length(t.blink_red) == 0)
-            assert (t.length(t.blink_red(u'x')) == 1)
-            assert (t.strip(t.blink) == u'')
-            assert (t.strip(t.blink(u'  x  ')) == u'x')
-            assert (t.strip(t.blink(u'z  x  q'), u'zq') == u'  x  ')
-            assert (t.strip(t.blink_red) == u'')
-            assert (t.strip(t.blink_red(u'  x  ')) == u'x')
-            assert (t.strip_seqs(t.blink) == u'')
-            assert (t.strip_seqs(t.blink(u'  x  ')) == u'  x  ')
-            assert (t.strip_seqs(t.blink_red) == u'')
-            assert (t.strip_seqs(t.blink_red(u'  x  ')) == u'  x  ')
+        if term.blink:
+            assert (term.length(term.blink) == 0)
+            assert (term.length(term.blink(u'x')) == 1)
+            assert (term.length(term.blink_red) == 0)
+            assert (term.length(term.blink_red(u'x')) == 1)
+            assert (term.strip(term.blink) == u'')
+            assert (term.strip(term.blink(u'  x  ')) == u'x')
+            assert (term.strip(term.blink(u'z  x  q'), u'zq') == u'  x  ')
+            assert (term.strip(term.blink_red) == u'')
+            assert (term.strip(term.blink_red(u'  x  ')) == u'x')
+            assert (term.strip_seqs(term.blink) == u'')
+            assert (term.strip_seqs(term.blink(u'  x  ')) == u'  x  ')
+            assert (term.strip_seqs(term.blink_red) == u'')
+            assert (term.strip_seqs(term.blink_red(u'  x  ')) == u'  x  ')
 
-        if t.home:
-            assert (t.length(t.home) == 0)
-            assert (t.strip(t.home) == u'')
-        if t.clear_eol:
-            assert (t.length(t.clear_eol) == 0)
-            assert (t.strip(t.clear_eol) == u'')
-        if t.enter_fullscreen:
-            assert (t.length(t.enter_fullscreen) == 0)
-            assert (t.strip(t.enter_fullscreen) == u'')
-        if t.exit_fullscreen:
-            assert (t.length(t.exit_fullscreen) == 0)
-            assert (t.strip(t.exit_fullscreen) == u'')
+        if term.home:
+            assert (term.length(term.home) == 0)
+            assert (term.strip(term.home) == u'')
+        if term.clear_eol:
+            assert (term.length(term.clear_eol) == 0)
+            assert (term.strip(term.clear_eol) == u'')
+        if term.enter_fullscreen:
+            assert (term.length(term.enter_fullscreen) == 0)
+            assert (term.strip(term.enter_fullscreen) == u'')
+        if term.exit_fullscreen:
+            assert (term.length(term.exit_fullscreen) == 0)
+            assert (term.strip(term.exit_fullscreen) == u'')
 
         # horizontally, we decide move_down and move_up are 0,
-        assert (t.length(t.move_down) == 0)
-        assert (t.length(t.move_down(2)) == 0)
-        assert (t.length(t.move_up) == 0)
-        assert (t.length(t.move_up(2)) == 0)
+        assert (term.length(term.move_down) == 0)
+        assert (term.length(term.move_down(2)) == 0)
+        assert (term.length(term.move_up) == 0)
+        assert (term.length(term.move_up(2)) == 0)
 
         # other things aren't so simple, somewhat edge cases,
         # moving backwards and forwards horizontally must be
         # accounted for as a "length", as <x><move right 10><y>
         # will result in a printed column length of 12 (even
         # though columns 2-11 are non-destructive space
-        assert (t.length(u'x\b') == 0)
-        assert (t.strip(u'x\b') == u'')
+        assert (term.length(u'x\b') == 0)
+        assert (term.strip(u'x\b') == u'')
 
         # XXX why are some terminals width of 9 here ??
-        assert (t.length(u'\t') in (8, 9))
-        assert (t.strip(u'\t') == u'')
-        assert (t.length(u'_' + t.move_left) == 0)
+        assert (term.length(u'\t') in (8, 9))
+        assert (term.strip(u'\t') == u'')
+        assert (term.length(u'_' + term.move_left) == 0)
 
-        if t.cub:
-            assert (t.length((u'_' * 10) + t.cub(10)) == 0)
+        if term.cub:
+            assert (term.length((u'_' * 10) + term.cub(10)) == 0)
 
-        assert (t.length(t.move_right) == 1)
+        assert (term.length(term.move_right) == 1)
 
-        if t.cuf:
-            assert (t.length(t.cuf(10)) == 10)
+        if term.cuf:
+            assert (term.length(term.cuf(10)) == 10)
 
         # vertical spacing is unaccounted as a 'length'
-        assert (t.length(t.move_up) == 0)
-        assert (t.length(t.cuu(10)) == 0)
-        assert (t.length(t.move_down) == 0)
-        assert (t.length(t.cud(10)) == 0)
+        assert (term.length(term.move_up) == 0)
+        assert (term.length(term.cuu(10)) == 0)
+        assert (term.length(term.move_down) == 0)
+        assert (term.length(term.cud(10)) == 0)
 
         # this is how manpages perform underlining, this is done
         # with the 'overstrike' capability of teletypes, and aparently
         # less(1), '123' -> '1\b_2\b_3\b_'
         text_wseqs = u''.join(itertools.chain(
             *zip(plain_text, itertools.cycle(['\b_']))))
-        assert (t.length(text_wseqs) == len(plain_text))
+        assert (term.length(text_wseqs) == len(plain_text))
 
     child(all_terms)
 
@@ -203,17 +203,17 @@ def test_env_winsize():
         # set the pty's virtual window size
         os.environ['COLUMNS'] = '99'
         os.environ['LINES'] = '11'
-        t = TestTerminal(stream=six.StringIO())
-        save_init = t._init_descriptor
+        term = TestTerminal(stream=six.StringIO())
+        save_init = term._init_descriptor
         save_stdout = sys.__stdout__
         try:
-            t._init_descriptor = None
+            term._init_descriptor = None
             sys.__stdout__ = None
-            winsize = t._height_and_width()
-            width = t.width
-            height = t.height
+            winsize = term._height_and_width()
+            width = term.width
+            height = term.height
         finally:
-            t._init_descriptor = save_init
+            term._init_descriptor = save_init
             sys.__stdout__ = save_stdout
         assert winsize.ws_col == width == 99
         assert winsize.ws_row == height == 11
@@ -228,10 +228,10 @@ def test_winsize(many_lines, many_columns):
         # set the pty's virtual window size
         val = struct.pack('HHHH', lines, cols, 0, 0)
         fcntl.ioctl(sys.__stdout__.fileno(), termios.TIOCSWINSZ, val)
-        t = TestTerminal()
-        winsize = t._height_and_width()
-        assert t.width == cols
-        assert t.height == lines
+        term = TestTerminal()
+        winsize = term._height_and_width()
+        assert term.width == cols
+        assert term.height == lines
         assert winsize.ws_col == cols
         assert winsize.ws_row == lines
 
@@ -241,23 +241,23 @@ def test_winsize(many_lines, many_columns):
 def test_Sequence_alignment_fixed_width():
     @as_subprocess
     def child(kind):
-        t = TestTerminal(kind=kind)
+        term = TestTerminal(kind=kind)
         pony_msg = 'pony express, all aboard, choo, choo!'
         pony_len = len(pony_msg)
         pony_colored = u''.join(
-            ['%s%s' % (t.color(n % 7), ch,)
+            ['%s%s' % (term.color(n % 7), ch,)
              for n, ch in enumerate(pony_msg)])
-        pony_colored += t.normal
-        ladjusted = t.ljust(pony_colored, 88)
-        radjusted = t.rjust(pony_colored, 88)
-        centered = t.center(pony_colored, 88)
-        assert (t.length(pony_colored) == pony_len)
-        assert (t.length(centered.strip()) == pony_len)
-        assert (t.length(centered) == len(pony_msg.center(88)))
-        assert (t.length(ladjusted.strip()) == pony_len)
-        assert (t.length(ladjusted) == len(pony_msg.ljust(88)))
-        assert (t.length(radjusted.strip()) == pony_len)
-        assert (t.length(radjusted) == len(pony_msg.rjust(88)))
+        pony_colored += term.normal
+        ladjusted = term.ljust(pony_colored, 88)
+        radjusted = term.rjust(pony_colored, 88)
+        centered = term.center(pony_colored, 88)
+        assert (term.length(pony_colored) == pony_len)
+        assert (term.length(centered.strip()) == pony_len)
+        assert (term.length(centered) == len(pony_msg.center(88)))
+        assert (term.length(ladjusted.strip()) == pony_len)
+        assert (term.length(ladjusted) == len(pony_msg.ljust(88)))
+        assert (term.length(radjusted.strip()) == pony_len)
+        assert (term.length(radjusted) == len(pony_msg.rjust(88)))
 
 
 def test_Sequence_alignment(all_terms):
@@ -267,96 +267,156 @@ def test_Sequence_alignment(all_terms):
         # set the pty's virtual window size
         val = struct.pack('HHHH', lines, cols, 0, 0)
         fcntl.ioctl(sys.__stdout__.fileno(), termios.TIOCSWINSZ, val)
-        t = TestTerminal(kind=kind)
+        term = TestTerminal(kind=kind)
 
         pony_msg = 'pony express, all aboard, choo, choo!'
         pony_len = len(pony_msg)
         pony_colored = u''.join(
-            ['%s%s' % (t.color(n % 7), ch,)
+            ['%s%s' % (term.color(n % 7), ch,)
              for n, ch in enumerate(pony_msg)])
-        pony_colored += t.normal
-        ladjusted = t.ljust(pony_colored)
-        radjusted = t.rjust(pony_colored)
-        centered = t.center(pony_colored)
-        assert (t.length(pony_colored) == pony_len)
-        assert (t.length(centered.strip()) == pony_len)
-        assert (t.length(centered) == len(pony_msg.center(t.width)))
-        assert (t.length(ladjusted.strip()) == pony_len)
-        assert (t.length(ladjusted) == len(pony_msg.ljust(t.width)))
-        assert (t.length(radjusted.strip()) == pony_len)
-        assert (t.length(radjusted) == len(pony_msg.rjust(t.width)))
+        pony_colored += term.normal
+        ladjusted = term.ljust(pony_colored)
+        radjusted = term.rjust(pony_colored)
+        centered = term.center(pony_colored)
+        assert (term.length(pony_colored) == pony_len)
+        assert (term.length(centered.strip()) == pony_len)
+        assert (term.length(centered) == len(pony_msg.center(term.width)))
+        assert (term.length(ladjusted.strip()) == pony_len)
+        assert (term.length(ladjusted) == len(pony_msg.ljust(term.width)))
+        assert (term.length(radjusted.strip()) == pony_len)
+        assert (term.length(radjusted) == len(pony_msg.rjust(term.width)))
 
     child(kind=all_terms)
-
 
 def test_sequence_is_movement_false(all_terms):
     """Test parser about sequences that do not move the cursor."""
     @as_subprocess
-    def child_mnemonics_wontmove(kind):
+    def child(kind):
         from blessed.sequences import measure_length
-        t = TestTerminal(kind=kind)
-        assert (0 == measure_length(u'', t))
+        term = TestTerminal(kind=kind)
+        assert (0 == measure_length(u'', term))
         # not even a mbs
-        assert (0 == measure_length(u'xyzzy', t))
+        assert (0 == measure_length(u'xyzzy', term))
         # negative numbers, though printable as %d, do not result
         # in movement; just garbage. Also not a valid sequence.
-        assert (0 == measure_length(t.cuf(-333), t))
-        assert (len(t.clear_eol) == measure_length(t.clear_eol, t))
+        assert (0 == measure_length(term.cuf(-333), term))
+        assert (len(term.clear_eol) == measure_length(term.clear_eol, term))
         # various erases don't *move*
-        assert (len(t.clear_bol) == measure_length(t.clear_bol, t))
-        assert (len(t.clear_eos) == measure_length(t.clear_eos, t))
-        assert (len(t.bold) == measure_length(t.bold, t))
+        assert (len(term.clear_bol) == measure_length(term.clear_bol, term))
+        assert (len(term.clear_eos) == measure_length(term.clear_eos, term))
+        assert (len(term.bold) == measure_length(term.bold, term))
         # various paints don't move
-        assert (len(t.red) == measure_length(t.red, t))
-        assert (len(t.civis) == measure_length(t.civis, t))
-        if t.cvvis:
-            assert (len(t.cvvis) == measure_length(t.cvvis, t))
-        assert (len(t.underline) == measure_length(t.underline, t))
-        assert (len(t.reverse) == measure_length(t.reverse, t))
-        for _num in range(t.number_of_colors):
-            assert (len(t.color(_num)) == measure_length(t.color(_num), t))
-        assert (len(t.normal) == measure_length(t.normal, t))
-        assert (len(t.normal_cursor) == measure_length(t.normal_cursor, t))
-        assert (len(t.hide_cursor) == measure_length(t.hide_cursor, t))
-        assert (len(t.save) == measure_length(t.save, t))
-        assert (len(t.italic) == measure_length(t.italic, t))
-        assert (len(t.standout) == measure_length(t.standout, t)
-                ), (t.standout, t._wont_move)
+        assert (len(term.red) == measure_length(term.red, term))
+        assert (len(term.civis) == measure_length(term.civis, term))
+        if term.cvvis:
+            assert (len(term.cvvis) == measure_length(term.cvvis, term))
+        assert (len(term.underline) == measure_length(term.underline, term))
+        assert (len(term.reverse) == measure_length(term.reverse, term))
+        for _num in (0, term.number_of_colors):
+            expected = len(term.color(_num))
+            given = measure_length(term.color(_num), term)
+            assert (expected == given)
+        assert (len(term.normal_cursor) == measure_length(term.normal_cursor, term))
+        assert (len(term.hide_cursor) == measure_length(term.hide_cursor, term))
+        assert (len(term.save) == measure_length(term.save, term))
+        assert (len(term.italic) == measure_length(term.italic, term))
+        assert (len(term.standout) == measure_length(term.standout, term)
+                ), (term.standout, term._wont_move)
 
-    child_mnemonics_wontmove(all_terms)
+    child(all_terms)
+
+def test_termcap_will_move_false(all_terms):
+    """Test parser about sequences that do not move the cursor."""
+    @as_subprocess
+    def child(kind):
+        from blessed.sequences import iter_parse
+        term = TestTerminal(kind=kind)
+        if term.clear_eol:
+            assert not next(iter_parse(term, term.clear_eol))[1].will_move
+        if term.clear_bol:
+            assert not next(iter_parse(term, term.clear_bol))[1].will_move
+        if term.clear_eos:
+            assert not next(iter_parse(term, term.clear_eos))[1].will_move
+        if term.bold:
+            assert not next(iter_parse(term, term.bold))[1].will_move
+        if term.red:
+            assert not next(iter_parse(term, term.red))[1].will_move
+        if term.civis:
+            assert not next(iter_parse(term, term.civis))[1].will_move
+        if term.cvvis:
+            assert not next(iter_parse(term, term.cvvis))[1].will_move
+        if term.underline:
+            assert not next(iter_parse(term, term.underline))[1].will_move
+        if term.reverse:
+            assert not next(iter_parse(term, term.reverse))[1].will_move
+        if term.color(0):
+            assert not next(iter_parse(term, term.color(0)))[1].will_move
+        if term.normal_cursor:
+            assert not next(iter_parse(term, term.normal_cursor))[1].will_move
+        if term.save:
+            assert not next(iter_parse(term, term.save))[1].will_move
+        if term.italic:
+            assert not next(iter_parse(term, term.italic))[1].will_move
+        if term.standout:
+            assert not next(iter_parse(term, term.standout))[1].will_move
+
+    child(all_terms)
+
 
 
 def test_sequence_is_movement_true(all_terms):
     """Test parsers about sequences that move the cursor."""
     @as_subprocess
-    def child_mnemonics_willmove(kind):
+    def child(kind):
         from blessed.sequences import measure_length
-        t = TestTerminal(kind=kind)
+        term = TestTerminal(kind=kind)
         # movements
-        assert (len(t.move(98, 76)) ==
-                measure_length(t.move(98, 76), t))
-        assert (len(t.move(54)) ==
-                measure_length(t.move(54), t))
-        assert not t.cud1 or (len(t.cud1) ==
-                              measure_length(t.cud1, t))
-        assert not t.cub1 or (len(t.cub1) ==
-                              measure_length(t.cub1, t))
-        assert not t.cuf1 or (len(t.cuf1) ==
-                              measure_length(t.cuf1, t))
-        assert not t.cuu1 or (len(t.cuu1) ==
-                              measure_length(t.cuu1, t))
-        assert not t.cub or (len(t.cub(333)) ==
-                             measure_length(t.cub(333), t))
-        assert not t.cuf or (len(t.cuf(333)) ==
-                             measure_length(t.cuf(333), t))
-        assert not t.home or (len(t.home) ==
-                              measure_length(t.home, t))
-        assert not t.restore or (len(t.restore) ==
-                                 measure_length(t.restore, t))
-        assert not t.clear or (len(t.clear) ==
-                               measure_length(t.clear, t))
+        assert (len(term.move(98, 76)) ==
+                measure_length(term.move(98, 76), term))
+        assert (len(term.move(54)) ==
+                measure_length(term.move(54), term))
+        assert not term.cud1 or (len(term.cud1) ==
+                              measure_length(term.cud1, term))
+        assert not term.cub1 or (len(term.cub1) ==
+                              measure_length(term.cub1, term))
+        assert not term.cuf1 or (len(term.cuf1) ==
+                              measure_length(term.cuf1, term))
+        assert not term.cuu1 or (len(term.cuu1) ==
+                              measure_length(term.cuu1, term))
+        assert not term.cub or (len(term.cub(333)) ==
+                             measure_length(term.cub(333), term))
+        assert not term.cuf or (len(term.cuf(333)) ==
+                             measure_length(term.cuf(333), term))
+        assert not term.home or (len(term.home) ==
+                              measure_length(term.home, term))
+        assert not term.restore or (len(term.restore) ==
+                                 measure_length(term.restore, term))
+        assert not term.clear or (len(term.clear) ==
+                               measure_length(term.clear, term))
 
-    child_mnemonics_willmove(all_terms)
+    child(all_terms)
+
+def test_termcap_will_move_true(all_terms):
+    """Test parser about sequences that move the cursor."""
+    @as_subprocess
+    def child(kind):
+        from blessed.sequences import iter_parse
+        term = TestTerminal(kind=kind)
+        assert next(iter_parse(term, term.move(98, 76)))[1].will_move
+        assert next(iter_parse(term, term.move(54)))[1].will_move
+        assert next(iter_parse(term, term.cud1))[1].will_move
+        assert next(iter_parse(term, term.cub1))[1].will_move
+        assert next(iter_parse(term, term.cuf1))[1].will_move
+        assert next(iter_parse(term, term.cuu1))[1].will_move
+        if term.cub(333):
+            assert next(iter_parse(term, term.cub(333)))[1].will_move
+        if term.cuf(333):
+            assert next(iter_parse(term, term.cuf(333)))[1].will_move
+        assert next(iter_parse(term, term.home))[1].will_move
+        assert next(iter_parse(term, term.restore))[1].will_move
+        assert next(iter_parse(term, term.clear))[1].will_move
+    child(all_terms)
+
 
 
 def test_foreign_sequences():
@@ -364,6 +424,6 @@ def test_foreign_sequences():
     @as_subprocess
     def child(kind):
         from blessed.sequences import measure_length
-        t = TestTerminal(kind=kind)
-        assert measure_length(u'\x1b[m', t) == len('\x1b[m')
+        term = TestTerminal(kind=kind)
+        assert measure_length(u'\x1b[m', term) == len('\x1b[m')
     child(kind='ansi')

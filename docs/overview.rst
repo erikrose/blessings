@@ -21,7 +21,7 @@ Its color support:
 And use construct strings containing color and styling:
 
     >>> term.green_reverse('ALL SYSTEMS GO')
-    u'\x1b[32m\x1b[7mALL SYSTEMS GO\x1b[m'
+    '\x1b[32m\x1b[7mALL SYSTEMS GO\x1b[m'
 
 Furthermore, the special sequences inserted with application keys
 (arrow and function keys) are understood and decoded, as well as your
@@ -431,6 +431,29 @@ poem word-wrapped to 25 columns::
     for line in poem:
         print('\n'.join(term.wrap(line, width=25, subsequent_indent=' ' * 4)))
 
+Sometimes it is necessary to make sense of sequences, and to distinguish them
+from plain text.  The :meth:`~.Terminal.split_seqs` method can allow us to
+iterate over a terminal string by its characters or sequences::
+
+    from blessed import Terminal
+
+    term = Terminal()
+
+    phrase = term.bold('bbq')
+    print(term.split_seqs(phrase))
+
+Will display something like, ``['\x1b[1m', 'b', 'b', 'q', '\x1b(B', '\x1b[m']``
+
+Similarly, the method :meth:`~.Terminal.strip_seqs` may be used on a string to
+remove all occurrences of terminal sequences::
+
+    from blessed import Terminal
+
+    term = Terminal()
+    phrase = term.bold_black('coffee')
+    print(repr(term.strip_seqs(phrase)))
+
+Will display only ``'coffee'``
 
 Keyboard Input
 --------------
@@ -488,8 +511,8 @@ also provides the special attributes :attr:`~.Keystroke.is_sequence`,
 
     print("press 'q' to quit.")
     with term.cbreak():
-        val = u''
-        while val not in (u'q', u'Q',):
+        val = ''
+        while val.lower() != 'q':
             val = term.inkey(timeout=5)
             if not val:
                # timeout

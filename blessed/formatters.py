@@ -282,17 +282,6 @@ class NullCallableString(six.text_type):
         any attributes.
         """
         if len(args) == 0 or isinstance(args[0], int):
-            # I am acting as a ParameterizingString.
-
-            # tparm can take not only ints but also (at least) strings as its
-            # 2nd...nth argument. But we don't support callable parameterizing
-            # capabilities that take non-ints yet, so we can cheap out here.
-
-            # TODO(erikrose): Go through enough of the motions in the
-            # capability resolvers to determine which of 2 special-purpose
-            # classes, NullParameterizableString or NullFormattingString,
-            # to return, and retire this one.
-
             # As a NullCallableString, even when provided with a parameter,
             # such as t.color(5), we must also still be callable, fe:
             #
