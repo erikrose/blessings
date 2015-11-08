@@ -13,7 +13,7 @@ from blessed._capabilities import CAPABILITIES_CAUSE_MOVEMENT
 import wcwidth
 import six
 
-__all__ = ('Sequence', 'SequenceTextWrapper')
+__all__ = ('Sequence', 'SequenceTextWrapper', 'measure_length')
 
 
 class Termcap(object):
@@ -426,3 +426,18 @@ def iter_parse(term, text):
             yield (value, None)
         else:
             yield value, term.caps[name]
+
+
+def measure_length(text, term):
+    """
+    .. deprecated:: 1.12.0
+
+    :rtype: int
+    """
+    try:
+        text, capability = next(iter_parse(term, text))
+        if capability:
+            return len(text)
+    except StopIteration:
+        return 0
+    return 0
