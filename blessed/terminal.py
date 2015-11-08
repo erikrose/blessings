@@ -858,7 +858,7 @@ class Terminal(object):
         for line in text.splitlines():
             lines.extend(
                 (_linewrap for _linewrap in SequenceTextWrapper(
-                    width=width, term=self, **kwargs).wrap(text))
+                    width=width, term=self, **kwargs).wrap(line))
                 if line.strip() else (u'',))
 
         return lines

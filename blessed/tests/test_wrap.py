@@ -111,3 +111,29 @@ def test_SequenceWrapper(many_columns, kwargs):
     child(width=many_columns, kwargs=kwargs,
           pgraph=u' Z! a bc defghij klmnopqrstuvw<<>>xyz012345678900 '*2)
     child(width=many_columns, kwargs=kwargs, pgraph=u'a bb ccc')
+
+
+def test_multiline():
+    """Test that text wrapping matches internal extra options."""
+
+    @as_subprocess
+    def child():
+        # build a test paragraph, along with a very colorful version
+        term = TestTerminal()
+        given_string = ('\n' + (32 * 'A') + '\n' +
+                        (32 * 'B') + '\n' +
+                        (32 * 'C') + '\n\n')
+        expected = [
+            '',
+            'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+            'AA',
+            'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+            'BB',
+            'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+            'CC',
+            '',
+        ]
+        result = term.wrap(given_string, width=30)
+        assert expected == result
+
+    child()
