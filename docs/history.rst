@@ -2,9 +2,11 @@ Version History
 ===============
 1.13
   * enhancement: :meth:`~.Terminal.split_seqs` introduced, and 4x cost
-    reduction in related sequence-aware functions.
+    reduction in related sequence-aware functions, :ghissue:`29`.
   * deprecated: ``blessed.sequences.measure_length`` function superseded by
     :func:`~.iter_parse` if necessary.
+  * deprecated: warnings about "binary-packed capabilities" are no longer
+    emitted on strange terminal types, making best effort.
 
 1.12
   * enhancement: :meth:`~.Terminal.get_location` returns the ``(row, col)``
