@@ -13,7 +13,7 @@ from blessed._capabilities import CAPABILITIES_CAUSE_MOVEMENT
 import wcwidth
 import six
 
-__all__ = ('Sequence', 'SequenceTextWrapper', 'measure_length')
+__all__ = ('Sequence', 'SequenceTextWrapper', 'iter_parse', 'measure_length')
 
 
 class Termcap(object):
