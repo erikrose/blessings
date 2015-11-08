@@ -825,20 +825,18 @@ class Terminal(object):
         """
         return Sequence(text, self).strip_seqs()
 
-    def split_seqs(self, text, maxsplit=0, flags=0):
+    def split_seqs(self, text, **kwds):
         r"""
         Return ``text`` split by individual character elements and sequences.
 
-        :arg int maxpslit: If maxsplit is nonzero, at most ``maxsplit``
-            splits occur, and the remainder of the string is returned as
-            the final element of the list.
+        :arg kwds: remaining keyword arguments for :func:`re.split`.
         :rtype: list[str]
 
         >>> term.split_seqs(term.underline(u'xyz'))
         ['\x1b[4m', 'x', 'y', 'z', '\x1b(B', '\x1b[m']
         """
-        return list(filter(None, re.split(self._caps_unnamed_any, text,
-                                          maxsplit=maxsplit, flags=flags)))
+        pattern = self._caps_unnamed_any
+        return list(filter(None, re.split(pattern, text, **kwds)))
 
     def wrap(self, text, width=None, **kwargs):
         """
