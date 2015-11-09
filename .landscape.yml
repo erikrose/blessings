@@ -72,7 +72,7 @@ pylint:
     disable:
         - protected-access
         - too-few-public-methods
-        - start-args
+        - star-args
 
 pyroma:
     # checks setup.py
