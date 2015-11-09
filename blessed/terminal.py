@@ -495,10 +495,10 @@ class Terminal(object):
             >>> term = Terminal()
             >>> term.move(*term.get_location()))
 
-         .. warning:: You might first test that a terminal is capable of
-             informing you of its location, while using a timeout, before
-             later calling.  When a timeout is specified, always ensure the
-             return value is conditionally checked for ``(-1, -1)``.
+        .. warning:: You might first test that a terminal is capable of
+           informing you of its location, while using a timeout, before
+           later calling.  When a timeout is specified, always ensure the
+           return value is conditionally checked for ``(-1, -1)``.
         """
         # Local lines attached by termios and remote login protocols such as
         # ssh and telnet both provide a means to determine the window
