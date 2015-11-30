@@ -432,7 +432,7 @@ class Terminal(object):
     @contextlib.contextmanager
     def location(self, x=None, y=None):
         """
-        Return a context manager for temporarily moving the cursor.
+        Context manager for temporarily moving the cursor.
 
         Move the cursor to a certain position on entry, let you print stuff
         there, then return the cursor to its original position::
@@ -1039,7 +1039,7 @@ class Terminal(object):
     @contextlib.contextmanager
     def keypad(self):
         r"""
-        Return a context manager that enables directional keypad input.
+        Context manager that enables directional keypad input.
 
         On entrying, this puts the terminal into "keyboard_transmit" mode by
         emitting the keypad_xmit (smkx) capability. On exit, it emits
