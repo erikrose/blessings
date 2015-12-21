@@ -326,19 +326,20 @@ class Sequence(six.text_type):
 
     # we require ur"" for the docstring, but it is not supported by pep257
     # tool: https://github.com/GreenSteam/pep257/issues/116
-    length.__doc__ += (
-        u"""For example:
+    if length.__doc__ is not None:
+        length.__doc__ += (
+            u"""For example:
 
-            >>> from blessed import Terminal
-            >>> from blessed.sequences import Sequence
-            >>> term = Terminal()
-            >>> Sequence(term.clear + term.red(u'コンニチハ'), term).length()
-            10
+                >>> from blessed import Terminal
+                >>> from blessed.sequences import Sequence
+                >>> term = Terminal()
+                >>> Sequence(term.clear + term.red(u'コンニチハ'), term).length()
+                10
 
-        .. note:: Although accounted for, strings containing sequences such as
-            ``term.clear`` will not give accurate returns, it is not
-            considered lengthy (a length of 0).
-        """)
+            .. note:: Although accounted for, strings containing sequences such
+             as ``term.clear`` will not give accurate returns, it is not
+                considered lengthy (a length of 0).
+            """)
 
     def strip(self, chars=None):
         """
