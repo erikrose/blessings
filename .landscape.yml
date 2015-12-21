@@ -20,15 +20,13 @@ dodgy:
 
 pyflakes:
     # preferring 'frosted' instead (a fork of)
-    run: false
-
-frosted:
-    # static analysis, pyflakes improved?
-    #
     run: true
     disable:
         # Terminal imported but unused (false)
         - 'E101'
+
+frosted:
+    run: false
 
 mccabe:
     # complexity checking.  We know of only one offense of the
@@ -69,10 +67,14 @@ pylint:
         # 'fd' is a common shorthand term for file descriptor (as int).
         good-names: _,ks,fd
 
+
     disable:
         - protected-access
         - too-few-public-methods
         - star-args
+        - wrong-import-order
+        - wrong-import-position
+        - ungrouped-imports
 
 pyroma:
     # checks setup.py
