@@ -336,8 +336,8 @@ class Sequence(six.text_type):
                 >>> Sequence(term.clear + term.red(u'コンニチハ'), term).length()
                 10
 
-            .. note:: Although accounted for, strings containing sequences such as
-                ``term.clear`` will not give accurate returns, it is not
+            .. note:: Although accounted for, strings containing sequences such
+             as ``term.clear`` will not give accurate returns, it is not
                 considered lengthy (a length of 0).
             """)
 
