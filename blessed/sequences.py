@@ -324,21 +324,23 @@ class Sequence(six.text_type):
         return sum(clip(wcwidth.wcwidth(w_char))
                    for w_char in self.strip_seqs())
 
-    # we require ur"" for the docstring, but it is not supported by pep257
-    # tool: https://github.com/GreenSteam/pep257/issues/116
+    # we require ur"" for the docstring, but it is not supported by all
+    # python versions.
     if length.__doc__ is not None:
         length.__doc__ += (
-            u"""For example:
+            u"""
+            For example:
 
                 >>> from blessed import Terminal
                 >>> from blessed.sequences import Sequence
                 >>> term = Terminal()
-                >>> Sequence(term.clear + term.red(u'コンニチハ'), term).length()
+                >>> msg = term.clear + term.red(u'コンニチハ'), term
+                >>> Sequence(msg).length()
                 10
 
             .. note:: Although accounted for, strings containing sequences such
-             as ``term.clear`` will not give accurate returns, it is not
-                considered lengthy (a length of 0).
+               as ``term.clear`` will not give accurate returns, it is not
+               considered lengthy (a length of 0).
             """)
 
     def strip(self, chars=None):

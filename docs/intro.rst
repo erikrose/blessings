@@ -130,7 +130,7 @@ The same program with *Blessed* is simply::
 Requirements
 ------------
 
-Blessed is tested with Python 2.7, 3.4, and 3.5 on Debian Linux, Mac, and
+*Blessed* is tested with Python 2.7, 3.4, and 3.5 on Debian Linux, Mac, and
 FreeBSD.
 
 Further Documentation
@@ -155,12 +155,12 @@ in the `issue tracker`_ with a well-formed question.
 License
 -------
 
-Blessed is under the MIT License. See the LICENSE file.
+*Blessed* is under the MIT License. See the LICENSE file.
 
 Forked
 ------
 
-Blessed is a fork of `blessings <https://github.com/erikrose/blessings>`_.
+*Blessed* is a fork of `blessings <https://github.com/erikrose/blessings>`_.
 Changes since 1.7 have all been proposed but unaccepted upstream.
 
 Furthermore, a project in the node.js language of the `same name

@@ -2,5 +2,6 @@ include docs/*.rst
 include LICENSE
 include version.json
 include *.txt
+include .coveragerc
 include tox.ini
 include blessed/tests/wall.ans
