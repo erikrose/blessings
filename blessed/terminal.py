@@ -36,6 +36,7 @@ try:
     InterruptedError
 except NameError:
     # alias py2 exception to py3
+    # pylint: disable=redefined-builtin
     InterruptedError = select.error
 
 try:
@@ -416,8 +417,6 @@ class Terminal(object):
 
         """
         for fd in (self._init_descriptor, sys.__stdout__):
-            # pylint: disable=pointless-except
-            #         Except doesn't do anything
             try:
                 if fd is not None:
                     return self._winsize(fd)

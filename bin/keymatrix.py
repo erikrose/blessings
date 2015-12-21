@@ -85,7 +85,7 @@ def add_score(score, pts, level):
     """Add points to score, determine and return new score and level."""
     lvl_multiplier = 10
     score += pts
-    if 0 == (score % (pts * lvl_multiplier)):
+    if (score % (pts * lvl_multiplier)) == 0:
         level += 1
     return score, level
 
@@ -109,7 +109,7 @@ def main():
             dirty = True
             if (inp.is_sequence and
                     inp.name in gameboard and
-                    0 == gameboard[inp.name]['hit']):
+                    gameboard[inp.name]['hit'] == 0):
                 gameboard[inp.name]['hit'] = 1
                 score, level = add_score(score, 100, level)
             elif inp and not inp.is_sequence and 128 <= ord(inp) <= 255:

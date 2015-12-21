@@ -43,7 +43,7 @@ def display_fpathconf():
             try:
                 value = os.fpathconf(fd, name)
                 if name == 'PC_VDISABLE':
-                    value = r'\x{0:2x}'.format(value)
+                    value = r'\x{0:02x}'.format(value)
             except OSError as err:
                 value = 'OSErrno {0.errno}'.format(err)
 
