@@ -3,6 +3,8 @@ Version History
 1.14
   * bugfix: :meth:`~.Terminal.wrap` misbehaved for text containing newlines,
     :ghissue:`74`.
+  * bugfix: TypeError when using ``PYTHONOPTIMIZE=2`` environment variable,
+    :ghissue:`84`.
 
 1.13
   * enhancement: :meth:`~.Terminal.split_seqs` introduced, and 4x cost
