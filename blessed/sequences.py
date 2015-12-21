@@ -331,11 +331,12 @@ class Sequence(six.text_type):
             u"""
             For example:
 
-                    >>> from blessed import Terminal
-                    >>> from blessed.sequences import Sequence
-                    >>> term = Terminal()
-                    >>> Sequence(term.clear + term.red(u'コンニチハ'), term).length()
-                    10
+                >>> from blessed import Terminal
+                >>> from blessed.sequences import Sequence
+                >>> term = Terminal()
+                >>> msg = term.clear + term.red(u'コンニチハ'), term
+                >>> Sequence(msg).length()
+                10
 
             .. note:: Although accounted for, strings containing sequences such
                as ``term.clear`` will not give accurate returns, it is not
