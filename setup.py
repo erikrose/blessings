@@ -1,32 +1,49 @@
-import sys
-
-# Prevent spurious errors during `python setup.py test`, a la
-# http://www.eby-sarna.com/pipermail/peak/2010-May/003357.html:
-try:
-    import multiprocessing
-except ImportError:
-    pass
-
-from setuptools import setup, find_packages
+#!/usr/bin/env python
+"""Distutils setup script."""
+import os
+import setuptools
 
 
-extra_setup = {}
-if sys.version_info >= (3,):
-    extra_setup['use_2to3'] = True
+def _get_install_requires(fname):
+    import sys
+    result = [req_line.strip() for req_line in open(fname)
+              if req_line.strip() and not req_line.startswith('#')]
 
-setup(
-    name='blessings',
-    version='1.6',
-    description='A thin, practical wrapper around terminal coloring, styling, and positioning',
-    long_description=open('README.rst').read(),
-    author='Erik Rose',
-    author_email='erikrose@grinchcentral.com',
+    # support python2.6 by using backport of 'orderedict'
+    if sys.version_info < (2, 7):
+        result.append('ordereddict==1.1')
+
+    return result
+
+
+def _get_version(fname):
+    import json
+    return json.load(open(fname, 'r'))['version']
+
+
+def _get_long_description(fname):
+    import codecs
+    return codecs.open(fname, 'r', 'utf8').read()
+
+HERE = os.path.dirname(__file__)
+
+setuptools.setup(
+    name='blessed',
+    version=_get_version(
+        fname=os.path.join(HERE, 'version.json')),
+    install_requires=_get_install_requires(
+        fname=os.path.join(HERE, 'requirements.txt')),
+    long_description=_get_long_description(
+        fname=os.path.join(HERE, 'docs', 'intro.rst')),
+    description=('A thin, practical wrapper around terminal styling, '
+                 'screen positioning, and keyboard input.'),
+    author='Jeff Quast, Erik Rose',
+    author_email='contact@jeffquast.com',
     license='MIT',
-    packages=find_packages(exclude=['ez_setup']),
-    tests_require=['nose'],
-    test_suite='nose.collector',
-    url='https://github.com/erikrose/blessings',
+    packages=['blessed', 'blessed.tests'],
+    url='https://github.com/jquast/blessed',
     include_package_data=True,
+    zip_safe=True,
     classifiers=[
         'Intended Audience :: Developers',
         'Natural Language :: English',
@@ -36,15 +53,17 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: POSIX',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.5',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: User Interfaces',
         'Topic :: Terminals'
-        ],
-    keywords=['terminal', 'tty', 'curses', 'ncurses', 'formatting', 'style', 'color', 'console'],
-    **extra_setup
+    ],
+    keywords=['terminal', 'sequences', 'tty', 'curses', 'ncurses',
+              'formatting', 'style', 'color', 'console', 'keyboard',
+              'ansi', 'xterm'],
 )

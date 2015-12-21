@@ -1,17 +1,33 @@
 language: python
-
-python:
-  - 2.6
-  - 2.7
-  - 3.2
-  - pypy
-
 matrix:
-  allow_failures:
-    - python: 3.2  # Not a new enough 3.2 for blessings
-    - python: pypy  # PyPy doesn't have _curses.
-
+  fast_finish: true
+  include:
+    - env: TOXENV=about
+    - env: TOXENV=sa
+    - env: TOXENV=sphinx
+    - python: 2.7
+      env: TOXENV=py27 TEST_QUICK=1 COVERAGE_ID=travis-ci
+    - python: 3.4
+      env: TOXENV=py34 TEST_QUICK=1 COVERAGE_ID=travis-ci
+    - python: 3.5
+      env: TOXENV=py35 COVERAGE_ID=travis-ci
+install:
+  - pip install tox
 script:
-  - pip install -q --use-mirrors nose
-  - python setup.py install
-  - nosetests -w /tmp blessings.tests
+  - tox
+sudo: false
+
+notifications:
+  email:
+    recipients:
+      - contact@jeffquast.com
+    on_success: change
+    on_failure: change
+#  irc:
+#    channels:
+#      - "irc.servercentral.net#1984"
+#    template:
+#      - "%{repository}(%{branch}): %{message} (%{duration}) %{build_url}"
+#    skip_join: true
+#    on_success: change
+#    on_failure: change
