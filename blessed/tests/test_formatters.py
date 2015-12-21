@@ -382,7 +382,7 @@ def test_pickled_parameterizing_string(monkeypatch):
     for proto_num in range(pickle.HIGHEST_PROTOCOL):
         assert pstr == pickle.loads(pickle.dumps(pstr, protocol=proto_num))
     w.send(pstr)
-    r.recv() == pstr
+    assert r.recv() == pstr
 
     # exercise picklability of FormattingString
     # -- the return value of calling ParameterizingString
@@ -390,7 +390,7 @@ def test_pickled_parameterizing_string(monkeypatch):
     for proto_num in range(pickle.HIGHEST_PROTOCOL):
         assert zero == pickle.loads(pickle.dumps(zero, protocol=proto_num))
     w.send(zero)
-    r.recv() == zero
+    assert r.recv() == zero
 
 
 def test_tparm_returns_null(monkeypatch):
