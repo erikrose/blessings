@@ -278,12 +278,12 @@ this::
     term = Terminal()
     print(term.move(10, 1) + 'Hi, mom!')
 
-``move``
-  Position the cursor, parameter in form of *(y, x)*
-``move_x``
-  Position the cursor at given horizontal column.
-``move_y``
-  Position the cursor at given vertical column.
+``move(y, x)``
+  Position cursor at given **y**, **x**.
+``move_x(x)``
+  Position cursor at column **x**.
+``move_y(y)``
+  Position cursor at row **y**.
 
 One-Notch Movement
 ~~~~~~~~~~~~~~~~~~

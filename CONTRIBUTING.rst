@@ -15,8 +15,7 @@ Prepare a developer environment.  Then, from the blessed code folder::
     pip install --editable .
 
 Any changes made in this project folder are then made available to the python
-interpreter as the 'blessed' package regardless of the current working
-directory.
+interpreter as the 'blessed' package from any working directory.
 
 Running Tests
 ~~~~~~~~~~~~~
