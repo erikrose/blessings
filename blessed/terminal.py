@@ -1002,17 +1002,16 @@ class Terminal(object):
         r"""
         A context manager for :func:`tty.setraw`.
 
-        Raw mode differs from :meth:`cbreak` mode in that input and output
-        processing of characters is disabled, in similar in that they both
-        allow each keystroke to be read immediately after it is pressed.
+        Raw mode, like :meth:`cbreak` mode, allows each keystroke to be read
+        immediately after it is pressed.  It differs from :meth:`cbreak` in
+        that *input and output processing is disabled.
 
-        For input, the interrupt, quit, suspend, and flow control characters
-        are received as their raw control character values rather than
-        generating a signal.
+        Interrupt, quit, suspend, and flow control characters are received as
+        their raw control character values rather than generating a signal.
 
-        For output, the newline ``chr(10)`` is not sufficient enough to return
-        the carriage, requiring ``chr(13)`` printed explicitly by your
-        program::
+        Because output processing is not done, the newline ``'\n'`` is not
+        enough, you must also print carriage return to ensure that the cursor
+        is returned to the first column::
 
             with term.raw():
                    print("printing in raw mode", end="\r\n")
