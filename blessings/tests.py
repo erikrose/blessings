@@ -14,6 +14,9 @@ from curses import tigetstr, tparm
 from functools import partial
 from StringIO import StringIO
 import sys
+import pty
+import traceback
+import os
 
 from nose import SkipTest
 from nose.tools import eq_
@@ -24,6 +27,65 @@ from blessings import *
 
 
 TestTerminal = partial(Terminal, kind='xterm-256color')
+
+
+class as_subprocess:
+    """ This helper executes test cases in a child process,
+        avoiding a python-internal bug of _curses: setupterm()
+        may not be called more than once per process.
+    """
+    _CHILD_PID = 0
+
+    def __init__(self, func):
+        self.func = func
+
+    def __call__(self, *args, **kwargs):
+        pid, master_fd = pty.fork()
+        if pid is self._CHILD_PID:
+            # child process executes function, raises exception
+            # if failed, causing a non-zero exit code, using the
+            # protected _exit() function of ``os``; to prevent the
+            # 'SystemExit' exception from being thrown.
+            try:
+                self.func(*args, **kwargs)
+            except Exception:
+                e_type, e_value, e_tb = sys.exc_info()
+                o_err = list()
+                for line in traceback.format_tb(e_tb):
+                    o_err.append(line.rstrip().encode('utf-8'))
+                o_err.append(('-=' * 20).encode('ascii'))
+                o_err.extend([_exc.rstrip().encode('utf-8') for _exc in
+                              traceback.format_exception_only(
+                                  e_type, e_value)])
+                os.write(sys.__stdout__.fileno(), '\n'.join(o_err))
+                os._exit(1)
+            else:
+                os._exit(0)
+
+        exc_output = unicode()
+        while True:
+            try:
+                _exc = os.read(master_fd, 65534)
+            except OSError:
+                # linux EOF
+                break
+            if not _exc:
+                # bsd EOF
+                break
+            exc_output += _exc.decode('utf-8')
+
+        # parent process asserts exit code is 0, causing test
+        # to fail if child process raised an exception/assertion
+        pid, status = os.waitpid(pid, 0)
+
+        # Display any output written by child process (esp. those
+        # AssertionError exceptions written to stderr).
+        exc_output_msg = 'Output in child process:\n%s\n%s\n%s' % (
+            u'=' * 40, exc_output, u'=' * 40,)
+        eq_('', exc_output, exc_output_msg)
+
+        # Also test exit status is non-zero
+        eq_(os.WEXITSTATUS(status), 0)
 
 
 def unicode_cap(cap):
@@ -268,3 +330,28 @@ def test_null_callable_string():
     eq_(t.clear, '')
     eq_(t.move(1, 2), '')
     eq_(t.move_x(1), '')
+
+
+def test_setupterm_singleton_issue33():
+    """A warning is emitted if a new terminal ``kind`` is used per process."""
+    @as_subprocess
+    def child():
+        import warnings
+        warnings.filterwarnings("error", category=RuntimeWarning)
+
+        # instantiate first terminal, of type xterm-256color
+        term = TestTerminal(force_styling=True)
+
+        try:
+            # a second instantiation raises RuntimeWarning
+            term = TestTerminal(kind="vt220", force_styling=True)
+            assert not term.is_a_tty or False, 'Should have thrown exception'
+
+        except RuntimeWarning, err:
+            assert (err.args[0].startswith(
+                    'A terminal of kind "vt220" has been requested')
+                    ), err.args[0]
+            assert ('a terminal of kind "xterm-256color" will '
+                    'continue to be returned' in err.args[0]), err.args[0]
+
+    child()
