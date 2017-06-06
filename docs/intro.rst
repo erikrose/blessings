@@ -27,7 +27,9 @@ Introduction
 
 Blessed is a thin, practical wrapper around terminal capabilities in Python.
 
-Coding with *Blessed* looks like this... ::
+Coding with *Blessed* looks like this...
+
+.. code-block:: python
 
     from blessed import Terminal
 
@@ -82,7 +84,9 @@ Before And After
 ----------------
 
 With the built-in curses_ module, this is how you would typically
-print some underlined text at the bottom of the screen::
+print some underlined text at the bottom of the screen:
+
+.. code-block:: python
 
     from curses import tigetstr, setupterm, tparm
     from fcntl import ioctl
@@ -119,7 +123,9 @@ print some underlined text at the bottom of the screen::
     # Restore cursor position.
     print(rc)
 
-The same program with *Blessed* is simply::
+The same program with *Blessed* is simply:
+
+.. code-block:: python
 
     from blessed import Terminal
 
