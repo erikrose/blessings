@@ -337,6 +337,9 @@ class Terminal(object):
         # don't name it after the underlying capability, because we deviate
         # slightly from its behavior, and we might someday wish to give direct
         # access to it.
+        if not self._does_styling:
+            return 0
+
         colors = tigetnum('colors')  # Returns -1 if no color support, -2 if no
                                      # such cap.
         #  self.__dict__['colors'] = ret  # Cache it. It's not changing.
