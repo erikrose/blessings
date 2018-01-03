@@ -16,7 +16,7 @@ if sys.version_info >= (3,):
 
 setup(
     name='blessings',
-    version='1.6',
+    version='1.6.1',
     description='A thin, practical wrapper around terminal coloring, styling, and positioning',
     long_description=open('README.rst').read(),
     author='Erik Rose',

@@ -437,6 +437,10 @@ Blessings is under the MIT License. See the LICENSE file.
 Version History
 ===============
 
+1.6.1
+  * Don't crash if ``number_of_colors()`` is called when run in a non-terminal
+    or when ``does_styling`` is otherwise false.
+
 1.6
   * Add ``does_styling`` property. This takes ``force_styling`` into account
     and should replace most uses of ``is_a_tty``.
