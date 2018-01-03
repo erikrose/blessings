@@ -3,15 +3,17 @@ language: python
 python:
   - 2.6
   - 2.7
-  - 3.2
+  - 3.3
+  - 3.6
   - pypy
 
 matrix:
   allow_failures:
-    - python: 3.2  # Not a new enough 3.2 for blessings
     - python: pypy  # PyPy doesn't have _curses.
 
-script:
-  - pip install -q --use-mirrors nose
+install:
+  - pip install -q nose
   - python setup.py install
+
+script:
   - nosetests -w /tmp blessings.tests
