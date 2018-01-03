@@ -7,10 +7,6 @@ python:
   - 3.6
   - pypy
 
-matrix:
-  allow_failures:
-    - python: pypy  # PyPy doesn't have _curses.
-
 install:
   - pip install -q nose
   - python setup.py install
