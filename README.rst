@@ -20,6 +20,8 @@ capabilities::
     print '{t.bold}All your {t.red}bold and red base{t.normal}'.format(t=t)
     print t.wingo(2)
 
+`Full API Reference <https://blessings.readthedocs.io/>`_
+
 The Pitch
 =========
 
