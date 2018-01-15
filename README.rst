@@ -428,7 +428,8 @@ Blessings tests are run automatically by `Travis CI`_.
 
 .. _`Travis CI`: https://travis-ci.org/erikrose/blessings/
 
-.. image:: https://secure.travis-ci.org/erikrose/blessings.png
+.. image:: https://travis-ci.org/erikrose/blessings.svg?branch=master
+    :target: https://travis-ci.org/erikrose/blessings
 
 
 License
