@@ -27,6 +27,7 @@ setup(
     test_suite='nose.collector',
     url='https://github.com/erikrose/blessings',
     include_package_data=True,
+    python_requires='>=2.6, !=3.0.*, !=3.1.*, !=3.2.*',
     classifiers=[
         'Intended Audience :: Developers',
         'Natural Language :: English',
