@@ -14,20 +14,12 @@ except ImportError:
         ``io.UnsupportedOperation`` in Python 2"""
 
 from os import isatty, environ
-from platform import python_version_tuple
 import struct
 import sys
 from termios import TIOCGWINSZ
 
 
 __all__ = ['Terminal']
-
-
-if ('3', '0', '0') <= python_version_tuple() < ('3', '2', '2+'):  # Good till
-                                                                  # 3.2.10
-    # Python 3.x < 3.2.3 has a bug in which tparm() erroneously takes a string.
-    raise ImportError('Blessings needs Python 3.2.3 or greater for Python 3 '
-                      'support due to http://bugs.python.org/issue10570.')
 
 
 class Terminal(object):
