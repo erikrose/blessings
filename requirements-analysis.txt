@@ -1,3 +1,4 @@
 prospector[with_pyroma]
 restructuredtext_lint
 doc8
+Pygments
