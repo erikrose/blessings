@@ -129,9 +129,9 @@ class Termcap(object):
                     return cls(name, pattern, attribute)
 
         if match_grouped:
-            pattern = re.sub(r'(\d+)', _numeric_regex, _outp)
+            pattern = re.sub(r'(\d+)', lambda x: _numeric_regex, _outp)
         else:
-            pattern = re.sub(r'\d+', _numeric_regex, _outp)
+            pattern = re.sub(r'\d+', lambda x: _numeric_regex, _outp)
         return cls(name, pattern, attribute)
 
 
