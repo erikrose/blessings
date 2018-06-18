@@ -9,8 +9,6 @@ All we require from the host machine is that a standard terminfo definition of
 xterm-256color exists.
 
 """
-from __future__ import with_statement  # Make 2.5-compatible
-from __future__ import absolute_import
 from curses import tigetstr, tparm
 from functools import partial
 import sys
