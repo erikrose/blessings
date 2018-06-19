@@ -10,10 +10,6 @@ except ImportError:
 from setuptools import setup, find_packages
 
 
-extra_setup = {}
-if sys.version_info >= (3,):
-    extra_setup['use_2to3'] = True
-
 setup(
     name='blessings',
     version='1.6.1',
@@ -23,6 +19,7 @@ setup(
     author_email='erikrose@grinchcentral.com',
     license='MIT',
     packages=find_packages(exclude=['ez_setup']),
+    install_requires=['six'],
     tests_require=['nose'],
     test_suite='nose.collector',
     url='https://github.com/erikrose/blessings',
@@ -49,5 +46,4 @@ setup(
         'Topic :: Terminals'
         ],
     keywords=['terminal', 'tty', 'curses', 'ncurses', 'formatting', 'style', 'color', 'console'],
-    **extra_setup
 )

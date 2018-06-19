@@ -5,6 +5,7 @@ from contextlib import contextmanager
 import curses
 from curses import setupterm, tigetnum, tigetstr, tparm
 from fcntl import ioctl
+from six import text_type, string_types
 
 try:
     from io import UnsupportedOperation as IOUnsupportedOperation
@@ -420,7 +421,7 @@ COMPOUNDABLES = (COLORS |
                       'shadow', 'standout', 'subscript', 'superscript']))
 
 
-class ParametrizingString(unicode):
+class ParametrizingString(text_type):
     """A Unicode string which can be called to parametrize it as a terminal
     capability"""
 
@@ -432,7 +433,7 @@ class ParametrizingString(unicode):
             "normal" capability.
 
         """
-        new = unicode.__new__(cls, formatting)
+        new = text_type.__new__(cls, formatting)
         new._normal = normal
         return new
 
@@ -461,7 +462,7 @@ class ParametrizingString(unicode):
         except TypeError:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
-            if len(args) == 1 and isinstance(args[0], basestring):
+            if len(args) == 1 and isinstance(args[0], string_types):
                 raise TypeError(
                     'A native or nonexistent capability template received '
                     '%r when it was expecting ints. You probably misspelled a '
@@ -472,12 +473,12 @@ class ParametrizingString(unicode):
                 raise
 
 
-class FormattingString(unicode):
+class FormattingString(text_type):
     """A Unicode string which can be called upon a piece of text to wrap it in
     formatting"""
 
     def __new__(cls, formatting, normal):
-        new = unicode.__new__(cls, formatting)
+        new = text_type.__new__(cls, formatting)
         new._normal = normal
         return new
 
@@ -492,7 +493,7 @@ class FormattingString(unicode):
         return self + text + self._normal
 
 
-class NullCallableString(unicode):
+class NullCallableString(text_type):
     """A dummy callable Unicode to stand in for ``FormattingString`` and
     ``ParametrizingString``
 
@@ -500,7 +501,7 @@ class NullCallableString(unicode):
 
     """
     def __new__(cls):
-        new = unicode.__new__(cls, u'')
+        new = text_type.__new__(cls, u'')
         return new
 
     def __call__(self, *args):
