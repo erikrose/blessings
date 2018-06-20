@@ -479,7 +479,8 @@ def test_termcap_repr():
 
     given_ttype='vt220'
     given_capname = 'cursor_up'
-    expected = [r"<Termcap cursor_up:'\\\x1b\\[A'>",
+    expected = [r"<Termcap cursor_up:'\x1b\\[A'>",
+                r"<Termcap cursor_up:'\\\x1b\\[A'>",
                 r"<Termcap cursor_up:u'\\\x1b\\[A'>"]
 
     @as_subprocess

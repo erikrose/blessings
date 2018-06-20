@@ -1,5 +1,5 @@
 # encoding: utf-8
-"""This module contains :class:`Terminal`, the primary API entry point."""
+"""Module containing :class:`Terminal`, the primary API entry point."""
 # pylint: disable=too-many-lines
 #         Too many lines in module (1027/1000)
 import codecs
@@ -73,6 +73,9 @@ from .keyboard import (get_keyboard_sequences,
                        _read_until,
                        _time_left,
                        )
+
+
+_CUR_TERM = None  # See comments at end of file
 
 
 class Terminal(object):
@@ -191,9 +194,8 @@ class Terminal(object):
         self._normal = None  # cache normal attr, preventing recursive lookups
 
         # The descriptor to direct terminal initialization sequences to.
-        self._init_descriptor = (stream_fd is None and
-                                 sys.__stdout__.fileno() or
-                                 stream_fd)
+        self._init_descriptor = (sys.__stdout__.fileno() if stream_fd is None
+                                 else stream_fd)
         self._kind = kind or os.environ.get('TERM', 'unknown')
 
         if self.does_styling:
@@ -1009,8 +1011,8 @@ class Terminal(object):
         A context manager for :func:`tty.setraw`.
 
         Although both :meth:`break` and :meth:`raw` modes allow each keystroke
-        to be read immediately after it is pressed, Raw mode disables processing
-        of input and output.
+        to be read immediately after it is pressed, Raw mode disables
+        processing of input and output.
 
         In cbreak mode, special input characters such as ``^C`` or ``^S`` are
         interpreted by the terminal driver and excluded from the stdin stream.
@@ -1177,6 +1179,7 @@ class WINSZ(collections.namedtuple('WINSZ', (
     _BUF = '\x00' * struct.calcsize(_FMT)
 
 
+#: _CUR_TERM = None
 #: From libcurses/doc/ncurses-intro.html (ESR, Thomas Dickey, et. al)::
 #:
 #:   "After the call to setupterm(), the global variable cur_term is set to
@@ -1196,4 +1199,3 @@ class WINSZ(collections.namedtuple('WINSZ', (
 #: Therefore, the :attr:`Terminal.kind` of each :class:`Terminal` is
 #: essentially a singleton. This global variable reflects that, and a warning
 #: is emitted if somebody expects otherwise.
-_CUR_TERM = None

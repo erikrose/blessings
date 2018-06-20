@@ -45,7 +45,10 @@ pep257:
         - 'D203'
         # 1 blank line required after class docstring
         - 'D204'
-
+        # Multi-line docstring summary should start at the first line
+        - 'D212'
+        # First line should be in imperative mood
+        - 'D401'
 
 pep8:
     # style checking

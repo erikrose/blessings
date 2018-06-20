@@ -1,4 +1,4 @@
-"""This sub-module provides sequence-formatting functions."""
+"""Sub-module providing sequence-formatting functions."""
 # standard imports
 import curses
 
@@ -59,10 +59,10 @@ class ParameterizingString(six.text_type):
         :arg normal: terminating sequence for this capability (optional).
         :arg name: name of this terminal capability (optional).
         """
-        assert len(args) and len(args) < 4, args
+        assert args and len(args) < 4, args
         new = six.text_type.__new__(cls, args[0])
-        new._normal = len(args) > 1 and args[1] or u''
-        new._name = len(args) > 2 and args[2] or u'<not specified>'
+        new._normal = args[1] if len(args) > 1 else u''
+        new._name = args[2] if len(args) > 2 else u'<not specified>'
         return new
 
     def __call__(self, *args):
@@ -84,7 +84,7 @@ class ParameterizingString(six.text_type):
         except TypeError as err:
             # If the first non-int (i.e. incorrect) arg was a string, suggest
             # something intelligent:
-            if len(args) and isinstance(args[0], six.string_types):
+            if args and isinstance(args[0], six.string_types):
                 raise TypeError(
                     "A native or nonexistent capability template, %r received"
                     " invalid argument %r: %s. You probably misspelled a"
@@ -135,13 +135,13 @@ class ParameterizingProxyString(six.text_type):
         :arg normal: terminating sequence for this capability (optional).
         :arg name: name of this terminal capability (optional).
         """
-        assert len(args) and len(args) < 4, args
+        assert args and len(args) < 4, args
         assert isinstance(args[0], tuple), args[0]
         assert callable(args[0][1]), args[0][1]
         new = six.text_type.__new__(cls, args[0][0])
         new._fmt_args = args[0][1]
-        new._normal = len(args) > 1 and args[1] or u''
-        new._name = len(args) > 2 and args[2] or u'<not specified>'
+        new._normal = args[1] if len(args) > 1 else u''
+        new._name = args[2] if len(args) > 2 else u'<not specified>'
         return new
 
     def __call__(self, *args):
@@ -226,7 +226,7 @@ class FormattingString(six.text_type):
         """
         assert 1 <= len(args) <= 2, args
         new = six.text_type.__new__(cls, args[0])
-        new._normal = len(args) > 1 and args[1] or u''
+        new._normal = args[1] if len(args) > 1 else u''
         return new
 
     def __call__(self, *args):
@@ -246,7 +246,7 @@ class FormattingString(six.text_type):
                                     expected_types=six.string_types,
                                 ))
         postfix = u''
-        if len(self) and self._normal:
+        if self and self._normal:
             postfix = self._normal
             _refresh = self._normal + self
             args = [_refresh.join(ucs_part.split(self._normal))
@@ -281,7 +281,7 @@ class NullCallableString(six.text_type):
         the first arg, acting in place of :class:`FormattingString` without
         any attributes.
         """
-        if len(args) == 0 or isinstance(args[0], int):
+        if not args or isinstance(args[0], int):
             # As a NullCallableString, even when provided with a parameter,
             # such as t.color(5), we must also still be callable, fe:
             #

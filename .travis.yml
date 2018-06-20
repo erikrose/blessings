@@ -10,7 +10,14 @@ matrix:
     - python: 3.4
       env: TOXENV=py34 TEST_QUICK=1 COVERAGE_ID=travis-ci
     - python: 3.5
-      env: TOXENV=py35 COVERAGE_ID=travis-ci
+      env: TOXENV=py35 TEST_QUICK=1 COVERAGE_ID=travis-ci
+    - python: 3.6
+      env: TOXENV=py36 COVERAGE_ID=travis-ci
+    - python: 3.7-dev
+      env: TOXENV=py37 COVERAGE_ID=travis-ci
+before_install:
+    # work around https://github.com/travis-ci/travis-ci/issues/8363
+    - pyenv global system 3.6
 install:
   - pip install tox
 script:
