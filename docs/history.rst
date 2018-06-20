@@ -1,5 +1,12 @@
 Version History
 ===============
+1.15
+  * disable timing integration tests for keyboard routines.
+
+    They work perfectly fine for regression testing for contributing
+    developers, but people run our tests on build farms and open issues when
+    they fail. So we comment out these useful tests. :ghissue:`29`.
+
 1.14
   * bugfix: :meth:`~.Terminal.wrap` misbehaved for text containing newlines,
     :ghissue:`74`.
