@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-This tool uses pexpect to test expected Canonical mode length.
+A tool which uses pexpect to test expected Canonical mode length.
 
 All systems use the value of MAX_CANON which can be found using
 fpathconf(3) value PC_MAX_CANON -- with the exception of Linux

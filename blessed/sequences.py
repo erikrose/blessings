@@ -1,5 +1,5 @@
 # encoding: utf-8
-"""This module provides 'sequence awareness'."""
+"""Module providing 'sequence awareness'."""
 # std imports
 import functools
 import textwrap
@@ -129,14 +129,14 @@ class Termcap(object):
                     return cls(name, pattern, attribute)
 
         if match_grouped:
-            pattern = re.sub(r'(\d+)', _numeric_regex, _outp)
+            pattern = re.sub(r'(\d+)', lambda x: _numeric_regex, _outp)
         else:
-            pattern = re.sub(r'\d+', _numeric_regex, _outp)
+            pattern = re.sub(r'\d+', lambda x: _numeric_regex, _outp)
         return cls(name, pattern, attribute)
 
 
 class SequenceTextWrapper(textwrap.TextWrapper):
-    """This docstring overridden."""
+    """Docstring overridden."""
 
     def __init__(self, width, term, **kwargs):
         """
@@ -195,7 +195,8 @@ class SequenceTextWrapper(textwrap.TextWrapper):
         return lines
 
     def _handle_long_word(self, reversed_chunks, cur_line, cur_len, width):
-        """Sequence-aware :meth:`textwrap.TextWrapper._handle_long_word`.
+        """
+        Sequence-aware :meth:`textwrap.TextWrapper._handle_long_word`.
 
         This simply ensures that word boundaries are not broken mid-sequence,
         as standard python textwrap would incorrectly determine the length

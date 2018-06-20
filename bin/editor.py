@@ -81,9 +81,9 @@ def readline(term, width=20):
             text = text[:-1]
             # https://utcc.utoronto.ca/~cks/space/blog/unix/HowUnixBackspaces
             #
-            # "When you hit backspace, the kernel tty line discipline rubs out your previous
-            #  character by printing (in the simple case) Ctrl-H, a space, and then another
-            #  Ctrl-H."
+            # "When you hit backspace, the kernel tty line discipline rubs out
+            # your previous character by printing (in the simple case)
+            # Ctrl-H, a space, and then another Ctrl-H."
             echo(u'\b \b')
     return text
 

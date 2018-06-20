@@ -1,4 +1,4 @@
-"""This sub-module provides 'keyboard awareness'."""
+"""Sub-module providing 'keyboard awareness'."""
 
 # std imports
 import curses.has_key
@@ -52,8 +52,7 @@ class Keystroke(six.text_type):
 
     def __repr__(self):
         """Docstring overwritten."""
-        return (self._name is None and
-                six.text_type.__repr__(self) or
+        return (six.text_type.__repr__(self) if self._name is None else
                 self._name)
     __repr__.__doc__ = six.text_type.__doc__
 
@@ -246,10 +245,7 @@ def _time_left(stime, timeout):
     :returns: time remaining as float. If no time is remaining,
        then the integer ``0`` is returned.
     """
-    if timeout is not None:
-        if timeout == 0:
-            return 0
-        return max(0, timeout - (time.time() - stime))
+    return max(0, timeout - (time.time() - stime)) if timeout else timeout
 
 
 def _read_until(term, pattern, timeout):
@@ -343,6 +339,7 @@ def _inject_curses_keynames():
                 'KP_3', 'KP_4', 'KP_5', 'KP_6', 'KP_7', 'KP_8', 'KP_9'):
         _lastval += 1
         setattr(curses, 'KEY_{0}'.format(key), _lastval)
+
 
 _inject_curses_keynames()
 

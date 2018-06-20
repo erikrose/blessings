@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-This is an example application for the 'blessed' Terminal library for python.
+Example application for the 'blessed' Terminal library for python.
 
 It is also an experiment in functional programming.
 """
@@ -25,7 +25,7 @@ except TypeError:
     import sys
 
     def echo(text):
-        """python 2 version of print(end='', flush=True)."""
+        """Python 2 version of print(end='', flush=True)."""
         sys.stdout.write(u'{0}'.format(text))
         sys.stdout.flush()
 
