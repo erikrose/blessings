@@ -5,7 +5,9 @@ Version History
 
     They work perfectly fine for regression testing for contributing
     developers, but people run our tests on build farms and open issues when
-    they fail. So we comment out these useful tests. :ghissue:`29`.
+    they fail. So we comment out these useful tests. :ghissue:`100`.
+
+  * Support python 3.7. :ghissue:`102`.
 
 1.14
   * bugfix: :meth:`~.Terminal.wrap` misbehaved for text containing newlines,

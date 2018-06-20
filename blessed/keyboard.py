@@ -340,6 +340,7 @@ def _inject_curses_keynames():
         _lastval += 1
         setattr(curses, 'KEY_{0}'.format(key), _lastval)
 
+
 _inject_curses_keynames()
 
 #: In a perfect world, terminal emulators would always send exactly what
