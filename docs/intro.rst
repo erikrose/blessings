@@ -2,10 +2,6 @@
     :alt: Travis Continuous Integration
     :target: https://travis-ci.org/jquast/blessed/
 
-.. image:: https://img.shields.io/teamcity/https/teamcity-master.pexpect.org/s/Blessed_BuildHead.svg
-    :alt: TeamCity Build status
-    :target: https://teamcity-master.pexpect.org/viewType.html?buildTypeId=Blessed_BuildHead&branch_Blessed=%3Cdefault%3E&tab=buildTypeStatusDiv
-
 .. image:: https://coveralls.io/repos/jquast/blessed/badge.svg?branch=master&service=github
     :alt: Coveralls Code Coverage
     :target: https://coveralls.io/github/jquast/blessed?branch=master
