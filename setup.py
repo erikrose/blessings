@@ -12,7 +12,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='blessings',
-    version='1.6.1',
+    version='1.7',
     description='A thin, practical wrapper around terminal coloring, styling, and positioning',
     long_description=open('README.rst').read(),
     author='Erik Rose',

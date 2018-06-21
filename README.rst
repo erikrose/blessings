@@ -440,6 +440,10 @@ Blessings is under the MIT License. See the LICENSE file.
 Version History
 ===============
 
+1.7
+  * Drop support for Python 2.6 and 3.3, which are end-of-lifed.
+  * Switch from 2to3 to the ``six`` library.
+
 1.6.1
   * Don't crash if ``number_of_colors()`` is called when run in a non-terminal
     or when ``does_styling`` is otherwise false.
