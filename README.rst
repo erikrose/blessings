@@ -2,7 +2,9 @@
 Blessings
 =========
 
-Coding with Blessings looks like this... ::
+Coding with Blessings looks like this...
+
+.. code:: python
 
     from blessings import Terminal
 
@@ -15,7 +17,9 @@ Coding with Blessings looks like this... ::
         print 'This is at the bottom.'
 
 Or, for byte-level control, you can drop down and play with raw terminal
-capabilities::
+capabilities:
+
+.. code:: python
 
     print '{t.bold}All your {t.red}bold and red base{t.normal}'.format(t=t)
     print t.wingo(2)
@@ -44,7 +48,9 @@ Before And After
 ----------------
 
 Without Blessings, this is how you'd print some underlined text at the bottom
-of the screen::
+of the screen:
+
+.. code:: python
 
     from curses import tigetstr, setupterm, tparm
     from fcntl import ioctl
@@ -74,7 +80,9 @@ of the screen::
     print rc  # Restore cursor position.
 
 That was long and full of incomprehensible trash! Let's try it again, this time
-with Blessings::
+with Blessings:
+
+.. code:: python
 
     from blessings import Terminal
 
@@ -96,7 +104,9 @@ Simple Formatting
 -----------------
 
 Lots of handy formatting codes ("capabilities" in low-level parlance) are
-available as attributes on a ``Terminal``. For example::
+available as attributes on a ``Terminal``. For example...
+
+.. code:: python
 
     from blessings import Terminal
 
@@ -104,13 +114,17 @@ available as attributes on a ``Terminal``. For example::
     print 'I am ' + term.bold + 'bold' + term.normal + '!'
 
 Though they are strings at heart, you can also use them as callable wrappers so
-you don't have to say ``normal`` afterward::
+you don't have to say ``normal`` afterward:
+
+.. code:: python
 
     print 'I am', term.bold('bold') + '!'
 
 Or, if you want fine-grained control while maintaining some semblance of
 brevity, you can combine it with Python's string formatting, which makes
-attributes easy to access::
+attributes easy to access:
+
+.. code:: python
 
     print 'All your {t.red}base {t.underline}are belong to us{t.normal}'.format(t=term)
 
@@ -150,7 +164,9 @@ Color
 -----
 
 16 colors, both foreground and background, are available as easy-to-remember
-attributes::
+attributes:
+
+.. code:: python
 
     from blessings import Terminal
 
@@ -159,7 +175,9 @@ attributes::
     print term.bright_red + term.on_bright_blue + 'This is even worse!' + term.normal
 
 You can also call them as wrappers, which sets everything back to normal at the
-end::
+end:
+
+.. code:: python
 
     print term.red_on_green('Red on green? Ick!')
     print term.yellow('I can barely see it.')
@@ -180,7 +198,9 @@ You can set the background color instead of the foreground by prepending
 for example, ``on_bright_blue``.
 
 There is also a numerical interface to colors, which takes an integer from
-0-15::
+0-15:
+
+.. code:: python
 
     term.color(5) + 'Hello' + term.normal
     term.on_color(3) + 'Hello' + term.normal
@@ -200,7 +220,9 @@ Compound Formatting
 -------------------
 
 If you want to do lots of crazy formatting all at once, you can just mash it
-all together::
+all together:
+
+.. code:: python
 
     from blessings import Terminal
 
@@ -208,7 +230,9 @@ all together::
     print term.bold_underline_green_on_yellow + 'Woo' + term.normal
 
 Or you can use your newly coined attribute as a wrapper, which implicitly sets
-everything back to normal afterward::
+everything back to normal afterward:
+
+.. code:: python
 
     print term.bold_underline_green_on_yellow('Woo')
 
@@ -233,7 +257,9 @@ Moving Temporarily
 
 Most often, you'll need to flit to a certain location, print something, and
 then return: for example, when updating a progress bar at the bottom of the
-screen. ``Terminal`` provides a context manager for doing this concisely::
+screen. ``Terminal`` provides a context manager for doing this concisely:
+
+.. code:: python
 
     from blessings import Terminal
 
@@ -243,14 +269,18 @@ screen. ``Terminal`` provides a context manager for doing this concisely::
     print 'This is back where I came from.'
 
 Parameters to ``location()`` are ``x`` and then ``y``, but you can also pass
-just one of them, leaving the other alone. For example... ::
+just one of them, leaving the other alone. For example...
+
+.. code:: python
 
     with term.location(y=10):
         print 'We changed just the row.'
 
 If you're doing a series of ``move`` calls (see below) and want to return the
 cursor to its original position afterward, call ``location()`` with no
-arguments, and it will do only the position restoring::
+arguments, and it will do only the position restoring:
+
+.. code:: python
 
     with term.location():
         print term.move(1, 1) + 'Hi'
@@ -265,7 +295,9 @@ Moving Permanently
 ~~~~~~~~~~~~~~~~~~
 
 If you just want to move and aren't worried about returning, do something like
-this::
+this:
+
+.. code:: python
 
     from blessings import Terminal
 
@@ -303,14 +335,18 @@ cursor one character in various directions:
 * ``move_up``
 * ``move_down``
 
-For example... ::
+For example...
+
+.. code:: python
 
     print term.move_up + 'Howdy!'
 
 Height And Width
 ----------------
 
-It's simple to get the height and width of the terminal, in characters::
+It's simple to get the height and width of the terminal, in characters:
+
+.. code:: python
 
     from blessings import Terminal
 
@@ -354,7 +390,9 @@ state-restoration thing, use these capabilities:
 Using ``exit_fullscreen`` will wipe away any trace of your program's output, so
 reserve it for when you don't want to leave anything behind in the scrollback.
 
-There's also a context manager you can use as a shortcut::
+There's also a context manager you can use as a shortcut:
+
+.. code:: python
 
     from blessings import Terminal
 
@@ -380,7 +418,9 @@ through ``less -r``, which handles terminal escapes just fine--pass
 In any case, there is a ``does_styling`` attribute on ``Terminal`` that lets
 you see whether your capabilities will return actual, working formatting codes.
 If it's false, you should refrain from drawing progress bars and other frippery
-and just stick to content, since you're apparently headed into a pipe::
+and just stick to content, since you're apparently headed into a pipe:
+
+.. code:: python
 
     from blessings import Terminal
 
