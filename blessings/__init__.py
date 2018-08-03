@@ -482,15 +482,38 @@ class FormattingString(text_type):
         new._normal = normal
         return new
 
-    def __call__(self, text):
-        """Return a new string that is ``text`` formatted with my contents.
+    def __call__(self, *args):
+        """Return a new string that is formatted with my contents. 
+        
+        The content of the new string is a concatentaion of the args passed in,
+        which should be simple strings or FormattingStrings (allows nested
+        calls for "inner" style).
+
+        For example, this creates a red phrase with some bold words in the middle:
+          t.red('This is ', t.bold('extremely important'), ' information!')
 
         At the beginning of the string, I prepend the formatting that is my
         contents. At the end, I append the "normal" sequence to set everything
         back to defaults. The return value is always a Unicode.
 
         """
-        return self + text + self._normal
+
+        # complain if there are funky (non-string) args
+        for a in args:
+            if not isinstance(a, basestring):
+                raise TypeError(
+                    'Calls to a FormattingString should pass a series of strings '
+                    '(str or unicode). Something here does not belong: %r' % (args,))
+
+        if self._normal:
+            # "refresh" my style in the inner text by inserting it after each 'normal' (reset) code
+            refresh = self._normal + self
+            args = [refresh.join(a.split(self._normal)) for a in args]
+        else:    
+            # if self._normal is empty, there's no tty so nothing to do here
+            pass
+
+        return self + "".join(args) + self._normal
 
 
 class NullCallableString(text_type):
@@ -522,7 +545,7 @@ class NullCallableString(text_type):
         the first arg. I am acting as a ``FormattingString``.
 
         """
-        if len(args) != 1 or isinstance(args[0], int):
+        if len(args) == 0 or isinstance(args[0], int):
             # I am acting as a ParametrizingString.
 
             # tparm can take not only ints but also (at least) strings as its
@@ -533,7 +556,7 @@ class NullCallableString(text_type):
             # NullParametrizableString or NullFormattingString, to return, and
             # retire this one.
             return u''
-        return args[0]  # Should we force even strs in Python 2.x to be
+        return "".join(args) # Should we force even strs in Python 2.x to be
                         # unicodes? No. How would I know what encoding to use
                         # to convert it?
 

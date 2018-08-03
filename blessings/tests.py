@@ -210,6 +210,14 @@ def test_formatting_functions():
     eq_(t.on_bright_red_bold_bright_green_underline('meh'),
         t.on_bright_red + t.bold + t.bright_green + t.underline + u'meh' +
                           t.normal)
+    # Test deeply nested styles
+    eq_(t.green('foo', t.bold('bar', t.underline('baz'), 'herp'), 'derp'),
+        t.green + 'foo' + t.bold + 'bar' + t.underline + 'baz' + t.normal + t.green + t.bold + 
+        'herp' + t.normal + t.green + 'derp' + t.normal)
+    # Test off-and-on nested styles
+    eq_(t.green('off ', t.underline('ON'), ' off ', t.underline('ON'), ' off'),
+        t.green + 'off ' + t.underline + 'ON' + t.normal + t.green  + ' off ' +
+        t.underline + 'ON' + t.normal + t.green + ' off' + t.normal)
 
 
 def test_formatting_functions_without_tty():
@@ -221,6 +229,12 @@ def test_formatting_functions_without_tty():
     eq_(t.bold_green(u'boö'), u'boö')
     eq_(t.bold_underline_green_on_red('loo'), u'loo')
     eq_(t.on_bright_red_bold_bright_green_underline('meh'), u'meh')
+    # Test deeply nested styles
+    eq_(t.green('foo', t.bold('bar', t.underline('baz'), 'herp'), 'derp'),
+        'foobarbazherpderp')
+    # Test off-and-on nested styles
+    eq_(t.green('off ', t.underline('ON'), ' off ', t.underline('ON'), ' off'),
+        'off ON off ON off')
 
 
 def test_nice_formatting_errors():
