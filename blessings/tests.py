@@ -210,6 +210,12 @@ def test_formatting_functions():
     eq_(t.on_bright_red_bold_bright_green_underline('meh'),
         t.on_bright_red + t.bold + t.bright_green + t.underline + u'meh' +
                           t.normal)
+    # Add also some negated vversions
+    eq_(t.bold_no_underline_green_on_red('boo'),
+        t.bold + t.no_underline + t.green + t.on_red + u'boo' + t.normal)
+    eq_(t.on_bright_red_no_italic_bright_green_underline('meh'),
+        t.on_bright_red + t.no_italic + t.bright_green + t.underline +
+        u'meh' + t.normal)
 
 
 def test_formatting_functions_without_tty():
@@ -221,6 +227,9 @@ def test_formatting_functions_without_tty():
     eq_(t.bold_green(u'boö'), u'boö')
     eq_(t.bold_underline_green_on_red('loo'), u'loo')
     eq_(t.on_bright_red_bold_bright_green_underline('meh'), u'meh')
+    # Add some negated expressions
+    eq_(t.bold_no_underline_green_on_red('loo'), u'loo')
+    eq_(t.on_bright_red_bold_bright_green_no_underline('meh'), u'meh')
 
 
 def test_nice_formatting_errors():

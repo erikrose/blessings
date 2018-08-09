@@ -416,9 +416,11 @@ def derivative_colors(colors):
 COLORS = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
               'white'])
 COLORS.update(derivative_colors(COLORS))
-COMPOUNDABLES = (COLORS |
-                 set(['bold', 'underline', 'reverse', 'blink', 'dim', 'italic',
-                      'shadow', 'standout', 'subscript', 'superscript']))
+SINGLES = set(['bold', 'reverse', 'blink', 'dim', 'flash'])
+DUALS = set([
+    'underline', 'italic', 'shadow', 'standout', 'subscript', 'superscript'
+])
+COMPOUNDABLES = (COLORS | SINGLES | DUALS | set(['no_' + c for c in DUALS]))
 
 
 class ParametrizingString(text_type):
@@ -543,11 +545,12 @@ def split_into_formatters(compound):
 
     >>> split_into_formatters('bold_underline_bright_blue_on_red')
     ['bold', 'underline', 'bright_blue', 'on_red']
-
+    >>> split_into_formatters('red_no_italic_shadow_on_bright_cyan')
+    ['red', 'no_italic', 'shadow', 'on_bright_cyan']
     """
     merged_segs = []
     # These occur only as prefixes, so they can always be merged:
-    mergeable_prefixes = ['on', 'bright', 'on_bright']
+    mergeable_prefixes = ['no', 'on', 'bright', 'on_bright']
     for s in compound.split('_'):
         if merged_segs and merged_segs[-1] in mergeable_prefixes:
             merged_segs[-1] += '_' + s
