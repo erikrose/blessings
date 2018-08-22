@@ -1,3 +1,5 @@
 include README.rst
 include LICENSE
 include tox.ini
+graft docs
+graft blessings/tests
