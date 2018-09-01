@@ -97,7 +97,7 @@ class Terminal(object):
             try:
                 setupterm(kind or environ.get('TERM', 'dumb'),
                           self._init_descriptor)
-            except:
+            except curses.error:
                 # There was an error setting up the terminal, either curses is
                 # not supported or TERM is incorrectly set. Fall back to dumb.
                 self._does_styling = False
