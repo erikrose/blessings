@@ -94,8 +94,13 @@ class Terminal(object):
             # init sequences to the stream if it has a file descriptor, and
             # send them to stdout as a fallback, since they have to go
             # somewhere.
-            setupterm(kind or environ.get('TERM', 'unknown'),
-                      self._init_descriptor)
+            try:
+                setupterm(kind or environ.get('TERM', 'dumb'),
+                          self._init_descriptor)
+            except curses.error:
+                # There was an error setting up the terminal, either curses is
+                # not supported or TERM is incorrectly set. Fall back to dumb.
+                self._does_styling = False
 
         self.stream = stream
 
