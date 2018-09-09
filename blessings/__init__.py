@@ -95,7 +95,7 @@ class Terminal(object):
             # send them to stdout as a fallback, since they have to go
             # somewhere.
             try:
-                setupterm(kind or environ.get('TERM', 'dumb'),
+                setupterm(kind or environ.get('TERM', 'dumb') or 'dumb',
                           self._init_descriptor)
             except curses.error:
                 # There was an error setting up the terminal, either curses is
