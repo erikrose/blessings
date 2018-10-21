@@ -247,9 +247,9 @@ class Terminal(object):
 
             term = Terminal()
             with term.location(2, 5):
-                print 'Hello, world!'
+                print('Hello, world!')
                 for x in xrange(10):
-                    print 'I can do it %i times!' % x
+                    print('I can do it %i times!' % x)
 
         Specify ``x`` to move to a certain column, ``y`` to move to a certain
         row, both, or neither. If you specify neither, only the saving and
