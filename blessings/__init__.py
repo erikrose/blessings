@@ -418,14 +418,14 @@ def derivative_colors(colors):
                [('on_bright_' + c) for c in colors])
 
 
-COLORS = set(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
-              'white'])
+COLORS = {'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan',
+              'white'}
 COLORS.update(derivative_colors(COLORS))
-SINGLES = set(['bold', 'reverse', 'blink', 'dim', 'flash'])
-DUALS = set([
+SINGLES = {'bold', 'reverse', 'blink', 'dim', 'flash'}
+DUALS = {
     'underline', 'italic', 'shadow', 'standout', 'subscript', 'superscript'
-])
-COMPOUNDABLES = (COLORS | SINGLES | DUALS | set(['no_' + c for c in DUALS]))
+}
+COMPOUNDABLES = (COLORS | SINGLES | DUALS | {'no_' + c for c in DUALS})
 
 
 class ParametrizingString(text_type):
