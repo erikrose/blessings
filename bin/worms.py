@@ -47,6 +47,7 @@ RIGHT = (0, 1)
 UP = (-1, 0)
 DOWN = (1, 0)
 
+
 def left_of(segment, term):
     """Return Location left-of given segment."""
     # pylint: disable=unused-argument
@@ -54,10 +55,12 @@ def left_of(segment, term):
     return Location(y=segment.y,
                     x=max(0, segment.x - 1))
 
+
 def right_of(segment, term):
     """Return Location right-of given segment."""
     return Location(y=segment.y,
                     x=min(term.width - 1, segment.x + 1))
+
 
 def above(segment, term):
     """Return Location above given segment."""
@@ -67,11 +70,13 @@ def above(segment, term):
         y=max(0, segment.y - 1),
         x=segment.x)
 
+
 def below(segment, term):
     """Return Location below given segment."""
     return Location(
         y=min(term.height - 1, segment.y + 1),
         x=segment.x)
+
 
 def next_bearing(term, inp_code, bearing):
     """
@@ -99,6 +104,7 @@ def change_bearing(f_mov, segment, term):
         f_mov(segment, term).y - segment.y,
         f_mov(segment, term).x - segment.x)
 
+
 def bearing_flipped(dir1, dir2):
     """
     direction-flipped check.
@@ -107,19 +113,23 @@ def bearing_flipped(dir1, dir2):
     """
     return (0, 0) == (dir1.y + dir2.y, dir1.x + dir2.x)
 
+
 def hit_any(loc, segments):
     """Return True if `loc' matches any (y, x) coordinates within segments."""
     # `segments' -- a list composing a worm.
     return loc in segments
+
 
 def hit_vany(locations, segments):
     """Return True if any locations are found within any segments."""
     return any(hit_any(loc, segments)
                for loc in locations)
 
+
 def hit(src, dst):
     """Return True if segments are same position (hit detection)."""
     return src.x == dst.x and src.y == dst.y
+
 
 def next_wormlength(nibble, head, worm_length):
     """Return new worm_length if current nibble is hit."""
@@ -127,11 +137,13 @@ def next_wormlength(nibble, head, worm_length):
         return worm_length + nibble.value
     return worm_length
 
+
 def next_speed(nibble, head, speed, modifier):
     """Return new speed if current nibble is hit."""
     if hit(head, nibble.location):
         return speed * modifier
     return speed
+
 
 def head_glyph(direction):
     """Return character for worm head depending on horiz/vert orientation."""
@@ -151,7 +163,7 @@ def next_nibble(term, nibble, head, worm):
     loc, val = nibble.location, nibble.value
     while hit_vany([head] + worm, nibble_locations(loc, val)):
         loc = Location(x=randrange(1, term.width - 1),
-                     y=randrange(1, term.height - 1))
+                       y=randrange(1, term.height - 1))
         val = nibble.value + 1
     return Nibble(loc, val)
 
@@ -261,6 +273,7 @@ def main():
     score = (worm_length - 1) * 100
     echo(u''.join((term.move(term.height - 1, 1), term.normal)))
     echo(u''.join((u'\r\n', u'score: {}'.format(score), u'\r\n')))
+
 
 if __name__ == '__main__':
     main()

@@ -89,5 +89,6 @@ def main():
     print('{checkbox} multibyte encoding supported!'
           .format(checkbox=term.bold_green(u'✓')))
 
+
 if __name__ == '__main__':
     exit(main())

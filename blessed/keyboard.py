@@ -79,9 +79,8 @@ def get_curses_keycodes():
     """
     _keynames = [attr for attr in dir(curses)
                  if attr.startswith('KEY_')]
-    return dict(
-        [(keyname, getattr(curses, keyname))
-         for keyname in _keynames])
+    return dict((keyname, getattr(curses, keyname))
+                for keyname in _keynames)
 
 
 def get_keyboard_codes():

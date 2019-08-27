@@ -78,6 +78,7 @@ pylint:
         - wrong-import-order
         - wrong-import-position
         - ungrouped-imports
+        - useless-object-inheritance
 
 pyroma:
     # checks setup.py

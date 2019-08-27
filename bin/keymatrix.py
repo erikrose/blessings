@@ -26,6 +26,7 @@ except TypeError:
         sys.stdout.write(u'{}'.format(text))
         sys.stdout.flush()
 
+
 def refresh(term, board, level, score, inps):
     """Refresh the game screen."""
     echo(term.home + term.clear)
@@ -41,8 +42,7 @@ def refresh(term, board, level, score, inps):
             keycode,
             term.normal)))
         bottom = max(bottom, attr['row'])
-    echo(term.move(term.height, 0)
-                     + 'level: %s score: %s' % (level, score,))
+    echo(term.move(term.height, 0) + 'level: %s score: %s' % (level, score,))
     if bottom >= (term.height - 5):
         sys.stderr.write(
             ('\n' * (term.height // 2)) +
@@ -60,6 +60,7 @@ def refresh(term, board, level, score, inps):
              inp.code,
              inp.name))
         echo(term.clear_eol)
+
 
 def build_gameboard(term):
     """Build the gameboard layout."""
@@ -80,6 +81,7 @@ def build_gameboard(term):
                           }
         column += len(keycode) + (spacing * 2)
     return board
+
 
 def add_score(score, pts, level):
     """Add points to score, determine and return new score and level."""
@@ -139,6 +141,7 @@ def main():
                 hit_unicode=hit_unicode)
         )
         term.inkey()
+
 
 if __name__ == '__main__':
     main()
