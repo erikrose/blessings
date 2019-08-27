@@ -153,7 +153,7 @@ def test_nested_formattingstring_type_error(monkeypatch):
         pstr('text', 1, '...')
 
     # verify,
-    assert expected_msg in '{0!s}'.format(err)
+    assert expected_msg in str(err.value)
 
 
 def test_nullcallablestring(monkeypatch):
