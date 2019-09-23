@@ -12,6 +12,7 @@ import signal
 
 from blessed import Terminal
 
+
 def main():
     """Program entry point."""
     term = Terminal()
@@ -40,6 +41,7 @@ def main():
         while inp != 'X':
             inp = term.inkey()
             print(repr(inp))
+
 
 if __name__ == '__main__':
     main()

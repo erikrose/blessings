@@ -75,6 +75,7 @@ def detect_maxcanon():
             print(('child.before: ', child.before))
     print(column)
 
+
 if __name__ == '__main__':
     try:
         detect_maxcanon()

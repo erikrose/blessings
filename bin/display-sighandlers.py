@@ -5,6 +5,7 @@
 from __future__ import print_function
 import signal
 
+
 def main():
     """Program entry point."""
     fmt = '{name:<10} {value:<5} {description}'
@@ -27,6 +28,7 @@ def main():
             signal.SIG_DFL: "default(SIG_DFL)"
         }.get(handler, handler)
         print(fmt.format(name=name, value=value, description=description))
+
 
 if __name__ == '__main__':
     main()

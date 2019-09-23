@@ -43,5 +43,6 @@ def main():
             inp = term.inkey(0.04)
     print()
 
+
 if __name__ == '__main__':
     main()

@@ -14,9 +14,9 @@ def _make_colors():
     """
     derivatives = ('on', 'bright', 'on_bright',)
     colors = set('black red green yellow blue magenta cyan white'.split())
-    return set(['_'.join((_deravitive, _color))
-                for _deravitive in derivatives
-                for _color in colors]) | colors
+    return set('_'.join((_deravitive, _color))
+               for _deravitive in derivatives
+               for _color in colors) | colors
 
 
 def _make_compoundables(colors):
@@ -403,17 +403,18 @@ def resolve_attribute(term, attr):
     if all(fmt in COMPOUNDABLES for fmt in formatters):
         resolution = (resolve_attribute(term, fmt) for fmt in formatters)
         return FormattingString(u''.join(resolution), term.normal)
-    else:
-        # otherwise, this is our end-game: given a sequence such as 'csr'
-        # (change scrolling region), return a ParameterizingString instance,
-        # that when called, performs and returns the final string after curses
-        # capability lookup is performed.
-        tparm_capseq = resolve_capability(term, attr)
-        if not tparm_capseq:
-            # and, for special terminals, such as 'screen', provide a Proxy
-            # ParameterizingString for attributes they do not claim to support,
-            # but actually do! (such as 'hpa' and 'vpa').
-            proxy = get_proxy_string(term, term._sugar.get(attr, attr))
-            if proxy is not None:
-                return proxy
-        return ParameterizingString(tparm_capseq, term.normal, attr)
+
+    # otherwise, this is our end-game: given a sequence such as 'csr'
+    # (change scrolling region), return a ParameterizingString instance,
+    # that when called, performs and returns the final string after curses
+    # capability lookup is performed.
+    tparm_capseq = resolve_capability(term, attr)
+    if not tparm_capseq:
+        # and, for special terminals, such as 'screen', provide a Proxy
+        # ParameterizingString for attributes they do not claim to support,
+        # but actually do! (such as 'hpa' and 'vpa').
+        proxy = get_proxy_string(term, term._sugar.get(attr, attr))
+        if proxy is not None:
+            return proxy
+
+    return ParameterizingString(tparm_capseq, term.normal, attr)

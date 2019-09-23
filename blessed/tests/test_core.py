@@ -9,7 +9,6 @@ import locale
 import time
 import math
 import sys
-import imp
 import os
 import io
 
@@ -25,6 +24,7 @@ from .accessories import (
 import mock
 import pytest
 import six
+from six.moves import reload_module
 
 
 def test_export_only_Terminal():
@@ -262,17 +262,17 @@ def test_missing_ordereddict_uses_module(monkeypatch):
         monkeypatch.delattr('collections.OrderedDict')
 
     try:
-        imp.reload(blessed.keyboard)
+        reload_module(blessed.keyboard)
     except ImportError as err:
         assert err.args[0] in ("No module named ordereddict",  # py2
                                "No module named 'ordereddict'")  # py3
         sys.modules['ordereddict'] = mock.Mock()
         sys.modules['ordereddict'].OrderedDict = -1
-        imp.reload(blessed.keyboard)
+        reload_module(blessed.keyboard)
         assert blessed.keyboard.OrderedDict == -1
         del sys.modules['ordereddict']
         monkeypatch.undo()
-        imp.reload(blessed.keyboard)
+        reload_module(blessed.keyboard)
     else:
         assert platform.python_version_tuple() < ('2', '7')  # reached by py2.6
 
@@ -285,13 +285,13 @@ def test_python3_2_raises_exception(monkeypatch):
                         lambda: ('3', '2', '2'))
 
     try:
-        imp.reload(blessed)
+        reload_module(blessed)
     except ImportError as err:
         assert err.args[0] == (
             'Blessed needs Python 3.2.3 or greater for Python 3 '
             'support due to http://bugs.python.org/issue10570.')
         monkeypatch.undo()
-        imp.reload(blessed)
+        reload_module(blessed)
     else:
         assert False, 'Exception should have been raised'
 
@@ -426,14 +426,14 @@ def test_win32_missing_tty_modules(monkeypatch):
                 __builtins__['__import__'] = __import__
             try:
                 import blessed.terminal
-                imp.reload(blessed.terminal)
+                reload_module(blessed.terminal)
             except UserWarning:
                 err = sys.exc_info()[1]
                 assert err.args[0] == blessed.terminal._MSG_NOSUPPORT
 
             warnings.filterwarnings("ignore", category=UserWarning)
             import blessed.terminal
-            imp.reload(blessed.terminal)
+            reload_module(blessed.terminal)
             assert not blessed.terminal.HAS_TTY
             term = blessed.terminal.Terminal('ansi')
             # https://en.wikipedia.org/wiki/VGA-compatible_text_mode
@@ -448,7 +448,7 @@ def test_win32_missing_tty_modules(monkeypatch):
                 __builtins__['__import__'] = original_import
             warnings.resetwarnings()
             import blessed.terminal
-            imp.reload(blessed.terminal)
+            reload_module(blessed.terminal)
 
     child()
 

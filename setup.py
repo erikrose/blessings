@@ -25,6 +25,7 @@ def _get_long_description(fname):
     import codecs
     return codecs.open(fname, 'r', 'utf8').read()
 
+
 HERE = os.path.dirname(__file__)
 
 setuptools.setup(
