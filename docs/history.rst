@@ -9,6 +9,8 @@ Version History
 
   * Support python 3.7. :ghissue:`102`.
 
+  * Various fixes to test automation :ghissue:`108`
+
 1.14
   * bugfix: :meth:`~.Terminal.wrap` misbehaved for text containing newlines,
     :ghissue:`74`.
