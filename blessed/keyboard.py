@@ -1,8 +1,7 @@
 """Sub-module providing 'keyboard awareness'."""
 
 # std imports
-import curses.has_key
-import curses
+import platform
 import time
 import re
 
@@ -17,6 +16,15 @@ except ImportError:
     # pylint: disable=import-error
     #         Unable to import 'ordereddict'
     from ordereddict import OrderedDict
+
+# curses
+if platform.system() == 'Windows':
+    # pylint: disable=import-error
+    import jinxed as curses
+    from jinxed.has_key import _capability_names as capability_names
+else:
+    import curses
+    from curses.has_key import _capability_names as capability_names
 
 
 class Keystroke(six.text_type):
@@ -170,7 +178,6 @@ def get_keyboard_sequences(term):
     # of a kermit or avatar terminal, for example, remains unchanged
     # in its byte sequence values even when represented by unicode.
     #
-    capability_names = curses.has_key._capability_names
     sequence_map = dict((
         (seq.decode('latin1'), val)
         for (seq, val) in (

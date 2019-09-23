@@ -748,7 +748,6 @@ def test_get_keyboard_sequences_sort_order():
 
 def test_get_keyboard_sequence(monkeypatch):
     "Test keyboard.get_keyboard_sequence. "
-    import curses.has_key
     import blessed.keyboard
 
     (KEY_SMALL, KEY_LARGE, KEY_MIXIN) = range(3)
@@ -765,7 +764,7 @@ def test_get_keyboard_sequence(monkeypatch):
                         lambda cap: {CAP_SMALL: SEQ_SMALL,
                                      CAP_LARGE: SEQ_LARGE}[cap])
 
-    monkeypatch.setattr(curses.has_key, '_capability_names',
+    monkeypatch.setattr(blessed.keyboard, 'capability_names',
                         dict(((KEY_SMALL, CAP_SMALL,),
                               (KEY_LARGE, CAP_LARGE,))))
 

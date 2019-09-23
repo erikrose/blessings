@@ -7,7 +7,10 @@ http://pypi.python.org/pypi/blessed
 import platform as _platform
 
 # local
-from blessed.terminal import Terminal
+if _platform.system() == 'Windows':
+    from blessed.win_terminal import Terminal
+else:
+    from blessed.terminal import Terminal
 
 if ('3', '0', '0') <= _platform.python_version_tuple() < ('3', '2', '2+'):
     # Good till 3.2.10

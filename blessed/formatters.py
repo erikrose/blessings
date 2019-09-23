@@ -1,9 +1,15 @@
 """Sub-module providing sequence-formatting functions."""
 # standard imports
-import curses
+import platform
 
 # 3rd-party
 import six
+
+# curses
+if platform.system() == 'Windows':
+    import jinxed as curses   # pylint: disable=import-error
+else:
+    import curses
 
 
 def _make_colors():

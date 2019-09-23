@@ -5,32 +5,17 @@
 import codecs
 import collections
 import contextlib
-import curses
 import functools
 import io
 import locale
 import os
+import platform
 import select
 import struct
 import sys
 import time
 import warnings
 import re
-
-try:
-    import termios
-    import fcntl
-    import tty
-    HAS_TTY = True
-except ImportError:
-    _TTY_METHODS = ('setraw', 'cbreak', 'kbhit', 'height', 'width')
-    _MSG_NOSUPPORT = (
-        "One or more of the modules: 'termios', 'fcntl', and 'tty' "
-        "are not found on your platform '{0}'. The following methods "
-        "of Terminal are dummy/no-op unless a deriving class overrides "
-        "them: {1}".format(sys.platform.lower(), ', '.join(_TTY_METHODS)))
-    warnings.warn(_MSG_NOSUPPORT)
-    HAS_TTY = False
 
 try:
     InterruptedError
@@ -74,6 +59,26 @@ from .keyboard import (get_keyboard_sequences,
                        _time_left,
                        )
 
+if platform.system() == 'Windows':
+    import jinxed as curses  # pylint: disable=import-error
+    HAS_TTY = True
+else:
+    import curses
+
+    try:
+        import termios
+        import fcntl
+        import tty
+        HAS_TTY = True
+    except ImportError:
+        _TTY_METHODS = ('setraw', 'cbreak', 'kbhit', 'height', 'width')
+        _MSG_NOSUPPORT = (
+            "One or more of the modules: 'termios', 'fcntl', and 'tty' "
+            "are not found on your platform '{0}'. The following methods "
+            "of Terminal are dummy/no-op unless a deriving class overrides "
+            "them: {1}".format(sys.platform.lower(), ', '.join(_TTY_METHODS)))
+        warnings.warn(_MSG_NOSUPPORT)
+        HAS_TTY = False
 
 _CUR_TERM = None  # See comments at end of file
 
@@ -196,7 +201,11 @@ class Terminal(object):
         # The descriptor to direct terminal initialization sequences to.
         self._init_descriptor = (sys.__stdout__.fileno() if stream_fd is None
                                  else stream_fd)
-        self._kind = kind or os.environ.get('TERM', 'unknown')
+
+        if platform.system() == 'Windows':
+            self._kind = kind or curses.get_term(self._init_descriptor)
+        else:
+            self._kind = kind or os.environ.get('TERM', 'unknown')
 
         if self.does_styling:
             # Initialize curses (call setupterm).

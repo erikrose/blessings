@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Distutils setup script."""
 import os
+import platform
 import setuptools
 
 
@@ -12,6 +13,10 @@ def _get_install_requires(fname):
     # support python2.6 by using backport of 'orderedict'
     if sys.version_info < (2, 7):
         result.append('ordereddict==1.1')
+
+    # Windows requires jinxed
+    if platform.system() == 'Windows':
+        result.append('jinxed>=0.5.4')
 
     return result
 
@@ -53,6 +58,7 @@ setuptools.setup(
         'Environment :: Console :: Curses',
         'License :: OSI Approved :: MIT License',
         'Operating System :: POSIX',
+        'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
