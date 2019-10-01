@@ -437,7 +437,7 @@ class Terminal(object):
             try:
                 if fd is not None:
                     return self._winsize(fd)
-            except IOError:
+            except (IOError, OSError, ValueError):
                 pass
 
         return WINSZ(ws_row=int(os.getenv('LINES', '25')),
