@@ -1,22 +1,12 @@
 #!/usr/bin/env python
 """Distutils setup script."""
 import os
-import platform
 import setuptools
 
 
 def _get_install_requires(fname):
-    import sys
     result = [req_line.strip() for req_line in open(fname)
               if req_line.strip() and not req_line.startswith('#')]
-
-    # support python2.6 by using backport of 'orderedict'
-    if sys.version_info < (2, 7):
-        result.append('ordereddict==1.1')
-
-    # Windows requires jinxed
-    if platform.system() == 'Windows':
-        result.append('jinxed>=0.5.4')
 
     return result
 
