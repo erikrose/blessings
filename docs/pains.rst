@@ -19,7 +19,7 @@ A recent phenomenon of users is to customize their base 16 colors to provide
 getting LCD displays of colorspaces that achieve close approximation to the
 original video terminals.  Some find these values uncomfortably intense: in
 their original CRT form, their contrast and brightness was lowered by hardware
-dials, whereas today's LCD's typically display well only near full intensity.
+dials, whereas today's LCD's typically display colors well near full intensity.
 
 Though we may not *detect* the colorspace of the remote terminal, **we can**:
 
@@ -33,10 +33,10 @@ Though we may not *detect* the colorspace of the remote terminal, **we can**:
 .. note::
 
    It has become popular to use dynamic system-wide color palette adjustments
-   in software such as `f.lux`_, which adjust the system-wide "Color Profile"
-   of the entire graphics display depending on the time of day.  One might
-   assume that ``term.blue("text")`` may be **completely** invisible to such
-   users during the night!
+   in software such as `f.lux`_, "Dark Mode", "Night Mode", and others,
+   which adjust the system-wide "Color Profile" of the entire graphics display
+   depending on the time of day.  One might assume that ``term.blue("text")``
+   may become **completely** invisible to such users during the night!
 
 
 Where is brown, purple, or grey?
