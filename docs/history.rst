@@ -1,5 +1,8 @@
 Version History
 ===============
+1.16
+  * Windows support?! :ghissue:`110`
+
 1.15
   * disable timing integration tests for keyboard routines.
 
