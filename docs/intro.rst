@@ -125,9 +125,8 @@ Requirements
 ------------
 
 *Blessed* is tested with Python 2.7, 3.4, 3.5, 3.6, and 3.7 on Linux, Mac, and
-FreeBSD.  Windows support was just added in October 2019, thanks to kind
-contributions from :ghuser:`avylove`, give it a try, and please report any
-strange issues!
+FreeBSD.  Windows support was just added in October 2019, give it a try, and
+please report any strange issues!
 
 Further Documentation
 ---------------------
