@@ -68,14 +68,6 @@ Brief Overview
 * Allows the printable length of strings containing sequences to be
   determined.
 
-Blessed **does not** provide...
-
-* Windows command prompt support.  A PDCurses_ build of python for windows
-  provides only partial support at this time -- there are plans to merge with
-  the ansi_ module in concert with colorama_ to resolve this.  `Patches
-  welcome <https://github.com/jquast/blessed/issues/18>`_!
-
-
 Before And After
 ----------------
 
@@ -132,8 +124,10 @@ The same program with *Blessed* is simply:
 Requirements
 ------------
 
-*Blessed* is tested with Python 2.7, 3.4, and 3.5 on Debian Linux, Mac, and
-FreeBSD.
+*Blessed* is tested with Python 2.7, 3.4, 3.5, 3.6, and 3.7 on Linux, Mac, and
+FreeBSD.  Windows support was just added in October 2019, thanks to kind
+contributions from :ghuser:`avylove`, give it a try, and please report any
+strange issues!
 
 Further Documentation
 ---------------------
