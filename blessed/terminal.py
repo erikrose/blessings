@@ -293,7 +293,11 @@ class Terminal(object):
 
         if self._keyboard_fd is not None:
             # set input encoding and initialize incremental decoder
-            locale.setlocale(locale.LC_ALL, '')
+            if platform.system() == 'Windows' and sys.version_info[0] < 3:
+                # Default for setlocale() has side effects for Python 2 on Windows
+                pass
+            else:
+                locale.setlocale(locale.LC_ALL, '')
             self._encoding = locale.getpreferredencoding() or 'ascii'
 
             try:
