@@ -76,9 +76,9 @@ Here are some recommended readings to help you along:
 
   The TTY driver is a great introduction to Kernel and Systems programming,
   because familiar components may be discovered and experimented with.  It is
-  available on all operating systems, and because of its critical nature, examples of
-  efficient file I/O, character buffers (often implemented as "ring buffers") and even
-  fine-grained kernel locking can be found.
+  available on all operating systems, and because of its critical nature,
+  examples of efficient file I/O, character buffers (often implemented as
+  "ring buffers") and even fine-grained kernel locking can be found.
 
 - `Thomas E. Dickey <http://invisible-island.net/>`_ has been maintaining
   `xterm <http://invisible-island.net/xterm/xterm.html>`_, as well as a
