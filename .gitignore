@@ -14,3 +14,4 @@ htmlcov
 .coveralls.yml
 .DS_Store
 .*.sw?
+.vscode
