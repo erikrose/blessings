@@ -293,7 +293,11 @@ class Terminal(object):
 
         if self._keyboard_fd is not None:
             # set input encoding and initialize incremental decoder
-            locale.setlocale(locale.LC_ALL, '')
+            if platform.system() == 'Windows' and sys.version_info[0] < 3:
+                # Default for setlocale() has side effects for PY2 on Windows
+                pass
+            else:
+                locale.setlocale(locale.LC_ALL, '')
             self._encoding = locale.getpreferredencoding() or 'ascii'
 
             try:
@@ -437,7 +441,7 @@ class Terminal(object):
             try:
                 if fd is not None:
                     return self._winsize(fd)
-            except (IOError, OSError, ValueError):
+            except (IOError, OSError, ValueError, TypeError):
                 pass
 
         return WINSZ(ws_row=int(os.getenv('LINES', '25')),
