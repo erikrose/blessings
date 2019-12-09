@@ -233,6 +233,13 @@ class Terminal(object):
                         ' returned for the remainder of this process.' % (
                             self._kind, _CUR_TERM,))
 
+        if self._does_styling:
+            colorterm = os.environ.get('COLORTERM', None)
+            self._truecolor = (colorterm in ('truecolor', '24bit')
+                               or platform.system() == 'Windows')
+        else:
+            self._truecolor = False
+
         # initialize capabilities and terminal keycodes database
         self.__init__capabilities()
         self.__init__keycodes()
