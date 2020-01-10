@@ -427,7 +427,7 @@ def resolve_attribute(term, attr):
         return resolve_color(term, attr)
 
     # A direct compoundable, such as `bold' or `on_red'.
-    if attr in COMPOUNDABLES:
+    if attr in COLORS_WITH_COMPOUNDABLES:
         sequence = resolve_capability(term, attr)
         return FormattingString(sequence, term.normal)
 
