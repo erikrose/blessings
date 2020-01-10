@@ -38,6 +38,7 @@ from .formatters import (ParameterizingString,
                          NullCallableString,
                          resolve_capability,
                          resolve_attribute,
+                         COLORS,
                          )
 
 from ._capabilities import (
@@ -100,14 +101,13 @@ class Terminal(object):
     _sugar = dict(
         save='sc',
         restore='rc',
-        # 'clear' clears the whole screen.
         clear_eol='el',
         clear_bol='el1',
         clear_eos='ed',
-        position='cup',  # deprecated
         enter_fullscreen='smcup',
         exit_fullscreen='rmcup',
         move='cup',
+        position='cup',
         move_x='hpa',
         move_y='vpa',
         move_left='cub1',
@@ -226,6 +226,11 @@ class Terminal(object):
                 if _CUR_TERM is None or self._kind == _CUR_TERM:
                     _CUR_TERM = self._kind
                 else:
+                    # termcap 'kind' is immutable in a python process! Once
+                    # initialized by setupterm, it is unsupported by the
+                    # 'curses' module to change the terminal type again. If you
+                    # are a downstream developer and you need this
+                    # functionality, consider sub-processing, instead.
                     warnings.warn(
                         'A terminal of kind "%s" has been requested; due to an'
                         ' internal python curses bug, terminal capabilities'
@@ -233,16 +238,19 @@ class Terminal(object):
                         ' returned for the remainder of this process.' % (
                             self._kind, _CUR_TERM,))
 
-        if self._does_styling:
-            colorterm = os.environ.get('COLORTERM', None)
-            self._truecolor = (colorterm in ('truecolor', '24bit')
-                               or platform.system() == 'Windows')
-        else:
-            self._truecolor = False
-
-        # initialize capabilities and terminal keycodes database
+        self.__init__color_capabilities()
         self.__init__capabilities()
         self.__init__keycodes()
+
+    def __init__color_capabilities(self):
+        if not self.does_styling:
+            self.number_of_colors = 0
+        elif platform.system() == 'Windows' or (
+            os.environ.get('COLORTERM') in ('truecolor', '24bit')
+        ):
+            self.number_of_colors = 1 << 24
+        else:
+            self.number_of_colors = max(0, curses.tigetnum('colors') or -1)
 
     def __init__capabilities(self):
         # important that we lay these in their ordered direction, so that our
@@ -347,7 +355,11 @@ class Terminal(object):
         val = resolve_attribute(self, attr)
         # Cache capability resolution: note this will prevent this
         # __getattr__ method for being called again.  That's the idea!
-        setattr(self, attr, val)
+        if attr not in COLORS:
+            # TODO XXX temporarily(?), we don't cache these for colors, so that
+            # we can see the dang results when we dynamically change
+            # 'number_of_colors' at runtime.
+            setattr(self, attr, val)
         return val
 
     @property
@@ -692,25 +704,19 @@ class Terminal(object):
     @property
     def number_of_colors(self):
         """
-        Read-only property: number of colors supported by terminal.
+        Number of colors supported by terminal.
 
-        Common values are 0, 8, 16, 88, and 256.
+        Common return values are 0, 8, 16, 256, or 1 << 24.
 
-        Most commonly, this may be used to test whether the terminal supports
-        colors. Though the underlying capability returns -1 when there is no
-        color support, we return 0. This lets you test more Pythonically::
-
-            if term.number_of_colors:
-                ...
+        This may be used to test whether the terminal supports colors,
+        and at what depth, if that's a concern.
         """
-        # This is actually the only remotely useful numeric capability. We
-        # don't name it after the underlying capability, because we deviate
-        # slightly from its behavior, and we might someday wish to give direct
-        # access to it.
+        return self._number_of_colors
 
-        # trim value to 0, as tigetnum('colors') returns -1 if no support,
-        # and -2 if no such capability.
-        return max(0, self.does_styling and curses.tigetnum('colors') or -1)
+    @number_of_colors.setter
+    def number_of_colors(self, value):
+        assert value in (0, 8, 16, 256, 1 << 24)
+        self._number_of_colors = value
 
     @property
     def _foreground_color(self):

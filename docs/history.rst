@@ -1,5 +1,10 @@
 Version History
 ===============
+1.17
+  * deprecated: "compoundable" with ``superscript``, ``subscript``, or
+    ``shadow``, or ``dim``, such as in phrase ``Terminal.blue_subscript('a')``.
+    Use Unicode text or 256 or 24-bit color codes instead.
+
 1.16
   * Windows support?! :ghissue:`110` by :ghuser:`avylove`.
 

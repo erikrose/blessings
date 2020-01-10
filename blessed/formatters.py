@@ -1,6 +1,10 @@
 """Sub-module providing sequence-formatting functions."""
 # standard imports
 import platform
+import math
+
+# local
+from blessed.colorspace import X11_COLORNAMES_TO_RGB, RGB_256TABLE
 
 # 3rd-party
 import six
@@ -11,6 +15,7 @@ if platform.system() == 'Windows':
 else:
     import curses
 
+CGA_COLORS = set(('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'))
 
 def _make_colors():
     """
@@ -18,12 +23,18 @@ def _make_colors():
 
     :rtype: set
     """
-    derivatives = ('on', 'bright', 'on_bright',)
-    colors = set('black red green yellow blue magenta cyan white'.split())
-    return set('_'.join((_deravitive, _color))
-               for _deravitive in derivatives
-               for _color in colors) | colors
-
+    colors = set()
+    def make_cga_compounds(cga_color):
+        return set(
+            ('on_' + cga_color,
+             'bright_' + cga_color,
+             'on_bright_' + cga_color))
+    for color in CGA_COLORS:
+        colors.update(make_cga_compounds(color))
+    colors.update(X11_COLORNAMES_TO_RGB)
+    for vga_color in X11_COLORNAMES_TO_RGB:
+        colors.add('on_' + vga_color)
+    return colors
 
 def _make_compoundables(colors):
     """
@@ -32,18 +43,16 @@ def _make_compoundables(colors):
     :arg set colors: set of color names as string.
     :rtype: set
     """
-    _compoundables = set('bold underline reverse blink dim italic shadow '
-                         'standout subscript superscript'.split())
+    _compoundables = set('bold underline reverse blink italic standout'.split())
     return colors | _compoundables
 
-
-#: Valid colors and their background (on), bright,
-#: and bright-background derivatives.
+#: Valid colors and their background (on), bright, and bright-background
+#: derivatives.
 COLORS = _make_colors()
 
-#: Attributes and colors which may be compounded by underscore.
-COMPOUNDABLES = _make_compoundables(COLORS)
-
+#: Attributes that may be compounded with colors, by underscore, such as
+#: 'reverse_indigo'.
+COLORS_WITH_COMPOUNDABLES = _make_compoundables(COLORS)
 
 class ParameterizingString(six.text_type):
     r"""
@@ -360,22 +369,42 @@ def resolve_color(term, color):
     if term.number_of_colors == 0:
         return NullCallableString()
 
-    # NOTE(erikrose): Does curses automatically exchange red and blue and cyan
-    # and yellow when a terminal supports setf/setb rather than setaf/setab?
-    # I'll be blasted if I can find any documentation. The following
-    # assumes it does: to terminfo(5) describes color(1) as COLOR_RED when
-    # using setaf, but COLOR_BLUE when using setf.
-    color_cap = (term._background_color if 'on_' in color else
-                 term._foreground_color)
+    # fg/bg capabilities terminals that support 0-256+ colors.
+    vga_color_cap = (term._background_color if 'on_' in color else
+                     term._foreground_color)
 
-    # curses constants go up to only 7, so add an offset to get at the
-    # bright colors at 8-15:
-    offset = 8 if 'bright_' in color else 0
     base_color = color.rsplit('_', 1)[-1]
+    if base_color in CGA_COLORS:
+        # curses constants go up to only 7, so add an offset to get at the
+        # bright colors at 8-15:
+        offset = 8 if 'bright_' in color else 0
+        base_color = color.rsplit('_', 1)[-1]
+        attr = 'COLOR_%s' % (base_color.upper(),)
+        fmt_attr = vga_color_cap(getattr(curses, attr) + offset)
+        return FormattingString(fmt_attr, term.normal)
 
-    attr = 'COLOR_%s' % (base_color.upper(),)
-    fmt_attr = color_cap(getattr(curses, attr) + offset)
-    return FormattingString(fmt_attr, term.normal)
+    assert base_color in X11_COLORNAMES_TO_RGB, (
+        'color not known', base_color)
+    rgb = X11_COLORNAMES_TO_RGB[base_color]
+
+    # downconvert X11 colors to CGA, EGA, or VGA color spaces
+    if term.number_of_colors <= 256:
+        depth = term.number_of_colors
+        if depth == 88:
+            depth = 16
+        assert depth in (0, 8, 16, 256), (
+            'Unexpected number_of_colors', term.number_of_colors)
+        fmt_attr = vga_color_cap(rgb_downconvert(*rgb, depth))
+        return FormattingString(fmt_attr, term.normal)
+
+    # Modern 24-bit color terminals are written pretty basically.  The
+    # foreground and background sequences are:
+    # - ^[38;2;<r>;<g>;<b>m
+    # - ^[48;2;<r>;<g>;<b>m
+    fgbg_seq = ('48' if 'on_' in color else '38')
+    assert term.number_of_colors == 1 << 24
+    fmt_attr = u'\x1b[' + fgbg_seq + ';2;{0};{1};{2}m'
+    return FormattingString(fmt_attr.format(*rgb), term.normal)
 
 
 def resolve_attribute(term, attr):
@@ -406,7 +435,7 @@ def resolve_attribute(term, attr):
     # call for each compounding section, joined and returned as
     # a completed completed FormattingString.
     formatters = split_compound(attr)
-    if all(fmt in COMPOUNDABLES for fmt in formatters):
+    if all(fmt in COLORS_WITH_COMPOUNDABLES for fmt in formatters):
         resolution = (resolve_attribute(term, fmt) for fmt in formatters)
         return FormattingString(u''.join(resolution), term.normal)
 
@@ -424,3 +453,49 @@ def resolve_attribute(term, attr):
             return proxy
 
     return ParameterizingString(tparm_capseq, term.normal, attr)
+
+
+def rgb_downconvert(red, green, blue, depth):
+    """
+    Translate an RGB color to a color code in the configured color depth.
+
+    :arg red: RGB value of Red.
+    :arg green: RGB value of Green.
+    :arg blue: RGB value of Blue.
+    :rtype: int
+
+    This works by treating RGB colors as coordinates in three dimensional
+    space and finding the closest point within the configured color range
+    using the formula::
+
+        d^2 = (r2 - r1)^2 + (g2 - g1)^2 + (b2 - b1)^2
+
+    For mapping of two sets of {r,g,b} color spaces.
+    """
+    # NOTE(jquast): Color distance is a complex problem, but for our
+    # perspective the HSV colorspace is the most meaningfully matching,
+    # especially for "far" distances, this RGB may not make good sense.
+    #
+    # We would prioritize Hue (color) above Saturation (tones) or Value
+    # (lightness), or maybe HVS, but because our output is RGB, so is our
+    # internal values, and thus our calculation for now.
+    #
+    # I hope to make a kind of demo application that might suggest the
+    # difference, if any, to help ascertain the trade-off.
+    assert depth in (0, 8, 16, 256)
+
+    # white(7) returns for depth 0.
+    color_idx = 7
+    shortest_distance = None
+    for cmp_depth, cmp_rgb in enumerate(RGB_256TABLE):
+        # XXX TODO: Should this have 'abs'? pow(abs(cmp_rgb.red - red), 2) ?
+        cmp_distance = math.sqrt(sum((
+            pow(cmp_rgb.red - red, 2),
+            pow(cmp_rgb.green - green, 2),
+            pow(cmp_rgb.blue - blue, 2))))
+        if shortest_distance is None or cmp_distance < shortest_distance:
+            shortest_distance = cmp_distance
+            color_idx = cmp_depth
+        if cmp_depth == depth:
+            break
+    return color_idx
