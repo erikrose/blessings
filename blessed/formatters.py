@@ -24,27 +24,19 @@ def _make_colors():
     :rtype: set
     """
     colors = set()
-    def make_cga_compounds(cga_color):
-        return set(
-            ('on_' + cga_color,
-             'bright_' + cga_color,
-             'on_bright_' + cga_color))
-    for color in CGA_COLORS:
-        colors.update(make_cga_compounds(color))
-    colors.update(X11_COLORNAMES_TO_RGB)
+    # basic CGA foreground color, background, high intensity, and bold
+    # background ('iCE colors' in my day).
+    for cga_color in CGA_COLORS:
+        colors.add(cga_color)
+        colors.add('on_' + cga_color)
+        colors.add('bright_' + cga_color)
+        colors.add('on_bright_' + cga_color)
+
+    # foreground and background VGA color
     for vga_color in X11_COLORNAMES_TO_RGB:
+        colors.add(vga_color)
         colors.add('on_' + vga_color)
     return colors
-
-def _make_compoundables(colors):
-    """
-    Return given set ``colors`` along with all "compoundable" attributes.
-
-    :arg set colors: set of color names as string.
-    :rtype: set
-    """
-    _compoundables = set('bold underline reverse blink italic standout'.split())
-    return colors | _compoundables
 
 #: Valid colors and their background (on), bright, and bright-background
 #: derivatives.
@@ -52,7 +44,7 @@ COLORS = _make_colors()
 
 #: Attributes that may be compounded with colors, by underscore, such as
 #: 'reverse_indigo'.
-COLORS_WITH_COMPOUNDABLES = _make_compoundables(COLORS)
+COMPOUNDABLES = set('bold underline reverse blink italic standout'.split())
 
 class ParameterizingString(six.text_type):
     r"""
@@ -427,7 +419,7 @@ def resolve_attribute(term, attr):
         return resolve_color(term, attr)
 
     # A direct compoundable, such as `bold' or `on_red'.
-    if attr in COLORS_WITH_COMPOUNDABLES:
+    if attr in COMPOUNDABLES:
         sequence = resolve_capability(term, attr)
         return FormattingString(sequence, term.normal)
 
@@ -435,7 +427,7 @@ def resolve_attribute(term, attr):
     # call for each compounding section, joined and returned as
     # a completed completed FormattingString.
     formatters = split_compound(attr)
-    if all(fmt in COLORS_WITH_COMPOUNDABLES for fmt in formatters):
+    if all(fmt in (COLORS | COMPOUNDABLES) for fmt in formatters):
         resolution = (resolve_attribute(term, fmt) for fmt in formatters)
         return FormattingString(u''.join(resolution), term.normal)
 
@@ -482,8 +474,6 @@ def rgb_downconvert(red, green, blue, depth):
     #
     # I hope to make a kind of demo application that might suggest the
     # difference, if any, to help ascertain the trade-off.
-    assert depth in (0, 8, 16, 256)
-
     # white(7) returns for depth 0.
     color_idx = 7
     shortest_distance = None

@@ -38,7 +38,9 @@ from .formatters import (ParameterizingString,
                          NullCallableString,
                          resolve_capability,
                          resolve_attribute,
-                         COLORS,
+                         FormattingString,
+                         rgb_downconvert,
+                         COLORS, 
                          )
 
 from ._capabilities import (
@@ -252,6 +254,10 @@ class Terminal(object):
         else:
             self.number_of_colors = max(0, curses.tigetnum('colors') or -1)
 
+    def __clear_color_capabilities(self):
+        for cached_color_cap in set(dir(self)) & COLORS:
+            delattr(self, cached_color_cap)
+
     def __init__capabilities(self):
         # important that we lay these in their ordered direction, so that our
         # preferred, 'color' over 'set_a_attributes1', for example.
@@ -341,7 +347,7 @@ class Terminal(object):
 
             >>> term.bold_blink_red_on_green("merry x-mas!")
 
-        For a parametrized capability such as ``move`` (or ``cup``), pass the
+        For a parameterized capability such as ``move`` (or ``cup``), pass the
         parameters as positional arguments::
 
             >>> term.move(line, column)
@@ -352,14 +358,13 @@ class Terminal(object):
         """
         if not self.does_styling:
             return NullCallableString()
+        # Fetch the missing 'attribute' into some kind of curses-resolved
+        # capability, and cache by attaching to this Terminal class instance.
+        #
+        # Note that this will prevent future calls to __getattr__(), but
+        # that's precisely the idea of the cache!
         val = resolve_attribute(self, attr)
-        # Cache capability resolution: note this will prevent this
-        # __getattr__ method for being called again.  That's the idea!
-        if attr not in COLORS:
-            # TODO XXX temporarily(?), we don't cache these for colors, so that
-            # we can see the dang results when we dynamically change
-            # 'number_of_colors' at runtime.
-            setattr(self, attr, val)
+        setattr(self, attr, val)
         return val
 
     @property
@@ -661,6 +666,16 @@ class Terminal(object):
         return ParameterizingString(self._foreground_color,
                                     self.normal, 'color')
 
+    def color_rgb(self, red, green, blue):
+        if self.number_of_colors == 1 << 24:
+            # "truecolor" 24-bit
+            fmt_attr = u'\x1b[38;2;{0};{1};{2}m'.format(red, green, blue)
+            return FormattingString(fmt_attr, self.normal)
+
+        # color by approximation to 256 or 16-color terminals
+        color_idx = rgb_downconvert(red, green, blue, depth=self.number_of_colors)
+        return FormattingString(self._foreground_color(color_idx), self.normal)
+
     @property
     def on_color(self):
         """
@@ -673,6 +688,14 @@ class Terminal(object):
             return NullCallableString()
         return ParameterizingString(self._background_color,
                                     self.normal, 'on_color')
+
+    def on_color_rgb(self, red, green, blue):
+        if self.number_of_colors == 1 << 24:
+            fmt_attr = u'\x1b[48;2;{0};{1};{2}m'.format(red, green, blue)
+            return FormattingString(fmt_attr, self.normal)
+
+        color_idx = rgb_downconvert(red, green, blue, depth=self.number_of_colors)
+        return FormattingString(self._background_color(color_idx), self.normal)
 
     @property
     def normal(self):
@@ -715,8 +738,9 @@ class Terminal(object):
 
     @number_of_colors.setter
     def number_of_colors(self, value):
-        assert value in (0, 8, 16, 256, 1 << 24)
+        assert value in (0, 4, 8, 16, 256, 1 << 24)
         self._number_of_colors = value
+        self.__clear_color_capabilities()
 
     @property
     def _foreground_color(self):
