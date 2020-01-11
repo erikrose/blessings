@@ -1,6 +1,8 @@
 Version History
 ===============
 1.17
+  * bugfix: ``chr(127)``, ``\x7f`` has changed from keycode ``term.DELETE``
+    to ``term.BACKSPACE``, :ghissue:115` by :ghuser:`jwezel`.
   * deprecated: "compoundable" with ``superscript``, ``subscript``, or
     ``shadow``, or ``dim``, such as in phrase ``Terminal.blue_subscript('a')``.
     Use Unicode text or 256 or 24-bit color codes instead.
