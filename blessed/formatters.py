@@ -1,9 +1,9 @@
 """Sub-module providing sequence-formatting functions."""
 # standard imports
 import platform
-import math
 
 # local
+from blessed.color import COLOR_ALGORITHMS
 from blessed.colorspace import X11_COLORNAMES_TO_RGB, RGB_256TABLE
 
 # 3rd-party
@@ -447,7 +447,7 @@ def resolve_attribute(term, attr):
     return ParameterizingString(tparm_capseq, term.normal, attr)
 
 
-def rgb_downconvert(red, green, blue, depth):
+def rgb_downconvert(red, green, blue, depth, algorithm='cie94'):
     """
     Translate an RGB color to a color code in the configured color depth.
 
@@ -455,12 +455,6 @@ def rgb_downconvert(red, green, blue, depth):
     :arg green: RGB value of Green.
     :arg blue: RGB value of Blue.
     :rtype: int
-
-    This works by treating RGB colors as coordinates in three dimensional
-    space and finding the closest point within the configured color range
-    using the formula::
-
-        d^2 = (r2 - r1)^2 + (g2 - g1)^2 + (b2 - b1)^2
 
     For mapping of two sets of {r,g,b} color spaces.
     """
@@ -475,14 +469,12 @@ def rgb_downconvert(red, green, blue, depth):
     # I hope to make a kind of demo application that might suggest the
     # difference, if any, to help ascertain the trade-off.
     # white(7) returns for depth 0.
+
+    get_distance = COLOR_ALGORITHMS[algorithm]
     color_idx = 7
     shortest_distance = None
     for cmp_depth, cmp_rgb in enumerate(RGB_256TABLE):
-        # XXX TODO: Should this have 'abs'? pow(abs(cmp_rgb.red - red), 2) ?
-        cmp_distance = math.sqrt(sum((
-            pow(cmp_rgb.red - red, 2),
-            pow(cmp_rgb.green - green, 2),
-            pow(cmp_rgb.blue - blue, 2))))
+        cmp_distance = get_distance(cmp_rgb, (red, green, blue))
         if shortest_distance is None or cmp_distance < shortest_distance:
             shortest_distance = cmp_distance
             color_idx = cmp_depth
