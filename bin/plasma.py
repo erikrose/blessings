@@ -1,37 +1,113 @@
 #!/usr/bin/env python
 import math
 import colorsys
+import collections
+import contextlib
+import timeit
 import time
 import sys
 import blessed
-# todo: if we use unicode shaded blocks, we can do monotone/single color
- 
-def plasma (term):
+scale_255 = lambda val: int(round(val * 255))
+
+def rgb_at_xy(term, x, y, t):
+    h, w = term.height, term.width
+    hue = 4.0 + (
+        math.sin(x / 16.0)
+      + math.sin(y / 32.0)
+      + math.sin(math.sqrt(
+          ((x - w / 2.0) * (x - w / 2.0) +
+           (y - h / 2.0) * (y - h / 2.0))
+      ) / 8.0 + t*3)
+    ) + math.sin(math.sqrt((x * x + y * y)) / 8.0)
+    saturation = 1-y / h
+    lightness = 1-x / w
+    return tuple(map(scale_255, colorsys.hsv_to_rgb(hue / 8.0, saturation, lightness)))
+
+def screen_plasma(term, plasma_fn, t):
     result = ''
-    for y in range(term.height):
+    for y in range(term.height - 1):
         for x in range (term.width):
-            hue = (4.0
-                   + math.sin((x + (time.time() * 5)) / 19.0)
-                   + math.sin((y + (time.time() * 5)) / 9.0)
-                   + math.sin((x + y) / 25.0)
-                   + math.sin(math.sqrt(x**2.0 + y**2.0) / 8.0))
-            rgb = colorsys.hsv_to_rgb(hue / 8.0, 1, 1)
-            xyz = int(round(rgb[0]*255)), int(round(rgb[1]*255)), int(round(rgb[2]*255))
-            result += term.on_color_rgb(*xyz) + ' '
+            result += term.on_color_rgb(*plasma_fn(term, x, y, t)) + ' '
     return result
+
+@contextlib.contextmanager
+def elapsed_timer():
+    """Timer pattern, from https://stackoverflow.com/a/30024601."""
+    start = timeit.default_timer()
+
+    def elapser():
+        return timeit.default_timer() - start
+
+    # pylint: disable=unnecessary-lambda
+    yield lambda: elapser()
  
-if __name__=="__main__":
-    term = blessed.Terminal()
+def please_wait(term):
+    txt_wait = 'please wait ...'
+    outp = term.move(term.height-1, 0) + term.clear_eol + term.center(txt_wait)
+    print(outp, end='')
+    sys.stdout.flush()
+
+def paused(term):
+    txt_paused = 'paused'
+    outp = term.move(term.height-1, int(term.width/2 - len(txt_paused)/2))
+    outp += txt_paused
+    print(outp, end='')
+    sys.stdout.flush()
+
+def next_algo(algo, forward):
+    from blessed.color import COLOR_DISTANCE_ALGORITHMS
+    algos = tuple(sorted(COLOR_DISTANCE_ALGORITHMS))
+    next_index = algos.index(algo) + (1 if forward else -1)
+    if next_index == len(algos):
+        next_index = 0
+    return algos[next_index]
+
+def next_color(color, forward):
+    colorspaces = (4, 8, 16, 256, 1 << 24)
+    next_index = colorspaces.index(color) + (1 if forward else -1)
+    if next_index == len(colorspaces):
+        next_index = 0
+    return colorspaces[next_index]
+
+def status(term, elapsed):
+    left_txt = (f'{term.number_of_colors} colors - '
+                f'{term.color_distance_algorithm} - ?: help ')
+    right_txt = f'fps: {1 / elapsed:2.2f}'
+    return ('\n' + term.normal +
+             term.white_on_blue + left_txt +
+             term.rjust(right_txt, term.width-len(left_txt)))
+
+def main(term):
     with term.cbreak(), term.hidden_cursor():
+        pause = False
+        t = time.time()
         while True:
-            print(term.home + plasma(term), end='')
-            sys.stdout.flush()
-            inp = term.inkey(timeout=0.2)
-            if inp == '\x09':
-                term.number_of_colors = {
-                    4: 8,
-                    8: 16,
-                    16: 256,
-                    256: 1 << 24,
-                    1 << 24: 4,
-                }[term.number_of_colors]
+            if not pause or dirty:
+                if not pause:
+                    t = time.time()
+                with elapsed_timer() as elapsed:
+                    outp = term.home + screen_plasma(term, rgb_at_xy, t)
+                outp += status(term, elapsed())
+                print(outp, end='')
+                sys.stdout.flush()
+                dirty = False
+            if paused:
+                paused(term)
+
+            inp = term.inkey(timeout=0.01 if not pause else None)
+            if inp == '?': assert False, "don't panic"
+            if inp == '\x0c': dirty = True
+            if inp in ('[', ']'):
+                term.color_distance_algorithm = next_algo(
+                    term.color_distance_algorithm, inp == '[')
+                please_wait(term)
+                dirty = True
+            if inp == ' ': pause = not pause
+            if inp.code in (term.KEY_TAB, term.KEY_BTAB):
+                term.number_of_colors = next_color(
+                    term.number_of_colors, inp.code==term.KEY_TAB)
+                please_wait(term)
+                dirty = True
+
+if __name__ == "__main__":
+    exit(main(blessed.Terminal()))

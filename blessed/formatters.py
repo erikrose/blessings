@@ -3,8 +3,7 @@
 import platform
 
 # local
-from blessed.color import COLOR_ALGORITHMS
-from blessed.colorspace import X11_COLORNAMES_TO_RGB, RGB_256TABLE
+from blessed.colorspace import X11_COLORNAMES_TO_RGB, CGA_COLORS
 
 # 3rd-party
 import six
@@ -14,8 +13,6 @@ if platform.system() == 'Windows':
     import jinxed as curses   # pylint: disable=import-error
 else:
     import curses
-
-CGA_COLORS = set(('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'))
 
 def _make_colors():
     """
@@ -381,12 +378,7 @@ def resolve_color(term, color):
 
     # downconvert X11 colors to CGA, EGA, or VGA color spaces
     if term.number_of_colors <= 256:
-        depth = term.number_of_colors
-        if depth == 88:
-            depth = 16
-        assert depth in (0, 8, 16, 256), (
-            'Unexpected number_of_colors', term.number_of_colors)
-        fmt_attr = vga_color_cap(rgb_downconvert(*rgb, depth))
+        fmt_attr = vga_color_cap(term.rgb_downconvert(*rgb))
         return FormattingString(fmt_attr, term.normal)
 
     # Modern 24-bit color terminals are written pretty basically.  The
@@ -445,39 +437,3 @@ def resolve_attribute(term, attr):
             return proxy
 
     return ParameterizingString(tparm_capseq, term.normal, attr)
-
-
-def rgb_downconvert(red, green, blue, depth, algorithm='cie94'):
-    """
-    Translate an RGB color to a color code in the configured color depth.
-
-    :arg red: RGB value of Red.
-    :arg green: RGB value of Green.
-    :arg blue: RGB value of Blue.
-    :rtype: int
-
-    For mapping of two sets of {r,g,b} color spaces.
-    """
-    # NOTE(jquast): Color distance is a complex problem, but for our
-    # perspective the HSV colorspace is the most meaningfully matching,
-    # especially for "far" distances, this RGB may not make good sense.
-    #
-    # We would prioritize Hue (color) above Saturation (tones) or Value
-    # (lightness), or maybe HVS, but because our output is RGB, so is our
-    # internal values, and thus our calculation for now.
-    #
-    # I hope to make a kind of demo application that might suggest the
-    # difference, if any, to help ascertain the trade-off.
-    # white(7) returns for depth 0.
-
-    get_distance = COLOR_ALGORITHMS[algorithm]
-    color_idx = 7
-    shortest_distance = None
-    for cmp_depth, cmp_rgb in enumerate(RGB_256TABLE):
-        cmp_distance = get_distance(cmp_rgb, (red, green, blue))
-        if shortest_distance is None or cmp_distance < shortest_distance:
-            shortest_distance = cmp_distance
-            color_idx = cmp_depth
-        if cmp_depth == depth:
-            break
-    return color_idx

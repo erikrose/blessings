@@ -11,6 +11,16 @@ References,
 """
 import collections
 
+__all__ = (
+    'CGA_COLORS',
+    'RGBColor',
+    'RGB_256TABLE',
+    'X11_COLORNAMES_TO_RGB',
+)
+
+CGA_COLORS = set(
+    ('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'))
+
 RGBColor = collections.namedtuple("RGBColor", ["red", "green", "blue"])
 
 #: X11 Color names to (XTerm-defined) RGB values from xorg-rgb/rgb.txt

@@ -180,7 +180,7 @@ def dist_cie94(rgb1, rgb2):
             (delta_h / (k_h * s_h)) ** 2)
 
 
-COLOR_ALGORITHMS = {'rgb': dist_rgb,
-                    'rgb-weighted': dist_rgb_weighted,
-                    'cie76': dist_cie76,
-                    'cie94': dist_cie94}
+COLOR_DISTANCE_ALGORITHMS = {'rgb': dist_rgb,
+                             'rgb-weighted': dist_rgb_weighted,
+                             'cie76': dist_cie76,
+                             'cie94': dist_cie94}

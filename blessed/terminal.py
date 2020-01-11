@@ -39,7 +39,6 @@ from .formatters import (ParameterizingString,
                          resolve_capability,
                          resolve_attribute,
                          FormattingString,
-                         rgb_downconvert,
                          COLORS, 
                          )
 
@@ -61,6 +60,9 @@ from .keyboard import (get_keyboard_sequences,
                        _read_until,
                        _time_left,
                        )
+
+from .color import COLOR_DISTANCE_ALGORITHMS
+from .colorspace import RGB_256TABLE
 
 if platform.system() == 'Windows':
     import jinxed as curses  # pylint: disable=import-error
@@ -138,6 +140,11 @@ class Terminal(object):
         terminal_answerback='u8',
         terminal_enquire='u9',
     )
+
+    #: Color distance algorithm used by :meth:`rgb_downconvert`.
+    #: The slowest, but most accurate, 'cie94', is default. Other
+    #: available options are 'rgb', 'rgb-weighted', and 'cie76'.
+    color_distance_algorithm = 'cie94'
 
     def __init__(self, kind=None, stream=None, force_styling=False):
         """
@@ -673,7 +680,7 @@ class Terminal(object):
             return FormattingString(fmt_attr, self.normal)
 
         # color by approximation to 256 or 16-color terminals
-        color_idx = rgb_downconvert(red, green, blue, depth=self.number_of_colors)
+        color_idx = self.rgb_downconvert(red, green, blue)
         return FormattingString(self._foreground_color(color_idx), self.normal)
 
     @property
@@ -694,8 +701,34 @@ class Terminal(object):
             fmt_attr = u'\x1b[48;2;{0};{1};{2}m'.format(red, green, blue)
             return FormattingString(fmt_attr, self.normal)
 
-        color_idx = rgb_downconvert(red, green, blue, depth=self.number_of_colors)
+        color_idx = self.rgb_downconvert(red, green, blue)
         return FormattingString(self._background_color(color_idx), self.normal)
+
+    def rgb_downconvert(self, red, green, blue):
+        """
+        Translate an RGB color to a color code of the terminal's color depth.
+
+        :arg int red: RGB value of Red (0-255).
+        :arg int green: RGB value of Green (0-255).
+        :arg int blue: RGB value of Blue (0-255).
+        :rtype: int """
+        # Though pre-computing all 1 << 24 options is memory-intensive, a pre-computed
+        # "k-d tree" of 256 (x,y,z) vectors of a colorspace in 3 dimensions, such as a
+        # cone of HSV, or simply 255x255x255 RGB square, any given rgb value is just a
+        # nearest-neighbor search of 256 points, which k-d should be much faster by
+        # sub-dividing / culling search points, rather than our "search all 256 points
+        # always" approach.
+        fn_distance = COLOR_DISTANCE_ALGORITHMS[self.color_distance_algorithm]
+        color_idx = 7
+        shortest_distance = None
+        for cmp_depth, cmp_rgb in enumerate(RGB_256TABLE):
+            cmp_distance = fn_distance(cmp_rgb, (red, green, blue))
+            if shortest_distance is None or cmp_distance < shortest_distance:
+                shortest_distance = cmp_distance
+                color_idx = cmp_depth
+            if cmp_depth >= self.number_of_colors:
+                break
+        return color_idx
 
     @property
     def normal(self):
