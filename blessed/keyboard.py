@@ -372,7 +372,7 @@ DEFAULT_SEQUENCE_MIXIN = (
     (six.unichr(8), curses.KEY_BACKSPACE),
     (six.unichr(9), curses.KEY_TAB),
     (six.unichr(27), curses.KEY_EXIT),
-    (six.unichr(127), curses.KEY_DC),
+    (six.unichr(127), curses.KEY_BACKSPACE),
 
     (u"\x1b[A", curses.KEY_UP),
     (u"\x1b[B", curses.KEY_DOWN),
