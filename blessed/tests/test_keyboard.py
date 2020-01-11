@@ -880,7 +880,7 @@ def test_keypad_mixins_and_aliases():
         assert resolve(unichr(8)).name == "KEY_BACKSPACE"
         assert resolve(unichr(9)).name == "KEY_TAB"
         assert resolve(unichr(27)).name == "KEY_ESCAPE"
-        assert resolve(unichr(127)).name == "KEY_DELETE"
+        assert resolve(unichr(127)).name == "KEY_BACKSPACE"
         assert resolve(u"\x1b[A").name == "KEY_UP"
         assert resolve(u"\x1b[B").name == "KEY_DOWN"
         assert resolve(u"\x1b[C").name == "KEY_RIGHT"
