@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# std imports
 import math
 import colorsys
 import collections
@@ -6,7 +7,10 @@ import contextlib
 import timeit
 import time
 import sys
+
+# local
 import blessed
+
 scale_255 = lambda val: int(round(val * 255))
 
 def rgb_at_xy(term, x, y, t):
@@ -55,8 +59,7 @@ def paused(term):
     sys.stdout.flush()
 
 def next_algo(algo, forward):
-    from blessed.color import COLOR_DISTANCE_ALGORITHMS
-    algos = tuple(sorted(COLOR_DISTANCE_ALGORITHMS))
+    algos = tuple(sorted(blessed.color.COLOR_DISTANCE_ALGORITHMS))
     next_index = algos.index(algo) + (1 if forward else -1)
     if next_index == len(algos):
         next_index = 0

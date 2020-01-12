@@ -1,6 +1,9 @@
 Version History
 ===============
 1.17
+  * bugfix: Context Managers, :meth:`~.Terminal.fullscreen`,
+    :meth:`~.Terminal.hidden_cursor`, and :meth:`~Terminal.keypad`
+    now flush the stream after writing their sequences.
   * bugfix: ``chr(127)``, ``\x7f`` has changed from keycode ``term.DELETE``
     to ``term.BACKSPACE``, :ghissue:115` by :ghuser:`jwezel`.
   * deprecated: "compoundable" with ``superscript``, ``subscript``, or

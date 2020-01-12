@@ -39,7 +39,7 @@ from .formatters import (ParameterizingString,
                          resolve_capability,
                          resolve_attribute,
                          FormattingString,
-                         COLORS, 
+                         COLORS,
                          )
 
 from ._capabilities import (
@@ -140,11 +140,6 @@ class Terminal(object):
         terminal_answerback='u8',
         terminal_enquire='u9',
     )
-
-    #: Color distance algorithm used by :meth:`rgb_downconvert`.
-    #: The slowest, but most accurate, 'cie94', is default. Other
-    #: available options are 'rgb', 'rgb-weighted', and 'cie76'.
-    color_distance_algorithm = 'cie94'
 
     def __init__(self, kind=None, stream=None, force_styling=False):
         """
@@ -252,6 +247,7 @@ class Terminal(object):
         self.__init__keycodes()
 
     def __init__color_capabilities(self):
+        self._color_distance_algorithm = 'cie94'
         if not self.does_styling:
             self.number_of_colors = 0
         elif platform.system() == 'Windows' or (
@@ -632,10 +628,12 @@ class Terminal(object):
            entered at a time.
         """
         self.stream.write(self.enter_fullscreen)
+        self.stream.flush()
         try:
             yield
         finally:
             self.stream.write(self.exit_fullscreen)
+            self.stream.flush()
 
     @contextlib.contextmanager
     def hidden_cursor(self):
@@ -649,10 +647,12 @@ class Terminal(object):
             should be entered at a time.
         """
         self.stream.write(self.hide_cursor)
+        self.stream.flush()
         try:
             yield
         finally:
             self.stream.write(self.normal_cursor)
+            self.stream.flush()
 
     @property
     def color(self):
@@ -774,6 +774,24 @@ class Terminal(object):
         assert value in (0, 4, 8, 16, 256, 1 << 24)
         self._number_of_colors = value
         self.__clear_color_capabilities()
+
+
+    @property
+    def color_distance_algorithm(self):
+        """
+        Color distance algorithm used by :meth:`rgb_downconvert`.
+
+        The slowest, but most accurate, 'cie94', is default. Other
+        available options are 'rgb', 'rgb-weighted', and 'cie76'.
+        """
+        return self._color_distance_algorithm
+
+    @color_distance_algorithm.setter
+    def color_distance_algorithm(self, value):
+        assert value in COLOR_DISTANCE_ALGORITHMS
+        self._color_distance_algorithm = value
+        self.__clear_color_capabilities()
+
 
     @property
     def _foreground_color(self):
@@ -1145,9 +1163,11 @@ class Terminal(object):
         """
         try:
             self.stream.write(self.smkx)
+            self.stream.flush()
             yield
         finally:
             self.stream.write(self.rmkx)
+            self.stream.flush()
 
     def inkey(self, timeout=None, esc_delay=0.35, **_kwargs):
         """
