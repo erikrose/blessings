@@ -1,22 +1,46 @@
-.. image:: https://img.shields.io/travis/jquast/blessed/master.svg
+| |docs| |travis| |coveralls|
+| |pypi| |downloads| |gitter|
+| |linux| |windows| |mac| |bsd|
+
+.. |docs| image:: https://img.shields.io/readthedocs/blessed.svg?logo=read-the-docs
+    :target: https://blessed.readthedocs.org
+    :alt: Documentation Status
+
+.. |travis| image:: https://img.shields.io/travis/jquast/blessed/master.svg?logo=travis
     :alt: Travis Continuous Integration
     :target: https://travis-ci.org/jquast/blessed/
 
-.. image:: https://coveralls.io/repos/jquast/blessed/badge.svg?branch=master&service=github
+.. |coveralls| image:: https://img.shields.io/coveralls/github/jquast/blessed/master?logo=coveralls
     :alt: Coveralls Code Coverage
     :target: https://coveralls.io/github/jquast/blessed?branch=master
 
-.. image:: https://img.shields.io/pypi/v/blessed.svg
+.. |pypi| image:: https://img.shields.io/pypi/v/blessed.svg?logo=pypi
     :alt: Latest Version
     :target: https://pypi.python.org/pypi/blessed
 
-.. image:: https://img.shields.io/pypi/dm/blessed.svg
+.. |downloads| image:: https://img.shields.io/pypi/dm/blessed.svg?logo=pypi
     :alt: Downloads
     :target: https://pypi.python.org/pypi/blessed
 
-.. image:: https://badges.gitter.im/Join%20Chat.svg
+.. |gitter| image:: https://img.shields.io/badge/gitter-Join%20Chat-mediumaquamarine?logo=gitter
     :alt: Join Chat
     :target: https://gitter.im/jquast/blessed
+
+.. |linux| image:: https://img.shields.io/badge/Linux-yes-success?logo=linux
+    :alt: Linux supported
+    :target: https://pypi.python.org/pypi/enlighten
+
+.. |windows| image:: https://img.shields.io/badge/Windows-NEW-success?logo=windows
+    :alt: Windows supported
+    :target: https://pypi.python.org/pypi/enlighten
+
+.. |mac| image:: https://img.shields.io/badge/MacOS-yes-success?logo=apple
+    :alt: MacOS supported
+    :target: https://pypi.python.org/pypi/enlighten
+
+.. |bsd| image:: https://img.shields.io/badge/BSD-yes-success?logo=freebsd
+    :alt: BSD supported
+    :target: https://pypi.python.org/pypi/enlighten
 
 Introduction
 ============
