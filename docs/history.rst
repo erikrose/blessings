@@ -18,6 +18,8 @@ Version History
     24-bit color codes instead.
   * deprecated: additional key names, such as ``KEY_TAB``, are no longer "injected" into
     the curses module namespace.
+  * deprecated: :func:`curses.setupterm` is now called with :attr:`os.devnull`
+    as the file descriptor, let us know if this causes any issues. :ghissue:`59`.
 
 1.16
   * introduced: Windows support?! :ghissue:`110` by :ghuser:`avylove`.

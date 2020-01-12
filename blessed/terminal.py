@@ -212,15 +212,9 @@ class Terminal(object):
             self._kind = kind or os.environ.get('TERM', 'unknown')
 
         if self.does_styling:
-            # Initialize curses (call setupterm).
-            #
-            # Make things like tigetstr() work. Explicit args make setupterm()
-            # work even when -s is passed to nosetests. Lean toward sending
-            # init sequences to the stream if it has a file descriptor, and
-            # send them to stdout as a fallback, since they have to go
-            # somewhere.
+            # Initialize curses (call setupterm), so things like tigetstr() work.
             try:
-                curses.setupterm(self._kind, self._init_descriptor)
+                curses.setupterm(kind, open(os.devnull).fileno())
             except curses.error as err:
                 warnings.warn('Failed to setupterm(kind={0!r}): {1}'
                               .format(self._kind, err))
