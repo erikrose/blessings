@@ -118,6 +118,12 @@ def get_keyboard_codes():
     """
     keycodes = OrderedDict(get_curses_keycodes())
     keycodes.update(CURSES_KEYCODE_OVERRIDE_MIXIN)
+    # merge _CURSES_KEYCODE_ADDINS added to our module space
+    keycodes.update({
+        name: value
+        for name, value in globals().items()
+        if name.startswith('KEY_')
+    })
 
     # invert dictionary (key, values) => (values, key), preferring the
     # last-most inserted value ('KEY_DELETE' over 'KEY_DC').
@@ -315,6 +321,23 @@ def _read_until(term, pattern, timeout):
     return match, buf
 
 
+#: Though we may determine *keynames* and codes for keyboard input that
+#: generate multibyte sequences, it is also especially useful to aliases
+#: a few basic ASCII characters such as ``KEY_TAB`` instead of ``u'\t'`` for
+#: uniformity.
+#:
+#: Furthermore, many key-names for application keys enabled only by context
+#: manager :meth:`~.Terminal.keypad` are surprisingly absent.  We inject them
+#: here directly into the curses module.
+_CURSES_KEYCODE_ADDINS = ('TAB', 'KP_MULTIPLY', 'KP_ADD', 'KP_SEPARATOR', 'KP_SUBTRACT', 'KP_DECIMAL',
+                         'KP_DIVIDE', 'KP_EQUAL', 'KP_0', 'KP_1', 'KP_2', 'KP_3', 'KP_4', 'KP_5', 'KP_6',
+                         'KP_7', 'KP_8', 'KP_9')
+
+_lastval = max(get_curses_keycodes().values())
+for keycode_name in _CURSES_KEYCODE_ADDINS:
+    _lastval += 1
+    globals()['KEY_' + keycode_name] = _lastval
+
 #: In a perfect world, terminal emulators would always send exactly what
 #: the terminfo(5) capability database plans for them, accordingly by the
 #: value of the ``TERM`` name they declare.
@@ -336,7 +359,7 @@ DEFAULT_SEQUENCE_MIXIN = (
     (six.unichr(10), curses.KEY_ENTER),
     (six.unichr(13), curses.KEY_ENTER),
     (six.unichr(8), curses.KEY_BACKSPACE),
-    (six.unichr(9), curses.KEY_TAB),
+    (six.unichr(9), KEY_TAB),
     (six.unichr(27), curses.KEY_EXIT),
     (six.unichr(127), curses.KEY_BACKSPACE),
 
@@ -356,24 +379,24 @@ DEFAULT_SEQUENCE_MIXIN = (
     # http://fossies.org/linux/rxvt/doc/rxvtRef.html#KeyCodes
     #
     # keypad, numlock on
-    (u"\x1bOM", curses.KEY_ENTER),         # return
-    (u"\x1bOj", curses.KEY_KP_MULTIPLY),   # *
-    (u"\x1bOk", curses.KEY_KP_ADD),        # +
-    (u"\x1bOl", curses.KEY_KP_SEPARATOR),  # ,
-    (u"\x1bOm", curses.KEY_KP_SUBTRACT),   # -
-    (u"\x1bOn", curses.KEY_KP_DECIMAL),    # .
-    (u"\x1bOo", curses.KEY_KP_DIVIDE),     # /
-    (u"\x1bOX", curses.KEY_KP_EQUAL),      # =
-    (u"\x1bOp", curses.KEY_KP_0),          # 0
-    (u"\x1bOq", curses.KEY_KP_1),          # 1
-    (u"\x1bOr", curses.KEY_KP_2),          # 2
-    (u"\x1bOs", curses.KEY_KP_3),          # 3
-    (u"\x1bOt", curses.KEY_KP_4),          # 4
-    (u"\x1bOu", curses.KEY_KP_5),          # 5
-    (u"\x1bOv", curses.KEY_KP_6),          # 6
-    (u"\x1bOw", curses.KEY_KP_7),          # 7
-    (u"\x1bOx", curses.KEY_KP_8),          # 8
-    (u"\x1bOy", curses.KEY_KP_9),          # 9
+    (u"\x1bOM", curses.KEY_ENTER),  # return
+    (u"\x1bOj", KEY_KP_MULTIPLY),   # *
+    (u"\x1bOk", KEY_KP_ADD),        # +
+    (u"\x1bOl", KEY_KP_SEPARATOR),  # ,
+    (u"\x1bOm", KEY_KP_SUBTRACT),   # -
+    (u"\x1bOn", KEY_KP_DECIMAL),    # .
+    (u"\x1bOo", KEY_KP_DIVIDE),     # /
+    (u"\x1bOX", KEY_KP_EQUAL),      # =
+    (u"\x1bOp", KEY_KP_0),          # 0
+    (u"\x1bOq", KEY_KP_1),          # 1
+    (u"\x1bOr", KEY_KP_2),          # 2
+    (u"\x1bOs", KEY_KP_3),          # 3
+    (u"\x1bOt", KEY_KP_4),          # 4
+    (u"\x1bOu", KEY_KP_5),          # 5
+    (u"\x1bOv", KEY_KP_6),          # 6
+    (u"\x1bOw", KEY_KP_7),          # 7
+    (u"\x1bOx", KEY_KP_8),          # 8
+    (u"\x1bOy", KEY_KP_9),          # 9
 
     # keypad, numlock off
     (u"\x1b[1~", curses.KEY_FIND),         # find

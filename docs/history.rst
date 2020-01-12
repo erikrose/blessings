@@ -1,28 +1,35 @@
 Version History
 ===============
 1.17
+  * introduced: 24-bit color support, detected by ``term.number_of_colors == 1 << 24``,
+    and 24-bit color foreground method :meth:`~Terminal.color_rgb` and background method
+    :meth:`~Terminal.on_color_rgb`.
   * bugfix: Context Managers, :meth:`~.Terminal.fullscreen`,
     :meth:`~.Terminal.hidden_cursor`, and :meth:`~Terminal.keypad`
     now flush the stream after writing their sequences.
-  * bugfix: ``chr(127)``, ``\x7f`` has changed from keycode ``term.DELETE``
-    to ``term.BACKSPACE``, :ghissue:115` by :ghuser:`jwezel`.
-  * deprecated: "compoundable" with ``superscript``, ``subscript``, or
-    ``shadow``, or ``dim``, such as in phrase ``Terminal.blue_subscript('a')``.
-    Use Unicode text or 256 or 24-bit color codes instead.
+  * bugfix: ``chr(127)``, ``\x7f`` has changed from keycode ``term.DELETE`` to the more
+    common match, ``term.BACKSPACE``, :ghissue:115` by :ghuser:`jwezel`.
+  * deprecated: the direct curses ``move()`` capability is no longer recommended,
+    suggest to use :meth:`~.Terminal.move_xy()`, which matches the return value of
+    :meth:`~.Terminal.get_location`.
+  * deprecated: ``superscript``, ``subscript``, ``shadow``, and ``dim`` are no
+    longer "compoundable" with colors, such as in phrase ``Terminal.blue_subscript('a')``.
+    These attributes are not typically supported, anyway.  Use Unicode text or 256 or
+    24-bit color codes instead.
+  * deprecated: additional key names, such as ``KEY_TAB``, are no longer "injected" into
+    the curses module namespace.
 
 1.16
-  * Windows support?! :ghissue:`110` by :ghuser:`avylove`.
+  * introduced: Windows support?! :ghissue:`110` by :ghuser:`avylove`.
 
 1.15
-  * disable timing integration tests for keyboard routines.
+  * enhancement: disable timing integration tests for keyboard routines.
 
     They work perfectly fine for regression testing for contributing
     developers, but people run our tests on build farms and open issues when
     they fail. So we comment out these useful tests. :ghissue:`100`.
-
-  * Support python 3.7. :ghissue:`102`.
-
-  * Various fixes to test automation :ghissue:`108`
+  * enhancement: Support python 3.7. :ghissue:`102`.
+  * enhancement: Various fixes to test automation :ghissue:`108`
 
 1.14
   * bugfix: :meth:`~.Terminal.wrap` misbehaved for text containing newlines,

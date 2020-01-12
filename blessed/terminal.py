@@ -111,7 +111,7 @@ class Terminal(object):
         enter_fullscreen='smcup',
         exit_fullscreen='rmcup',
         move='cup',
-        position='cup',
+        move_yx='cup',
         move_x='hpa',
         move_y='vpa',
         move_left='cub1',
@@ -120,7 +120,7 @@ class Terminal(object):
         move_down='cud1',
         hide_cursor='civis',
         normal_cursor='cnorm',
-        reset_colors='op',  # oc doesn't work on my OS X terminal.
+        reset_colors='op',
         normal='sgr0',
         reverse='rev',
         italic='sitm',
