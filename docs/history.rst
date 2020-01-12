@@ -1,5 +1,15 @@
 Version History
 ===============
+1.17
+  * bugfix: Context Managers, :meth:`~.Terminal.fullscreen`,
+    :meth:`~.Terminal.hidden_cursor`, and :meth:`~Terminal.keypad`
+    now flush the stream after writing their sequences.
+  * bugfix: ``chr(127)``, ``\x7f`` has changed from keycode ``term.DELETE``
+    to ``term.BACKSPACE``, :ghissue:115` by :ghuser:`jwezel`.
+  * deprecated: "compoundable" with ``superscript``, ``subscript``, or
+    ``shadow``, or ``dim``, such as in phrase ``Terminal.blue_subscript('a')``.
+    Use Unicode text or 256 or 24-bit color codes instead.
+
 1.16
   * Windows support?! :ghissue:`110` by :ghuser:`avylove`.
 

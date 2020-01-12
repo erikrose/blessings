@@ -9,6 +9,15 @@ you from several considerations shared here.
 8 and 16 colors
 ---------------
 
+XXX
+
+https://en.wikipedia.org/wiki/ANSI_escape_code#3/4_bit
+
+As a curses library, I think we should safely assume to map our colorspace
+to rgb values that match xterm.
+
+XXX
+
 Where 8 and 16 colors are used, they should be assumed to be the
 `CGA Color Palette`_.  Though there is no terminal standard that proclaims
 that the CGA colors are used, their values are the best approximations

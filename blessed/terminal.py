@@ -38,6 +38,8 @@ from .formatters import (ParameterizingString,
                          NullCallableString,
                          resolve_capability,
                          resolve_attribute,
+                         FormattingString,
+                         COLORS,
                          )
 
 from ._capabilities import (
@@ -58,6 +60,9 @@ from .keyboard import (get_keyboard_sequences,
                        _read_until,
                        _time_left,
                        )
+
+from .color import COLOR_DISTANCE_ALGORITHMS
+from .colorspace import RGB_256TABLE
 
 if platform.system() == 'Windows':
     import jinxed as curses  # pylint: disable=import-error
@@ -100,14 +105,13 @@ class Terminal(object):
     _sugar = dict(
         save='sc',
         restore='rc',
-        # 'clear' clears the whole screen.
         clear_eol='el',
         clear_bol='el1',
         clear_eos='ed',
-        position='cup',  # deprecated
         enter_fullscreen='smcup',
         exit_fullscreen='rmcup',
         move='cup',
+        position='cup',
         move_x='hpa',
         move_y='vpa',
         move_left='cub1',
@@ -226,6 +230,11 @@ class Terminal(object):
                 if _CUR_TERM is None or self._kind == _CUR_TERM:
                     _CUR_TERM = self._kind
                 else:
+                    # termcap 'kind' is immutable in a python process! Once
+                    # initialized by setupterm, it is unsupported by the
+                    # 'curses' module to change the terminal type again. If you
+                    # are a downstream developer and you need this
+                    # functionality, consider sub-processing, instead.
                     warnings.warn(
                         'A terminal of kind "%s" has been requested; due to an'
                         ' internal python curses bug, terminal capabilities'
@@ -233,9 +242,24 @@ class Terminal(object):
                         ' returned for the remainder of this process.' % (
                             self._kind, _CUR_TERM,))
 
-        # initialize capabilities and terminal keycodes database
+        self.__init__color_capabilities()
         self.__init__capabilities()
         self.__init__keycodes()
+
+    def __init__color_capabilities(self):
+        self._color_distance_algorithm = 'cie94'
+        if not self.does_styling:
+            self.number_of_colors = 0
+        elif platform.system() == 'Windows' or (
+            os.environ.get('COLORTERM') in ('truecolor', '24bit')
+        ):
+            self.number_of_colors = 1 << 24
+        else:
+            self.number_of_colors = max(0, curses.tigetnum('colors') or -1)
+
+    def __clear_color_capabilities(self):
+        for cached_color_cap in set(dir(self)) & COLORS:
+            delattr(self, cached_color_cap)
 
     def __init__capabilities(self):
         # important that we lay these in their ordered direction, so that our
@@ -326,7 +350,7 @@ class Terminal(object):
 
             >>> term.bold_blink_red_on_green("merry x-mas!")
 
-        For a parametrized capability such as ``move`` (or ``cup``), pass the
+        For a parameterized capability such as ``move`` (or ``cup``), pass the
         parameters as positional arguments::
 
             >>> term.move(line, column)
@@ -337,9 +361,12 @@ class Terminal(object):
         """
         if not self.does_styling:
             return NullCallableString()
+        # Fetch the missing 'attribute' into some kind of curses-resolved
+        # capability, and cache by attaching to this Terminal class instance.
+        #
+        # Note that this will prevent future calls to __getattr__(), but
+        # that's precisely the idea of the cache!
         val = resolve_attribute(self, attr)
-        # Cache capability resolution: note this will prevent this
-        # __getattr__ method for being called again.  That's the idea!
         setattr(self, attr, val)
         return val
 
@@ -601,10 +628,12 @@ class Terminal(object):
            entered at a time.
         """
         self.stream.write(self.enter_fullscreen)
+        self.stream.flush()
         try:
             yield
         finally:
             self.stream.write(self.exit_fullscreen)
+            self.stream.flush()
 
     @contextlib.contextmanager
     def hidden_cursor(self):
@@ -618,10 +647,12 @@ class Terminal(object):
             should be entered at a time.
         """
         self.stream.write(self.hide_cursor)
+        self.stream.flush()
         try:
             yield
         finally:
             self.stream.write(self.normal_cursor)
+            self.stream.flush()
 
     @property
     def color(self):
@@ -642,6 +673,16 @@ class Terminal(object):
         return ParameterizingString(self._foreground_color,
                                     self.normal, 'color')
 
+    def color_rgb(self, red, green, blue):
+        if self.number_of_colors == 1 << 24:
+            # "truecolor" 24-bit
+            fmt_attr = u'\x1b[38;2;{0};{1};{2}m'.format(red, green, blue)
+            return FormattingString(fmt_attr, self.normal)
+
+        # color by approximation to 256 or 16-color terminals
+        color_idx = self.rgb_downconvert(red, green, blue)
+        return FormattingString(self._foreground_color(color_idx), self.normal)
+
     @property
     def on_color(self):
         """
@@ -654,6 +695,40 @@ class Terminal(object):
             return NullCallableString()
         return ParameterizingString(self._background_color,
                                     self.normal, 'on_color')
+
+    def on_color_rgb(self, red, green, blue):
+        if self.number_of_colors == 1 << 24:
+            fmt_attr = u'\x1b[48;2;{0};{1};{2}m'.format(red, green, blue)
+            return FormattingString(fmt_attr, self.normal)
+
+        color_idx = self.rgb_downconvert(red, green, blue)
+        return FormattingString(self._background_color(color_idx), self.normal)
+
+    def rgb_downconvert(self, red, green, blue):
+        """
+        Translate an RGB color to a color code of the terminal's color depth.
+
+        :arg int red: RGB value of Red (0-255).
+        :arg int green: RGB value of Green (0-255).
+        :arg int blue: RGB value of Blue (0-255).
+        :rtype: int """
+        # Though pre-computing all 1 << 24 options is memory-intensive, a pre-computed
+        # "k-d tree" of 256 (x,y,z) vectors of a colorspace in 3 dimensions, such as a
+        # cone of HSV, or simply 255x255x255 RGB square, any given rgb value is just a
+        # nearest-neighbor search of 256 points, which k-d should be much faster by
+        # sub-dividing / culling search points, rather than our "search all 256 points
+        # always" approach.
+        fn_distance = COLOR_DISTANCE_ALGORITHMS[self.color_distance_algorithm]
+        color_idx = 7
+        shortest_distance = None
+        for cmp_depth, cmp_rgb in enumerate(RGB_256TABLE):
+            cmp_distance = fn_distance(cmp_rgb, (red, green, blue))
+            if shortest_distance is None or cmp_distance < shortest_distance:
+                shortest_distance = cmp_distance
+                color_idx = cmp_depth
+            if cmp_depth >= self.number_of_colors:
+                break
+        return color_idx
 
     @property
     def normal(self):
@@ -685,25 +760,38 @@ class Terminal(object):
     @property
     def number_of_colors(self):
         """
-        Read-only property: number of colors supported by terminal.
+        Number of colors supported by terminal.
 
-        Common values are 0, 8, 16, 88, and 256.
+        Common return values are 0, 8, 16, 256, or 1 << 24.
 
-        Most commonly, this may be used to test whether the terminal supports
-        colors. Though the underlying capability returns -1 when there is no
-        color support, we return 0. This lets you test more Pythonically::
-
-            if term.number_of_colors:
-                ...
+        This may be used to test whether the terminal supports colors,
+        and at what depth, if that's a concern.
         """
-        # This is actually the only remotely useful numeric capability. We
-        # don't name it after the underlying capability, because we deviate
-        # slightly from its behavior, and we might someday wish to give direct
-        # access to it.
+        return self._number_of_colors
 
-        # trim value to 0, as tigetnum('colors') returns -1 if no support,
-        # and -2 if no such capability.
-        return max(0, self.does_styling and curses.tigetnum('colors') or -1)
+    @number_of_colors.setter
+    def number_of_colors(self, value):
+        assert value in (0, 4, 8, 16, 256, 1 << 24)
+        self._number_of_colors = value
+        self.__clear_color_capabilities()
+
+
+    @property
+    def color_distance_algorithm(self):
+        """
+        Color distance algorithm used by :meth:`rgb_downconvert`.
+
+        The slowest, but most accurate, 'cie94', is default. Other
+        available options are 'rgb', 'rgb-weighted', and 'cie76'.
+        """
+        return self._color_distance_algorithm
+
+    @color_distance_algorithm.setter
+    def color_distance_algorithm(self, value):
+        assert value in COLOR_DISTANCE_ALGORITHMS
+        self._color_distance_algorithm = value
+        self.__clear_color_capabilities()
+
 
     @property
     def _foreground_color(self):
@@ -1075,9 +1163,11 @@ class Terminal(object):
         """
         try:
             self.stream.write(self.smkx)
+            self.stream.flush()
             yield
         finally:
             self.stream.write(self.rmkx)
+            self.stream.flush()
 
     def inkey(self, timeout=None, esc_delay=0.35, **_kwargs):
         """

@@ -59,7 +59,7 @@ for more complex strings::
 Capabilities
 ~~~~~~~~~~~~
 
-The basic capabilities supported by most terminals are:
+Capabilities supported by most terminals are:
 
 ``bold``
   Turn on 'extra bright' mode.
@@ -69,37 +69,8 @@ The basic capabilities supported by most terminals are:
   Turn on blinking.
 ``normal``
   Reset attributes to default.
-
-The less commonly supported capabilities:
-
-``dim``
-  Enable half-bright mode.
 ``underline``
   Enable underline mode.
-``no_underline``
-  Exit underline mode.
-``italic``
-  Enable italicized text.
-``no_italic``
-  Exit italics.
-``shadow``
-  Enable shadow text mode (rare).
-``no_shadow``
-  Exit shadow text mode.
-``standout``
-  Enable standout mode (often, an alias for ``reverse``).
-``no_standout``
-  Exit standout mode.
-``subscript``
-  Enable subscript mode.
-``no_subscript``
-  Exit subscript mode.
-``superscript``
-  Enable superscript mode.
-``no_superscript``
-  Exit superscript mode.
-``flash``
-  Visual bell, flashes the screen.
 
 Note that, while the inverse of *underline* is *no_underline*, the only way
 to turn off *bold* or *reverse* is *normal*, which also cancels any custom
@@ -108,12 +79,19 @@ colors.
 Many of these are aliases, their true capability names (such as 'smul' for
 'begin underline mode') may still be used. Any capability in the `terminfo(5)`_
 manual, under column **Cap-name**, may be used as an attribute of a
-:class:`~.Terminal` instance. If it is not a supported capability, or a non-tty
-is used as an output stream, an empty string is returned.
-
+:class:`~.Terminal` instance. If it is not a supported capability for the
+current terminal, or a non-tty is used as output stream, an empty string is
+always returned.
 
 Colors
 ~~~~~~
+
+XXX TODO XXX
+
+all X11 colors are available,
+rgb(int, int, int),
+truecolor is automatically detected,
+or, downsampled to 256 or 16, 8, etc colorspace.
 
 Color terminals are capable of at least 8 basic colors.
 
@@ -181,7 +159,7 @@ on amber or green* on monochrome terminals. Whereas the more declarative
 formatter *black_on_green* would remain colorless.
 
 .. note:: On most color terminals, *bright_black* is not invisible -- it is
-    actually a very dark shade of gray!
+    actually a very dark shade of grey!
 
 Compound Formatting
 ~~~~~~~~~~~~~~~~~~~
