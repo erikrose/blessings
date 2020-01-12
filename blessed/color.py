@@ -11,6 +11,11 @@ References,
 
 from math import atan2, cos, exp, sin, sqrt
 
+try:
+    from functools import lru_cache
+except ImportError:
+    from backports.functools_lru_cache import lru_cache
+
 
 def rgb_to_xyz(red, green, blue):
     """
@@ -71,6 +76,7 @@ def xyz_to_lab(x_val, y_val, z_val):
     return cie_l, cie_a, cie_b
 
 
+@lru_cache(maxsize=256)
 def rgb_to_lab(red, green, blue):
     """
     Convert RGB color to CIE-Lab color.
