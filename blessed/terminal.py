@@ -592,8 +592,19 @@ class Terminal(object):
 
             if match:
                 # return matching sequence response, the cursor location.
-                row, col = match.groups()
-                return int(row), int(col)
+                row, col = (int(val) for val in match.groups())
+
+                # Per https://invisible-island.net/ncurses/terminfo.src.html
+                # The cursor position report (<u6>) string must contain two
+                # scanf(3)-style %d format elements.  The first of these must
+                # correspond to the Y coordinate and the second to the %d.
+                # If the string contains the sequence %i, it is taken as an
+                # instruction to decrement each value after reading it (this is
+                # the inverse sense from the cup string).
+                if '%i' in self.cursor_report:
+                    row -= 1
+                    col -= 1
+                return row, col
 
         finally:
             if ctx is not None:
