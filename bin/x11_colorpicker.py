@@ -41,15 +41,15 @@ def next_color(color, forward):
 
 def main():
     term = blessed.Terminal()
-    with term.cbreak(), term.hidden_cursor():
+    with term.cbreak(), term.hidden_cursor(), term.fullscreen():
         idx = len(hsv_sorted_colors) // 2
         dirty = True
         while True:
             if dirty:
                 outp = render(term, idx)
-                with term.hidden_cursor():
-                    print(outp, end='', flush=True)
-            inp = term.inkey()
+                print(outp, end='', flush=True)
+            with term.hidden_cursor():
+                inp = term.inkey()
             dirty = True
             if inp.code == term.KEY_LEFT or inp == 'h':
                 idx -= 1
