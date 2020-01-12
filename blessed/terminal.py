@@ -241,7 +241,7 @@ class Terminal(object):
         self.__init__keycodes()
 
     def __init__color_capabilities(self):
-        self._color_distance_algorithm = 'cie94'
+        self._color_distance_algorithm = 'cie2000'
         if not self.does_styling:
             self.number_of_colors = 0
         elif platform.system() == 'Windows' or (
@@ -775,8 +775,8 @@ class Terminal(object):
         """
         Color distance algorithm used by :meth:`rgb_downconvert`.
 
-        The slowest, but most accurate, 'cie94', is default. Other
-        available options are 'rgb', 'rgb-weighted', and 'cie76'.
+        The slowest, but most accurate, 'cie2000', is default. Other
+        available options are 'rgb', 'rgb-weighted', 'cie76', and 'cie94'.
         """
         return self._color_distance_algorithm
 
