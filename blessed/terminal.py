@@ -1181,9 +1181,6 @@ class Terminal(object):
         :rtype: :class:`~.Keystroke`.
         :returns: :class:`~.Keystroke`, which may be empty (``u''``) if
            ``timeout`` is specified and keystroke is not received.
-        :raises RuntimeError: When :attr:`stream` is not a terminal, having
-            no keyboard attached, a ``timeout`` value of ``None`` would block
-            indefinitely, prevented by by raising an exception.
 
         .. note:: When used without the context manager :meth:`cbreak`, or
             :meth:`raw`, :obj:`sys.__stdin__` remains line-buffered, and this
@@ -1196,10 +1193,6 @@ class Terminal(object):
         if _kwargs:
             raise TypeError('inkey() got unexpected keyword arguments {!r}'
                             .format(_kwargs))
-        if timeout is None and self._keyboard_fd is None:
-            raise RuntimeError(
-                'Terminal.inkey() called, but no terminal with keyboard '
-                'attached to process.  This call would hang forever.')
 
         resolve = functools.partial(resolve_sequence,
                                     mapper=self._keymap,

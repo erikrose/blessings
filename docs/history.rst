@@ -20,6 +20,10 @@ Version History
     the curses module namespace.
   * deprecated: :func:`curses.setupterm` is now called with :attr:`os.devnull`
     as the file descriptor, let us know if this causes any issues. :ghissue:`59`.
+  * deprecated: :meth:`~Terminal.inkey` no longer raises RuntimeError when
+    :attr:`~Terminal.stream` is not a terminal, programs using
+    :meth:`~Terminal.inkey` to block indefinitely if a keyboard is not
+    attached. :ghissue:`69`.
 
 1.16
   * introduced: Windows support?! :ghissue:`110` by :ghuser:`avylove`.
