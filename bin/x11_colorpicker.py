@@ -1,20 +1,32 @@
 import colorsys
 import blessed
 
-hsv_sorted_colors = sorted(
-    blessed.colorspace.X11_COLORNAMES_TO_RGB.items(),
-    key=lambda rgb: colorsys.rgb_to_hsv(*rgb[1]),
-    reverse=True)
+def sort_colors():
+    colors = {}
+    for color_name, rgb_color in blessed.colorspace.X11_COLORNAMES_TO_RGB.items():
+        if rgb_color in colors:
+            colors[rgb_color].append(color_name)
+        else:
+            colors[rgb_color] = [color_name]
+
+    return sorted(colors.items(),
+                  key=lambda rgb: colorsys.rgb_to_hsv(*rgb[0]),
+                  reverse=True)
+
+
+HSV_SORTED_COLORS = sort_colors()
+
 
 def render(term, idx):
-    color_name, rgb_color = hsv_sorted_colors[idx]
+    rgb_color, color_names = HSV_SORTED_COLORS[idx]
     result = term.home + term.normal + ''.join(
-        getattr(term, hsv_sorted_colors[i][0]) + '◼'
-        for i in range(len(hsv_sorted_colors))
+        getattr(term, HSV_SORTED_COLORS[i][1][0]) + '◼'
+        for i in range(len(HSV_SORTED_COLORS))
     )
-    result += term.clear_eos+ '\n'
-    result += getattr(term, 'on_' + color_name) + term.clear_eos + '\n'
-    result += term.normal + term.center(f'{color_name}: {rgb_color}') + '\n'
+    result += term.clear_eos + '\n'
+    result += getattr(term, 'on_' + color_names[0]) + term.clear_eos + '\n'
+    result += term.normal + \
+        term.center(f'{" | ".join(color_names)}: {rgb_color}') + '\n'
     result += term.normal + term.center(
         f'{term.number_of_colors} colors - '
         f'{term.color_distance_algorithm}')
@@ -42,7 +54,7 @@ def next_color(color, forward):
 def main():
     term = blessed.Terminal()
     with term.cbreak(), term.hidden_cursor(), term.fullscreen():
-        idx = len(hsv_sorted_colors) // 2
+        idx = len(HSV_SORTED_COLORS) // 2
         dirty = True
         while True:
             if dirty:
@@ -71,9 +83,9 @@ def main():
                 dirty = False
 
             while idx < 0:
-                idx += len(hsv_sorted_colors)
-            while idx >= len(hsv_sorted_colors):
-                idx -= len(hsv_sorted_colors)
+                idx += len(HSV_SORTED_COLORS)
+            while idx >= len(HSV_SORTED_COLORS):
+                idx -= len(HSV_SORTED_COLORS)
 
 if __name__ == '__main__':
     main()
