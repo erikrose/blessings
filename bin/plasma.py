@@ -23,8 +23,8 @@ def rgb_at_xy(term, x, y, t):
            (y - h / 2.0) * (y - h / 2.0))
       ) / 8.0 + t*3)
     ) + math.sin(math.sqrt((x * x + y * y)) / 8.0)
-    saturation = 1-y / h
-    lightness = 1-x / w
+    saturation = y / h
+    lightness = x / w
     return tuple(map(scale_255, colorsys.hsv_to_rgb(hue / 8.0, saturation, lightness)))
 
 def screen_plasma(term, plasma_fn, t):
@@ -45,13 +45,13 @@ def elapsed_timer():
     # pylint: disable=unnecessary-lambda
     yield lambda: elapser()
  
-def please_wait(term):
+def show_please_wait(term):
     txt_wait = 'please wait ...'
     outp = term.move(term.height-1, 0) + term.clear_eol + term.center(txt_wait)
     print(outp, end='')
     sys.stdout.flush()
 
-def paused(term):
+def show_paused(term):
     txt_paused = 'paused'
     outp = term.move(term.height-1, int(term.width/2 - len(txt_paused)/2))
     outp += txt_paused
@@ -77,15 +77,15 @@ def status(term, elapsed):
                 f'{term.color_distance_algorithm} - ?: help ')
     right_txt = f'fps: {1 / elapsed:2.2f}'
     return ('\n' + term.normal +
-             term.white_on_blue + left_txt +
+             term.white_on_blue + term.clear_eol + left_txt +
              term.rjust(right_txt, term.width-len(left_txt)))
 
 def main(term):
-    with term.cbreak(), term.hidden_cursor():
-        pause = False
+    with term.cbreak(), term.hidden_cursor(), term.fullscreen():
+        pause, dirty = False, True
         t = time.time()
         while True:
-            if not pause or dirty:
+            if dirty or not pause:
                 if not pause:
                     t = time.time()
                 with elapsed_timer() as elapsed:
@@ -94,8 +94,8 @@ def main(term):
                 print(outp, end='')
                 sys.stdout.flush()
                 dirty = False
-            if paused:
-                paused(term)
+            if pause:
+                show_paused(term)
 
             inp = term.inkey(timeout=0.01 if not pause else None)
             if inp == '?': assert False, "don't panic"
@@ -103,13 +103,13 @@ def main(term):
             if inp in ('[', ']'):
                 term.color_distance_algorithm = next_algo(
                     term.color_distance_algorithm, inp == '[')
-                please_wait(term)
+                show_please_wait(term)
                 dirty = True
             if inp == ' ': pause = not pause
             if inp.code in (term.KEY_TAB, term.KEY_BTAB):
                 term.number_of_colors = next_color(
                     term.number_of_colors, inp.code==term.KEY_TAB)
-                please_wait(term)
+                show_please_wait(term)
                 dirty = True
 
 if __name__ == "__main__":
