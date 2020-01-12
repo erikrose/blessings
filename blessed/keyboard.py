@@ -315,40 +315,6 @@ def _read_until(term, pattern, timeout):
     return match, buf
 
 
-def _inject_curses_keynames():
-    r"""
-    Inject KEY_NAMES that we think would be useful into the curses module.
-
-    This function compliments the global constant
-    :obj:`DEFAULT_SEQUENCE_MIXIN`.  It is important to note that this
-    function has the side-effect of **injecting** new attributes to the
-    curses module, and is called from the global namespace at time of
-    import.
-
-    Though we may determine *keynames* and codes for keyboard input that
-    generate multibyte sequences, it is also especially useful to aliases
-    a few basic ASCII characters such as ``KEY_TAB`` instead of ``u'\t'`` for
-    uniformity.
-
-    Furthermore, many key-names for application keys enabled only by context
-    manager :meth:`~.Terminal.keypad` are surprisingly absent.  We inject them
-    here directly into the curses module.
-
-    It is not necessary to directly "monkeypatch" the curses module to
-    contain these constants, as they will also be accessible as attributes
-    of the Terminal class instance, they are provided only for convenience
-    when mixed in with other curses code.
-    """
-    _lastval = max(get_curses_keycodes().values())
-    for key in ('TAB', 'KP_MULTIPLY', 'KP_ADD', 'KP_SEPARATOR', 'KP_SUBTRACT',
-                'KP_DECIMAL', 'KP_DIVIDE', 'KP_EQUAL', 'KP_0', 'KP_1', 'KP_2',
-                'KP_3', 'KP_4', 'KP_5', 'KP_6', 'KP_7', 'KP_8', 'KP_9'):
-        _lastval += 1
-        setattr(curses, 'KEY_{0}'.format(key), _lastval)
-
-
-_inject_curses_keynames()
-
 #: In a perfect world, terminal emulators would always send exactly what
 #: the terminfo(5) capability database plans for them, accordingly by the
 #: value of the ``TERM`` name they declare.
