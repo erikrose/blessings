@@ -182,6 +182,19 @@ Forked
 *Blessed* is a fork of `blessings <https://github.com/erikrose/blessings>`_.
 Changes since 1.7 have all been proposed but unaccepted upstream.
 
+Enhancements only in *Blessed*:
+  * 24-bit color support with :meth:`~Terminal.color_rgb` and :meth:`~Terminal.on_color_rgb` methods
+  * X11 color name attributes
+  * Windows support
+  * :meth:`~.Terminal.length` to determine printable length of text containing sequences
+  * :meth:`~.Terminal.strip`, :meth:`~.Terminal.rstrip`, :meth:`~.Terminal.rstrip`,
+    and :meth:`~.Terminal.strip_seqs` for removing sequences from text
+  * :meth:`Terminal.wrap` for wrapping text containing sequences at a specified width
+  * :meth:`~.Terminal.center`, :meth:`~.Terminal.rjust`, and :meth:`~.Terminal.ljust`
+    for alignment of text containing sequences
+  * :meth:`~.cbreak` and :meth:`~.raw` context managers for keyboard input
+  * :meth:`~.inkey` for keyboard event detection
+
 Furthermore, a project in the node.js language of the `same name
 <https://github.com/chjj/blessed>`_ is **not** related, or a fork
 of each other in any way.
