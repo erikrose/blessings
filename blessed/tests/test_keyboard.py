@@ -681,17 +681,19 @@ def test_a_keystroke():
 
 def test_get_keyboard_codes():
     "Test all values returned by get_keyboard_codes are from curses."
-    from blessed.keyboard import (
-        get_keyboard_codes,
-        CURSES_KEYCODE_OVERRIDE_MIXIN,
-    )
-    exemptions = dict(CURSES_KEYCODE_OVERRIDE_MIXIN)
-    for value, keycode in get_keyboard_codes().items():
+    import blessed.keyboard
+    exemptions = dict(blessed.keyboard.CURSES_KEYCODE_OVERRIDE_MIXIN)
+    for value, keycode in blessed.keyboard.get_keyboard_codes().items():
         if keycode in exemptions:
             assert value == exemptions[keycode]
             continue
-        assert hasattr(curses, keycode)
-        assert getattr(curses, keycode) == value
+        if keycode[4:] in blessed.keyboard._CURSES_KEYCODE_ADDINS:
+            assert not hasattr(curses, keycode)
+            assert hasattr(blessed.keyboard, keycode)
+            assert getattr(blessed.keyboard, keycode) == value
+        else:
+            assert hasattr(curses, keycode)
+            assert getattr(curses, keycode) == value
 
 
 def test_alternative_left_right():
