@@ -5,11 +5,10 @@ from __future__ import print_function, with_statement
 
 # std imports
 import os
-import pty
 import sys
 import codecs
 import curses
-import termios
+import platform
 import functools
 import traceback
 import contextlib
@@ -21,6 +20,10 @@ import pytest
 
 # local
 from blessed import Terminal
+
+if platform.system() != "Windows":
+    import pty
+    import termios
 
 TestTerminal = functools.partial(Terminal, kind='xterm-256color')
 SEND_SEMAPHORE = SEMAPHORE = b'SEMAPHORE\n'
@@ -75,6 +78,10 @@ class as_subprocess(object):
         self.func = func
 
     def __call__(self, *args, **kwargs):
+        if platform.system() == 'Windows':
+            self.func(*args, **kwargs)
+            return
+
         pid_testrunner = os.getpid()
         pid, master_fd = pty.fork()
         if pid == self._CHILD_PID:
@@ -197,14 +204,17 @@ def read_until_eof(fd, encoding='utf8'):
 @contextlib.contextmanager
 def echo_off(fd):
     """Ensure any bytes written to pty fd are not duplicated as output."""
-    try:
-        attrs = termios.tcgetattr(fd)
-        attrs[3] = attrs[3] & ~termios.ECHO
-        termios.tcsetattr(fd, termios.TCSANOW, attrs)
+    if platform.system() != 'Windows':
+        try:
+            attrs = termios.tcgetattr(fd)
+            attrs[3] = attrs[3] & ~termios.ECHO
+            termios.tcsetattr(fd, termios.TCSANOW, attrs)
+            yield
+        finally:
+            attrs[3] = attrs[3] | termios.ECHO
+            termios.tcsetattr(fd, termios.TCSANOW, attrs)
+    else:
         yield
-    finally:
-        attrs[3] = attrs[3] | termios.ECHO
-        termios.tcsetattr(fd, termios.TCSANOW, attrs)
 
 
 def unicode_cap(cap):
