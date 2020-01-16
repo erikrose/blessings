@@ -6,6 +6,7 @@ import platform
 
 # 3rd party
 import six
+import pytest
 
 # local
 from .accessories import (TestTerminal,
