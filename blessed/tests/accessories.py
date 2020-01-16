@@ -7,7 +7,6 @@ from __future__ import print_function, with_statement
 import os
 import sys
 import codecs
-import curses
 import platform
 import functools
 import traceback
@@ -22,8 +21,11 @@ import pytest
 from blessed import Terminal
 
 if platform.system() != "Windows":
+    import curses
     import pty
     import termios
+else:
+    import jinxed as curses
 
 TestTerminal = functools.partial(Terminal, kind='xterm-256color')
 SEND_SEMAPHORE = SEMAPHORE = b'SEMAPHORE\n'
