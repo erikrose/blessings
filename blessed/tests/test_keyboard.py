@@ -8,6 +8,7 @@ import functools
 
 # 3rd party
 import mock
+import pytest
 
 # local
 from .accessories import TestTerminal, all_terms, as_subprocess
