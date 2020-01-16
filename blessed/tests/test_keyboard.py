@@ -14,9 +14,9 @@ from .accessories import TestTerminal, all_terms, as_subprocess
 
 if platform.system() != 'Windows':
     import curses
+    import tty  # NOQA
 else:
     import jinxed as curses
-    import tty  # NOQA
 
 if sys.version_info[0] == 3:
     unichr = chr
