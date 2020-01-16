@@ -177,7 +177,7 @@ def test_force_styling_none(all_terms):
     child(all_terms)
 
 
-def test_setupterm_singleton_issue33():
+def test_setupterm_singleton_issue_33():
     """A warning is emitted if a new terminal ``kind`` is used per process."""
     @as_subprocess
     def child():
@@ -185,16 +185,21 @@ def test_setupterm_singleton_issue33():
 
         # instantiate first terminal, of type xterm-256color
         term = TestTerminal(force_styling=True)
+        next_kind = 'vt220'
+        first_kind = 'xterm-256color'
+        if platform.system() == 'Windows':
+            first_kind = 'vtwin10'
+            next_kind = 'xterm'
 
         try:
             # a second instantiation raises UserWarning
-            term = TestTerminal(kind="vt220", force_styling=True)
+            term = TestTerminal(kind=next_kind, force_styling=True)
         except UserWarning:
             err = sys.exc_info()[1]
             assert (err.args[0].startswith(
-                    'A terminal of kind "vt220" has been requested')
+                    'A terminal of kind "' + next_kind + '" has been requested')
                     ), err.args[0]
-            assert ('a terminal of kind "xterm-256color" will '
+            assert ('a terminal of kind "' + first_kind + '" will '
                     'continue to be returned' in err.args[0]), err.args[0]
         else:
             # unless term is not a tty and setupterm() is not called
