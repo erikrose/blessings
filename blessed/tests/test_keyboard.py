@@ -21,7 +21,7 @@ else:
 if sys.version_info[0] == 3:
     unichr = chr
 
-
+@pytest.mark.skipif(platform.system() == 'Windows', reason="?")
 def test_break_input_no_kb():
     """cbreak() should not call tty.setcbreak() without keyboard."""
     @as_subprocess
@@ -35,6 +35,7 @@ def test_break_input_no_kb():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="?")
 def test_raw_input_no_kb():
     """raw should not call tty.setraw() without keyboard."""
     @as_subprocess
@@ -48,6 +49,7 @@ def test_raw_input_no_kb():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="?")
 def test_raw_input_with_kb():
     """raw should call tty.setraw() when with keyboard."""
     @as_subprocess
@@ -281,6 +283,7 @@ def test_keyboard_prefixes():
     assert pfs == set([u'a', u'ab', u'abd', u'j', u'jk'])
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="no multiprocess")
 def test_keypad_mixins_and_aliases():
     """Test PC-Style function key translations when in ``keypad`` mode."""
     # Key     plain   app     modified
