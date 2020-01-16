@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """Tests string formatting functions."""
 # std imports
-import curses
+import platform
 
 # 3rd party
 import mock
 import pytest
+
+if platform.system() != 'Windows':
+    import curses
+else:
+    import jinxed as curses
 
 
 def fn_tparm(*args):
