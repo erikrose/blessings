@@ -28,6 +28,9 @@ Version History
     :attr:`~Terminal.stream` is not a terminal, programs using
     :meth:`~Terminal.inkey` to block indefinitely if a keyboard is not
     attached. :ghissue:`69`.
+  * deprecated: using argument ``_intr_continue`` to method
+    :meth:`~Terminal.kbhit`, behavior is as though such value is always True
+    since 1.9.
 
 1.16
   * introduced: Windows support?! :ghissue:`110` by :ghuser:`avylove`.

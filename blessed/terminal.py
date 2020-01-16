@@ -987,7 +987,7 @@ class Terminal(object):
         """
         self._keyboard_buf.extendleft(text)
 
-    def kbhit(self, timeout=None, **_kwargs):
+    def kbhit(self, timeout=None):
         """
         Return whether a keypress has been detected on the keyboard.
 
@@ -1005,14 +1005,6 @@ class Terminal(object):
             attached to this terminal.  When input is not a terminal, False is
             always returned.
         """
-        if _kwargs.pop('_intr_continue', None) is not None:
-            warnings.warn('keyword argument _intr_continue deprecated: '
-                          'beginning v1.9.6, behavior is as though such '
-                          'value is always True.')
-        if _kwargs:
-            raise TypeError('inkey() got unexpected keyword arguments {!r}'
-                            .format(_kwargs))
-
         stime = time.time()
         ready_r = [None, ]
         check_r = [self._keyboard_fd] if self._keyboard_fd is not None else []
