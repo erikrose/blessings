@@ -324,6 +324,7 @@ def test_IOUnsupportedOperation():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="has process-wide side-effects")
 def test_winsize_IOError_returns_environ():
     """When _winsize raises IOError, defaults from os.environ given."""
     @as_subprocess
@@ -478,6 +479,7 @@ def test_time_left_infinite_None():
     assert _time_left(stime=time.time(), timeout=None) is None
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="cant multiprocess")
 def test_termcap_repr():
     """Ensure ``hidden_cursor()`` writes hide_cursor and normal_cursor."""
 
