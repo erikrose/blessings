@@ -87,6 +87,7 @@ def test_null_fileno():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', "requires more than 1 tty")
 def test_number_of_colors_without_tty():
     """``number_of_colors`` should return 0 when there's no tty."""
     @as_subprocess
@@ -122,6 +123,7 @@ def test_number_of_colors_without_tty():
     child_256_nostyle()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', "requires more than 1 tty")
 def test_number_of_colors_with_tty():
     """test ``number_of_colors`` 0, 8, and 256."""
     @as_subprocess
