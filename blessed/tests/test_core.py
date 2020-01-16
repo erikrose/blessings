@@ -87,7 +87,7 @@ def test_null_fileno():
     child()
 
 
-@pytest.mark.skipif(platform.system() == 'Windows', "requires more than 1 tty")
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires more than 1 tty")
 def test_number_of_colors_without_tty():
     """``number_of_colors`` should return 0 when there's no tty."""
     @as_subprocess
@@ -123,7 +123,7 @@ def test_number_of_colors_without_tty():
     child_256_nostyle()
 
 
-@pytest.mark.skipif(platform.system() == 'Windows', "requires more than 1 tty")
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires more than 1 tty")
 def test_number_of_colors_with_tty():
     """test ``number_of_colors`` 0, 8, and 256."""
     @as_subprocess
@@ -393,7 +393,7 @@ def test_unknown_preferredencoding_warned_and_fallback_ascii():
     child()
 
 
-@pytest.mark.skipif(platform.system() == 'Windows', "requires fcntl")
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires fcntl")
 def test_win32_missing_tty_modules(monkeypatch):
     """Ensure dummy exception is used when io is without UnsupportedOperation."""
     @as_subprocess

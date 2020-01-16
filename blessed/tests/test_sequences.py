@@ -16,7 +16,7 @@ from .accessories import (TestTerminal,
                           as_subprocess)
 
 
-@pytest.mark.skipif(platform.system() == 'Windows', "requires real tty")
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires real tty")
 def test_capability():
     """Check that capability lookup works."""
     @as_subprocess
@@ -154,7 +154,7 @@ def test_vertical_location(all_terms):
     child(all_terms)
 
 
-@pytest.mark.skipif(platform.system() == 'Windows', "requires multiprocess")
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires multiprocess")
 def test_inject_move_x():
     """Test injection of hpa attribute for screen/ansi (issue #55)."""
     @as_subprocess
@@ -175,7 +175,7 @@ def test_inject_move_x():
     child('ansi')
 
 
-@pytest.mark.skipif(platform.system() == 'Windows', "requires multiprocess")
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires multiprocess")
 def test_inject_move_y():
     """Test injection of vpa attribute for screen/ansi (issue #55)."""
     @as_subprocess
@@ -196,7 +196,7 @@ def test_inject_move_y():
     child('ansi')
 
 
-@pytest.mark.skipif(platform.system() == 'Windows', "requires multiprocess")
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires multiprocess")
 def test_inject_civis_and_cnorm_for_ansi():
     """Test injection of cvis attribute for ansi."""
     @as_subprocess
@@ -210,7 +210,7 @@ def test_inject_civis_and_cnorm_for_ansi():
     child('ansi')
 
 
-@pytest.mark.skipif(platform.system() == 'Windows', "requires multiprocess")
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires multiprocess")
 def test_inject_sc_and_rc_for_ansi():
     """Test injection of sc and rc (save and restore cursor) for ansi."""
     @as_subprocess

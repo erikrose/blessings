@@ -218,7 +218,7 @@ def test_env_winsize():
     child()
 
 
-@pytest.mark.skipif(platform.system() == 'Windows', "requires fcntl")
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires fcntl")
 def test_winsize(many_lines, many_columns):
     """Test height and width is appropriately queried in a pty."""
     @as_subprocess
@@ -258,7 +258,7 @@ def test_Sequence_alignment_fixed_width():
         assert (term.length(radjusted) == len(pony_msg.rjust(88)))
 
 
-@pytest.mark.skipif(platform.system() == 'Windows', "requires fcntl")
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires fcntl")
 def test_Sequence_alignment(all_terms):
     """Tests methods related to Sequence class, namely ljust, rjust, center."""
     @as_subprocess
