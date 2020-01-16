@@ -185,11 +185,8 @@ def test_setupterm_singleton_issue_33():
 
         # instantiate first terminal, of type xterm-256color
         term = TestTerminal(force_styling=True)
-        next_kind = 'vt220'
         first_kind = 'xterm-256color'
-        if platform.system() == 'Windows':
-            first_kind = 'vtwin10'
-            next_kind = 'xterm'
+        next_kind = 'xterm'
 
         try:
             # a second instantiation raises UserWarning
