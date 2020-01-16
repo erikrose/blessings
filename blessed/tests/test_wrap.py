@@ -102,7 +102,7 @@ def test_SequenceWrapper(many_columns, kwargs):
         assert (len(internal_wrapped) == len(my_wrapped_colored))
 
     child(width=many_columns, kwargs=kwargs,
-          pgraph=u' Z! a bc defghij klmnopqrstuvw<<>>xyz012345678900 '*2)
+          pgraph=u' Z! a bc defghij klmnopqrstuvw<<>>xyz012345678900 ' * 2)
     child(width=many_columns, kwargs=kwargs, pgraph=u'a bb ccc')
 
 

@@ -18,6 +18,7 @@ __all__ = ('Sequence', 'SequenceTextWrapper', 'iter_parse', 'measure_length')
 
 class Termcap(object):
     """Terminal capability of given variable name and pattern."""
+
     def __init__(self, name, pattern, attribute):
         """
         Class initializer.

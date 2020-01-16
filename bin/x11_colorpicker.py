@@ -39,6 +39,7 @@ def render(term, idx):
     result += term.on_color_rgb(*rgb_color)(' \b')
     return result
 
+
 def next_algo(algo, forward):
     algos = tuple(sorted(blessed.color.COLOR_DISTANCE_ALGORITHMS))
     next_index = algos.index(algo) + (1 if forward else -1)
@@ -77,7 +78,7 @@ def main():
                 idx += 1
             elif inp.code in (term.KEY_TAB, term.KEY_BTAB):
                 term.number_of_colors = next_color(
-                    term.number_of_colors, inp.code==term.KEY_TAB)
+                    term.number_of_colors, inp.code == term.KEY_TAB)
             elif inp in ('[', ']'):
                 term.color_distance_algorithm = next_algo(
                     term.color_distance_algorithm, inp == '[')
@@ -90,6 +91,7 @@ def main():
                 idx += len(HSV_SORTED_COLORS)
             while idx >= len(HSV_SORTED_COLORS):
                 idx -= len(HSV_SORTED_COLORS)
+
 
 if __name__ == '__main__':
     main()

@@ -472,7 +472,7 @@ def test_time_left_infinite_None():
 def test_termcap_repr():
     "Ensure ``hidden_cursor()`` writes hide_cursor and normal_cursor."
 
-    given_ttype='vt220'
+    given_ttype = 'vt220'
     given_capname = 'cursor_up'
     expected = [r"<Termcap cursor_up:'\x1b\\[A'>",
                 r"<Termcap cursor_up:'\\\x1b\\[A'>",

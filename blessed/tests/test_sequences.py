@@ -391,7 +391,7 @@ def test_nested_formatting(all_terms):
                         ' off')
         expected = u''.join((
             t.green, 'off ', t.underline, 'ON',
-            t.normal, t.green , ' off ', t.underline, 'ON',
+            t.normal, t.green, ' off ', t.underline, 'ON',
             t.normal, t.green, ' off', t.normal))
         assert given == expected
 
@@ -490,6 +490,7 @@ def test_padd():
         assert Sequence('\x1b[3D', term).padd() == u''  # "Trim left"
 
     child()
+
 
 def test_split_seqs(all_terms):
     """Test Terminal.split_seqs."""

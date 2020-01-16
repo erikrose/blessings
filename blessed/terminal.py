@@ -51,10 +51,6 @@ except ImportError:
     from ordereddict import OrderedDict
 
 
-
-
-
-
 if platform.system() == 'Windows':
     import jinxed as curses  # pylint: disable=import-error
     HAS_TTY = True
@@ -771,7 +767,6 @@ class Terminal(object):
         self._number_of_colors = value
         self.__clear_color_capabilities()
 
-
     @property
     def color_distance_algorithm(self):
         """
@@ -787,7 +782,6 @@ class Terminal(object):
         assert value in COLOR_DISTANCE_ALGORITHMS
         self._color_distance_algorithm = value
         self.__clear_color_capabilities()
-
 
     @property
     def _foreground_color(self):

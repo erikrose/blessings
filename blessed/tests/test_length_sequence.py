@@ -282,6 +282,7 @@ def test_Sequence_alignment(all_terms):
 
     child(kind=all_terms)
 
+
 def test_sequence_is_movement_false(all_terms):
     """Test parser about sequences that do not move the cursor."""
     @as_subprocess
@@ -318,6 +319,7 @@ def test_sequence_is_movement_false(all_terms):
                 ), (term.standout, term._wont_move)
 
     child(all_terms)
+
 
 def test_termcap_will_move_false(all_terms):
     """Test parser about sequences that do not move the cursor."""
@@ -357,7 +359,6 @@ def test_termcap_will_move_false(all_terms):
     child(all_terms)
 
 
-
 def test_sequence_is_movement_true(all_terms):
     """Test parsers about sequences that move the cursor."""
     @as_subprocess
@@ -370,25 +371,26 @@ def test_sequence_is_movement_true(all_terms):
         assert (len(term.move(54)) ==
                 measure_length(term.move(54), term))
         assert not term.cud1 or (len(term.cud1) ==
-                              measure_length(term.cud1, term))
+                                 measure_length(term.cud1, term))
         assert not term.cub1 or (len(term.cub1) ==
-                              measure_length(term.cub1, term))
+                                 measure_length(term.cub1, term))
         assert not term.cuf1 or (len(term.cuf1) ==
-                              measure_length(term.cuf1, term))
+                                 measure_length(term.cuf1, term))
         assert not term.cuu1 or (len(term.cuu1) ==
-                              measure_length(term.cuu1, term))
+                                 measure_length(term.cuu1, term))
         assert not term.cub or (len(term.cub(333)) ==
-                             measure_length(term.cub(333), term))
+                                measure_length(term.cub(333), term))
         assert not term.cuf or (len(term.cuf(333)) ==
-                             measure_length(term.cuf(333), term))
+                                measure_length(term.cuf(333), term))
         assert not term.home or (len(term.home) ==
-                              measure_length(term.home, term))
+                                 measure_length(term.home, term))
         assert not term.restore or (len(term.restore) ==
-                                 measure_length(term.restore, term))
+                                    measure_length(term.restore, term))
         assert not term.clear or (len(term.clear) ==
-                               measure_length(term.clear, term))
+                                  measure_length(term.clear, term))
 
     child(all_terms)
+
 
 def test_termcap_will_move_true(all_terms):
     """Test parser about sequences that move the cursor."""
@@ -410,7 +412,6 @@ def test_termcap_will_move_true(all_terms):
         assert next(iter_parse(term, term.restore))[1].will_move
         assert next(iter_parse(term, term.clear))[1].will_move
     child(all_terms)
-
 
 
 def test_foreign_sequences():

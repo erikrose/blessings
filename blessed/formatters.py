@@ -14,6 +14,7 @@ if platform.system() == 'Windows':
 else:
     import curses
 
+
 def _make_colors():
     """
     Return set of valid colors and their derivatives.
@@ -35,6 +36,7 @@ def _make_colors():
         colors.add('on_' + vga_color)
     return colors
 
+
 #: Valid colors and their background (on), bright, and bright-background
 #: derivatives.
 COLORS = _make_colors()
@@ -42,6 +44,7 @@ COLORS = _make_colors()
 #: Attributes that may be compounded with colors, by underscore, such as
 #: 'reverse_indigo'.
 COMPOUNDABLES = set('bold underline reverse blink italic standout'.split())
+
 
 class ParameterizingString(six.text_type):
     r"""
