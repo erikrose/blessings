@@ -202,7 +202,7 @@ class Terminal(object):
         if self.does_styling:
             # Initialize curses (call setupterm), so things like tigetstr() work.
             try:
-                curses.setupterm(kind, open(os.devnull).fileno())
+                curses.setupterm(self._kind, open(os.devnull).fileno())
             except curses.error as err:
                 warnings.warn('Failed to setupterm(kind={0!r}): {1}'
                               .format(self._kind, err))
