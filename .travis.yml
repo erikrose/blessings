@@ -30,7 +30,7 @@ matrix:
 jobs:
   allow_failures:
     - env: TOXENV=py39,coveralls TEST_QUICK=1 COVERAGE_ID=travis-ci
-    - env: TOXENV=about,pylint,flake8,sphinx COVERAGE_ID=travis-ci
+    - env: TOXENV=about,pylint,flake8,flake8_tests,sphinx COVERAGE_ID=travis-ci
 
 install:
   - pip install tox
