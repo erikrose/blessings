@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Tests string formatting functions."""
-# std
+# std imports
 import curses
 
-# 3rd-party
+# 3rd party
 import mock
 import pytest
 

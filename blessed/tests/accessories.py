@@ -17,10 +17,9 @@ import subprocess
 
 # 3rd party
 import six
+import pytest
 
 # local
-# 3rd-party
-import pytest
 from blessed import Terminal
 
 TestTerminal = functools.partial(Terminal, kind='xterm-256color')
