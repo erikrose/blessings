@@ -51,6 +51,8 @@ if os.environ.get('TEST_FULL'):
             .communicate()[0].splitlines()]
     except OSError:
         pass
+elif platform.system() == 'Windows':
+    all_terms_params = ['xterm', ]
 elif os.environ.get('TEST_QUICK'):
     all_terms_params = 'xterm screen ansi linux'.split()
 
