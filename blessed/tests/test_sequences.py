@@ -16,12 +16,12 @@ from .accessories import (TestTerminal,
                           as_subprocess)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', "requires real tty")
 def test_capability():
     """Check that capability lookup works."""
     @as_subprocess
     def child():
-        # Also test that Terminal grabs a reasonable default stream. This test
-        # assumes it will be run from a tty.
+        # Also test that Terminal grabs a reasonable default stream.
         t = TestTerminal()
         sc = unicode_cap('sc')
         assert t.save == sc
@@ -175,6 +175,7 @@ def test_inject_move_x():
     child('ansi')
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', "requires multiprocess")
 def test_inject_move_y():
     """Test injection of vpa attribute for screen/ansi (issue #55)."""
     @as_subprocess
@@ -195,6 +196,7 @@ def test_inject_move_y():
     child('ansi')
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', "requires multiprocess")
 def test_inject_civis_and_cnorm_for_ansi():
     """Test injection of cvis attribute for ansi."""
     @as_subprocess
