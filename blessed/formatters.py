@@ -266,8 +266,8 @@ class NullCallableString(six.text_type):
     """
     A dummy callable Unicode alternative to :class:`FormattingString`.
 
-    This is used for colors on terminals that do not support colors,
-    it is just a basic form of unicode that may also act as a callable.
+    This is used for colors on terminals that do not support colors, it is just a basic form of
+    unicode that may also act as a callable.
     """
 
     def __new__(cls):

@@ -39,9 +39,7 @@ sphinx.environment.BuildEnvironment.warn_node = _warn_node
 # Monkey-patch functools.wraps and contextlib.wraps
 # https://github.com/sphinx-doc/sphinx/issues/1711#issuecomment-93126473
 def no_op_wraps(func):
-    """
-    Replaces functools.wraps in order to undo wrapping when generating Sphinx documentation
-    """
+    """Replaces functools.wraps in order to undo wrapping when generating Sphinx documentation."""
     if func.__module__ is None or 'blessed' not in func.__module__:
         return functools.orig_wraps(func)
     def wrapper(decorator):

@@ -44,7 +44,7 @@ if os.environ.get('TEST_QUICK', None) is not None:
 
 
 def test_SequenceWrapper_invalid_width():
-    """Test exception thrown from invalid width"""
+    """Test exception thrown from invalid width."""
     WIDTH = -3
 
     @as_subprocess

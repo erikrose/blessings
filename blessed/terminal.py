@@ -79,10 +79,10 @@ class Terminal(object):
     """
     An abstraction for color, style, positioning, and input in the terminal.
 
-    This keeps the endless calls to ``tigetstr()`` and ``tparm()`` out of your
-    code, acts intelligently when somebody pipes your output to a non-terminal,
-    and abstracts over the complexity of unbuffered keyboard input. It uses the
-    terminfo database to remain portable across terminal types.
+    This keeps the endless calls to ``tigetstr()`` and ``tparm()`` out of your code, acts
+    intelligently when somebody pipes your output to a non-terminal, and abstracts over the
+    complexity of unbuffered keyboard input. It uses the terminfo database to remain portable across
+    terminal types.
     """
     # pylint: disable=too-many-instance-attributes,too-many-public-methods
     #         Too many public methods (28/20)
@@ -443,7 +443,6 @@ class Terminal(object):
             - ``ws_col``: height of terminal by its number of character cells.
             - ``ws_xpixel``: width of terminal by pixels (not accurate).
             - ``ws_ypixel``: height of terminal by pixels (not accurate).
-
         """
         for fd in (self._init_descriptor, sys.__stdout__):
             try:
@@ -703,7 +702,8 @@ class Terminal(object):
         :arg int red: RGB value of Red (0-255).
         :arg int green: RGB value of Green (0-255).
         :arg int blue: RGB value of Blue (0-255).
-        :rtype: int """
+        :rtype: int
+        """
         # Though pre-computing all 1 << 24 options is memory-intensive, a pre-computed
         # "k-d tree" of 256 (x,y,z) vectors of a colorspace in 3 dimensions, such as a
         # cone of HSV, or simply 255x255x255 RGB square, any given rgb value is just a
@@ -772,8 +772,8 @@ class Terminal(object):
         """
         Color distance algorithm used by :meth:`rgb_downconvert`.
 
-        The slowest, but most accurate, 'cie2000', is default. Other
-        available options are 'rgb', 'rgb-weighted', 'cie76', and 'cie94'.
+        The slowest, but most accurate, 'cie2000', is default. Other available options are 'rgb',
+        'rgb-weighted', 'cie76', and 'cie94'.
         """
         return self._color_distance_algorithm
 
@@ -788,10 +788,9 @@ class Terminal(object):
         """
         Convenience capability to support :attr:`~.on_color`.
 
-        Prefers returning sequence for capability ``setaf``, "Set foreground
-        color to #1, using ANSI escape". If the given terminal does not
-        support such sequence, fallback to returning attribute ``setf``,
-        "Set foreground color #1".
+        Prefers returning sequence for capability ``setaf``, "Set foreground color to #1, using ANSI
+        escape". If the given terminal does not support such sequence, fallback to returning
+        attribute ``setf``, "Set foreground color #1".
         """
         return self.setaf or self.setf
 
@@ -800,10 +799,9 @@ class Terminal(object):
         """
         Convenience capability to support :attr:`~.on_color`.
 
-        Prefers returning sequence for capability ``setab``, "Set background
-        color to #1, using ANSI escape". If the given terminal does not
-        support such sequence, fallback to returning attribute ``setb``,
-        "Set background color #1".
+        Prefers returning sequence for capability ``setab``, "Set background color to #1, using ANSI
+        escape". If the given terminal does not support such sequence, fallback to returning
+        attribute ``setb``, "Set background color #1".
         """
         return self.setab or self.setb
 

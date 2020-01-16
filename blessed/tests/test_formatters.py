@@ -157,7 +157,7 @@ def test_nested_formattingstring_type_error(monkeypatch):
 
 
 def test_nullcallablestring(monkeypatch):
-    """Test formatters.NullCallableString"""
+    """Test formatters.NullCallableString."""
     from blessed.formatters import (NullCallableString)
 
     # given, with arg
@@ -184,7 +184,7 @@ def test_split_compound():
 
 
 def test_resolve_capability(monkeypatch):
-    """Test formatters.resolve_capability and term sugaring """
+    """Test formatters.resolve_capability and term sugaring."""
     from blessed.formatters import resolve_capability
 
     # given, always returns a b'seq'
@@ -259,7 +259,7 @@ def test_resolve_color(monkeypatch):
 
 
 def test_resolve_attribute_as_color(monkeypatch):
-    """ Test simple resolve_attribte() given color name. """
+    """Test simple resolve_attribte() given color name."""
     import blessed
     from blessed.formatters import resolve_attribute
 
@@ -274,7 +274,7 @@ def test_resolve_attribute_as_color(monkeypatch):
 
 
 def test_resolve_attribute_as_compoundable(monkeypatch):
-    """ Test simple resolve_attribte() given a compoundable. """
+    """Test simple resolve_attribte() given a compoundable."""
     import blessed
     from blessed.formatters import resolve_attribute, FormattingString
 
@@ -294,7 +294,7 @@ def test_resolve_attribute_as_compoundable(monkeypatch):
 
 
 def test_resolve_attribute_non_compoundables(monkeypatch):
-    """ Test recursive compounding of resolve_attribute(). """
+    """Test recursive compounding of resolve_attribute()."""
     import blessed
     from blessed.formatters import resolve_attribute, ParameterizingString
     def uncompoundables(attr): return ['split', 'compound']
@@ -324,7 +324,7 @@ def test_resolve_attribute_non_compoundables(monkeypatch):
 
 
 def test_resolve_attribute_recursive_compoundables(monkeypatch):
-    """ Test recursive compounding of resolve_attribute(). """
+    """Test recursive compounding of resolve_attribute()."""
     import blessed
     from blessed.formatters import resolve_attribute, FormattingString
 
@@ -394,7 +394,7 @@ def test_pickled_parameterizing_string(monkeypatch):
 
 
 def test_tparm_returns_null(monkeypatch):
-    """ Test 'tparm() returned NULL' is caught (win32 PDCurses systems). """
+    """Test 'tparm() returned NULL' is caught (win32 PDCurses systems)."""
     # on win32, any calls to tparm raises curses.error with message,
     # "tparm() returned NULL", function PyCurses_tparm of _cursesmodule.c
     from blessed.formatters import ParameterizingString, NullCallableString
@@ -414,7 +414,7 @@ def test_tparm_returns_null(monkeypatch):
 
 
 def test_tparm_other_exception(monkeypatch):
-    """ Test 'tparm() returned NULL' is caught (win32 PDCurses systems). """
+    """Test 'tparm() returned NULL' is caught (win32 PDCurses systems)."""
     # on win32, any calls to tparm raises curses.error with message,
     # "tparm() returned NULL", function PyCurses_tparm of _cursesmodule.c
     from blessed.formatters import ParameterizingString, NullCallableString

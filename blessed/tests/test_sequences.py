@@ -478,7 +478,7 @@ def test_null_callable_string(all_terms):
 
 
 def test_padd():
-    """ Test Terminal.padd(seq). """
+    """Test Terminal.padd(seq)."""
     @as_subprocess
     def child():
         from blessed.sequences import Sequence

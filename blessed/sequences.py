@@ -152,11 +152,10 @@ class SequenceTextWrapper(textwrap.TextWrapper):
         """
         Sequence-aware variant of :meth:`textwrap.TextWrapper._wrap_chunks`.
 
-        This simply ensures that word boundaries are not broken mid-sequence,
-        as standard python textwrap would incorrectly determine the length
-        of a string containing sequences, and may also break consider sequences
-        part of a "word" that may be broken by hyphen (``-``), where this
-        implementation corrects both.
+        This simply ensures that word boundaries are not broken mid-sequence, as standard python
+        textwrap would incorrectly determine the length of a string containing sequences, and may
+        also break consider sequences part of a "word" that may be broken by hyphen (``-``), where
+        this implementation corrects both.
         """
         lines = []
         if self.width <= 0 or not isinstance(self.width, int):
@@ -199,11 +198,10 @@ class SequenceTextWrapper(textwrap.TextWrapper):
         """
         Sequence-aware :meth:`textwrap.TextWrapper._handle_long_word`.
 
-        This simply ensures that word boundaries are not broken mid-sequence,
-        as standard python textwrap would incorrectly determine the length
-        of a string containing sequences, and may also break consider sequences
-        part of a "word" that may be broken by hyphen (``-``), where this
-        implementation corrects both.
+        This simply ensures that word boundaries are not broken mid-sequence, as standard python
+        textwrap would incorrectly determine the length of a string containing sequences, and may
+        also break consider sequences part of a "word" that may be broken by hyphen (``-``), where
+        this implementation corrects both.
         """
         # Figure out when indent is larger than the specified width, and make
         # sure at least one character is stripped off on every pass

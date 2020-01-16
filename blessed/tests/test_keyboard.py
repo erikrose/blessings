@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"Tests for keyboard support."
+"""Tests for keyboard support."""
 # std imports
 import os
 import pty
@@ -34,7 +34,7 @@ if sys.version_info[0] == 3:
 
 
 def test_break_input_no_kb():
-    "cbreak() should not call tty.setcbreak() without keyboard."
+    """cbreak() should not call tty.setcbreak() without keyboard."""
     @as_subprocess
     def child():
         with tempfile.NamedTemporaryFile() as stream:
@@ -47,7 +47,7 @@ def test_break_input_no_kb():
 
 
 def test_raw_input_no_kb():
-    "raw should not call tty.setraw() without keyboard."
+    """raw should not call tty.setraw() without keyboard."""
     @as_subprocess
     def child():
         with tempfile.NamedTemporaryFile() as stream:
@@ -60,7 +60,7 @@ def test_raw_input_no_kb():
 
 
 def test_raw_input_with_kb():
-    "raw should call tty.setraw() when with keyboard."
+    """raw should call tty.setraw() when with keyboard."""
     @as_subprocess
     def child():
         term = TestTerminal()
@@ -72,7 +72,7 @@ def test_raw_input_with_kb():
 
 
 def test_notty_kb_is_None():
-    "term._keyboard_fd should be None when os.isatty returns False."
+    """term._keyboard_fd should be None when os.isatty returns False."""
     # in this scenerio, stream is sys.__stdout__,
     # but os.isatty(0) is False,
     # such as when piping output to less(1)
@@ -86,7 +86,7 @@ def test_notty_kb_is_None():
 
 
 def test_keystroke_default_args():
-    "Test keyboard.Keystroke constructor with default arguments."
+    """Test keyboard.Keystroke constructor with default arguments."""
     from blessed.keyboard import Keystroke
     ks = Keystroke()
     assert ks._name is None
@@ -100,7 +100,7 @@ def test_keystroke_default_args():
 
 
 def test_a_keystroke():
-    "Test keyboard.Keystroke constructor with set arguments."
+    """Test keyboard.Keystroke constructor with set arguments."""
     from blessed.keyboard import Keystroke
     ks = Keystroke(ucs=u'x', code=1, name=u'the X')
     assert ks._name == u'the X'
@@ -113,7 +113,7 @@ def test_a_keystroke():
 
 
 def test_get_keyboard_codes():
-    "Test all values returned by get_keyboard_codes are from curses."
+    """Test all values returned by get_keyboard_codes are from curses."""
     import blessed.keyboard
     exemptions = dict(blessed.keyboard.CURSES_KEYCODE_OVERRIDE_MIXIN)
     for value, keycode in blessed.keyboard.get_keyboard_codes().items():
@@ -130,7 +130,7 @@ def test_get_keyboard_codes():
 
 
 def test_alternative_left_right():
-    "Test _alternative_left_right behavior for space/backspace."
+    """Test _alternative_left_right behavior for space/backspace."""
     from blessed.keyboard import _alternative_left_right
     term = mock.Mock()
     term._cuf1 = u''
@@ -147,7 +147,7 @@ def test_alternative_left_right():
 
 
 def test_cuf1_and_cub1_as_RIGHT_LEFT(all_terms):
-    "Test that cuf1 and cub1 are assigned KEY_RIGHT and KEY_LEFT."
+    """Test that cuf1 and cub1 are assigned KEY_RIGHT and KEY_LEFT."""
     from blessed.keyboard import get_keyboard_sequences
 
     @as_subprocess
@@ -168,7 +168,7 @@ def test_cuf1_and_cub1_as_RIGHT_LEFT(all_terms):
 
 
 def test_get_keyboard_sequences_sort_order():
-    "ordereddict ensures sequences are ordered longest-first."
+    """ordereddict ensures sequences are ordered longest-first."""
     @as_subprocess
     def child(kind):
         term = TestTerminal(kind=kind, force_styling=True)
@@ -182,7 +182,7 @@ def test_get_keyboard_sequences_sort_order():
 
 
 def test_get_keyboard_sequence(monkeypatch):
-    "Test keyboard.get_keyboard_sequence. "
+    """Test keyboard.get_keyboard_sequence."""
     import blessed.keyboard
 
     (KEY_SMALL, KEY_LARGE, KEY_MIXIN) = range(3)
@@ -223,7 +223,7 @@ def test_get_keyboard_sequence(monkeypatch):
 
 
 def test_resolve_sequence():
-    "Test resolve_sequence for order-dependent mapping."
+    """Test resolve_sequence for order-dependent mapping."""
     from blessed.keyboard import resolve_sequence, OrderedDict
     mapper = OrderedDict(((u'SEQ1', 1),
                           (u'SEQ2', 2),
@@ -285,7 +285,7 @@ def test_resolve_sequence():
 
 
 def test_keyboard_prefixes():
-    "Test keyboard.prefixes"
+    """Test keyboard.prefixes."""
     from blessed.keyboard import get_leading_prefixes
     keys = ['abc', 'abdf', 'e', 'jkl']
     pfs = get_leading_prefixes(keys)
@@ -293,7 +293,7 @@ def test_keyboard_prefixes():
 
 
 def test_keypad_mixins_and_aliases():
-    """ Test PC-Style function key translations when in ``keypad`` mode."""
+    """Test PC-Style function key translations when in ``keypad`` mode."""
     # Key     plain   app     modified
     # Up      ^[[A    ^[OA    ^[[1;mA
     # Down    ^[[B    ^[OB    ^[[1;mB
