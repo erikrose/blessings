@@ -383,6 +383,7 @@ def test_no_preferredencoding_fallback_ascii():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires fcntl")
 def test_unknown_preferredencoding_warned_and_fallback_ascii():
     """Ensure a locale without a codec emits a warning."""
     @as_subprocess
