@@ -153,6 +153,7 @@ def test_vertical_location(all_terms):
     child(all_terms)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', "requires multiprocess")
 def test_inject_move_x():
     """Test injection of hpa attribute for screen/ansi (issue #55)."""
     @as_subprocess
@@ -206,6 +207,7 @@ def test_inject_civis_and_cnorm_for_ansi():
     child('ansi')
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', "requires multiprocess")
 def test_inject_sc_and_rc_for_ansi():
     """Test injection of sc and rc (save and restore cursor) for ansi."""
     @as_subprocess
