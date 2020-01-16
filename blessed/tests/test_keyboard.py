@@ -2,8 +2,7 @@
 """Tests for keyboard support."""
 # std imports
 import sys
-import tty  # NOQA
-import curses
+import platform
 import tempfile
 import functools
 
@@ -12,6 +11,12 @@ import mock
 
 # local
 from .accessories import TestTerminal, all_terms, as_subprocess
+
+if platform.system() != 'Windows':
+    import curses
+else:
+    import jinxed as curses
+    import tty  # NOQA
 
 if sys.version_info[0] == 3:
     unichr = chr

@@ -14,6 +14,7 @@ import collections
 # 3rd party
 import six
 import mock
+import pytest
 from six.moves import reload_module
 
 # local
@@ -390,6 +391,7 @@ def test_unknown_preferredencoding_warned_and_fallback_ascii():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', "requires fcntl")
 def test_win32_missing_tty_modules(monkeypatch):
     """Ensure dummy exception is used when io is without UnsupportedOperation."""
     @as_subprocess

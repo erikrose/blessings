@@ -2,19 +2,22 @@
 # std imports
 import os
 import sys
-import fcntl
 import struct
-import termios
+import platform
 import itertools
 
 # 3rd party
 import six
+import pytest
 
 # local
 from blessed.tests.accessories import (  # isort:skip
     TestTerminal, as_subprocess, all_terms, many_lines, many_columns
 )
 
+if platform.system() != 'Windows':
+    import fcntl
+    import termios
 
 def test_length_cjk():
     @as_subprocess
@@ -215,6 +218,7 @@ def test_env_winsize():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', "requires fcntl")
 def test_winsize(many_lines, many_columns):
     """Test height and width is appropriately queried in a pty."""
     @as_subprocess
@@ -254,6 +258,7 @@ def test_Sequence_alignment_fixed_width():
         assert (term.length(radjusted) == len(pony_msg.rjust(88)))
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', "requires fcntl")
 def test_Sequence_alignment(all_terms):
     """Tests methods related to Sequence class, namely ljust, rjust, center."""
     @as_subprocess
