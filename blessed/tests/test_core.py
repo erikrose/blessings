@@ -370,6 +370,7 @@ def test_yield_hidden_cursor(all_terms):
     child(all_terms)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="windows doesn't work like this")
 def test_no_preferredencoding_fallback_ascii():
     """Ensure empty preferredencoding value defaults to ascii."""
     @as_subprocess
