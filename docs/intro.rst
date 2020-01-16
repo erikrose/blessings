@@ -10,7 +10,7 @@
     :alt: Travis Continuous Integration
     :target: https://travis-ci.org/jquast/blessed/
 
-.. |coveralls| image:: https://img.shields.io/coveralls/github/jquast/blessed/master?logo=coveralls
+.. |coveralls| image:: https://coveralls.io/repos/github/jquast/blessed/badge.svg?branch=master
     :alt: Coveralls Code Coverage
     :target: https://coveralls.io/github/jquast/blessed?branch=master
 
@@ -28,19 +28,19 @@
 
 .. |linux| image:: https://img.shields.io/badge/Linux-yes-success?logo=linux
     :alt: Linux supported
-    :target: https://pypi.python.org/pypi/enlighten
+    :target: https://pypi.python.org/pypi/blessed
 
 .. |windows| image:: https://img.shields.io/badge/Windows-NEW-success?logo=windows
     :alt: Windows supported
-    :target: https://pypi.python.org/pypi/enlighten
+    :target: https://pypi.python.org/pypi/blessed
 
 .. |mac| image:: https://img.shields.io/badge/MacOS-yes-success?logo=apple
     :alt: MacOS supported
-    :target: https://pypi.python.org/pypi/enlighten
+    :target: https://pypi.python.org/pypi/blessed
 
 .. |bsd| image:: https://img.shields.io/badge/BSD-yes-success?logo=freebsd
     :alt: BSD supported
-    :target: https://pypi.python.org/pypi/enlighten
+    :target: https://pypi.python.org/pypi/blessed
 
 Introduction
 ============
