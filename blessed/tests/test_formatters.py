@@ -8,16 +8,19 @@ import mock
 import pytest
 
 
+def fn_tparm(*args):
+    return u'~'.join(
+        arg.decode('latin1') if not num else '%s' % (arg,)
+        for num, arg in enumerate(args)
+    ).encode('latin1')
+
+
 def test_parameterizing_string_args_unspecified(monkeypatch):
     """Test default args of formatters.ParameterizingString."""
     from blessed.formatters import ParameterizingString, FormattingString
     # first argument to tparm() is the sequence name, returned as-is;
     # subsequent arguments are usually Integers.
-    tparm = lambda *args: u'~'.join(
-        arg.decode('latin1') if not num else '%s' % (arg,)
-        for num, arg in enumerate(args)).encode('latin1')
-
-    monkeypatch.setattr(curses, 'tparm', tparm)
+    monkeypatch.setattr(curses, 'tparm', fn_tparm)
 
     # given,
     pstr = ParameterizingString(u'')
@@ -46,11 +49,7 @@ def test_parameterizing_string_args(monkeypatch):
 
     # first argument to tparm() is the sequence name, returned as-is;
     # subsequent arguments are usually Integers.
-    tparm = lambda *args: u'~'.join(
-        arg.decode('latin1') if not num else '%s' % (arg,)
-        for num, arg in enumerate(args)).encode('latin1')
-
-    monkeypatch.setattr(curses, 'tparm', tparm)
+    monkeypatch.setattr(curses, 'tparm', fn_tparm)
 
     # given,
     pstr = ParameterizingString(u'cap', u'norm', u'seq-name')
@@ -188,7 +187,8 @@ def test_resolve_capability(monkeypatch):
     from blessed.formatters import resolve_capability
 
     # given, always returns a b'seq'
-    def tigetstr(attr): return ('seq-%s' % (attr,)).encode('latin1')
+    def tigetstr(attr):
+        return ('seq-%s' % (attr,)).encode('latin1')
     monkeypatch.setattr(curses, 'tigetstr', tigetstr)
     term = mock.Mock()
     term._sugar = dict(mnemonic='xyz')
@@ -198,7 +198,8 @@ def test_resolve_capability(monkeypatch):
     assert resolve_capability(term, 'natural') == u'seq-natural'
 
     # given, where tigetstr returns None
-    def tigetstr_none(attr): return None
+    def tigetstr_none(attr):
+        return None
     monkeypatch.setattr(curses, 'tigetstr', tigetstr_none)
 
     # exercise,
@@ -220,7 +221,8 @@ def test_resolve_color(monkeypatch):
                                     FormattingString,
                                     NullCallableString)
 
-    def color_cap(digit): return 'seq-%s' % (digit,)
+    def color_cap(digit):
+        return 'seq-%s' % (digit,)
     monkeypatch.setattr(curses, 'COLOR_RED', 1984)
 
     # given, terminal with color capabilities
@@ -263,7 +265,8 @@ def test_resolve_attribute_as_color(monkeypatch):
     import blessed
     from blessed.formatters import resolve_attribute
 
-    def resolve_color(term, digit): return 'seq-%s' % (digit,)
+    def resolve_color(term, digit):
+        return 'seq-%s' % (digit,)
     COLORS = set(['COLORX', 'COLORY'])
     COMPOUNDABLES = set(['JOINT', 'COMPOUND'])
     monkeypatch.setattr(blessed.formatters, 'resolve_color', resolve_color)
@@ -278,7 +281,8 @@ def test_resolve_attribute_as_compoundable(monkeypatch):
     import blessed
     from blessed.formatters import resolve_attribute, FormattingString
 
-    def resolve_cap(term, digit): return 'seq-%s' % (digit,)
+    def resolve_cap(term, digit):
+        return 'seq-%s' % (digit,)
     COMPOUNDABLES = set(['JOINT', 'COMPOUND'])
     monkeypatch.setattr(blessed.formatters,
                         'resolve_capability',
@@ -297,18 +301,20 @@ def test_resolve_attribute_non_compoundables(monkeypatch):
     """Test recursive compounding of resolve_attribute()."""
     import blessed
     from blessed.formatters import resolve_attribute, ParameterizingString
-    def uncompoundables(attr): return ['split', 'compound']
-    def resolve_cap(term, digit): return 'seq-%s' % (digit,)
+
+    def uncompoundables(attr):
+        return ['split', 'compound']
+
+    def resolve_cap(term, digit):
+        return 'seq-%s' % (digit,)
+
     monkeypatch.setattr(blessed.formatters,
                         'split_compound',
                         uncompoundables)
     monkeypatch.setattr(blessed.formatters,
                         'resolve_capability',
                         resolve_cap)
-    tparm = lambda *args: u'~'.join(
-        arg.decode('latin1') if not num else '%s' % (arg,)
-        for num, arg in enumerate(args)).encode('latin1')
-    monkeypatch.setattr(curses, 'tparm', tparm)
+    monkeypatch.setattr(curses, 'tparm', fn_tparm)
 
     term = mock.Mock()
     term.normal = 'seq-normal'
@@ -329,18 +335,17 @@ def test_resolve_attribute_recursive_compoundables(monkeypatch):
     from blessed.formatters import resolve_attribute, FormattingString
 
     # patch,
-    def resolve_cap(term, digit): return 'seq-%s' % (digit,)
+    def resolve_cap(term, digit):
+        return 'seq-%s' % (digit,)
     monkeypatch.setattr(blessed.formatters,
                         'resolve_capability',
                         resolve_cap)
-    tparm = lambda *args: u'~'.join(
-        arg.decode('latin1') if not num else '%s' % (arg,)
-        for num, arg in enumerate(args)).encode('latin1')
-    monkeypatch.setattr(curses, 'tparm', tparm)
+    monkeypatch.setattr(curses, 'tparm', fn_tparm)
     monkeypatch.setattr(curses, 'COLOR_RED', 6502)
     monkeypatch.setattr(curses, 'COLOR_BLUE', 6800)
 
-    def color_cap(digit): return 'seq-%s' % (digit,)
+    def color_cap(digit):
+        return 'seq-%s' % (digit,)
     term = mock.Mock()
     term._background_color = color_cap
     term._foreground_color = color_cap
@@ -357,7 +362,7 @@ def test_resolve_attribute_recursive_compoundables(monkeypatch):
 
 def test_pickled_parameterizing_string(monkeypatch):
     """Test pickle-ability of a formatters.ParameterizingString."""
-    from blessed.formatters import ParameterizingString, FormattingString
+    from blessed.formatters import ParameterizingString
 
     # simply send()/recv() over multiprocessing Pipe, a simple
     # pickle.loads(dumps(...)) did not reproduce this issue,
@@ -366,11 +371,7 @@ def test_pickled_parameterizing_string(monkeypatch):
 
     # first argument to tparm() is the sequence name, returned as-is;
     # subsequent arguments are usually Integers.
-    tparm = lambda *args: u'~'.join(
-        arg.decode('latin1') if not num else '%s' % (arg,)
-        for num, arg in enumerate(args)).encode('latin1')
-
-    monkeypatch.setattr(curses, 'tparm', tparm)
+    monkeypatch.setattr(curses, 'tparm', fn_tparm)
 
     # given,
     pstr = ParameterizingString(u'seqname', u'norm', u'cap-name')
@@ -417,7 +418,7 @@ def test_tparm_other_exception(monkeypatch):
     """Test 'tparm() returned NULL' is caught (win32 PDCurses systems)."""
     # on win32, any calls to tparm raises curses.error with message,
     # "tparm() returned NULL", function PyCurses_tparm of _cursesmodule.c
-    from blessed.formatters import ParameterizingString, NullCallableString
+    from blessed.formatters import ParameterizingString
 
     def tparm(*args):
         raise curses.error("unexpected error in tparm()")

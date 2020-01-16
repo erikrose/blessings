@@ -1,33 +1,17 @@
 # -*- coding: utf-8 -*-
 """Tests for keyboard support."""
 # std imports
-import os
-import pty
 import sys
 import tty  # NOQA
-#import time
-import math
 import curses
-import signal
 import tempfile
 import functools
 
 # 3rd party
-import six
 import mock
-import pytest
 
 # local
-from .accessories import (SEMAPHORE,
-                          RECV_SEMAPHORE,
-                          SEND_SEMAPHORE,
-                          TestTerminal,
-                          echo_off,
-                          all_terms,
-                          as_subprocess,
-                          read_until_eof,
-                          read_until_semaphore,
-                          init_subproc_coverage)
+from .accessories import TestTerminal, all_terms, as_subprocess
 
 if sys.version_info[0] == 3:
     unichr = chr

@@ -1,21 +1,16 @@
 # -*- coding: utf-8 -*-
 """Tests for Terminal() sequences and sequence-awareness."""
 # std imports
-import os
 import sys
-import random
 import platform
 
 # 3rd party
 import six
-import mock
-import pytest
 
 # local
 from .accessories import (TestTerminal,
                           all_terms,
                           unicode_cap,
-                          many_columns,
                           unicode_parm,
                           as_subprocess)
 
@@ -363,8 +358,8 @@ def test_compound_formatting(all_terms):
                  t.normal))
         else:
             expected_output = u'meh'
-        assert (t.on_bright_red_bold_bright_green_underline('meh')
-                == expected_output)
+        very_long_cap = t.on_bright_red_bold_bright_green_underline
+        assert (very_long_cap('meh') == expected_output)
 
     child(all_terms)
 

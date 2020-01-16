@@ -9,14 +9,9 @@ import sphinx_rtd_theme
 import sphinx.environment
 from docutils.utils import get_source_line
 
-# This file is execfile()d with the current directory set to its
-# containing dir.
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
+# for github.py
 HERE = os.path.dirname(__file__)
-sys.path.insert(0, os.path.abspath('sphinxext'))  # for github.py
+sys.path.insert(0, os.path.abspath('sphinxext'))
 github_project_url = "https://github.com/jquast/blessed"
 
 
@@ -34,24 +29,29 @@ github_project_url = "https://github.com/jquast/blessed"
 def _warn_node(self, msg, node):
     if not msg.startswith('nonlocal image URI found:'):
         self._warnfunc(msg, '%s:%s' % get_source_line(node))
+
+
 sphinx.environment.BuildEnvironment.warn_node = _warn_node
 
-# Monkey-patch functools.wraps and contextlib.wraps
-# https://github.com/sphinx-doc/sphinx/issues/1711#issuecomment-93126473
+
 def no_op_wraps(func):
     """Replaces functools.wraps in order to undo wrapping when generating Sphinx documentation."""
     if func.__module__ is None or 'blessed' not in func.__module__:
         return functools.orig_wraps(func)
+
     def wrapper(decorator):
         sys.stderr.write('patched for function signature: {0!r}\n'.format(func))
         return func
     return wrapper
 
+
+# Monkey-patch functools.wraps and contextlib.wraps
+# https://github.com/sphinx-doc/sphinx/issues/1711#issuecomment-93126473
 functools.orig_wraps = functools.wraps
 functools.wraps = no_op_wraps
-import contextlib  # isort:skip
+import contextlib  # isort:skip # noqa
 contextlib.wraps = no_op_wraps
-from blessed.terminal import *  # isort:skip
+from blessed.terminal import *  # isort:skip # noqa
 
 # -- General configuration ----------------------------------------------------
 
@@ -164,7 +164,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-#html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

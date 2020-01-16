@@ -7,7 +7,6 @@ import os
 import sys
 import math
 import time
-import locale
 import platform
 import warnings
 import collections
@@ -15,7 +14,6 @@ import collections
 # 3rd party
 import six
 import mock
-import pytest
 from six.moves import reload_module
 
 # local

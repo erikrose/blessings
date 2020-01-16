@@ -6,7 +6,6 @@ import time
 import timeit
 import colorsys
 import contextlib
-import collections
 
 # local
 import blessed

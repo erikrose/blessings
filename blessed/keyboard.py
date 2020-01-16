@@ -375,7 +375,7 @@ DEFAULT_SEQUENCE_MIXIN = (
     (six.unichr(10), curses.KEY_ENTER),
     (six.unichr(13), curses.KEY_ENTER),
     (six.unichr(8), curses.KEY_BACKSPACE),
-    (six.unichr(9), KEY_TAB),
+    (six.unichr(9), KEY_TAB),  # noqa
     (six.unichr(27), curses.KEY_EXIT),
     (six.unichr(127), curses.KEY_BACKSPACE),
 
@@ -395,24 +395,24 @@ DEFAULT_SEQUENCE_MIXIN = (
     # http://fossies.org/linux/rxvt/doc/rxvtRef.html#KeyCodes
     #
     # keypad, numlock on
-    (u"\x1bOM", curses.KEY_ENTER),  # return
-    (u"\x1bOj", KEY_KP_MULTIPLY),   # *
-    (u"\x1bOk", KEY_KP_ADD),        # +
-    (u"\x1bOl", KEY_KP_SEPARATOR),  # ,
-    (u"\x1bOm", KEY_KP_SUBTRACT),   # -
-    (u"\x1bOn", KEY_KP_DECIMAL),    # .
-    (u"\x1bOo", KEY_KP_DIVIDE),     # /
-    (u"\x1bOX", KEY_KP_EQUAL),      # =
-    (u"\x1bOp", KEY_KP_0),          # 0
-    (u"\x1bOq", KEY_KP_1),          # 1
-    (u"\x1bOr", KEY_KP_2),          # 2
-    (u"\x1bOs", KEY_KP_3),          # 3
-    (u"\x1bOt", KEY_KP_4),          # 4
-    (u"\x1bOu", KEY_KP_5),          # 5
-    (u"\x1bOv", KEY_KP_6),          # 6
-    (u"\x1bOw", KEY_KP_7),          # 7
-    (u"\x1bOx", KEY_KP_8),          # 8
-    (u"\x1bOy", KEY_KP_9),          # 9
+    (u"\x1bOM", curses.KEY_ENTER),  # noqa return
+    (u"\x1bOj", KEY_KP_MULTIPLY),   # noqa *
+    (u"\x1bOk", KEY_KP_ADD),        # noqa +
+    (u"\x1bOl", KEY_KP_SEPARATOR),  # noqa ,
+    (u"\x1bOm", KEY_KP_SUBTRACT),   # noqa -
+    (u"\x1bOn", KEY_KP_DECIMAL),    # noqa .
+    (u"\x1bOo", KEY_KP_DIVIDE),     # noqa /
+    (u"\x1bOX", KEY_KP_EQUAL),      # noqa =
+    (u"\x1bOp", KEY_KP_0),          # noqa 0
+    (u"\x1bOq", KEY_KP_1),          # noqa 1
+    (u"\x1bOr", KEY_KP_2),          # noqa 2
+    (u"\x1bOs", KEY_KP_3),          # noqa 3
+    (u"\x1bOt", KEY_KP_4),          # noqa 4
+    (u"\x1bOu", KEY_KP_5),          # noqa 5
+    (u"\x1bOv", KEY_KP_6),          # noqa 6
+    (u"\x1bOw", KEY_KP_7),          # noqa 7
+    (u"\x1bOx", KEY_KP_8),          # noqa 8
+    (u"\x1bOy", KEY_KP_9),          # noqa 9  
 
     # keypad, numlock off
     (u"\x1b[1~", curses.KEY_FIND),         # find
