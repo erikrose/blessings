@@ -221,9 +221,12 @@ def test_setupterm_invalid_issue39():
             term = TestTerminal(kind='unknown', force_styling=True)
         except UserWarning:
             err = sys.exc_info()[1]
-            assert err.args[0] == (
+            assert err.args[0] in (
                 "Failed to setupterm(kind='unknown'): "
-                "setupterm: could not find terminal")
+                "setupterm: could not find terminal",
+                "Failed to setupterm(kind='unknown'): "
+                "Could not find terminal unknown",
+            )
         else:
             if platform.system().lower() != 'freebsd':
                 assert not term.is_a_tty and not term.does_styling, (
