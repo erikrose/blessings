@@ -41,6 +41,7 @@ setuptools.setup(
     license='MIT',
     packages=['blessed', ],
     url='https://github.com/jquast/blessed',
+    project_urls={'Documentation': 'https://blessed.readthedocs.io'},
     include_package_data=True,
     zip_safe=True,
     classifiers=[
