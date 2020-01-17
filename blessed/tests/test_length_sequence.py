@@ -56,6 +56,8 @@ def test_length_ansiart():
     child(kind)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows',
+                    reason='https://github.com/jquast/blessed/issues/122')
 def test_sequence_length(all_terms):
     """Ensure T.length(string containing sequence) is correcterm."""
     @as_subprocess
@@ -171,16 +173,8 @@ def test_sequence_length(all_terms):
         assert (term.length(u'\t') in (8, 9))
         assert (term.strip(u'\t') == u'')
 
-        if term.kind != 'vtwin10':
-            assert (term.length(u'_' + term.move_left) == 0)
-            assert (term.length(term.move_right) == 1)
-        else:
-            # XXX Why, on windows / jinxed, is this value correct,
-            # but, when running the tests on windows, the value
-            # is *incorrect* !?
-            assert (term.length(u'_' + term.move_left) == 1)
-            # XXX And, 0 here, it is as though RE_MOVE isn't working.
-            assert (term.length(term.move_right) == 0)
+        assert (term.length(u'_' + term.move_left) == 0)
+        assert (term.length(term.move_right) == 1)
 
         if term.cub:
             assert (term.length((u'_' * 10) + term.cub(10)) == 0)
@@ -409,6 +403,8 @@ def test_sequence_is_movement_true(all_terms):
     child(all_terms)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows',
+                    reason='https://github.com/jquast/blessed/issues/122')
 def test_termcap_will_move_true(all_terms):
     """Test parser about sequences that move the cursor."""
     @as_subprocess
