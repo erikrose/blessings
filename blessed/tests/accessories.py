@@ -52,7 +52,7 @@ if os.environ.get('TEST_FULL'):
     except OSError:
         pass
 elif platform.system() == 'Windows':
-    all_terms_params = ['xterm', ]
+    all_terms_params = ['vtwin10', ]
 elif os.environ.get('TEST_QUICK'):
     all_terms_params = 'xterm screen ansi linux'.split()
 
