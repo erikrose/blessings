@@ -5,11 +5,9 @@ from __future__ import print_function, with_statement
 
 # std imports
 import os
-import pty
 import sys
 import codecs
-import curses
-import termios
+import platform
 import functools
 import traceback
 import contextlib
@@ -22,7 +20,18 @@ import pytest
 # local
 from blessed import Terminal
 
-TestTerminal = functools.partial(Terminal, kind='xterm-256color')
+if platform.system() != "Windows":
+    import curses
+    import pty
+    import termios
+else:
+    import jinxed as curses
+
+
+test_kind = 'xterm-256color'
+if platform.system() == 'Windows':
+    test_kind = 'vtwin10'
+TestTerminal = functools.partial(Terminal, kind=test_kind)
 SEND_SEMAPHORE = SEMAPHORE = b'SEMAPHORE\n'
 RECV_SEMAPHORE = b'SEMAPHORE\r\n'
 many_lines_params = [40, 80]
@@ -46,6 +55,8 @@ if os.environ.get('TEST_FULL'):
             .communicate()[0].splitlines()]
     except OSError:
         pass
+elif platform.system() == 'Windows':
+    all_terms_params = ['vtwin10', ]
 elif os.environ.get('TEST_QUICK'):
     all_terms_params = 'xterm screen ansi linux'.split()
 
@@ -75,6 +86,10 @@ class as_subprocess(object):
         self.func = func
 
     def __call__(self, *args, **kwargs):
+        if platform.system() == 'Windows':
+            self.func(*args, **kwargs)
+            return
+
         pid_testrunner = os.getpid()
         pid, master_fd = pty.fork()
         if pid == self._CHILD_PID:
@@ -197,14 +212,17 @@ def read_until_eof(fd, encoding='utf8'):
 @contextlib.contextmanager
 def echo_off(fd):
     """Ensure any bytes written to pty fd are not duplicated as output."""
-    try:
-        attrs = termios.tcgetattr(fd)
-        attrs[3] = attrs[3] & ~termios.ECHO
-        termios.tcsetattr(fd, termios.TCSANOW, attrs)
+    if platform.system() != 'Windows':
+        try:
+            attrs = termios.tcgetattr(fd)
+            attrs[3] = attrs[3] & ~termios.ECHO
+            termios.tcsetattr(fd, termios.TCSANOW, attrs)
+            yield
+        finally:
+            attrs[3] = attrs[3] | termios.ECHO
+            termios.tcsetattr(fd, termios.TCSANOW, attrs)
+    else:
         yield
-    finally:
-        attrs[3] = attrs[3] | termios.ECHO
-        termios.tcsetattr(fd, termios.TCSANOW, attrs)
 
 
 def unicode_cap(cap):

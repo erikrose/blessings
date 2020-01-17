@@ -14,6 +14,7 @@ import collections
 # 3rd party
 import six
 import mock
+import pytest
 from six.moves import reload_module
 
 # local
@@ -86,6 +87,7 @@ def test_null_fileno():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires more than 1 tty")
 def test_number_of_colors_without_tty():
     """``number_of_colors`` should return 0 when there's no tty."""
     @as_subprocess
@@ -121,6 +123,7 @@ def test_number_of_colors_without_tty():
     child_256_nostyle()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires more than 1 tty")
 def test_number_of_colors_with_tty():
     """test ``number_of_colors`` 0, 8, and 256."""
     @as_subprocess
@@ -174,7 +177,7 @@ def test_force_styling_none(all_terms):
     child(all_terms)
 
 
-def test_setupterm_singleton_issue33():
+def test_setupterm_singleton_issue_33():
     """A warning is emitted if a new terminal ``kind`` is used per process."""
     @as_subprocess
     def child():
@@ -182,16 +185,18 @@ def test_setupterm_singleton_issue33():
 
         # instantiate first terminal, of type xterm-256color
         term = TestTerminal(force_styling=True)
+        first_kind = term.kind
+        next_kind = 'xterm'
 
         try:
             # a second instantiation raises UserWarning
-            term = TestTerminal(kind="vt220", force_styling=True)
+            term = TestTerminal(kind=next_kind, force_styling=True)
         except UserWarning:
             err = sys.exc_info()[1]
             assert (err.args[0].startswith(
-                    'A terminal of kind "vt220" has been requested')
+                    'A terminal of kind "' + next_kind + '" has been requested')
                     ), err.args[0]
-            assert ('a terminal of kind "xterm-256color" will '
+            assert ('a terminal of kind "' + first_kind + '" will '
                     'continue to be returned' in err.args[0]), err.args[0]
         else:
             # unless term is not a tty and setupterm() is not called
@@ -216,9 +221,12 @@ def test_setupterm_invalid_issue39():
             term = TestTerminal(kind='unknown', force_styling=True)
         except UserWarning:
             err = sys.exc_info()[1]
-            assert err.args[0] == (
+            assert err.args[0] in (
                 "Failed to setupterm(kind='unknown'): "
-                "setupterm: could not find terminal")
+                "setupterm: could not find terminal",
+                "Failed to setupterm(kind='unknown'): "
+                "Could not find terminal unknown",
+            )
         else:
             if platform.system().lower() != 'freebsd':
                 assert not term.is_a_tty and not term.does_styling, (
@@ -316,6 +324,7 @@ def test_IOUnsupportedOperation():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="has process-wide side-effects")
 def test_winsize_IOError_returns_environ():
     """When _winsize raises IOError, defaults from os.environ given."""
     @as_subprocess
@@ -362,6 +371,7 @@ def test_yield_hidden_cursor(all_terms):
     child(all_terms)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="windows doesn't work like this")
 def test_no_preferredencoding_fallback_ascii():
     """Ensure empty preferredencoding value defaults to ascii."""
     @as_subprocess
@@ -374,22 +384,24 @@ def test_no_preferredencoding_fallback_ascii():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires fcntl")
+#@pytest.mark.filterwarnings("ignore:LookupError")
 def test_unknown_preferredencoding_warned_and_fallback_ascii():
     """Ensure a locale without a codec emits a warning."""
     @as_subprocess
     def child():
         with mock.patch('locale.getpreferredencoding') as get_enc:
-            with warnings.catch_warnings(record=True) as warned:
-                get_enc.return_value = '---unknown--encoding---'
+            get_enc.return_value = '---unknown--encoding---'
+            with pytest.warns(UserWarning, match=(
+                    'LookupError: unknown encoding: ---unknown--encoding---, '
+                    'fallback to ASCII for keyboard.')):
                 t = TestTerminal()
                 assert t._encoding == 'ascii'
-                assert len(warned) == 1
-                assert issubclass(warned[-1].category, UserWarning)
-                assert "fallback to ASCII" in str(warned[-1].message)
 
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires fcntl")
 def test_win32_missing_tty_modules(monkeypatch):
     """Ensure dummy exception is used when io is without UnsupportedOperation."""
     @as_subprocess
@@ -467,6 +479,7 @@ def test_time_left_infinite_None():
     assert _time_left(stime=time.time(), timeout=None) is None
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="cant multiprocess")
 def test_termcap_repr():
     """Ensure ``hidden_cursor()`` writes hide_cursor and normal_cursor."""
 

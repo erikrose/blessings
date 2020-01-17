@@ -8,7 +8,7 @@ from __future__ import print_function
 import os
 import sys
 import locale
-import termios
+import platform
 
 BITMAP_IFLAG = {
     'IGNBRK': 'ignore BREAK condition',
@@ -99,6 +99,7 @@ CTLCHAR_INDEX = {
 
 def display_bitmask(kind, bitmap, value):
     """Display all matching bitmask values for ``value`` given ``bitmap``."""
+    import termios
     col1_width = max(map(len, list(bitmap.keys()) + [kind]))
     col2_width = 7
     fmt = '{name:>{col1_width}} {value:>{col2_width}}   {description}'
@@ -126,6 +127,7 @@ def display_bitmask(kind, bitmap, value):
 
 def display_ctl_chars(index, ctlc):
     """Display all control character indicies, names, and values."""
+    import termios
     title = 'Special Character'
     col1_width = len(title)
     col2_width = max(map(len, index.values()))
@@ -175,6 +177,11 @@ def display_pathconf(names, getter):
 
 def main():
     """Program entry point."""
+    if platform.system() == 'Windows':
+        print('No terminal on windows systems!')
+        exit(0)
+
+    import termios
     fd = sys.stdin.fileno()
     locale.setlocale(locale.LC_ALL, '')
     encoding = locale.getpreferredencoding()

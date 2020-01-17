@@ -6,6 +6,7 @@ import platform
 
 # 3rd party
 import six
+import pytest
 
 # local
 from .accessories import (TestTerminal,
@@ -15,12 +16,12 @@ from .accessories import (TestTerminal,
                           as_subprocess)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires real tty")
 def test_capability():
     """Check that capability lookup works."""
     @as_subprocess
     def child():
-        # Also test that Terminal grabs a reasonable default stream. This test
-        # assumes it will be run from a tty.
+        # Also test that Terminal grabs a reasonable default stream.
         t = TestTerminal()
         sc = unicode_cap('sc')
         assert t.save == sc
@@ -50,6 +51,8 @@ def test_capability_with_forced_tty():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows',
+                    reason='https://github.com/jquast/blessed/issues/122')
 def test_parametrization():
     """Test parameterizing a capability."""
     @as_subprocess
@@ -153,6 +156,7 @@ def test_vertical_location(all_terms):
     child(all_terms)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires multiprocess")
 def test_inject_move_x():
     """Test injection of hpa attribute for screen/ansi (issue #55)."""
     @as_subprocess
@@ -173,6 +177,7 @@ def test_inject_move_x():
     child('ansi')
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires multiprocess")
 def test_inject_move_y():
     """Test injection of vpa attribute for screen/ansi (issue #55)."""
     @as_subprocess
@@ -193,6 +198,7 @@ def test_inject_move_y():
     child('ansi')
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires multiprocess")
 def test_inject_civis_and_cnorm_for_ansi():
     """Test injection of cvis attribute for ansi."""
     @as_subprocess
@@ -206,6 +212,7 @@ def test_inject_civis_and_cnorm_for_ansi():
     child('ansi')
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires multiprocess")
 def test_inject_sc_and_rc_for_ansi():
     """Test injection of sc and rc (save and restore cursor) for ansi."""
     @as_subprocess
@@ -475,16 +482,19 @@ def test_null_callable_string(all_terms):
 def test_padd():
     """Test Terminal.padd(seq)."""
     @as_subprocess
-    def child():
+    def child(kind):
         from blessed.sequences import Sequence
         from blessed import Terminal
-        term = Terminal('xterm-256color')
+        term = Terminal(kind)
         assert Sequence('xyz\b', term).padd() == u'xy'
         assert Sequence('xyz\b-', term).padd() == u'xy-'
         assert Sequence('xxxx\x1b[3Dzz', term).padd() == u'xzz'
         assert Sequence('\x1b[3D', term).padd() == u''  # "Trim left"
 
-    child()
+    kind = 'xterm-256color'
+    if platform.system() == 'Windows':
+        kind = 'vtwin10'
+    child(kind)
 
 
 def test_split_seqs(all_terms):

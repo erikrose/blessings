@@ -2,21 +2,27 @@
 """Tests for keyboard support."""
 # std imports
 import sys
-import tty  # NOQA
-import curses
+import platform
 import tempfile
 import functools
 
 # 3rd party
 import mock
+import pytest
 
 # local
 from .accessories import TestTerminal, all_terms, as_subprocess
 
+if platform.system() != 'Windows':
+    import curses
+    import tty  # NOQA
+else:
+    import jinxed as curses
+
 if sys.version_info[0] == 3:
     unichr = chr
 
-
+@pytest.mark.skipif(platform.system() == 'Windows', reason="?")
 def test_break_input_no_kb():
     """cbreak() should not call tty.setcbreak() without keyboard."""
     @as_subprocess
@@ -30,6 +36,7 @@ def test_break_input_no_kb():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="?")
 def test_raw_input_no_kb():
     """raw should not call tty.setraw() without keyboard."""
     @as_subprocess
@@ -43,6 +50,7 @@ def test_raw_input_no_kb():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="?")
 def test_raw_input_with_kb():
     """raw should call tty.setraw() when with keyboard."""
     @as_subprocess
@@ -162,7 +170,10 @@ def test_get_keyboard_sequences_sort_order():
                 assert len(sequence) <= maxlen
             assert sequence
             maxlen = len(sequence)
-    child(kind='xterm-256color')
+    kind = 'xterm-256color'
+    if platform.system() == 'Windows':
+        kind = 'vtwin10'
+    child(kind)
 
 
 def test_get_keyboard_sequence(monkeypatch):
@@ -276,6 +287,7 @@ def test_keyboard_prefixes():
     assert pfs == set([u'a', u'ab', u'abd', u'j', u'jk'])
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="no multiprocess")
 def test_keypad_mixins_and_aliases():
     """Test PC-Style function key translations when in ``keypad`` mode."""
     # Key     plain   app     modified

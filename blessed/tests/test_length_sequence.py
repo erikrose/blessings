@@ -2,24 +2,27 @@
 # std imports
 import os
 import sys
-import fcntl
 import struct
-import termios
+import platform
 import itertools
 
 # 3rd party
 import six
+import pytest
 
 # local
 from blessed.tests.accessories import (  # isort:skip
     TestTerminal, as_subprocess, all_terms, many_lines, many_columns
 )
 
+if platform.system() != 'Windows':
+    import fcntl
+    import termios
 
 def test_length_cjk():
     @as_subprocess
     def child():
-        term = TestTerminal(kind='xterm-256color')
+        term = TestTerminal()
 
         # given,
         given = term.bold_red(u'コンニチハ, セカイ!')
@@ -33,9 +36,9 @@ def test_length_cjk():
 
 def test_length_ansiart():
     @as_subprocess
-    def child():
+    def child(kind):
         import codecs
-        term = TestTerminal(kind='xterm-256color')
+        term = TestTerminal(kind=kind)
         # this 'ansi' art contributed by xzip!impure for another project,
         # unlike most CP-437 DOS ansi art, this is actually utf-8 encoded.
         fname = os.path.join(os.path.dirname(__file__), 'wall.ans')
@@ -47,9 +50,14 @@ def test_length_ansiart():
         assert term.length(lines[4]) == 78
         assert term.length(lines[5]) == 78
         assert term.length(lines[6]) == 77
-    child()
+    kind = 'xterm-256color'
+    if platform.system() == 'Windows':
+        kind = 'vtwin10'
+    child(kind)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows',
+                    reason='https://github.com/jquast/blessed/issues/122')
 def test_sequence_length(all_terms):
     """Ensure T.length(string containing sequence) is correcterm."""
     @as_subprocess
@@ -164,12 +172,13 @@ def test_sequence_length(all_terms):
         # XXX why are some terminals width of 9 here ??
         assert (term.length(u'\t') in (8, 9))
         assert (term.strip(u'\t') == u'')
+
         assert (term.length(u'_' + term.move_left) == 0)
+        assert (term.length(term.move_right) == 1)
 
         if term.cub:
             assert (term.length((u'_' * 10) + term.cub(10)) == 0)
 
-        assert (term.length(term.move_right) == 1)
 
         if term.cuf:
             assert (term.length(term.cuf(10)) == 10)
@@ -215,6 +224,7 @@ def test_env_winsize():
     child()
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires fcntl")
 def test_winsize(many_lines, many_columns):
     """Test height and width is appropriately queried in a pty."""
     @as_subprocess
@@ -254,6 +264,7 @@ def test_Sequence_alignment_fixed_width():
         assert (term.length(radjusted) == len(pony_msg.rjust(88)))
 
 
+@pytest.mark.skipif(platform.system() == 'Windows', reason="requires fcntl")
 def test_Sequence_alignment(all_terms):
     """Tests methods related to Sequence class, namely ljust, rjust, center."""
     @as_subprocess
@@ -392,6 +403,8 @@ def test_sequence_is_movement_true(all_terms):
     child(all_terms)
 
 
+@pytest.mark.skipif(platform.system() == 'Windows',
+                    reason='https://github.com/jquast/blessed/issues/122')
 def test_termcap_will_move_true(all_terms):
     """Test parser about sequences that move the cursor."""
     @as_subprocess

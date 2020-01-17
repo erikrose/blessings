@@ -51,9 +51,9 @@ except ImportError:
     from ordereddict import OrderedDict
 
 
+HAS_TTY = True
 if platform.system() == 'Windows':
     import jinxed as curses  # pylint: disable=import-error
-    HAS_TTY = True
 else:
     import curses
 
@@ -61,14 +61,15 @@ else:
         import termios
         import fcntl
         import tty
-        HAS_TTY = True
     except ImportError:
         _TTY_METHODS = ('setraw', 'cbreak', 'kbhit', 'height', 'width')
         _MSG_NOSUPPORT = (
             "One or more of the modules: 'termios', 'fcntl', and 'tty' "
-            "are not found on your platform '{0}'. The following methods "
-            "of Terminal are dummy/no-op unless a deriving class overrides "
-            "them: {1}".format(sys.platform.lower(), ', '.join(_TTY_METHODS)))
+            "are not found on your platform '{platform}'. "
+            "The following methods of Terminal are dummy/no-op "
+            "unless a deriving class overrides them: {tty_methods}."
+            .format(platform=platform.system(),
+                    tty_methods=', '.join(_TTY_METHODS)))
         warnings.warn(_MSG_NOSUPPORT)
         HAS_TTY = False
 
@@ -201,7 +202,7 @@ class Terminal(object):
         if self.does_styling:
             # Initialize curses (call setupterm), so things like tigetstr() work.
             try:
-                curses.setupterm(kind, open(os.devnull).fileno())
+                curses.setupterm(self._kind, open(os.devnull).fileno())
             except curses.error as err:
                 warnings.warn('Failed to setupterm(kind={0!r}): {1}'
                               .format(self._kind, err))
