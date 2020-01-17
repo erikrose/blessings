@@ -39,7 +39,7 @@ setuptools.setup(
     author='Jeff Quast, Erik Rose',
     author_email='contact@jeffquast.com',
     license='MIT',
-    packages=['blessed', 'blessed.tests'],
+    packages=['blessed', ],
     url='https://github.com/jquast/blessed',
     include_package_data=True,
     zip_safe=True,

@@ -10,9 +10,8 @@ import itertools
 import six
 import pytest
 
-from blessed.tests.accessories import (  # isort:skip
-    TestTerminal, as_subprocess, all_terms, many_lines, many_columns
-)
+from .accessories import (  # isort:skip
+    TestTerminal, as_subprocess, all_terms, many_lines, many_columns)
 
 if platform.system() != 'Windows':
     import fcntl
