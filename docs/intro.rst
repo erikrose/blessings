@@ -10,10 +10,6 @@
     :alt: Travis Continuous Integration
     :target: https://travis-ci.org/jquast/blessed/
 
-.. |coveralls| image:: https://coveralls.io/repos/github/jquast/blessed/badge.svg?branch=master
-    :alt: Coveralls Code Coverage
-    :target: https://coveralls.io/github/jquast/blessed?branch=master
-
 .. |codecov| image:: https://codecov.io/gh/jquast/blessed/branch/master/graph/badge.svg
     :alt: codecov.io Code Coverage
     :target: https://codecov.io/gh/jquast/blessed
