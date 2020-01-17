@@ -1,4 +1,4 @@
-| |docs| |travis| |coveralls|
+| |docs| |travis| |codecov|
 | |pypi| |downloads| |gitter|
 | |linux| |windows| |mac| |bsd|
 
