@@ -1,91 +1,101 @@
+# encoding: utf-8
+"""
+Utility to show X11 colors in 24-bit and down-converted to 256, 16, and 8 color
+The time to generate the table is displayed to give an indication of how long each
+algorithm takes compared to the others.
+"""
 # std imports
-import re
+import colorsys
+import sys
+import timeit
 
 # local
 import blessed
+from blessed.color import COLOR_DISTANCE_ALGORITHMS
 from blessed.colorspace import X11_COLORNAMES_TO_RGB
 
-RE_NATURAL = re.compile(r'(dark|light|)(.+?)(\d*)$')
+
+def sort_colors():
+    """
+    Sort colors by HSV value and remove duplicates
+    """
+    colors = {}
+    for color_name, rgb_color in X11_COLORNAMES_TO_RGB.items():
+        if rgb_color not in colors:
+            colors[rgb_color] = color_name
+
+    return sorted(colors.items(),
+                  key=lambda rgb: colorsys.rgb_to_hsv(*rgb[0]),
+                  reverse=True)
 
 
-def naturalize(string):
-
-    intensity, word, num = RE_NATURAL.match(string).groups()
-
-    if intensity == 'light':
-        intensity = -1
-    elif intensity == 'medium':
-        intensity = 1
-    elif intensity == 'dark':
-        intensity = 2
-    else:
-        intensity = 0
-
-    return word, intensity, int(num) if num else 0
+ALGORITHMS = tuple(sorted(COLOR_DISTANCE_ALGORITHMS))
+SORTED_COLORS = sort_colors()
 
 
-def color_table(term):
+def draw_chart(term):
+    """
+    Draw a chart of each X11 color represented as in 24-bit and as down-converted
+    to 256, 16, and 8 color with the currently configured algorithm.
+    """
+    term.move(0, 0)
+    sys.stdout.write(term.home)
+    width = term.width
+    line = ''
+    line_len = 0
 
-    output = {}
-    for color, code in X11_COLORNAMES_TO_RGB.items():
-
-        if code in output:
-            output[code] = '%s %s' % (output[code], color)
-            continue
+    start = timeit.default_timer()
+    for color in SORTED_COLORS:
 
         chart = ''
         for noc in (1 << 24, 256, 16, 8):
             term.number_of_colors = noc
-            chart += getattr(term, color)(u'█')
+            chart += getattr(term, color[1])(u'█')
 
-        output[code] = '%s %s' % (chart, color)
+        if line_len + 5 > width:
+            line += '\n'
+            line_len = 0
 
-    for color in sorted(X11_COLORNAMES_TO_RGB, key=naturalize):
-        code = X11_COLORNAMES_TO_RGB[color]
-        if code in output:
-            print(output.pop(code))
+        line += ' %s' % chart
+        line_len += 5
+
+    elapsed = round((timeit.default_timer() - start) * 1000)
+    print(line)
+
+    left_text = '[] to select, q to quit'
+    center_text = f'{term.color_distance_algorithm}'
+    right_text = f'{elapsed:d} ms\n'
+
+    sys.stdout.write(term.clear_eos + left_text +
+                     term.center(center_text, term.width -
+                                 term.length(left_text) - term.length(right_text)) +
+                     right_text)
 
 
 def color_chart(term):
-
-    output = {}
-    for color, code in X11_COLORNAMES_TO_RGB.items():
-
-        if code in output:
-            continue
-
-        chart = ''
-        for noc in (1 << 24, 256, 16, 8):
-            term.number_of_colors = noc
-            chart += getattr(term, color)(u'█')
-
-        output[code] = chart
-
-    width = term.width
-
-    line = ''
-    line_len = 0
-    for color in sorted(X11_COLORNAMES_TO_RGB, key=naturalize):
-        code = X11_COLORNAMES_TO_RGB[color]
-        if code in output:
-            chart = output.pop(code)
-            if line_len + 5 > width:
-                print(line)
-                line = ''
-                line_len = 0
-
-            line += ' %s' % chart
-            line_len += 5
-
-    print(line)
-
-    for color in sorted(X11_COLORNAMES_TO_RGB, key=naturalize):
-        code = X11_COLORNAMES_TO_RGB[color]
-        if code in output:
-            print(output.pop(code))
+    """
+    Main color chart application
+    """
+    term = blessed.Terminal()
+    algo_idx = 0
+    dirty = True
+    with term.cbreak(), term.hidden_cursor(), term.fullscreen():
+        while True:
+            if dirty:
+                draw_chart(term)
+            inp = term.inkey()
+            dirty = True
+            if inp in '[]':
+                algo_idx += 1 if inp == ']' else -1
+                algo_idx = algo_idx % len(ALGORITHMS)
+                term.color_distance_algorithm = ALGORITHMS[algo_idx]
+            elif inp == '\x0c':
+                pass
+            elif inp in 'qQ':
+                break
+            else:
+                dirty = False
 
 
 if __name__ == '__main__':
-
-    # color_table(blessed.Terminal())
     color_chart(blessed.Terminal())
