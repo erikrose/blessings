@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # std imports
 import os
-import pty
 import sys
 import math
 import time
@@ -31,6 +30,7 @@ pytestmark = pytest.mark.skipif(
                     reason="TEST_QUICK specified")
 def test_kbhit_interrupted():
     """kbhit() should not be interrupted with a signal handler."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:
         cov = init_subproc_coverage('test_kbhit_interrupted')
@@ -73,6 +73,7 @@ def test_kbhit_interrupted():
                     reason="TEST_QUICK specified")
 def test_kbhit_interrupted_nonetype():
     """kbhit() should also allow interruption with timeout of None."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:
         cov = init_subproc_coverage('test_kbhit_interrupted_nonetype')
@@ -182,6 +183,7 @@ def test_keystroke_1s_cbreak_noinput_nokb():
 
 def test_keystroke_0s_cbreak_with_input():
     """0-second keystroke with input; Keypress should be immediately returned."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:
         cov = init_subproc_coverage('test_keystroke_0s_cbreak_with_input')
@@ -212,6 +214,7 @@ def test_keystroke_0s_cbreak_with_input():
 
 def test_keystroke_cbreak_with_input_slowly():
     """0-second keystroke with input; Keypress should be immediately returned."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:
         cov = init_subproc_coverage('test_keystroke_cbreak_with_input_slowly')
@@ -252,6 +255,7 @@ def test_keystroke_cbreak_with_input_slowly():
 def test_keystroke_0s_cbreak_multibyte_utf8():
     """0-second keystroke with multibyte utf-8 input; should decode immediately."""
     # utf-8 bytes represent "latin capital letter upsilon".
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:  # child
         cov = init_subproc_coverage('test_keystroke_0s_cbreak_multibyte_utf8')
@@ -282,6 +286,7 @@ def test_keystroke_0s_cbreak_multibyte_utf8():
                     reason="travis-ci does not handle ^C very well.")
 def test_keystroke_0s_raw_input_ctrl_c():
     """0-second keystroke with raw allows receiving ^C."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:  # child
         cov = init_subproc_coverage('test_keystroke_0s_raw_input_ctrl_c')
@@ -312,6 +317,7 @@ def test_keystroke_0s_raw_input_ctrl_c():
 
 def test_keystroke_0s_cbreak_sequence():
     """0-second keystroke with multibyte sequence; should decode immediately."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:  # child
         cov = init_subproc_coverage('test_keystroke_0s_cbreak_sequence')
@@ -341,6 +347,7 @@ def test_keystroke_0s_cbreak_sequence():
                     reason="TEST_QUICK specified")
 def test_keystroke_1s_cbreak_with_input():
     """1-second keystroke w/multibyte sequence; should return after ~1 second."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:  # child
         cov = init_subproc_coverage('test_keystroke_1s_cbreak_with_input')
@@ -372,6 +379,7 @@ def test_keystroke_1s_cbreak_with_input():
                     reason="TEST_QUICK specified")
 def test_esc_delay_cbreak_035():
     """esc_delay will cause a single ESC (\\x1b) to delay for 0.35."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:  # child
         cov = init_subproc_coverage('test_esc_delay_cbreak_035')
@@ -406,6 +414,7 @@ def test_esc_delay_cbreak_035():
                     reason="TEST_QUICK specified")
 def test_esc_delay_cbreak_135():
     """esc_delay=1.35 will cause a single ESC (\\x1b) to delay for 1.35."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:  # child
         cov = init_subproc_coverage('test_esc_delay_cbreak_135')
@@ -438,6 +447,7 @@ def test_esc_delay_cbreak_135():
 
 def test_esc_delay_cbreak_timout_0():
     """esc_delay still in effect with timeout of 0 ("nonblocking")."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:  # child
         cov = init_subproc_coverage('test_esc_delay_cbreak_timout_0')
@@ -470,6 +480,7 @@ def test_esc_delay_cbreak_timout_0():
 
 def test_esc_delay_cbreak_nonprefix_sequence():
     """ESC a (\\x1ba) will return an ESC immediately."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:  # child
         cov = init_subproc_coverage('test_esc_delay_cbreak_nonprefix_sequence')
@@ -504,6 +515,7 @@ def test_esc_delay_cbreak_nonprefix_sequence():
 
 def test_esc_delay_cbreak_prefix_sequence():
     """An unfinished multibyte sequence (\\x1b[) will delay an ESC by .35."""
+    import pty
     pid, master_fd = pty.fork()
     if pid == 0:  # child
         cov = init_subproc_coverage('test_esc_delay_cbreak_prefix_sequence')
