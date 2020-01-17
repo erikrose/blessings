@@ -1150,7 +1150,7 @@ class Terminal(object):
             self.stream.write(self.rmkx)
             self.stream.flush()
 
-    def inkey(self, timeout=None, esc_delay=0.35, **_kwargs):
+    def inkey(self, timeout=None, esc_delay=0.35):
         """
         Read and return the next keyboard event within given timeout.
 
@@ -1173,14 +1173,6 @@ class Terminal(object):
             :meth:`raw`, :obj:`sys.__stdin__` remains line-buffered, and this
             function will block until the return key is pressed!
         """
-        if _kwargs.pop('_intr_continue', None) is not None:
-            warnings.warn('keyword argument _intr_continue deprecated: '
-                          'beginning v1.9.6, behavior is as though such '
-                          'value is always True.')
-        if _kwargs:
-            raise TypeError('inkey() got unexpected keyword arguments {!r}'
-                            .format(_kwargs))
-
         resolve = functools.partial(resolve_sequence,
                                     mapper=self._keymap,
                                     codes=self._keycodes)
