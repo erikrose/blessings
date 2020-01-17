@@ -68,7 +68,7 @@ else:
             "are not found on your platform '{platform}'. "
             "The following methods of Terminal are dummy/no-op "
             "unless a deriving class overrides them: {tty_methods}."
-            .format(paltform=sys.platform.lower(),
+            .format(platform=platform.system(),
                     tty_methods=', '.join(_TTY_METHODS)))
         warnings.warn(_MSG_NOSUPPORT)
         HAS_TTY = False

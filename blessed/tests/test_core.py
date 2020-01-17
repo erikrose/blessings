@@ -385,18 +385,18 @@ def test_no_preferredencoding_fallback_ascii():
 
 
 @pytest.mark.skipif(platform.system() == 'Windows', reason="requires fcntl")
+#@pytest.mark.filterwarnings("ignore:LookupError")
 def test_unknown_preferredencoding_warned_and_fallback_ascii():
     """Ensure a locale without a codec emits a warning."""
     @as_subprocess
     def child():
         with mock.patch('locale.getpreferredencoding') as get_enc:
-            with warnings.catch_warnings(record=True) as warned:
-                get_enc.return_value = '---unknown--encoding---'
+            get_enc.return_value = '---unknown--encoding---'
+            with pytest.warns(UserWarning, match=(
+                    'LookupError: unknown encoding: ---unknown--encoding---, '
+                    'fallback to ASCII for keyboard.')):
                 t = TestTerminal()
                 assert t._encoding == 'ascii'
-                assert len(warned) == 1
-                assert issubclass(warned[-1].category, UserWarning)
-                assert "fallback to ASCII" in str(warned[-1].message)
 
     child()
 
