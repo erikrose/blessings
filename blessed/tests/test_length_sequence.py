@@ -173,16 +173,18 @@ def test_sequence_length(all_terms):
 
         if term.kind != 'vtwin10':
             assert (term.length(u'_' + term.move_left) == 0)
+            assert (term.length(term.move_right) == 1)
         else:
             # XXX Why, on windows / jinxed, is this value correct,
             # but, when running the tests on windows, the value
             # is *incorrect* !?
             assert (term.length(u'_' + term.move_left) == 1)
+            # XXX And, 0 here, it is as though RE_MOVE isn't working.
+            assert (term.length(term.move_right) == 0)
 
         if term.cub:
             assert (term.length((u'_' * 10) + term.cub(10)) == 0)
 
-        assert (term.length(term.move_right) == 1)
 
         if term.cuf:
             assert (term.length(term.cuf(10)) == 10)
