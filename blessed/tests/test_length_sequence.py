@@ -22,7 +22,7 @@ if platform.system() != 'Windows':
 def test_length_cjk():
     @as_subprocess
     def child():
-        term = TestTerminal(kind='xterm-256color')
+        term = TestTerminal()
 
         # given,
         given = term.bold_red(u'コンニチハ, セカイ!')
@@ -36,9 +36,9 @@ def test_length_cjk():
 
 def test_length_ansiart():
     @as_subprocess
-    def child():
+    def child(kind):
         import codecs
-        term = TestTerminal(kind='xterm-256color')
+        term = TestTerminal(kind=kind)
         # this 'ansi' art contributed by xzip!impure for another project,
         # unlike most CP-437 DOS ansi art, this is actually utf-8 encoded.
         fname = os.path.join(os.path.dirname(__file__), 'wall.ans')
@@ -50,7 +50,10 @@ def test_length_ansiart():
         assert term.length(lines[4]) == 78
         assert term.length(lines[5]) == 78
         assert term.length(lines[6]) == 77
-    child()
+    kind = 'xterm-256color'
+    if platform.system() == 'Windows':
+        kind = 'vtwin10'
+    child(kind)
 
 
 def test_sequence_length(all_terms):

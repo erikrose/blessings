@@ -27,7 +27,11 @@ if platform.system() != "Windows":
 else:
     import jinxed as curses
 
-TestTerminal = functools.partial(Terminal, kind='xterm-256color')
+
+test_kind = 'xterm-256color'
+if platform.system() == 'Windows':
+    test_kind = 'vtwin10'
+TestTerminal = functools.partial(Terminal, kind=test_kind)
 SEND_SEMAPHORE = SEMAPHORE = b'SEMAPHORE\n'
 RECV_SEMAPHORE = b'SEMAPHORE\r\n'
 many_lines_params = [40, 80]

@@ -480,16 +480,19 @@ def test_null_callable_string(all_terms):
 def test_padd():
     """Test Terminal.padd(seq)."""
     @as_subprocess
-    def child():
+    def child(kind):
         from blessed.sequences import Sequence
         from blessed import Terminal
-        term = Terminal('xterm-256color')
+        term = Terminal(kind)
         assert Sequence('xyz\b', term).padd() == u'xy'
         assert Sequence('xyz\b-', term).padd() == u'xy-'
         assert Sequence('xxxx\x1b[3Dzz', term).padd() == u'xzz'
         assert Sequence('\x1b[3D', term).padd() == u''  # "Trim left"
 
-    child()
+    kind = 'xterm-256color'
+    if platform.system() == 'Windows':
+        kind = 'vtwin10'
+    child(kind)
 
 
 def test_split_seqs(all_terms):

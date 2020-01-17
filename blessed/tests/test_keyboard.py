@@ -170,7 +170,10 @@ def test_get_keyboard_sequences_sort_order():
                 assert len(sequence) <= maxlen
             assert sequence
             maxlen = len(sequence)
-    child(kind='xterm-256color')
+    kind = 'xterm-256color'
+    if platform.system() == 'Windows':
+        kind = 'vtwin10'
+    child(kind)
 
 
 def test_get_keyboard_sequence(monkeypatch):
