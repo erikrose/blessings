@@ -667,6 +667,30 @@ class Terminal(object):
         return ParameterizingString(self._foreground_color,
                                     self.normal, 'color')
 
+    def move_xy(self, x, y):
+        """
+        A callable string that moves the cursor to the given ``(x, y)`` screen coordinates.
+
+        :arg int x: horizontal position.
+        :arg int y: vertical position.
+        :rtype: ParameterizingString
+        """
+        # this is just a convenience alias to the built-in, but hidden 'move'
+        # attribute -- we encourage folks to use only (x, y) positional
+        # arguments, or, if they must use (y, x), then use the 'move_yx'
+        # alias.
+        return self.move(y, x)
+
+    def move_yx(self, y, x):
+        """
+        A callable string that moves the cursor to the given ``(y, x)`` screen coordinates.
+
+        :arg int x: horizontal position.
+        :arg int y: vertical position.
+        :rtype: ParameterizingString
+        """
+        return self.move(y, x)
+
     def color_rgb(self, red, green, blue):
         if self.number_of_colors == 1 << 24:
             # "truecolor" 24-bit

@@ -41,17 +41,17 @@ def test_null_location(all_terms):
     child(all_terms)
 
 
-def test_flipped_location_move(all_terms):
-    """``location()`` and ``move()`` receive counter-example arguments."""
+def test_location_to_move_xy(all_terms):
+    """``location()`` and ``move_xy()`` receive complimentary arguments."""
     @as_subprocess
     def child(kind):
         buf = six.StringIO()
         t = TestTerminal(stream=buf, force_styling=True)
-        y, x = 10, 20
+        x, y = 12, 34
         with t.location(y, x):
-            xy_val = t.move(x, y)
-            yx_val = buf.getvalue()[len(t.sc):]
-            assert xy_val == yx_val
+            xy_val_from_move_xy = t.move_xy(y, x)
+            xy_val_from_location = buf.getvalue()[len(t.sc):]
+            assert xy_val_from_move_xy == xy_val_from_location
 
     child(all_terms)
 

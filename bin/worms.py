@@ -191,7 +191,7 @@ def main():
     color_worm = term.yellow_reverse
     color_head = term.red_reverse
     color_bg = term.on_blue
-    echo(term.move(1, 1))
+    echo(term.move_yx(1, 1))
     echo(color_bg(term.clear))
 
     # speed is actually a measure of time; the shorter, the faster.
@@ -199,13 +199,13 @@ def main():
     modifier = 0.93
     inp = None
 
-    echo(term.move(term.height, 0))
+    echo(term.move_yx(term.height, 0))
     with term.hidden_cursor(), term.cbreak(), term.location():
         while inp not in (u'q', u'Q'):
 
             # delete the tail of the worm at worm_length
             if len(worm) > worm_length:
-                echo(term.move(*worm.pop(0)))
+                echo(term.move_yx(*worm.pop(0)))
                 echo(color_bg(u' '))
 
             # compute head location
@@ -229,22 +229,22 @@ def main():
                 # with a worm color for those portions that overlay.
                 for (yloc, xloc) in nibble_locations(*nibble):
                     echo(u''.join((
-                        term.move(yloc, xloc),
+                        term.move_yx(yloc, xloc),
                         (color_worm if (yloc, xloc) == head
                          else color_bg)(u' '),
                         term.normal)))
                 # and draw the new,
-                echo(term.move(*n_nibble.location) + (
+                echo(term.move_yx(*n_nibble.location) + (
                     color_nibble('{}'.format(n_nibble.value))))
 
             # display new worm head
-            echo(term.move(*head) + color_head(head_glyph(direction)))
+            echo(term.move_yx(*head) + color_head(head_glyph(direction)))
 
             # and its old head (now, a body piece)
             if worm:
-                echo(term.move(*(worm[-1])))
+                echo(term.move_yx(*(worm[-1])))
                 echo(color_worm(u' '))
-            echo(term.move(*head))
+            echo(term.move_yx(*head))
 
             # wait for keyboard input, which may indicate
             # a new direction (up/down/left/right)
@@ -271,7 +271,7 @@ def main():
 
     echo(term.normal)
     score = (worm_length - 1) * 100
-    echo(u''.join((term.move(term.height - 1, 1), term.normal)))
+    echo(u''.join((term.move_yx(term.height - 1, 1), term.normal)))
     echo(u''.join((u'\r\n', u'score: {}'.format(score), u'\r\n')))
 
 

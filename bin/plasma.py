@@ -51,14 +51,14 @@ def elapsed_timer():
 
 def show_please_wait(term):
     txt_wait = 'please wait ...'
-    outp = term.move(term.height - 1, 0) + term.clear_eol + term.center(txt_wait)
+    outp = term.move_yx(term.height - 1, 0) + term.clear_eol + term.center(txt_wait)
     print(outp, end='')
     sys.stdout.flush()
 
 
 def show_paused(term):
     txt_paused = 'paused'
-    outp = term.move(term.height - 1, int(term.width / 2 - len(txt_paused) / 2))
+    outp = term.move_yx(term.height - 1, int(term.width / 2 - len(txt_paused) / 2))
     outp += txt_paused
     print(outp, end='')
     sys.stdout.flush()

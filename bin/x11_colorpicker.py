@@ -35,7 +35,7 @@ def render(term, idx):
         f'{term.number_of_colors} colors - '
         f'{term.color_distance_algorithm}')
 
-    result += term.move(idx // term.width, idx % term.width)
+    result += term.move_yx(idx // term.width, idx % term.width)
     result += term.on_color_rgb(*rgb_color)(' \b')
     return result
 

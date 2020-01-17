@@ -39,13 +39,13 @@ def refresh(term, board, level, score, inps):
     bottom = 0
     for keycode, attr in board.items():
         echo(u''.join((
-            term.move(attr['row'], attr['column']),
+            term.move_yx(attr['row'], attr['column']),
             term.color(level_color),
             (term.reverse if attr['hit'] else term.bold),
             keycode,
             term.normal)))
         bottom = max(bottom, attr['row'])
-    echo(term.move(term.height, 0) + 'level: %s score: %s' % (level, score,))
+    echo(term.move_yx(term.height, 0) + 'level: %s score: %s' % (level, score,))
     if bottom >= (term.height - 5):
         sys.stderr.write(
             ('\n' * (term.height // 2)) +
@@ -54,10 +54,10 @@ def refresh(term, board, level, score, inps):
             term.center("(use a larger screen)") +
             ('\n' * (term.height // 2)))
         sys.exit(1)
-    echo(term.move(bottom + 1, 0))
+    echo(term.move_yx(bottom + 1, 0))
     echo('Press ^C to exit.')
     for row, inp in enumerate(inps[(term.height - (bottom + 3)) * -1:], 1):
-        echo(term.move(bottom + row + 1, 0))
+        echo(term.move_yx(bottom + row + 1, 0))
         echo('{0!r}, {1}, {2}'.format(
             inp.__str__() if inp.is_sequence else inp,
              inp.code,
@@ -128,7 +128,7 @@ def main():
             inps.append(inp)
 
     with term.cbreak():
-        echo(term.move(term.height))
+        echo(term.move_yx(term.height))
         echo(
             u'{term.clear_eol}Your final score was {score} '
             u'at level {level}{term.clear_eol}\n'

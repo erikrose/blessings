@@ -184,39 +184,22 @@ demonstration script.
 Moving The Cursor
 -----------------
 
-When you want to move the cursor, you have a few choices:
-
-- ``location(x=None, y=None)`` context manager.
-- ``move(row, col)`` capability.
-- ``move_y(row)`` capability.
-- ``move_x(col)`` capability.
-
-.. warning:: The :meth:`~.Terminal.location` method receives arguments in
-   positional order *(x, y)*, whereas the ``move()`` capability receives
-   arguments in order *(y, x)*.  Please use keyword arguments as a later
-   release may correct the argument order of :meth:`~.Terminal.location`.
-
-Finding The Cursor
-------------------
-
-We can determine the cursor's current position at anytime using
-:meth:`~.get_location`, returning the current (y, x) location.  This uses a
-kind of "answer back" sequence that your terminal emulator responds to.  If
-the terminal may not respond, the :paramref:`~.get_location.timeout` keyword
-argument can be specified to return coordinates (-1, -1) after a blocking
-timeout::
+If you just want to move and aren't worried about returning, do something like
+this::
 
     from blessed import Terminal
 
     term = Terminal()
+    print(term.move_xy(10, 1) + 'Hi, mom!')
 
-    row, col = term.get_location(timeout=5)
+There are three basic movement capabilities:
 
-    if row < term.height:
-        print(term.move_y(term.height) + 'Get down there!')
-
-Moving Temporarily
-~~~~~~~~~~~~~~~~~~
+``move_xy(x, y)``
+  Position cursor at given **x**, **y**.
+``move_x(x)``
+  Position cursor at column **x**.
+``move_y(y)``
+  Position cursor at row **y**.
 
 A context manager, :meth:`~.Terminal.location` is provided to move the cursor
 to an *(x, y)* screen position and restore the previous position upon exit::
@@ -236,32 +219,32 @@ keyword arguments::
     with term.location(y=10):
         print('We changed just the row.')
 
-When omitted, it saves the cursor position and restore it upon exit::
+When omitted, it saves the current cursor position, and restore it upon exit::
 
     with term.location():
-        print(term.move(1, 1) + 'Hi')
-        print(term.move(9, 9) + 'Mom')
+        print(term.move_xy(1, 1) + 'Hi')
+        print(term.move_xy(9, 9) + 'Mom')
 
 .. note:: calls to :meth:`~.Terminal.location` may not be nested.
 
+Finding The Cursor
+------------------
 
-Moving Permanently
-~~~~~~~~~~~~~~~~~~
-
-If you just want to move and aren't worried about returning, do something like
-this::
+We can determine the cursor's current position at anytime using
+:meth:`~.get_location`, returning the current (y, x) location.  This uses a
+kind of "answer back" sequence that your terminal emulator responds to.  If
+the terminal may not respond, the :paramref:`~.get_location.timeout` keyword
+argument can be specified to return coordinates (-1, -1) after a blocking
+timeout::
 
     from blessed import Terminal
 
     term = Terminal()
-    print(term.move(10, 1) + 'Hi, mom!')
 
-``move(y, x)``
-  Position cursor at given **y**, **x**.
-``move_x(x)``
-  Position cursor at column **x**.
-``move_y(y)``
-  Position cursor at row **y**.
+    row, col = term.get_location(timeout=5)
+
+    if row < term.height:
+        print(term.move_y(term.height) + 'Get down there!')
 
 One-Notch Movement
 ~~~~~~~~~~~~~~~~~~

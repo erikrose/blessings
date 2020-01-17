@@ -1,38 +1,34 @@
 Version History
 ===============
 1.17
-  * introduced: 24-bit color support, detected by ``term.number_of_colors == 1 << 24``,
-    and 24-bit color foreground method :meth:`~Terminal.color_rgb` and background method
-    :meth:`~Terminal.on_color_rgb`.
+  * introduced: 24-bit color support, detected by ``term.number_of_colors == 1 << 24``, and 24-bit
+    color foreground method :meth:`~Terminal.color_rgb` and background method
+    :meth:`~Terminal.on_color_rgb`, as well as 676 common X11 color attribute names are now
+    possible, such as ``term.aquamarine_on_wheat``.
   * bugfix: prevent error condition, ``ValueError: underlying buffer has been detached`` in rare
     conditions where sys.__stdout__ has been detached in test frameworks. :ghissue:`126`.
-  * bugfix: off-by-one error in :meth:`~.Terminal.get_location`, now accounts for
-    ``%i`` in cursor_report, :ghissue:`94`.
-  * bugfix :meth:`~Terminal.split_seqs` and related functions failed to match when the
-    color index was greater than 15, :ghissue:`101`.
-  * bugfix: Context Managers, :meth:`~.Terminal.fullscreen`,
-    :meth:`~.Terminal.hidden_cursor`, and :meth:`~Terminal.keypad`
-    now flush the stream after writing their sequences.
-  * bugfix: ``chr(127)``, ``\x7f`` has changed from keycode ``term.DELETE`` to the more
-    common match, ``term.BACKSPACE``, :ghissue:115` by :ghuser:`jwezel`.
-  * deprecated: the direct curses ``move()`` capability is no longer recommended,
-    suggest to use :meth:`~.Terminal.move_xy()`, which matches the return value of
-    :meth:`~.Terminal.get_location`.
-  * deprecated: ``superscript``, ``subscript``, ``shadow``, and ``dim`` are no
-    longer "compoundable" with colors, such as in phrase ``Terminal.blue_subscript('a')``.
-    These attributes are not typically supported, anyway.  Use Unicode text or 256 or
-    24-bit color codes instead.
-  * deprecated: additional key names, such as ``KEY_TAB``, are no longer "injected" into
-    the curses module namespace.
-  * deprecated: :func:`curses.setupterm` is now called with :attr:`os.devnull`
-    as the file descriptor, let us know if this causes any issues. :ghissue:`59`.
-  * deprecated: :meth:`~Terminal.inkey` no longer raises RuntimeError when
-    :attr:`~Terminal.stream` is not a terminal, programs using
-    :meth:`~Terminal.inkey` to block indefinitely if a keyboard is not
-    attached. :ghissue:`69`.
-  * deprecated: using argument ``_intr_continue`` to method
-    :meth:`~Terminal.kbhit`, behavior is as though such value is always True
-    since 1.9.
+  * bugfix: off-by-one error in :meth:`~.Terminal.get_location`, now accounts for ``%i`` in
+    cursor_report, :ghissue:`94`.
+  * bugfix :meth:`~Terminal.split_seqs` and related functions failed to match when the color index
+    was greater than 15, :ghissue:`101`.
+  * bugfix: Context Managers, :meth:`~.Terminal.fullscreen`, :meth:`~.Terminal.hidden_cursor`, and
+    :meth:`~Terminal.keypad` now flush the stream after writing their sequences.
+  * bugfix: ``chr(127)``, ``\x7f`` has changed from keycode ``term.DELETE`` to the more common
+    match, ``term.BACKSPACE``, :ghissue:115` by :ghuser:`jwezel`.
+  * deprecated: the direct curses ``move()`` capability is no longer recommended, suggest to use
+    :meth:`~.Terminal.move_xy()`, which matches the return value of :meth:`~.Terminal.get_location`.
+  * deprecated: ``superscript``, ``subscript``, ``shadow``, and ``dim`` are no longer "compoundable"
+    with colors, such as in phrase ``Terminal.blue_subscript('a')``.  These attributes are not
+    typically supported, anyway.  Use Unicode text or 256 or 24-bit color codes instead.
+  * deprecated: additional key names, such as ``KEY_TAB``, are no longer "injected" into the curses
+    module namespace.
+  * deprecated: :func:`curses.setupterm` is now called with :attr:`os.devnull` as the file
+    descriptor, let us know if this causes any issues. :ghissue:`59`.
+  * deprecated: :meth:`~Terminal.inkey` no longer raises RuntimeError when :attr:`~Terminal.stream`
+    is not a terminal, programs using :meth:`~Terminal.inkey` to block indefinitely if a keyboard is
+    not attached. :ghissue:`69`.
+  * deprecated: using argument ``_intr_continue`` to method :meth:`~Terminal.kbhit`, behavior is as
+    though such value is always True since 1.9.
 
 1.16
   * introduced: Windows support?! :ghissue:`110` by :ghuser:`avylove`.
