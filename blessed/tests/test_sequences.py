@@ -51,6 +51,8 @@ def test_capability_with_forced_tty():
     child()
 
 
+@pytest.skipif(platform.system() == 'Windows',
+               reason='https://github.com/jquast/blessed/issues/122')
 def test_parametrization():
     """Test parameterizing a capability."""
     @as_subprocess
