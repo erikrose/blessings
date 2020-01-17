@@ -1,0 +1,4 @@
+Sphinx==2.3.1
+sphinx_rtd_theme
+sphinx-paramlinks
+jinxed>=0.5.4
