@@ -183,17 +183,17 @@ Forked
 Changes since 1.7 have all been proposed but unaccepted upstream.
 
 Enhancements only in *Blessed*:
-  * 24-bit color support with :meth:`~Terminal.color_rgb` and :meth:`~Terminal.on_color_rgb` methods
+  * 24-bit color support with `Terminal.color_rgb()`_ and `Terminal.on_color_rgb()`_ methods
   * X11 color name attributes
   * Windows support
-  * :meth:`~.Terminal.length` to determine printable length of text containing sequences
-  * :meth:`~.Terminal.strip`, :meth:`~.Terminal.rstrip`, :meth:`~.Terminal.rstrip`,
-    and :meth:`~.Terminal.strip_seqs` for removing sequences from text
-  * :meth:`Terminal.wrap` for wrapping text containing sequences at a specified width
-  * :meth:`~.Terminal.center`, :meth:`~.Terminal.rjust`, and :meth:`~.Terminal.ljust`
+  * `Terminal.length()`_ to determine printable length of text containing sequences
+  * `Terminal.strip()`_, `Terminal.rstrip()`_, `Terminal.lstrip()`_,
+    and `Terminal.strip_seqs()`_ for removing sequences from text
+  * `Terminal.wrap()`_ for wrapping text containing sequences at a specified width
+  * `Terminal.center()`_, `Terminal.rjust()`_, and `Terminal.ljust()`_
     for alignment of text containing sequences
-  * :meth:`~.cbreak` and :meth:`~.raw` context managers for keyboard input
-  * :meth:`~.inkey` for keyboard event detection
+  * `Terminal.cbreak()`_ and `Terminal.raw()`_ context managers for keyboard input
+  * `Terminal.inkey()`_ for keyboard event detection
 
 Furthermore, a project in the node.js language of the `same name
 <https://github.com/chjj/blessed>`_ is **not** related, or a fork
@@ -208,3 +208,17 @@ of each other in any way.
 .. _PDCurses: http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses
 .. _`terminfo(5)`: http://invisible-island.net/ncurses/man/terminfo.5.html
 .. _`stackoverflow`: http://stackoverflow.com/
+.. _`Terminal.color_rgb()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.color_rgb
+.. _`Terminal.on_color_rgb()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.on_color_rgb
+.. _`Terminal.length()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.length
+.. _`Terminal.strip()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.strip
+.. _`Terminal.rstrip()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.rstrip
+.. _`Terminal.lstrip()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.lstrip
+.. _`Terminal.strip_seqs()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.strip_seqs
+.. _`Terminal.wrap()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.wrap
+.. _`Terminal.center()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.center
+.. _`Terminal.rjust()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.rjust
+.. _`Terminal.ljust()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.ljust
+.. _`Terminal.cbreak()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.cbreak
+.. _`Terminal.raw()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.raw
+.. _`Terminal.inkey()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.inkey
