@@ -3,4 +3,4 @@ include LICENSE
 include version.json
 include *.txt
 include tox.ini
-include blessed/tests/wall.ans
+recursive-include tests *.py *.ans
