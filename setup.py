@@ -36,7 +36,7 @@ setuptools.setup(
         fname=os.path.join(HERE, 'docs', 'intro.rst')),
     description=('A thin, practical wrapper around terminal styling, '
                  'screen positioning, and keyboard input.'),
-    author='Jeff Quast, Erik Rose',
+    author='Jeff Quast, Erik Rose, Avram Lubkin',
     author_email='contact@jeffquast.com',
     license='MIT',
     packages=['blessed', ],
