@@ -165,48 +165,6 @@ class ParameterizingProxyString(six.text_type):
         return FormattingString(self.format(*self._fmt_args(*args)),
                                 self._normal)
 
-
-def get_proxy_string(term, attr):
-    """
-    Proxy and return callable string for proxied attributes.
-
-    :arg Terminal term: :class:`~.Terminal` instance.
-    :arg str attr: terminal capability name that may be proxied.
-    :rtype: None or :class:`ParameterizingProxyString`.
-    :returns: :class:`ParameterizingProxyString` for some attributes
-        of some terminal types that support it, where the terminfo(5)
-        database would otherwise come up empty, such as ``move_x``
-        attribute for ``term.kind`` of ``screen``.  Otherwise, None.
-    """
-    # normalize 'screen-256color', or 'ansi.sys' to its basic names
-    term_kind = next(iter(_kind for _kind in ('screen', 'ansi',)
-                          if term.kind.startswith(_kind)), term)
-    _proxy_table = {  # pragma: no cover
-        'screen': {
-            # proxy move_x/move_y for 'screen' terminal type, used by tmux(1).
-            'hpa': ParameterizingProxyString(
-                (u'\x1b[{0}G', lambda *arg: (arg[0] + 1,)), term.normal, attr),
-            'vpa': ParameterizingProxyString(
-                (u'\x1b[{0}d', lambda *arg: (arg[0] + 1,)), term.normal, attr),
-        },
-        'ansi': {
-            # proxy show/hide cursor for 'ansi' terminal type.  There is some
-            # demand for a richly working ANSI terminal type for some reason.
-            'civis': ParameterizingProxyString(
-                (u'\x1b[?25l', lambda *arg: ()), term.normal, attr),
-            'cnorm': ParameterizingProxyString(
-                (u'\x1b[?25h', lambda *arg: ()), term.normal, attr),
-            'hpa': ParameterizingProxyString(
-                (u'\x1b[{0}G', lambda *arg: (arg[0] + 1,)), term.normal, attr),
-            'vpa': ParameterizingProxyString(
-                (u'\x1b[{0}d', lambda *arg: (arg[0] + 1,)), term.normal, attr),
-            'sc': '\x1b[s',
-            'rc': '\x1b[u',
-        }
-    }
-    return _proxy_table.get(term_kind, {}).get(attr, None)
-
-
 class FormattingString(six.text_type):
     r"""
     A Unicode string which doubles as a callable.
@@ -262,6 +220,39 @@ class FormattingString(six.text_type):
         return self + u''.join(args) + postfix
 
 
+class FormattingOtherString(six.text_type):
+    r"""
+    A Unicode string which doubles as a callable for another sequence when called.
+
+    This is used for the :meth:`~.Terminal.move_up`, ``down``, ``left``, and ``right()`` family of functions::
+
+        >>> move_right = FormattingOtherString(term.cuf1, term.cuf)
+        >>> print(repr(move_right))
+        u'\x1b[C'
+        >>> print(repr(move_right(666)))
+        u'\x1b[666C'
+        >>> print(repr(move_right()))
+        u'\x1b[C'
+    """
+
+    def __new__(cls, *args):
+        """
+        Class constructor accepting 2 positional arguments.
+
+        :arg str direct: capability name for direct formatting, eg ``('x' + term.right)``.
+        :arg str callable: capability name for callable, eg ``('x' + term.right(99))``.
+        """
+        assert 2 == len(args), args
+        new = six.text_type.__new__(cls, args[0])
+        new._callable = args[1]
+        return new
+
+    def __call__(self, *args):
+        """Return ``text`` by ``callable``."""
+        if args:
+            return self._callable(*args)
+        return self
+
 class NullCallableString(six.text_type):
     """
     A dummy callable Unicode alternative to :class:`FormattingString`.
@@ -299,6 +290,47 @@ class NullCallableString(six.text_type):
             # another instance.
             return NullCallableString()
         return u''.join(args)
+
+
+def get_proxy_string(term, attr):
+    """
+    Proxy and return callable string for proxied attributes.
+
+    :arg Terminal term: :class:`~.Terminal` instance.
+    :arg str attr: terminal capability name that may be proxied.
+    :rtype: None or :class:`ParameterizingProxyString`.
+    :returns: :class:`ParameterizingProxyString` for some attributes
+        of some terminal types that support it, where the terminfo(5)
+        database would otherwise come up empty, such as ``move_x``
+        attribute for ``term.kind`` of ``screen``.  Otherwise, None.
+    """
+    # normalize 'screen-256color', or 'ansi.sys' to its basic names
+    term_kind = next(iter(_kind for _kind in ('screen', 'ansi',)
+                          if term.kind.startswith(_kind)), term)
+    _proxy_table = {  # pragma: no cover
+        'screen': {
+            # proxy move_x/move_y for 'screen' terminal type, used by tmux(1).
+            'hpa': ParameterizingProxyString(
+                (u'\x1b[{0}G', lambda *arg: (arg[0] + 1,)), term.normal, attr),
+            'vpa': ParameterizingProxyString(
+                (u'\x1b[{0}d', lambda *arg: (arg[0] + 1,)), term.normal, attr),
+        },
+        'ansi': {
+            # proxy show/hide cursor for 'ansi' terminal type.  There is some
+            # demand for a richly working ANSI terminal type for some reason.
+            'civis': ParameterizingProxyString(
+                (u'\x1b[?25l', lambda *arg: ()), term.normal, attr),
+            'cnorm': ParameterizingProxyString(
+                (u'\x1b[?25h', lambda *arg: ()), term.normal, attr),
+            'hpa': ParameterizingProxyString(
+                (u'\x1b[{0}G', lambda *arg: (arg[0] + 1,)), term.normal, attr),
+            'vpa': ParameterizingProxyString(
+                (u'\x1b[{0}d', lambda *arg: (arg[0] + 1,)), term.normal, attr),
+            'sc': '\x1b[s',
+            'rc': '\x1b[u',
+        }
+    }
+    return _proxy_table.get(term_kind, {}).get(attr, None)
 
 
 def split_compound(compound):

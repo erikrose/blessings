@@ -192,7 +192,7 @@ this::
     term = Terminal()
     print(term.move_xy(10, 1) + 'Hi, mom!')
 
-There are three basic movement capabilities:
+There are three basic direct movement capabilities:
 
 ``move_xy(x, y)``
   Position cursor at given **x**, **y**.
@@ -202,6 +202,17 @@ There are three basic movement capabilities:
   Position cursor at row **y**.
 ``home``
   Position cursor at (0, 0).
+
+And your basic set of relative capabilities:
+
+``move_up`` or ``move_up(y)``
+  Position cursor 1 or **y** cells above the current position.
+``move_down`` or ``move_down(y)``
+  Position cursor 1 or **y** cells below the current position.
+``move_left`` or ``move_left(x)``
+  Position cursor 1 or **x** cells left of the current position.
+``move_right`` or ``move_right(x)``
+  Position cursor 1 or **x** cells right of the current position.
 
 A context manager, :meth:`~.Terminal.location` is provided to move the cursor
 to an *(x, y)* screen position and *restore the previous position* on exit::
@@ -215,13 +226,10 @@ to an *(x, y)* screen position and *restore the previous position* on exit::
 
     print('This is back where I came from.')
 
-Parameters to :meth:`~.Terminal.location` are the **optional** *x* and/or *y*
-keyword arguments::
-
-    with term.location(y=10):
-        print('We changed just the row.')
-
-When omitted, it saves the current cursor position, and restore it on exit::
+Parameters to :meth:`~.Terminal.location` are the **optional** *x* and/or *y* keyword arguments.
+When only one argument is used, only the row or column is positioned. When both arguments are
+omitted, it saves the current cursor position, without performing any movement, but restore that
+position on exit::
 
     with term.location():
         print(term.move_xy(1, 1) + 'Hi')

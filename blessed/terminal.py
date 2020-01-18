@@ -28,6 +28,7 @@ from .sequences import Termcap, Sequence, SequenceTextWrapper
 from .colorspace import RGB_256TABLE
 from .formatters import (COLORS,
                          FormattingString,
+                         FormattingOtherString,
                          NullCallableString,
                          ParameterizingString,
                          resolve_attribute,
@@ -102,10 +103,6 @@ class Terminal(object):
         move_yx='cup',
         move_x='hpa',
         move_y='vpa',
-        move_left='cub1',
-        move_right='cuf1',
-        move_up='cuu1',
-        move_down='cud1',
         hide_cursor='civis',
         normal_cursor='cnorm',
         reset_colors='op',
@@ -648,25 +645,6 @@ class Terminal(object):
             self.stream.write(self.normal_cursor)
             self.stream.flush()
 
-    @property
-    def color(self):
-        """
-        A callable string that sets the foreground color.
-
-        :arg int num: The foreground color index. This should be within the
-           bounds of :attr:`~.number_of_colors`.
-        :rtype: ParameterizingString
-
-        The capability is unparameterized until called and passed a number,
-        0-15, at which point it returns another string which represents a
-        specific color change. This second string can further be called to
-        color a piece of text and set everything back to normal afterward.
-        """
-        if not self.does_styling:
-            return NullCallableString()
-        return ParameterizingString(self._foreground_color,
-                                    self.normal, 'color')
-
     def move_xy(self, x, y):
         """
         A callable string that moves the cursor to the given ``(x, y)`` screen coordinates.
@@ -690,6 +668,46 @@ class Terminal(object):
         :rtype: ParameterizingString
         """
         return self.move(y, x)
+
+    @property
+    def move_left(self):
+        """Move cursor 1 cells to the left, or callable string for n>1 cells."""
+        return FormattingOtherString(self.cub1, ParameterizingString(self.cub))
+
+    @property
+    def move_right(self):
+        """Move cursor 1 or more cells to the right, or callable string for n>1 cells."""
+        return FormattingOtherString(self.cuf1, ParameterizingString(self.cuf))
+
+    @property
+    def move_up(self):
+        """Move cursor 1 or more cells upwards, or callable string for n>1 cells."""
+        return FormattingOtherString(self.cuu1, ParameterizingString(self.cuu))
+
+    @property
+    def move_down(self):
+        """Move cursor 1 or more cells downwards, or callable string for n>1 cells."""
+        return FormattingOtherString(self.cud1, ParameterizingString(self.cud))
+
+    @property
+    def color(self):
+        """
+        A callable string that sets the foreground color.
+
+        :arg int num: The foreground color index.
+        :rtype: ParameterizingString
+
+        The capability is unparameterized until called and passed a number, at which point it
+        returns another string which represents a specific color change. This second string can
+        further be called to color a piece of text and set everything back to normal afterward.
+
+        This should not be used directly, but rather a specific color by name or
+        :meth:`~.Terminal.color_rgb` value.
+        """
+        if not self.does_styling:
+            return NullCallableString()
+        return ParameterizingString(self._foreground_color,
+                                    self.normal, 'color')
 
     def color_rgb(self, red, green, blue):
         if self.number_of_colors == 1 << 24:
