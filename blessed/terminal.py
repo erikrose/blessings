@@ -196,7 +196,7 @@ class Terminal(object):
         if platform.system() == 'Windows':
             self._kind = kind or curses.get_term(self._init_descriptor)
         else:
-            self._kind = kind or os.environ.get('TERM', 'unknown')
+            self._kind = kind or os.environ.get('TERM', 'dumb') or 'dumb'
 
         if self.does_styling:
             # Initialize curses (call setupterm), so things like tigetstr() work.
