@@ -63,7 +63,7 @@ def input_filter(keystroke):
 
 def echo_yx(cursor, text):
     """Move to ``cursor`` and display ``text``."""
-    echo(cursor.term.move(cursor.y, cursor.x) + text)
+    echo(cursor.term.move_yx(cursor.y, cursor.x) + text)
 
 
 Cursor = collections.namedtuple('Cursor', ('y', 'x', 'term'))

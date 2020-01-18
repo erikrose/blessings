@@ -377,6 +377,10 @@ def test_sequence_is_movement_true(all_terms):
                 measure_length(term.move(98, 76), term))
         assert (len(term.move(54)) ==
                 measure_length(term.move(54), term))
+        assert (len(term.move_xy(1, 2)) ==
+                measure_length(term.move(1, 2), term))
+        assert (len(term.move_yx(3, 4)) ==
+                measure_length(term.move(3, 4), term))
         assert not term.cud1 or (len(term.cud1) ==
                                  measure_length(term.cud1, term))
         assert not term.cub1 or (len(term.cub1) ==
@@ -406,6 +410,8 @@ def test_termcap_will_move_true(all_terms):
         from blessed.sequences import iter_parse
         term = TestTerminal(kind=kind, force_styling=True)
         assert next(iter_parse(term, term.move(98, 76)))[1].will_move
+        assert next(iter_parse(term, term.move_yx(8, 76)))[1].will_move
+        assert next(iter_parse(term, term.move_xy(98, 7)))[1].will_move
         assert next(iter_parse(term, term.move(54)))[1].will_move
         assert next(iter_parse(term, term.cud1))[1].will_move
         assert next(iter_parse(term, term.cub1))[1].will_move

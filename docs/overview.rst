@@ -184,17 +184,50 @@ demonstration script.
 Moving The Cursor
 -----------------
 
-When you want to move the cursor, you have a few choices:
+If you just want to move and aren't worried about returning, do something like
+this::
 
-- ``location(x=None, y=None)`` context manager.
-- ``move(row, col)`` capability.
-- ``move_y(row)`` capability.
-- ``move_x(col)`` capability.
+    from blessed import Terminal
 
-.. warning:: The :meth:`~.Terminal.location` method receives arguments in
-   positional order *(x, y)*, whereas the ``move()`` capability receives
-   arguments in order *(y, x)*.  Please use keyword arguments as a later
-   release may correct the argument order of :meth:`~.Terminal.location`.
+    term = Terminal()
+    print(term.move_xy(10, 1) + 'Hi, mom!')
+
+There are three basic movement capabilities:
+
+``move_xy(x, y)``
+  Position cursor at given **x**, **y**.
+``move_x(x)``
+  Position cursor at column **x**.
+``move_y(y)``
+  Position cursor at row **y**.
+``home``
+  Position cursor at (0, 0).
+
+A context manager, :meth:`~.Terminal.location` is provided to move the cursor
+to an *(x, y)* screen position and *restore the previous position* on exit::
+
+    from blessed import Terminal
+
+    term = Terminal()
+
+    with term.location(0, term.height - 1):
+        print('Here is the bottom.')
+
+    print('This is back where I came from.')
+
+Parameters to :meth:`~.Terminal.location` are the **optional** *x* and/or *y*
+keyword arguments::
+
+    with term.location(y=10):
+        print('We changed just the row.')
+
+When omitted, it saves the current cursor position, and restore it on exit::
+
+    with term.location():
+        print(term.move_xy(1, 1) + 'Hi')
+        print(term.move_xy(9, 9) + 'Mom')
+
+.. note:: calls to :meth:`~.Terminal.location` may not be nested.
 
 Finding The Cursor
 ------------------
@@ -214,54 +247,6 @@ timeout::
 
     if row < term.height:
         print(term.move_y(term.height) + 'Get down there!')
-
-Moving Temporarily
-~~~~~~~~~~~~~~~~~~
-
-A context manager, :meth:`~.Terminal.location` is provided to move the cursor
-to an *(x, y)* screen position and restore the previous position upon exit::
-
-    from blessed import Terminal
-
-    term = Terminal()
-
-    with term.location(0, term.height - 1):
-        print('Here is the bottom.')
-
-    print('This is back where I came from.')
-
-Parameters to :meth:`~.Terminal.location` are the **optional** *x* and/or *y*
-keyword arguments::
-
-    with term.location(y=10):
-        print('We changed just the row.')
-
-When omitted, it saves the cursor position and restore it upon exit::
-
-    with term.location():
-        print(term.move(1, 1) + 'Hi')
-        print(term.move(9, 9) + 'Mom')
-
-.. note:: calls to :meth:`~.Terminal.location` may not be nested.
-
-
-Moving Permanently
-~~~~~~~~~~~~~~~~~~
-
-If you just want to move and aren't worried about returning, do something like
-this::
-
-    from blessed import Terminal
-
-    term = Terminal()
-    print(term.move(10, 1) + 'Hi, mom!')
-
-``move(y, x)``
-  Position cursor at given **y**, **x**.
-``move_x(x)``
-  Position cursor at column **x**.
-``move_y(y)``
-  Position cursor at row **y**.
 
 One-Notch Movement
 ~~~~~~~~~~~~~~~~~~
@@ -309,6 +294,7 @@ changes, you may author a callback for SIGWINCH_ signals::
     # wait for keypress
     term.inkey()
 
+.. note:: This is not compatible with Windows!
 
 Clearing The Screen
 -------------------

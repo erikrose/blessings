@@ -32,7 +32,6 @@ SORTED_COLORS = sort_colors()
 def draw_chart(term):
     """Draw a chart of each X11 color represented as in 24-bit and as down-converted to 256, 16, and
     8 color with the currently configured algorithm."""
-    term.move(0, 0)
     sys.stdout.write(term.home)
     width = term.width
     line = ''
