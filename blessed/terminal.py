@@ -1,7 +1,6 @@
 # encoding: utf-8
 """Module containing :class:`Terminal`, the primary API entry point."""
 # std imports
-import io
 import os
 import re
 import sys
@@ -211,7 +210,7 @@ class Terminal(object):
         if stream_fd is None:
             try:
                 self._init_descriptor = sys.__stdout__.fileno()
-            except io.UnsupportedOperation as err:
+            except ValueError as err:
                 self.errors.append('Unable to determine __stdout__ file descriptor: %s' % err)
 
         if platform.system() == 'Windows' and self._init_descriptor is not None:
