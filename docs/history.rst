@@ -4,7 +4,7 @@ Version History
   * introduced: 24-bit color support, detected by ``term.number_of_colors == 1 << 24``, and 24-bit
     color foreground method :meth:`~Terminal.color_rgb` and background method
     :meth:`~Terminal.on_color_rgb`, as well as 676 common X11 color attribute names are now
-    possible, such as ``term.aquamarine_on_wheat``, :ghissue:`#60`.
+    possible, such as ``term.aquamarine_on_wheat``, :ghissue:`60`.
   * introduced: ``term.move_xy``, recommended over built-in ``move`` capability, as the return
     positional arguments, ``(x, y)`` match the return value of :meth:`~.Terminal.get_location`,
     and all other common graphics library calls, :ghissue:`65`.
