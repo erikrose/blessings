@@ -155,6 +155,8 @@ class Terminal(object):
         """
         # pylint: disable=global-statement,too-many-branches
         global _CUR_TERM
+        self.errors = ['parameters: kind=%r, stream=%r, force_styling=%r' %
+                       (kind, stream, force_styling)]
         self._keyboard_fd = None
 
         # Default stream is stdout, keyboard valid as stdin only when
@@ -169,18 +171,33 @@ class Terminal(object):
         # attached tty.
         self._line_buffered = True
 
-        try:
-            stream_fd = (stream.fileno() if hasattr(stream, 'fileno') and
-                         callable(stream.fileno) else None)
-        except (io.UnsupportedOperation, ValueError):
-            # The stream is not a file, such as the case of StringIO, or, when it has been
-            # "detached", such as might be the case of stdout in some test scenarios.
-            stream_fd = None
+        stream_fd = None
+        self._is_a_tty = False
+        if not hasattr(stream, 'fileno'):
+            self.errors.append('stream has no fileno method')
+        elif not callable(stream.fileno):
+            self.errors.append('stream.fileno is not callable')
+        else:
+            try:
+                stream_fd = stream.fileno()
+            except ValueError as err:
+                # The stream is not a file, such as the case of StringIO, or, when it has been
+                # "detached", such as might be the case of stdout in some test scenarios.
+                self.errors.append('Unable to determine stream file descriptor: %s' % err)
+            else:
+                self._is_a_tty = os.isatty(stream_fd)
+                if not self._is_a_tty:
+                    self.errors.append('stream not a TTY')
 
         self._stream = stream
-        self._is_a_tty = stream_fd is not None and os.isatty(stream_fd)
-        self._does_styling = ((self.is_a_tty or force_styling) and
-                              force_styling is not None)
+        self._does_styling = False
+        if force_styling:
+            self._does_styling = True
+        elif self.is_a_tty:
+            if force_styling is None:
+                self.errors.append('force_styling is None')
+            else:
+                self._does_styling = True
 
         # _keyboard_fd only non-None if both stdin and stdout is a tty.
         self._keyboard_fd = (self._keyboard_fd
@@ -190,10 +207,14 @@ class Terminal(object):
         self._normal = None  # cache normal attr, preventing recursive lookups
 
         # The descriptor to direct terminal initialization sequences to.
-        self._init_descriptor = (sys.__stdout__.fileno() if stream_fd is None
-                                 else stream_fd)
+        self._init_descriptor = stream_fd
+        if stream_fd is None:
+            try:
+                self._init_descriptor = sys.__stdout__.fileno()
+            except io.UnsupportedOperation as err:
+                self.errors.append('Unable to determine __stdout__ file descriptor: %s' % err)
 
-        if platform.system() == 'Windows':
+        if platform.system() == 'Windows' and self._init_descriptor is not None:
             self._kind = kind or curses.get_term(self._init_descriptor)
         else:
             self._kind = kind or os.environ.get('TERM', 'dumb') or 'dumb'
@@ -203,8 +224,9 @@ class Terminal(object):
             try:
                 curses.setupterm(self._kind, open(os.devnull).fileno())
             except curses.error as err:
-                warnings.warn('Failed to setupterm(kind={0!r}): {1}'
-                              .format(self._kind, err))
+                msg = 'Failed to setupterm(kind={0!r}): {1}'.format(self._kind, err)
+                warnings.warn(msg)
+                self.errors.append(msg)
                 self._kind = None
                 self._does_styling = False
             else:
