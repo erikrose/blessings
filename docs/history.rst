@@ -9,6 +9,10 @@ Version History
     positional arguments, ``(x, y)`` match the return value of :meth:`~.Terminal.get_location`,
     and all other common graphics library calls, :ghissue:`65`.
     values over the b``term.move``.
+  * introduced: :meth:`~.Terminal.move_up`, :meth:`~Terminal.move_down`, :meth:`Terminal.move_left`,
+    :meth:`~Terminal.move_right` which are strings that move the cursor one cell in the respective
+    direction, are now also callables for moving *n* cells to the given direction, such as
+    ``term.move_right(9)``.
   * bugfix: prevent error condition, ``ValueError: underlying buffer has been detached`` in rare
     conditions where sys.__stdout__ has been detached in test frameworks. :ghissue:`126`.
   * bugfix: off-by-one error in :meth:`~.Terminal.get_location`, now accounts for ``%i`` in
