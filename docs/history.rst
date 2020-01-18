@@ -5,6 +5,10 @@ Version History
     color foreground method :meth:`~Terminal.color_rgb` and background method
     :meth:`~Terminal.on_color_rgb`, as well as 676 common X11 color attribute names are now
     possible, such as ``term.aquamarine_on_wheat``.
+  * introduced: ``term.move_xy``, recommended over built-in ``move`` capability, as the return
+    positional arguments, ``(x, y)`` match the return value of :meth:`~.Terminal.get_location`,
+    and all other common graphics library calls, :ghissue:`65`.
+    values over the b``term.move``.
   * bugfix: prevent error condition, ``ValueError: underlying buffer has been detached`` in rare
     conditions where sys.__stdout__ has been detached in test frameworks. :ghissue:`126`.
   * bugfix: off-by-one error in :meth:`~.Terminal.get_location`, now accounts for ``%i`` in

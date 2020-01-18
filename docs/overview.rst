@@ -200,9 +200,11 @@ There are three basic movement capabilities:
   Position cursor at column **x**.
 ``move_y(y)``
   Position cursor at row **y**.
+``home``
+  Position cursor at (0, 0).
 
 A context manager, :meth:`~.Terminal.location` is provided to move the cursor
-to an *(x, y)* screen position and restore the previous position upon exit::
+to an *(x, y)* screen position and *restore the previous position* on exit::
 
     from blessed import Terminal
 
@@ -219,7 +221,7 @@ keyword arguments::
     with term.location(y=10):
         print('We changed just the row.')
 
-When omitted, it saves the current cursor position, and restore it upon exit::
+When omitted, it saves the current cursor position, and restore it on exit::
 
     with term.location():
         print(term.move_xy(1, 1) + 'Hi')
@@ -292,6 +294,7 @@ changes, you may author a callback for SIGWINCH_ signals::
     # wait for keypress
     term.inkey()
 
+.. note:: This is not compatible with Windows!
 
 Clearing The Screen
 -------------------
