@@ -1,7 +1,6 @@
 # encoding: utf-8
 # std imports
 import os
-import re
 import sys
 import struct
 import platform
@@ -411,11 +410,10 @@ def test_sequence_is_movement_false(all_terms):
             assert (len(term.cvvis) == measure_length(term.cvvis, term))
         assert (len(term.underline) == measure_length(term.underline, term))
         assert (len(term.reverse) == measure_length(term.reverse, term))
-        if not re.search(r'0[:;]0[:;]50m$', term._foreground_color(50)):
-            for _num in (0, min(term.number_of_colors, 256)):
-                expected = len(term.color(_num))
-                given = measure_length(term.color(_num), term)
-                assert (expected == given)
+        for _num in (0, term.number_of_colors):
+            expected = len(term.color(_num))
+            given = measure_length(term.color(_num), term)
+            assert (expected == given)
         assert (len(term.normal_cursor) == measure_length(term.normal_cursor, term))
         assert (len(term.hide_cursor) == measure_length(term.hide_cursor, term))
         assert (len(term.save) == measure_length(term.save, term))
