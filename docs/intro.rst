@@ -1,76 +1,74 @@
-| |docs| |travis| |codecov|
-| |pypi| |downloads| |gitter|
-| |linux| |windows| |mac| |bsd|
-
-.. |docs| image:: https://img.shields.io/readthedocs/blessed.svg?logo=read-the-docs
-    :target: https://blessed.readthedocs.org
-    :alt: Documentation Status
-
-.. |travis| image:: https://img.shields.io/travis/jquast/blessed/master.svg?logo=travis
-    :alt: Travis Continuous Integration
-    :target: https://travis-ci.org/jquast/blessed/
-
-.. |codecov| image:: https://codecov.io/gh/jquast/blessed/branch/master/graph/badge.svg
-    :alt: codecov.io Code Coverage
-    :target: https://codecov.io/gh/jquast/blessed
-
-.. |pypi| image:: https://img.shields.io/pypi/v/blessed.svg?logo=pypi
-    :alt: Latest Version
-    :target: https://pypi.python.org/pypi/blessed
-
-.. |downloads| image:: https://img.shields.io/pypi/dm/blessed.svg?logo=pypi
-    :alt: Downloads
-    :target: https://pypi.python.org/pypi/blessed
-
-.. |gitter| image:: https://img.shields.io/badge/gitter-Join%20Chat-mediumaquamarine?logo=gitter
-    :alt: Join Chat
-    :target: https://gitter.im/jquast/blessed
-
-.. |linux| image:: https://img.shields.io/badge/Linux-yes-success?logo=linux
-    :alt: Linux supported
-    :target: https://pypi.python.org/pypi/blessed
-
-.. |windows| image:: https://img.shields.io/badge/Windows-NEW-success?logo=windows
-    :alt: Windows supported
-    :target: https://pypi.python.org/pypi/blessed
-
-.. |mac| image:: https://img.shields.io/badge/MacOS-yes-success?logo=apple
-    :alt: MacOS supported
-    :target: https://pypi.python.org/pypi/blessed
-
-.. |bsd| image:: https://img.shields.io/badge/BSD-yes-success?logo=freebsd
-    :alt: BSD supported
-    :target: https://pypi.python.org/pypi/blessed
+|pypi| |downloads| |docs| |travis| |codecov| |linux| |windows| |mac| |bsd|
 
 Introduction
 ============
 
-Blessed is a thin, practical wrapper around terminal capabilities in Python.
+Blessed is an easy, practical library for making terminal apps, for Linux, Mac, and Windows.
 
-Coding with *Blessed* looks like this...
+It provides an easy-to-use API for a Terminal_ to use Colors_, Styles_, Keyboard_, Location_,
+and Measuring_ capabilities. It's meant to be *fun* and *easy* to do basic terminal graphics and
+styling with Python!
+
+|demo_gif|
+
+Examples
+========
+
+Programming with *Blessed* looks like this ...
 
 .. code-block:: python
 
     from blessed import Terminal
 
-    t = Terminal()
+    term = Terminal()
 
-    print(t.bold('Hi there!'))
-    print(t.bold_red_on_bright_green('It hurts my eyes!'))
+    color_1 = term.black_on_olivedrab4
+    color_2 = term.gold_on_olivedrab4
 
-    with t.location(0, t.height - 1):
-        print(t.center(t.blink('press any key to continue.')))
+    with term.cbreak(), term.hidden_cursor():
+        print(term.home + color_1 + term.clear
+              + term.move_y(term.height // 2)
+              + term.center('would you like to play a game'
+                            + color_2 + ' [yn] ?' + color_1))
+        inp = term.inkey()
+        if inp.lower() == 'y':
+            with term.location(0, term.height - 2):
+                print('They say that the only way to win is to not play at all.')
 
-    with t.cbreak():
-        inp = t.inkey()
-    print('You pressed ' + repr(inp))
+        # Classic game of tennis.
+        def roundxy(x, y):
+            from math import floor
+            return int(floor(x)), int(floor(y))
+
+        x, y, xs, ys = 2, 2, 0.4, 0.3
+        with term.cbreak(), term.hidden_cursor():
+            while term.inkey(timeout=0.02) != 'q':
+                txt_erase = term.move_xy(*roundxy(x, y)) + ' '
+                if x >= (term.width - 1) or x <= 0:
+                    xs *= -1
+                if y >= term.height or y <= 0:
+                    ys *= -1
+                x, y = x + xs, y + ys
+                txt_ball = term.move_xy(*roundxy(x, y)) + '█'
+                print(txt_erase + txt_ball, end='', flush=True)
 
 
 Brief Overview
 --------------
 
-*Blessed* is a more simplified wrapper around curses_, providing :
+*Blessed* is a Python wrapper around curses_, providing :
 
+* 24-bit color support with `Terminal.color_rgb()`_ and `Terminal.on_color_rgb()`_ methods
+* X11 color name attributes
+* Windows support
+* `Terminal.length()`_ to determine printable length of text containing sequences
+* `Terminal.strip()`_, `Terminal.rstrip()`_, `Terminal.lstrip()`_,
+and `Terminal.strip_seqs()`_ for removing sequences from text
+* `Terminal.wrap()`_ for wrapping text containing sequences at a specified width
+* `Terminal.center()`_, `Terminal.rjust()`_, and `Terminal.ljust()`_
+for alignment of text containing sequences
+* `Terminal.cbreak()`_ and `Terminal.raw()`_ context managers for keyboard input
+* `Terminal.inkey()`_ for keyboard event detection
 * Styles, color, and maybe a little positioning without necessarily
   clearing the whole screen first.
 * Works great with standard Python string formatting.
@@ -183,18 +181,6 @@ Forked
 Changes since 1.7 have all been proposed but unaccepted upstream.
 
 Enhancements only in *Blessed*:
-  * 24-bit color support with `Terminal.color_rgb()`_ and `Terminal.on_color_rgb()`_ methods
-  * X11 color name attributes
-  * Windows support
-  * `Terminal.length()`_ to determine printable length of text containing sequences
-  * `Terminal.strip()`_, `Terminal.rstrip()`_, `Terminal.lstrip()`_,
-    and `Terminal.strip_seqs()`_ for removing sequences from text
-  * `Terminal.wrap()`_ for wrapping text containing sequences at a specified width
-  * `Terminal.center()`_, `Terminal.rjust()`_, and `Terminal.ljust()`_
-    for alignment of text containing sequences
-  * `Terminal.cbreak()`_ and `Terminal.raw()`_ context managers for keyboard input
-  * `Terminal.inkey()`_ for keyboard event detection
-
 Furthermore, a project in the node.js language of the `same name
 <https://github.com/chjj/blessed>`_ is **not** related, or a fork
 of each other in any way.
@@ -222,3 +208,35 @@ of each other in any way.
 .. _`Terminal.cbreak()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.cbreak
 .. _`Terminal.raw()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.raw
 .. _`Terminal.inkey()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.inkey
+.. |docs| image:: https://img.shields.io/readthedocs/blessed.svg?logo=read-the-docs
+    :target: https://blessed.readthedocs.org
+    :alt: Documentation Status
+.. |travis| image:: https://img.shields.io/travis/jquast/blessed/master.svg?logo=travis
+    :alt: Travis Continuous Integration
+    :target: https://travis-ci.org/jquast/blessed/
+.. |codecov| image:: https://codecov.io/gh/jquast/blessed/branch/master/graph/badge.svg
+    :alt: codecov.io Code Coverage
+    :target: https://codecov.io/gh/jquast/blessed
+.. |pypi| image:: https://img.shields.io/pypi/v/blessed.svg?logo=pypi
+    :alt: Latest Version
+    :target: https://pypi.python.org/pypi/blessed
+.. |downloads| image:: https://img.shields.io/pypi/dm/blessed.svg?logo=pypi
+    :alt: Downloads
+    :target: https://pypi.python.org/pypi/blessed
+.. |gitter| image:: https://img.shields.io/badge/gitter-Join%20Chat-mediumaquamarine?logo=gitter
+    :alt: Join Chat
+    :target: https://gitter.im/jquast/blessed
+.. |linux| image:: https://img.shields.io/badge/Linux-yes-success?logo=linux
+    :alt: Linux supported
+    :target: https://pypi.python.org/pypi/blessed
+.. |windows| image:: https://img.shields.io/badge/Windows-NEW-success?logo=windows
+    :alt: Windows supported
+    :target: https://pypi.python.org/pypi/blessed
+.. |mac| image:: https://img.shields.io/badge/MacOS-yes-success?logo=apple
+    :alt: MacOS supported
+    :target: https://pypi.python.org/pypi/blessed
+.. |bsd| image:: https://img.shields.io/badge/BSD-yes-success?logo=freebsd
+    :alt: BSD supported
+    :target: https://pypi.python.org/pypi/blessed
+.. |demo_gif| image:: https://dxtz6bzwq9sxx.cloudfront.net/ttyrecs/blessed_demo_5.gif
+    :alt: Animated gif of blessed example programs
