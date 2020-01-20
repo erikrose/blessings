@@ -42,7 +42,7 @@ if os.environ.get('TEST_QUICK'):
     many_lines_params = [80, ]
     many_columns_params = [25, ]
 
-all_terms_params = 'xterm xterm-direct screen ansi vt220 rxvt cons25 linux'.split()
+all_terms_params = 'xterm screen ansi vt220 rxvt cons25 linux'.split()
 
 if os.environ.get('TEST_FULL'):
     try:

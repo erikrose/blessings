@@ -60,6 +60,11 @@ def test_sequence_length(all_terms):
     @as_subprocess
     def child(kind):
         term = TestTerminal(kind=kind, force_styling=True)
+
+        # Make sure to test with 24-bit color on at least one terminal
+        if kind == 'xterm':
+            term.number_of_colors = 1 << 24
+
         # Create a list of ascii characters, to be separated
         # by word, to be zipped up with a cycling list of
         # terminal sequences. Then, compare the length of
