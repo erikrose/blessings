@@ -39,11 +39,13 @@ class Termcap(object):
 
     @property
     def named_pattern(self):
+        """Regular expression pattern for capability with named group."""
         # pylint: disable=redundant-keyword-arg
         return '(?P<{self.name}>{self.pattern})'.format(self=self)
 
     @property
     def re_compiled(self):
+        """Compiled regular expression pattern for capability."""
         if self._re_compiled is None:
             self._re_compiled = re.compile(self.pattern)
         return self._re_compiled
@@ -97,9 +99,10 @@ class Termcap(object):
             capability to build for. When ``nparams`` is non-zero, it
             must be a callable unicode string (such as the result from
             ``getattr(term, 'bold')``.
-        :arg attribute: The terminfo(5) capability name by which this
+        :arg str attribute: The terminfo(5) capability name by which this
             pattern is known.
         :arg int nparams: number of positional arguments for callable.
+        :arg int numeric: Value to substitute into capability to when generating pattern
         :arg bool match_grouped: If the numeric pattern should be
             grouped, ``(\d+)`` when ``True``, ``\d+`` default.
         :arg bool match_any: When keyword argument ``nparams`` is given,
@@ -109,6 +112,8 @@ class Termcap(object):
             pattern ``(\d+)`` in builder.
         :arg bool match_optional: When ``True``, building of numeric patterns
             containing ``(\d+)`` will be built as optional, ``(\d+)?``.
+        :rtype: blessed.sequences.Termcap
+        :returns: Terminal capability instance for given capability definition
         """
         _numeric_regex = r'\d+'
         if match_grouped:
@@ -151,6 +156,10 @@ class SequenceTextWrapper(textwrap.TextWrapper):
     def _wrap_chunks(self, chunks):
         """
         Sequence-aware variant of :meth:`textwrap.TextWrapper._wrap_chunks`.
+
+        :raises ValueError: ``self.width`` is not a positive integer
+        :rtype: list
+        :returns: text chunks adjusted for width
 
         This simply ensures that word boundaries are not broken mid-sequence, as standard python
         textwrap would incorrectly determine the length of a string containing sequences, and may
@@ -251,10 +260,11 @@ class Sequence(six.text_type):
     """
 
     def __new__(cls, sequence_text, term):
+        # pylint: disable = missing-return-doc, missing-return-type-doc
         """
         Class constructor.
 
-        :arg sequence_text: A string that may contain sequences.
+        :arg str sequence_text: A string that may contain sequences.
         :arg blessed.Terminal term: :class:`~.Terminal` instance.
         """
         new = six.text_type.__new__(cls, sequence_text)
@@ -265,10 +275,10 @@ class Sequence(six.text_type):
         """
         Return string containing sequences, left-adjusted.
 
-        :arg int width: Total width given to right-adjust ``text``.  If
+        :arg int width: Total width given to left-adjust ``text``.  If
             unspecified, the width of the attached terminal is used (default).
         :arg str fillchar: String for padding right-of ``text``.
-        :returns: String of ``text``, right-aligned by ``width``.
+        :returns: String of ``text``, left-aligned by ``width``.
         :rtype: str
         """
         rightside = fillchar * int(
@@ -326,8 +336,9 @@ class Sequence(six.text_type):
 
     # we require ur"" for the docstring, but it is not supported by all
     # python versions.
-    if length.__doc__ is not None:
-        length.__doc__ += (
+    # This may no longer be needed
+    if length.__doc__ is not None:  # pylint: disable=no-member
+        length.__doc__ += (  # pylint: disable=no-member
             u"""
             For example:
 
@@ -345,10 +356,11 @@ class Sequence(six.text_type):
 
     def strip(self, chars=None):
         """
-        Return string of sequences, leading, and trailing whitespace removed.
+        Return string of sequences, leading and trailing whitespace removed.
 
         :arg str chars: Remove characters in chars instead of whitespace.
         :rtype: str
+        :returns: string of sequences with leading and trailing whitespace removed.
         """
         return self.strip_seqs().strip(chars)
 
@@ -358,6 +370,7 @@ class Sequence(six.text_type):
 
         :arg str chars: Remove characters in chars instead of whitespace.
         :rtype: str
+        :returns: string of sequences with leading removed.
         """
         return self.strip_seqs().lstrip(chars)
 
@@ -367,6 +380,7 @@ class Sequence(six.text_type):
 
         :arg str chars: Remove characters in chars instead of whitespace.
         :rtype: str
+        :returns: string of sequences with trailing removed.
         """
         return self.strip_seqs().rstrip(chars)
 
@@ -375,6 +389,7 @@ class Sequence(six.text_type):
         Return ``text`` stripped of only its terminal sequences.
 
         :rtype: str
+        :returns: Text with terminal sequences removed
         """
         gen = iter_parse(self._term, self.padd())
         return u''.join(text for text, cap in gen if not cap)
@@ -384,6 +399,7 @@ class Sequence(six.text_type):
         Return non-destructive horizontal movement as destructive spacing.
 
         :rtype: str
+        :returns: Text adjusted for horizontal movement
         """
         outp = ''
         for text, cap in iter_parse(self._term, self):
@@ -409,7 +425,7 @@ def iter_parse(term, text):
     :class:`str` of length 1.  Otherwise, ``text`` is a full
     matching sequence of given capability.
     """
-    for match in re.finditer(term._caps_compiled_any, text):
+    for match in re.finditer(term._caps_compiled_any, text):  # pylint: disable=protected-access
         name = match.lastgroup
         value = match.group(name)
         if name == 'MISMATCH':
@@ -423,6 +439,7 @@ def measure_length(text, term):
     .. deprecated:: 1.12.0.
 
     :rtype: int
+    :returns: Length of the first sequence in the string
     """
     try:
         text, capability = next(iter_parse(term, text))

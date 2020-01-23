@@ -80,10 +80,9 @@ def get_curses_keycodes():
     Return mapping of curses key-names paired by their keycode integer value.
 
     :rtype: dict
-
-    Returns dictionary of (name, code) pairs for curses keyboard constant
-    values and their mnemonic name. Such as code ``260``, with the value of
-    its key-name identity, ``u'KEY_LEFT'``.
+    :returns: Dictionary of (name, code) pairs for curses keyboard constant
+        values and their mnemonic name. Such as code ``260``, with the value of
+        its key-name identity, ``u'KEY_LEFT'``.
     """
     _keynames = [attr for attr in dir(curses)
                  if attr.startswith('KEY_')]
@@ -96,11 +95,12 @@ def get_keyboard_codes():
     Return mapping of keycode integer values paired by their curses key-name.
 
     :rtype: dict
+    :returns: Dictionary of (code, name) pairs for curses keyboard constant
+        values and their mnemonic name. Such as key ``260``, with the value of
+        its identity, ``u'KEY_LEFT'``.
 
-    Returns dictionary of (code, name) pairs for curses keyboard constant
-    values and their mnemonic name. Such as key ``260``, with the value of
-    its identity, ``u'KEY_LEFT'``.  These are derived from the attributes by
-    the same of the curses module, with the following exceptions:
+    These keys are derived from the attributes by the same of the curses module,
+    with the following exceptions:
 
     * ``KEY_DELETE`` in place of ``KEY_DC``
     * ``KEY_INSERT`` in place of ``KEY_IC``
@@ -136,16 +136,17 @@ def _alternative_left_right(term):
 
     :arg blessed.Terminal term: :class:`~.Terminal` instance.
     :rtype: dict
+    :returns: Dictionary of sequences ``term._cuf1``, and ``term._cub1``,
+        valued as ``KEY_RIGHT``, ``KEY_LEFT`` (when appropriate).
 
     This function supports :func:`get_terminal_sequences` to discover
     the preferred input sequence for the left and right application keys.
 
-    Return dict of sequences ``term._cuf1``, and ``term._cub1``,
-    valued as ``KEY_RIGHT``, ``KEY_LEFT`` (when appropriate).  It is
-    necessary to check the value of these sequences to ensure we do not
+    It is necessary to check the value of these sequences to ensure we do not
     use ``u' '`` and ``u'\b'`` for ``KEY_RIGHT`` and ``KEY_LEFT``,
     preferring their true application key sequence, instead.
     """
+    # pylint: disable=protected-access
     keymap = dict()
     if term._cuf1 and term._cuf1 != u' ':
         keymap[term._cuf1] = curses.KEY_RIGHT
@@ -209,6 +210,7 @@ def get_leading_prefixes(sequences):
 
     :arg iterable sequences
     :rtype: set
+    :return: Set of all string prefixes
 
     Given an iterable of strings, all textparts leading up to the final
     string is returned as a unique set.  This function supports the
@@ -225,17 +227,18 @@ def resolve_sequence(text, mapper, codes):
     r"""
     Return :class:`Keystroke` instance for given sequence ``text``.
 
-    The given ``text`` may extend beyond a matching sequence, such as
-    ``u\x1b[Dxxx`` returns a :class:`Keystroke` instance of attribute
-    :attr:`Keystroke.sequence` valued only ``u\x1b[D``.  It is up to
-    determine that ``xxx`` remains unresolved.
-
-    :arg text: string of characters received from terminal input stream.
+    :arg str text: string of characters received from terminal input stream.
     :arg OrderedDict mapper: unicode multibyte sequences, such as ``u'\x1b[D'``
         paired by their integer value (260)
     :arg dict codes: a :type:`dict` of integer values (such as 260) paired
         by their mnemonic name, such as ``'KEY_LEFT'``.
     :rtype: Keystroke
+    :returns: Keystroke instance for the given sequence
+
+    The given ``text`` may extend beyond a matching sequence, such as
+    ``u\x1b[Dxxx`` returns a :class:`Keystroke` instance of attribute
+    :attr:`Keystroke.sequence` valued only ``u\x1b[D``.  It is up to
+    determine that ``xxx`` remains unresolved.
     """
     for sequence, code in mapper.items():
         if text.startswith(sequence):
@@ -349,10 +352,10 @@ _CURSES_KEYCODE_ADDINS = (
     'KP_8',
     'KP_9')
 
-_lastval = max(get_curses_keycodes().values())
+_LASTVAL = max(get_curses_keycodes().values())
 for keycode_name in _CURSES_KEYCODE_ADDINS:
-    _lastval += 1
-    globals()['KEY_' + keycode_name] = _lastval
+    _LASTVAL += 1
+    globals()['KEY_' + keycode_name] = _LASTVAL
 
 #: In a perfect world, terminal emulators would always send exactly what
 #: the terminfo(5) capability database plans for them, accordingly by the
@@ -375,7 +378,7 @@ DEFAULT_SEQUENCE_MIXIN = (
     (six.unichr(10), curses.KEY_ENTER),
     (six.unichr(13), curses.KEY_ENTER),
     (six.unichr(8), curses.KEY_BACKSPACE),
-    (six.unichr(9), KEY_TAB),  # noqa
+    (six.unichr(9), KEY_TAB),  # noqa  # pylint: disable=undefined-variable
     (six.unichr(27), curses.KEY_EXIT),
     (six.unichr(127), curses.KEY_BACKSPACE),
 
@@ -396,23 +399,23 @@ DEFAULT_SEQUENCE_MIXIN = (
     #
     # keypad, numlock on
     (u"\x1bOM", curses.KEY_ENTER),  # noqa return
-    (u"\x1bOj", KEY_KP_MULTIPLY),   # noqa *
-    (u"\x1bOk", KEY_KP_ADD),        # noqa +
-    (u"\x1bOl", KEY_KP_SEPARATOR),  # noqa ,
-    (u"\x1bOm", KEY_KP_SUBTRACT),   # noqa -
-    (u"\x1bOn", KEY_KP_DECIMAL),    # noqa .
-    (u"\x1bOo", KEY_KP_DIVIDE),     # noqa /
-    (u"\x1bOX", KEY_KP_EQUAL),      # noqa =
-    (u"\x1bOp", KEY_KP_0),          # noqa 0
-    (u"\x1bOq", KEY_KP_1),          # noqa 1
-    (u"\x1bOr", KEY_KP_2),          # noqa 2
-    (u"\x1bOs", KEY_KP_3),          # noqa 3
-    (u"\x1bOt", KEY_KP_4),          # noqa 4
-    (u"\x1bOu", KEY_KP_5),          # noqa 5
-    (u"\x1bOv", KEY_KP_6),          # noqa 6
-    (u"\x1bOw", KEY_KP_7),          # noqa 7
-    (u"\x1bOx", KEY_KP_8),          # noqa 8
-    (u"\x1bOy", KEY_KP_9),          # noqa 9
+    (u"\x1bOj", KEY_KP_MULTIPLY),   # noqa *  # pylint: disable=undefined-variable
+    (u"\x1bOk", KEY_KP_ADD),        # noqa +  # pylint: disable=undefined-variable
+    (u"\x1bOl", KEY_KP_SEPARATOR),  # noqa ,  # pylint: disable=undefined-variable
+    (u"\x1bOm", KEY_KP_SUBTRACT),   # noqa -  # pylint: disable=undefined-variable
+    (u"\x1bOn", KEY_KP_DECIMAL),    # noqa .  # pylint: disable=undefined-variable
+    (u"\x1bOo", KEY_KP_DIVIDE),     # noqa /  # pylint: disable=undefined-variable
+    (u"\x1bOX", KEY_KP_EQUAL),      # noqa =  # pylint: disable=undefined-variable
+    (u"\x1bOp", KEY_KP_0),          # noqa 0  # pylint: disable=undefined-variable
+    (u"\x1bOq", KEY_KP_1),          # noqa 1  # pylint: disable=undefined-variable
+    (u"\x1bOr", KEY_KP_2),          # noqa 2  # pylint: disable=undefined-variable
+    (u"\x1bOs", KEY_KP_3),          # noqa 3  # pylint: disable=undefined-variable
+    (u"\x1bOt", KEY_KP_4),          # noqa 4  # pylint: disable=undefined-variable
+    (u"\x1bOu", KEY_KP_5),          # noqa 5  # pylint: disable=undefined-variable
+    (u"\x1bOv", KEY_KP_6),          # noqa 6  # pylint: disable=undefined-variable
+    (u"\x1bOw", KEY_KP_7),          # noqa 7  # pylint: disable=undefined-variable
+    (u"\x1bOx", KEY_KP_8),          # noqa 8  # pylint: disable=undefined-variable
+    (u"\x1bOy", KEY_KP_9),          # noqa 9  # pylint: disable=undefined-variable
 
     # keypad, numlock off
     (u"\x1b[1~", curses.KEY_FIND),         # find

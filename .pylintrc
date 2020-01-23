@@ -15,11 +15,12 @@ disable=
     I,
     fixme,
     c-extension-no-member,
-    ungrouped-imports
+    ungrouped-imports,
+    useless-object-inheritance  # Python 2
 
 [FORMAT]
 max-line-length: 100
-good-names=ks,fd,_
+good-names=ks,fd,_,x,y
 
 [PARAMETER_DOCUMENTATION]
 default-docstring-type=sphinx
