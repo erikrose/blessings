@@ -12,10 +12,7 @@ try:
     from collections import OrderedDict
 except ImportError:
     # python 2.6 requires 3rd party library (backport)
-    #
-    # pylint: disable=import-error
-    #         Unable to import 'ordereddict'
-    from ordereddict import OrderedDict
+    from ordereddict import OrderedDict  # pylint: disable=import-error
 
 # curses
 if platform.system() == 'Windows':
@@ -119,11 +116,7 @@ def get_keyboard_codes():
     keycodes = OrderedDict(get_curses_keycodes())
     keycodes.update(CURSES_KEYCODE_OVERRIDE_MIXIN)
     # merge _CURSES_KEYCODE_ADDINS added to our module space
-    keycodes.update({
-        name: value
-        for name, value in globals().items()
-        if name.startswith('KEY_')
-    })
+    keycodes.update((name, value) for name, value in globals().items() if name.startswith('KEY_'))
 
     # invert dictionary (key, values) => (values, key), preferring the
     # last-most inserted value ('KEY_DELETE' over 'KEY_DC').
