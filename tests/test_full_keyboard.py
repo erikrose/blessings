@@ -604,6 +604,21 @@ def test_get_location_0s_reply_via_ungetch_under_raw():
     child()
 
 
+def test_get_location_timeout():
+    """0-second get_location call with response."""
+    @as_subprocess
+    def child():
+        term = TestTerminal(stream=six.StringIO())
+        stime = time.time()
+        # monkey patch in an invalid response !
+        term.ungetch(u'\x1b[0n')
+
+        y, x = term.get_location(timeout=0.2)
+        assert (math.floor(time.time() - stime) == 0.0)
+        assert (y, x) == (-1, -1)
+    child()
+
+
 def test_kbhit_no_kb():
     """kbhit() always immediately returns False without a keyboard."""
     @as_subprocess
