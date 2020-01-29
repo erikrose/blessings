@@ -20,6 +20,7 @@ def _make_colors():
     Return set of valid colors and their derivatives.
 
     :rtype: set
+    :returns: Color names with prefixes
     """
     colors = set()
     # basic CGA foreground color, background, high intensity, and bold
@@ -58,18 +59,18 @@ class ParameterizingString(six.text_type):
         u'\x1b[91mcolor #9\x1b(B\x1b[m'
     """
 
-    def __new__(cls, *args):
+    def __new__(cls, cap, normal=u'', name=u'<not specified>'):
+        # pylint: disable = missing-return-doc, missing-return-type-doc
         """
         Class constructor accepting 3 positional arguments.
 
-        :arg cap: parameterized string suitable for curses.tparm()
-        :arg normal: terminating sequence for this capability (optional).
-        :arg name: name of this terminal capability (optional).
+        :arg str cap: parameterized string suitable for curses.tparm()
+        :arg str normal: terminating sequence for this capability (optional).
+        :arg str name: name of this terminal capability (optional).
         """
-        assert args and len(args) < 4, args
-        new = six.text_type.__new__(cls, args[0])
-        new._normal = args[1] if len(args) > 1 else u''
-        new._name = args[2] if len(args) > 2 else u'<not specified>'
+        new = six.text_type.__new__(cls, cap)
+        new._normal = normal
+        new._name = name
         return new
 
     def __call__(self, *args):
@@ -80,7 +81,10 @@ class ParameterizingString(six.text_type):
         ``*args``, followed by the terminating sequence (self.normal) into
         a :class:`FormattingString` capable of being called.
 
+        :raises TypeError: Mismatch between capability and arguments
+        :raises curses.error: :func:`curses.tparm` raised an exception
         :rtype: :class:`FormattingString` or :class:`NullCallableString`
+        :returns: Callable string for given parameters
         """
         try:
             # Re-encode the cap, because tparm() takes a bytestring in Python
@@ -133,22 +137,23 @@ class ParameterizingProxyString(six.text_type):
         u'\x1b[10G'
     """
 
-    def __new__(cls, *args):
+    def __new__(cls, fmt_pair, normal=u'', name=u'<not specified>'):
+        # pylint: disable = missing-return-doc, missing-return-type-doc
         """
         Class constructor accepting 4 positional arguments.
 
-        :arg fmt: format string suitable for displaying terminal sequences.
-        :arg callable: receives __call__ arguments for formatting fmt.
-        :arg normal: terminating sequence for this capability (optional).
-        :arg name: name of this terminal capability (optional).
+        :arg tuple fmt_pair: Two element tuple containing:
+            - format string suitable for displaying terminal sequences
+            - callable suitable for receiving  __call__ arguments for formatting string
+        :arg str normal: terminating sequence for this capability (optional).
+        :arg str name: name of this terminal capability (optional).
         """
-        assert args and len(args) < 4, args
-        assert isinstance(args[0], tuple), args[0]
-        assert callable(args[0][1]), args[0][1]
-        new = six.text_type.__new__(cls, args[0][0])
-        new._fmt_args = args[0][1]
-        new._normal = args[1] if len(args) > 1 else u''
-        new._name = args[2] if len(args) > 2 else u'<not specified>'
+        assert isinstance(fmt_pair, tuple), fmt_pair
+        assert callable(fmt_pair[1]), fmt_pair[1]
+        new = six.text_type.__new__(cls, fmt_pair[0])
+        new._fmt_args = fmt_pair[1]
+        new._normal = normal
+        new._name = name
         return new
 
     def __call__(self, *args):
@@ -161,9 +166,11 @@ class ParameterizingProxyString(six.text_type):
         given capability.
 
         :rtype: FormattingString
+        :returns: Callable string for given parameters
         """
         return FormattingString(self.format(*self._fmt_args(*args)),
                                 self._normal)
+
 
 class FormattingString(six.text_type):
     r"""
@@ -182,20 +189,26 @@ class FormattingString(six.text_type):
         u'\x1b[94mBig Blue\x1b(B\x1b[m'
     """
 
-    def __new__(cls, *args):
+    def __new__(cls, sequence, normal=u''):
+        # pylint: disable = missing-return-doc, missing-return-type-doc
         """
         Class constructor accepting 2 positional arguments.
 
-        :arg sequence: terminal attribute sequence.
-        :arg normal: terminating sequence for this attribute (optional).
+        :arg str sequence: terminal attribute sequence.
+        :arg str normal: terminating sequence for this attribute (optional).
         """
-        assert 1 <= len(args) <= 2, args
-        new = six.text_type.__new__(cls, args[0])
-        new._normal = args[1] if len(args) > 1 else u''
+        new = six.text_type.__new__(cls, sequence)
+        new._normal = normal
         return new
 
     def __call__(self, *args):
-        """Return ``text`` joined by ``sequence`` and ``normal``."""
+        """
+        Return ``text`` joined by ``sequence`` and ``normal``.
+
+        :raises TypeError: Not a string type
+        :rtype: str
+        :returns: Arguments wrapped in sequence and normal
+        """
         # Jim Allman brings us this convenience of allowing existing
         # unicode strings to be joined as a call parameter to a formatting
         # string result, allowing nestation:
@@ -224,7 +237,8 @@ class FormattingOtherString(six.text_type):
     r"""
     A Unicode string which doubles as a callable for another sequence when called.
 
-    This is used for the :meth:`~.Terminal.move_up`, ``down``, ``left``, and ``right()`` family of functions::
+    This is used for the :meth:`~.Terminal.move_up`, ``down``, ``left``, and ``right()``
+    family of functions::
 
         >>> move_right = FormattingOtherString(term.cuf1, term.cuf)
         >>> print(repr(move_right))
@@ -235,23 +249,24 @@ class FormattingOtherString(six.text_type):
         u'\x1b[C'
     """
 
-    def __new__(cls, *args):
+    def __new__(cls, direct, target):
+        # pylint: disable = missing-return-doc, missing-return-type-doc
         """
         Class constructor accepting 2 positional arguments.
 
         :arg str direct: capability name for direct formatting, eg ``('x' + term.right)``.
-        :arg str callable: capability name for callable, eg ``('x' + term.right(99))``.
+        :arg str target: capability name for callable, eg ``('x' + term.right(99))``.
         """
-        assert 2 == len(args), args
-        new = six.text_type.__new__(cls, args[0])
-        new._callable = args[1]
+        new = six.text_type.__new__(cls, direct)
+        new._callable = target
         return new
 
     def __call__(self, *args):
-        """Return ``text`` by ``callable``."""
+        """Return ``text`` by ``target``."""
         if args:
             return self._callable(*args)
         return self
+
 
 class NullCallableString(six.text_type):
     """
@@ -343,6 +358,7 @@ def split_compound(compound):
     :arg str compound: a string that may contain compounds, separated by
         underline (``_``).
     :rtype: list
+    :returns: List of formating string segments
     """
     merged_segs = []
     # These occur only as prefixes, so they can always be merged:
@@ -370,7 +386,7 @@ def resolve_capability(term, attr):
     # b'\xff' is returned, this must be decoded to u'\xff'.
     if not term.does_styling:
         return u''
-    val = curses.tigetstr(term._sugar.get(attr, attr))
+    val = curses.tigetstr(term._sugar.get(attr, attr))  # pylint: disable=protected-access
     return u'' if val is None else val.decode('latin1')
 
 
@@ -390,6 +406,7 @@ def resolve_color(term, color):
         otherwise :class:`FormattingString`.
     :rtype: :class:`NullCallableString` or :class:`FormattingString`
     """
+    # pylint: disable=protected-access
     if term.number_of_colors == 0:
         return NullCallableString()
 
@@ -467,7 +484,8 @@ def resolve_attribute(term, attr):
         # and, for special terminals, such as 'screen', provide a Proxy
         # ParameterizingString for attributes they do not claim to support,
         # but actually do! (such as 'hpa' and 'vpa').
-        proxy = get_proxy_string(term, term._sugar.get(attr, attr))
+        proxy = get_proxy_string(term,
+                                 term._sugar.get(attr, attr))  # pylint: disable=protected-access
         if proxy is not None:
             return proxy
 

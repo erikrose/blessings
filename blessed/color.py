@@ -14,6 +14,7 @@ from math import cos, exp, sin, sqrt, atan2
 try:
     from functools import lru_cache
 except ImportError:
+    # lru_cache was added in Python 3.2
     from backports.functools_lru_cache import lru_cache
 
 
@@ -21,9 +22,9 @@ def rgb_to_xyz(red, green, blue):
     """
     Convert standard RGB color to XYZ color.
 
-    :arg red: RGB value of Red.
-    :arg green: RGB value of Green.
-    :arg blue: RGB value of Blue.
+    :arg int red: RGB value of Red.
+    :arg int green: RGB value of Green.
+    :arg int blue: RGB value of Blue.
     :returns: Tuple (X, Y, Z) representing XYZ color
     :rtype: tuple
 
@@ -51,9 +52,9 @@ def xyz_to_lab(x_val, y_val, z_val):
     """
     Convert XYZ color to CIE-Lab color.
 
-    :arg x_val: XYZ value of X.
-    :arg y_val: XYZ value of Y.
-    :arg z_val: XYZ value of Z.
+    :arg float x_val: XYZ value of X.
+    :arg float y_val: XYZ value of Y.
+    :arg float z_val: XYZ value of Z.
     :returns: Tuple (L, a, b) representing CIE-Lab color
     :rtype: tuple
 
@@ -81,9 +82,9 @@ def rgb_to_lab(red, green, blue):
     """
     Convert RGB color to CIE-Lab color.
 
-    :arg red: RGB value of Red.
-    :arg green: RGB value of Green.
-    :arg blue: RGB value of Blue.
+    :arg int red: RGB value of Red.
+    :arg int green: RGB value of Green.
+    :arg int blue: RGB value of Blue.
     :returns: Tuple (L, a, b) representing CIE-Lab color
     :rtype: tuple
 

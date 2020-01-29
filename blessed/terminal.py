@@ -1,4 +1,5 @@
 # encoding: utf-8
+# pylint: disable=too-many-lines
 """Module containing :class:`Terminal`, the primary API entry point."""
 # std imports
 import os
@@ -27,9 +28,9 @@ from .sequences import Termcap, Sequence, SequenceTextWrapper
 from .colorspace import RGB_256TABLE
 from .formatters import (COLORS,
                          FormattingString,
-                         FormattingOtherString,
                          NullCallableString,
                          ParameterizingString,
+                         FormattingOtherString,
                          resolve_attribute,
                          resolve_capability)
 from ._capabilities import CAPABILITY_DATABASE, CAPABILITIES_ADDITIVES, CAPABILITIES_RAW_MIXIN
@@ -45,10 +46,7 @@ try:
     from collections import OrderedDict
 except ImportError:
     # python 2.6 requires 3rd party library (backport)
-    #
-    # pylint: disable=import-error
-    #         Unable to import 'ordereddict'
-    from ordereddict import OrderedDict
+    from ordereddict import OrderedDict  # pylint: disable=import-error
 
 
 HAS_TTY = True
@@ -156,39 +154,22 @@ class Terminal(object):
         global _CUR_TERM
         self.errors = ['parameters: kind=%r, stream=%r, force_styling=%r' %
                        (kind, stream, force_styling)]
-        self._keyboard_fd = None
-
-        # Default stream is stdout, keyboard valid as stdin only when
-        # output stream is stdout or stderr and is a tty.
-        if stream is None:
-            stream = sys.__stdout__
-        if stream in (sys.__stdout__, sys.__stderr__):
-            self._keyboard_fd = sys.__stdin__.fileno()
-
+        self._normal = None  # cache normal attr, preventing recursive lookups
         # we assume our input stream to be line-buffered until either the
-        # cbreak of raw context manager methods are entered with an
-        # attached tty.
+        # cbreak of raw context manager methods are entered with an attached tty.
         self._line_buffered = True
 
-        stream_fd = None
-        self._is_a_tty = False
-        if not hasattr(stream, 'fileno'):
-            self.errors.append('stream has no fileno method')
-        elif not callable(stream.fileno):
-            self.errors.append('stream.fileno is not callable')
-        else:
-            try:
-                stream_fd = stream.fileno()
-            except ValueError as err:
-                # The stream is not a file, such as the case of StringIO, or, when it has been
-                # "detached", such as might be the case of stdout in some test scenarios.
-                self.errors.append('Unable to determine stream file descriptor: %s' % err)
-            else:
-                self._is_a_tty = os.isatty(stream_fd)
-                if not self._is_a_tty:
-                    self.errors.append('stream not a TTY')
-
         self._stream = stream
+        self._keyboard_fd = None
+        self._init_descriptor = None
+        self._is_a_tty = False
+        self.__init__streams()
+
+        if platform.system() == 'Windows' and self._init_descriptor is not None:
+            self._kind = kind or curses.get_term(self._init_descriptor)
+        else:
+            self._kind = kind or os.environ.get('TERM', 'dumb') or 'dumb'
+
         self._does_styling = False
         if force_styling:
             self._does_styling = True
@@ -197,26 +178,6 @@ class Terminal(object):
                 self.errors.append('force_styling is None')
             else:
                 self._does_styling = True
-
-        # _keyboard_fd only non-None if both stdin and stdout is a tty.
-        self._keyboard_fd = (self._keyboard_fd
-                             if self._keyboard_fd is not None and
-                             self.is_a_tty and os.isatty(self._keyboard_fd)
-                             else None)
-        self._normal = None  # cache normal attr, preventing recursive lookups
-
-        # The descriptor to direct terminal initialization sequences to.
-        self._init_descriptor = stream_fd
-        if stream_fd is None:
-            try:
-                self._init_descriptor = sys.__stdout__.fileno()
-            except ValueError as err:
-                self.errors.append('Unable to determine __stdout__ file descriptor: %s' % err)
-
-        if platform.system() == 'Windows' and self._init_descriptor is not None:
-            self._kind = kind or curses.get_term(self._init_descriptor)
-        else:
-            self._kind = kind or os.environ.get('TERM', 'dumb') or 'dumb'
 
         if self.does_styling:
             # Initialize curses (call setupterm), so things like tigetstr() work.
@@ -248,13 +209,53 @@ class Terminal(object):
         self.__init__capabilities()
         self.__init__keycodes()
 
+    def __init__streams(self):
+        stream_fd = None
+
+        # Default stream is stdout
+        if self._stream is None:
+            self._stream = sys.__stdout__
+
+        if not hasattr(self._stream, 'fileno'):
+            self.errors.append('stream has no fileno method')
+        elif not callable(self._stream.fileno):
+            self.errors.append('stream.fileno is not callable')
+        else:
+            try:
+                stream_fd = self._stream.fileno()
+            except ValueError as err:
+                # The stream is not a file, such as the case of StringIO, or, when it has been
+                # "detached", such as might be the case of stdout in some test scenarios.
+                self.errors.append('Unable to determine stream file descriptor: %s' % err)
+            else:
+                self._is_a_tty = os.isatty(stream_fd)
+                if not self._is_a_tty:
+                    self.errors.append('stream not a TTY')
+
+        # Keyboard valid as stdin only when output stream is stdout or stderr and is a tty.
+        if self._stream in (sys.__stdout__, sys.__stderr__):
+            self._keyboard_fd = sys.__stdin__.fileno()
+
+        # _keyboard_fd only non-None if both stdin and stdout is a tty.
+        self._keyboard_fd = (self._keyboard_fd
+                             if self._keyboard_fd is not None and
+                             self.is_a_tty and os.isatty(self._keyboard_fd)
+                             else None)
+
+        # The descriptor to direct terminal initialization sequences to.
+        self._init_descriptor = stream_fd
+        if stream_fd is None:
+            try:
+                self._init_descriptor = sys.__stdout__.fileno()
+            except ValueError as err:
+                self.errors.append('Unable to determine __stdout__ file descriptor: %s' % err)
+
     def __init__color_capabilities(self):
         self._color_distance_algorithm = 'cie2000'
         if not self.does_styling:
             self.number_of_colors = 0
         elif platform.system() == 'Windows' or (
-            os.environ.get('COLORTERM') in ('truecolor', '24bit')
-        ):
+                os.environ.get('COLORTERM') in ('truecolor', '24bit')):
             self.number_of_colors = 1 << 24
         else:
             self.number_of_colors = max(0, curses.tigetnum('colors') or -1)
@@ -429,6 +430,7 @@ class Terminal(object):
         :arg int fd: file descriptor queries for its window size.
         :raises IOError: the file descriptor ``fd`` is not a terminal.
         :rtype: WINSZ
+        :returns: named tuple describing size of the terminal
 
         WINSZ is a :class:`collections.namedtuple` instance, whose structure
         directly maps to the return value of the :const:`termios.TIOCGWINSZ`
@@ -440,6 +442,7 @@ class Terminal(object):
             - ``ws_ypixel``: height of terminal by pixels (not accurate).
         """
         if HAS_TTY:
+            # pylint: disable=protected-access
             data = fcntl.ioctl(fd, termios.TIOCGWINSZ, WINSZ._BUF)
             return WINSZ(*struct.unpack(WINSZ._FMT, data))
         return WINSZ(ws_row=25, ws_col=80, ws_xpixel=0, ws_ypixel=0)
@@ -455,6 +458,7 @@ class Terminal(object):
         is the default text mode of IBM PC compatibles.
 
         :rtype: WINSZ
+        :returns: Named tuple specifying the terminal size
 
         WINSZ is a :class:`collections.namedtuple` instance, whose structure
         directly maps to the return value of the :const:`termios.TIOCGWINSZ`
@@ -469,7 +473,7 @@ class Terminal(object):
             try:
                 if fd is not None:
                     return self._winsize(fd)
-            except (IOError, OSError, ValueError, TypeError):
+            except (IOError, OSError, ValueError, TypeError):  # pylint: disable=overlapping-except
                 pass
 
         return WINSZ(ws_row=int(os.getenv('LINES', '25')),
@@ -579,7 +583,7 @@ class Terminal(object):
         try:
             if self._line_buffered:
                 ctx = self.cbreak()
-                ctx.__enter__()
+                ctx.__enter__()  # pylint: disable=no-member
 
             # emit the 'query cursor position' sequence,
             self.stream.write(query_str)
@@ -615,7 +619,7 @@ class Terminal(object):
 
         finally:
             if ctx is not None:
-                ctx.__exit__(None, None, None)
+                ctx.__exit__(None, None, None)  # pylint: disable=no-member
 
         # We chose to return an illegal value rather than an exception,
         # favoring that users author function filters, such as max(0, y),
@@ -673,6 +677,7 @@ class Terminal(object):
         :arg int x: horizontal position.
         :arg int y: vertical position.
         :rtype: ParameterizingString
+        :returns: Callable string that moves the cursor to the given coordinates
         """
         # this is just a convenience alias to the built-in, but hidden 'move'
         # attribute -- we encourage folks to use only (x, y) positional
@@ -687,6 +692,7 @@ class Terminal(object):
         :arg int x: horizontal position.
         :arg int y: vertical position.
         :rtype: ParameterizingString
+        :returns: Callable string that moves the cursor to the given coordinates
         """
         return self.move(y, x)
 
@@ -715,7 +721,6 @@ class Terminal(object):
         """
         A callable string that sets the foreground color.
 
-        :arg int num: The foreground color index.
         :rtype: ParameterizingString
 
         The capability is unparameterized until called and passed a number, at which point it
@@ -731,6 +736,18 @@ class Terminal(object):
                                     self.normal, 'color')
 
     def color_rgb(self, red, green, blue):
+        """
+        Provides callable formatting string to set foreground color to the specified RGB color.
+
+        :arg int red: RGB value of Red.
+        :arg int green: RGB value of Green.
+        :arg int blue: RGB value of Blue.
+        :rtype: FormattingString
+        :returns: Callable string that sets the foreground color
+
+        If the terminal does not support RGB color, the nearest supported
+        color will be determined using :py:attr:`color_distance_algorithm`.
+        """
         if self.number_of_colors == 1 << 24:
             # "truecolor" 24-bit
             fmt_attr = u'\x1b[38;2;{0};{1};{2}m'.format(red, green, blue)
@@ -745,7 +762,6 @@ class Terminal(object):
         """
         A callable capability that sets the background color.
 
-        :arg int num: The background color index.
         :rtype: ParameterizingString
         """
         if not self.does_styling:
@@ -754,6 +770,18 @@ class Terminal(object):
                                     self.normal, 'on_color')
 
     def on_color_rgb(self, red, green, blue):
+        """
+        Provides callable formatting string to set background color to the specified RGB color.
+
+        :arg int red: RGB value of Red.
+        :arg int green: RGB value of Green.
+        :arg int blue: RGB value of Blue.
+        :rtype: FormattingString
+        :returns: Callable string that sets the foreground color
+
+        If the terminal does not support RGB color, the nearest supported
+        color will be determined using :py:attr:`color_distance_algorithm`.
+        """
         if self.number_of_colors == 1 << 24:
             fmt_attr = u'\x1b[48;2;{0};{1};{2}m'.format(red, green, blue)
             return FormattingString(fmt_attr, self.normal)
@@ -769,6 +797,7 @@ class Terminal(object):
         :arg int green: RGB value of Green (0-255).
         :arg int blue: RGB value of Blue (0-255).
         :rtype: int
+        :returns: Color code of downconverted RGB color
         """
         # Though pre-computing all 1 << 24 options is memory-intensive, a pre-computed
         # "k-d tree" of 256 (x,y,z) vectors of a colorspace in 3 dimensions, such as a
@@ -880,6 +909,7 @@ class Terminal(object):
             unspecified, the whole width of the terminal is filled.
         :arg str fillchar: String for padding the right of ``text``
         :rtype: str
+        :returns: String of ``text``, left-aligned by ``width``.
         """
         # Left justification is different from left alignment, but we continue
         # the vocabulary error of the str method for polymorphism.
@@ -896,6 +926,7 @@ class Terminal(object):
             unspecified, the whole width of the terminal is used.
         :arg str fillchar: String for padding the left of ``text``
         :rtype: str
+        :returns: String of ``text``, right-aligned by ``width``.
         """
         if width is None:
             width = self.width
@@ -910,6 +941,7 @@ class Terminal(object):
             unspecified, the whole width of the terminal is used.
         :arg str fillchar: String for padding the left and right of ``text``
         :rtype: str
+        :returns: String of ``text``, centered by ``width``
         """
         if width is None:
             width = self.width
@@ -942,6 +974,7 @@ class Terminal(object):
         Return ``text`` without sequences and leading or trailing whitespace.
 
         :rtype: str
+        :returns: Text with leading and trailing whitespace removed
 
         >>> term.strip(u' \x1b[0;3m xyz ')
         u'xyz'
@@ -953,6 +986,7 @@ class Terminal(object):
         Return ``text`` without terminal sequences or trailing whitespace.
 
         :rtype: str
+        :returns: Text with terminal sequences and trailing whitespace removed
 
         >>> term.rstrip(u' \x1b[0;3m xyz ')
         u'  xyz'
@@ -964,6 +998,7 @@ class Terminal(object):
         Return ``text`` without terminal sequences or leading whitespace.
 
         :rtype: str
+        :returns: Text with terminal sequences and leading whitespace removed
 
         >>> term.lstrip(u' \x1b[0;3m xyz ')
         u'xyz '
@@ -975,6 +1010,7 @@ class Terminal(object):
         Return ``text`` stripped of only its terminal sequences.
 
         :rtype: str
+        :returns: Text with terminal sequences removed
 
         >>> term.strip_seqs(u'\x1b[0;3mxyz')
         u'xyz'
@@ -991,8 +1027,10 @@ class Terminal(object):
         r"""
         Return ``text`` split by individual character elements and sequences.
 
+        :arg str text: String containing sequences
         :arg kwds: remaining keyword arguments for :func:`re.split`.
         :rtype: list[str]
+        :returns: List of sequences and individual characters
 
         >>> term.split_seqs(term.underline(u'xyz'))
         ['\x1b[4m', 'x', 'y', 'z', '\x1b(B', '\x1b[m']
@@ -1010,7 +1048,9 @@ class Terminal(object):
             :func:`string.expandtabs`.
         :arg int width: Unlike :func:`textwrap.wrap`, ``width`` will
             default to the width of the attached terminal.
+        :arg kwargs: See :py:class:`textwrap.TextWrapper`
         :rtype: list
+        :returns: List of wrapped lines
 
         See :class:`textwrap.TextWrapper` for keyword arguments that can
         customize wrapping behaviour.
@@ -1049,7 +1089,7 @@ class Terminal(object):
         """
         Buffer input data to be discovered by next call to :meth:`~.inkey`.
 
-        :arg str ucs: String to be buffered as keyboard input.
+        :arg str text: String to be buffered as keyboard input.
         """
         self._keyboard_buf.extendleft(text)
 

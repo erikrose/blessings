@@ -6,10 +6,7 @@ try:
     from collections import OrderedDict
 except ImportError:
     # python 2.6 requires 3rd party library (backport)
-    #
-    # pylint: disable=import-error
-    #         Unable to import 'ordereddict'
-    from ordereddict import OrderedDict
+    from ordereddict import OrderedDict  # pylint: disable=import-error
 
 __all__ = (
     'CAPABILITY_DATABASE',
@@ -126,6 +123,8 @@ CAPABILITIES_RAW_MIXIN = {
 
 CAPABILITIES_ADDITIVES = {
     'color256': ('color', re.escape('\x1b') + r'\[38;5;\d+m'),
+    'color_rgb': ('color_rgb', re.escape('\x1b') + r'\[38;2;\d+;\d+;\d+m'),
+    'on_color_rgb': ('color_rgb', re.escape('\x1b') + r'\[48;2;\d+;\d+;\d+m'),
     'shift_in': ('', re.escape('\x0f')),
     'shift_out': ('', re.escape('\x0e')),
     # sgr(...) outputs strangely, use the basic ANSI/EMCA-48 codes here.

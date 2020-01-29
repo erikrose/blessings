@@ -1,5 +1,5 @@
 # encoding: utf-8
-"""Utility to show X11 colors in 24-bit and down-converted to 256, 16, and 8 color The time to
+"""Utility to show X11 colors in 24-bit and downconverted to 256, 16, and 8 color The time to
 generate the table is displayed to give an indication of how long each algorithm takes compared to
 the others."""
 # std imports
@@ -30,7 +30,7 @@ SORTED_COLORS = sort_colors()
 
 
 def draw_chart(term):
-    """Draw a chart of each X11 color represented as in 24-bit and as down-converted to 256, 16, and
+    """Draw a chart of each X11 color represented as in 24-bit and as downconverted to 256, 16, and
     8 color with the currently configured algorithm."""
     sys.stdout.write(term.home)
     width = term.width

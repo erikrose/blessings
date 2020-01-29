@@ -43,7 +43,7 @@ class Terminal(_Terminal):
             rtn += msvcrt.getwch()
         return rtn
 
-    def kbhit(self, timeout=None, **_kwargs):
+    def kbhit(self, timeout=None):
         """
         Return whether a keypress has been detected on the keyboard.
 
@@ -78,6 +78,7 @@ class Terminal(_Terminal):
 
         :arg int fd: file descriptor queries for its window size.
         :rtype: WINSZ
+        :returns: named tuple describing size of the terminal
 
         WINSZ is a :class:`collections.namedtuple` instance, whose structure
         directly maps to the return value of the :const:`termios.TIOCGWINSZ`
