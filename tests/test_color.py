@@ -53,7 +53,7 @@ def test_color_rgb():
     """Ensure expected sequence is returned"""
     @as_subprocess
     def child():
-        t = TestTerminal()
+        t = TestTerminal(force_styling=True)
         color_patterns = r'%s|%s' % (t.caps['color'].pattern, t.caps['color256'].pattern)
         t.number_of_colors = 1 << 24
         assert t.color_rgb(0, 0, 0)('smoo') == u'\x1b[38;2;0;0;0msmoo' + t.normal
@@ -70,7 +70,7 @@ def test_on_color_rgb():
     """Ensure expected sequence is returned"""
     @as_subprocess
     def child():
-        t = TestTerminal()
+        t = TestTerminal(force_styling=True)
         color_patterns = r'%s|%s' % (t.caps['color'].pattern, t.caps['on_color256'].pattern)
         t.number_of_colors = 1 << 24
         assert t.on_color_rgb(0, 0, 0)('smoo') == u'\x1b[48;2;0;0;0msmoo' + t.normal
@@ -87,7 +87,7 @@ def test_set_number_of_colors():
     """Ensure number of colors is supported and cache is cleared"""
     @as_subprocess
     def child():
-        t = TestTerminal()
+        t = TestTerminal(force_styling=True)
         for num in (0, 4, 8, 16, 256, 1 << 24):
             t.aqua
             assert 'aqua' in dir(t)
@@ -104,7 +104,7 @@ def test_set_color_distance_algorithm():
     """Ensure algorithm is supported and cache is cleared"""
     @as_subprocess
     def child():
-        t = TestTerminal()
+        t = TestTerminal(force_styling=True)
         for algo in COLOR_DISTANCE_ALGORITHMS:
             t.aqua
             assert 'aqua' in dir(t)
