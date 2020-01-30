@@ -584,7 +584,23 @@ def test_get_location_0s_reply_via_ungetch():
 
         y, x = term.get_location(timeout=0.01)
         assert (math.floor(time.time() - stime) == 0.0)
-        assert (y, x) == (10, 10)
+        assert (y, x) == (9, 9)
+    child()
+
+
+def test_get_location_styling_indifferent():
+    """Ensure get_location() behavior is the same regardless of styling"""
+    @as_subprocess
+    def child():
+        term = TestTerminal(stream=six.StringIO(), force_styling=True)
+        term.ungetch(u'\x1b[10;10R')
+        y, x = term.get_location(timeout=0.01)
+        assert (y, x) == (9, 9)
+
+        term = TestTerminal(stream=six.StringIO(), force_styling=False)
+        term.ungetch(u'\x1b[10;10R')
+        y, x = term.get_location(timeout=0.01)
+        assert (y, x) == (9, 9)
     child()
 
 
@@ -600,7 +616,7 @@ def test_get_location_0s_reply_via_ungetch_under_raw():
 
             y, x = term.get_location(timeout=0.01)
             assert (math.floor(time.time() - stime) == 0.0)
-            assert (y, x) == (10, 10)
+            assert (y, x) == (9, 9)
     child()
 
 

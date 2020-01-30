@@ -569,6 +569,7 @@ class Terminal(object):
         # >  u7   cursor position request (equiv. to VT100/ANSI/ECMA-48 DSR 6)
         # >  u6   cursor position report (equiv. to ANSI/ECMA-48 CPR)
         query_str = self.u7 or u'\x1b[6n'
+        response_str = getattr(self, self.caps['cursor_report'].attribute) or u'\x1b[%i%d;%dR'
 
         # determine response format as a regular expression
         response_re = self.caps['cursor_report'].re_compiled
@@ -612,7 +613,7 @@ class Terminal(object):
                 # If the string contains the sequence %i, it is taken as an
                 # instruction to decrement each value after reading it (this is
                 # the inverse sense from the cup string).
-                if '%i' in self.cursor_report:
+                if u'%i' in response_str:
                     row -= 1
                     col -= 1
                 return row, col
