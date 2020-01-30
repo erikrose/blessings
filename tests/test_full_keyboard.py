@@ -562,15 +562,26 @@ def test_get_location_0s():
 
 def test_get_location_0s_under_raw():
     """0-second get_location call without response under raw mode."""
-    @as_subprocess
-    def child():
-        term = TestTerminal(stream=six.StringIO())
+    import pty
+    pid, master_fd = pty.fork()
+    if pid == 0:
+        cov = init_subproc_coverage('test_get_location_0s_under_raw')
+        term = TestTerminal()
         with term.raw():
             stime = time.time()
             y, x = term.get_location(timeout=0)
             assert (math.floor(time.time() - stime) == 0.0)
             assert (y, x) == (-1, -1)
-    child()
+
+        if cov is not None:
+            cov.stop()
+            cov.save()
+        os._exit(0)
+
+    stime = time.time()
+    pid, status = os.waitpid(pid, 0)
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
 
 
 def test_get_location_0s_reply_via_ungetch():
@@ -606,9 +617,11 @@ def test_get_location_styling_indifferent():
 
 def test_get_location_0s_reply_via_ungetch_under_raw():
     """0-second get_location call with response under raw mode."""
-    @as_subprocess
-    def child():
-        term = TestTerminal(stream=six.StringIO())
+    import pty
+    pid, master_fd = pty.fork()
+    if pid == 0:
+        cov = init_subproc_coverage('test_get_location_0s_reply_via_ungetch_under_raw')
+        term = TestTerminal()
         with term.raw():
             stime = time.time()
             # monkey patch in an invalid response !
@@ -617,7 +630,16 @@ def test_get_location_0s_reply_via_ungetch_under_raw():
             y, x = term.get_location(timeout=0.01)
             assert (math.floor(time.time() - stime) == 0.0)
             assert (y, x) == (9, 9)
-    child()
+
+        if cov is not None:
+            cov.stop()
+            cov.save()
+        os._exit(0)
+
+    stime = time.time()
+    pid, status = os.waitpid(pid, 0)
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
 
 
 def test_get_location_timeout():
