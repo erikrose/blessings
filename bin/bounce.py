@@ -12,11 +12,18 @@ with term.cbreak(), term.hidden_cursor():
 
     # loop every 20ms
     while term.inkey(timeout=0.02) != 'q':
-        txt_erase = term.move_xy(*roundxy(x, y)) + ' '         # erase,
-        if x >= (term.width - 1) or x <= 0:                    # bounce horizontally,
+        # erase,
+        txt_erase = term.move_xy(*roundxy(x, y)) + ' '
+
+        # bounce,
+        if x >= (term.width - 1) or x <= 0:
             xs *= -1
-        if y >= term.height or y <= 0:                         # vertically,
+        if y >= term.height or y <= 0:
             ys *= -1
-        x, y = x + xs, y + ys                                  # move,
+
+        # move,
+        x, y = x + xs, y + ys
+
+        # draw !
         txt_ball = term.move_xy(*roundxy(x, y)) + '█'
-        print(txt_erase + txt_ball, end='', flush=True)        # draw !
+        print(txt_erase + txt_ball, end='', flush=True)

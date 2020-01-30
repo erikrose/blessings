@@ -1,3 +1,60 @@
+
+Before And After
+----------------
+
+With the built-in curses_ module, this is how you would typically
+print some underlined text at the bottom of the screen:
+
+.. code-block:: python
+
+    from curses import tigetstr, setupterm, tparm
+    from fcntl import ioctl
+    from os import isatty
+    import struct
+    import sys
+    from termios import TIOCGWINSZ
+
+    # If we want to tolerate having our output piped to other commands or
+    # files without crashing, we need to do all this branching:
+    if hasattr(sys.stdout, 'fileno') and isatty(sys.stdout.fileno()):
+        setupterm()
+        sc = tigetstr('sc')
+        cup = tigetstr('cup')
+        rc = tigetstr('rc')
+        underline = tigetstr('smul')
+        normal = tigetstr('sgr0')
+    else:
+        sc = cup = rc = underline = normal = ''
+
+    # Save cursor position.
+    print(sc)
+
+    if cup:
+        # tigetnum('lines') doesn't always update promptly, hence this:
+        height = struct.unpack('hhhh', ioctl(0, TIOCGWINSZ, '\000' * 8))[0]
+
+        # Move cursor to bottom.
+        print(tparm(cup, height - 1, 0))
+
+    print('This is {under}underlined{normal}!'
+          .format(under=underline, normal=normal))
+
+    # Restore cursor position.
+    print(rc)
+
+The same program with *Blessed* is simply:
+
+.. code-block:: python
+
+    from blessed import Terminal
+
+    term = Terminal()
+    with term.location(0, term.height - 1):
+        print('This is' + term.underline('underlined') + '!')
+
+
+
+
 Overview
 ========
 
@@ -583,3 +640,39 @@ context manager is used with numlock on:
 .. _`curs_getch(3)`: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man3/curs_getch.3
 .. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/man4/termios.3
 .. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH
+
+Bugs, Contributing, Support
+---------------------------
+
+**Bugs** or suggestions? Visit the `issue tracker`_ and file an issue.
+We welcome your bug reports and feature suggestions!
+
+Would you like to **contribute**?  That's awesome!  We've written a
+`guide <http://blessed.readthedocs.org/en/latest/contributing.html>`_
+to help you.
+
+Are you stuck and need **support**?  Give `stackoverflow`_ a try.  If
+you're still having trouble, we'd like to hear about it!  Open an issue
+in the `issue tracker`_ with a well-formed question.
+
+.. _`issue tracker`: https://github.com/jquast/blessed/issues/
+.. _`stackoverflow`: http://stackoverflow.com/
+
+License
+-------
+
+*Blessed* is under the MIT License. See the LICENSE file.
+
+Forked
+------
+
+*Blessed* is a fork of `blessings <https://github.com/erikrose/blessings>`_.
+Changes since 1.7 have all been proposed but unaccepted upstream.
+
+Enhancements only in *Blessed*:
+Furthermore, a project in the node.js language of the `same name
+<https://github.com/chjj/blessed>`_ is **not** related, or a fork
+of each other in any way.
+
+
+.. _curses: https://docs.python.org/3/library/curses.html
