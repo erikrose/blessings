@@ -61,6 +61,7 @@ def test_kbhit_interrupted():
         os.write(master_fd, SEND_SEMAPHORE)
         read_until_semaphore(master_fd)
         stime = time.time()
+        time.sleep(0.05)
         os.kill(pid, signal.SIGWINCH)
         output = read_until_eof(master_fd)
 
