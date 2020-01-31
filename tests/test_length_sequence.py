@@ -339,7 +339,7 @@ def test_winsize(many_lines, many_columns):
     child(lines=many_lines, cols=many_columns)
 
 
-def test_Sequence_alignment_fixed_width():
+def test_Sequence_alignment_fixed_width(all_terms):
     @as_subprocess
     def child(kind):
         term = TestTerminal(kind=kind)
@@ -359,6 +359,8 @@ def test_Sequence_alignment_fixed_width():
         assert (term.length(ladjusted) == len(pony_msg.ljust(88)))
         assert (term.length(radjusted.strip()) == pony_len)
         assert (term.length(radjusted) == len(pony_msg.rjust(88)))
+
+    child(kind=all_terms)
 
 
 @pytest.mark.skipif(platform.system() == 'Windows', reason="requires fcntl")
