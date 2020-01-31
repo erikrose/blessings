@@ -91,10 +91,13 @@ def test_kbhit_interrupted_nonetype():
         signal.signal(signal.SIGWINCH, on_resize)
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.raw():
-            term.inkey(timeout=1)
-        os.write(sys.__stdout__.fileno(), b'complete')
-        assert got_sigwinch
+        try:
+            with term.raw():
+                term.inkey(timeout=None)
+        except KeyboardInterrupt:
+            os.write(sys.__stdout__.fileno(), b'complete')
+            assert got_sigwinch
+
         if cov is not None:
             cov.stop()
             cov.save()
@@ -106,12 +109,14 @@ def test_kbhit_interrupted_nonetype():
         stime = time.time()
         time.sleep(0.05)
         os.kill(pid, signal.SIGWINCH)
+        time.sleep(0.05)
+        os.kill(pid, signal.SIGINT)
         output = read_until_eof(master_fd)
 
     pid, status = os.waitpid(pid, 0)
     assert output == u'complete'
     assert os.WEXITSTATUS(status) == 0
-    assert math.floor(time.time() - stime) == 1.0
+    assert math.floor(time.time() - stime) == 0
 
 
 def test_kbhit_no_kb():
@@ -123,6 +128,19 @@ def test_kbhit_no_kb():
         assert term._keyboard_fd is None
         assert not term.kbhit(timeout=1.1)
         assert math.floor(time.time() - stime) == 1.0
+    child()
+
+
+def test_kbhit_no_tty():
+    """kbhit() returns False immediately if HAS_TTY is False"""
+    import blessed.terminal
+    @as_subprocess
+    def child():
+        with mock.patch('blessed.terminal.HAS_TTY', False):
+            term = TestTerminal(stream=six.StringIO())
+            stime = time.time()
+            assert term.kbhit(timeout=1.1) is False
+            assert math.floor(time.time() - stime) == 0
     child()
 
 
