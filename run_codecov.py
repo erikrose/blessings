@@ -2,11 +2,12 @@
 Workaround for https://github.com/codecov/codecov-python/issues/158
 """
 
+# std imports
 import sys
 import time
 
+# local
 import codecov
-
 
 RETRIES = 5
 TIMEOUT = 2
