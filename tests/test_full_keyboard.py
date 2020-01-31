@@ -9,6 +9,7 @@ import platform
 
 # 3rd party
 import six
+import mock
 import pytest
 
 # local
@@ -60,6 +61,7 @@ def test_kbhit_interrupted():
         os.write(master_fd, SEND_SEMAPHORE)
         read_until_semaphore(master_fd)
         stime = time.time()
+        time.sleep(0.05)
         os.kill(pid, signal.SIGWINCH)
         output = read_until_eof(master_fd)
 
@@ -90,10 +92,13 @@ def test_kbhit_interrupted_nonetype():
         signal.signal(signal.SIGWINCH, on_resize)
         read_until_semaphore(sys.__stdin__.fileno(), semaphore=SEMAPHORE)
         os.write(sys.__stdout__.fileno(), SEMAPHORE)
-        with term.raw():
-            term.inkey(timeout=1)
-        os.write(sys.__stdout__.fileno(), b'complete')
-        assert got_sigwinch
+        try:
+            with term.raw():
+                term.inkey(timeout=None)
+        except KeyboardInterrupt:
+            os.write(sys.__stdout__.fileno(), b'complete')
+            assert got_sigwinch
+
         if cov is not None:
             cov.stop()
             cov.save()
@@ -105,12 +110,14 @@ def test_kbhit_interrupted_nonetype():
         stime = time.time()
         time.sleep(0.05)
         os.kill(pid, signal.SIGWINCH)
+        time.sleep(0.05)
+        os.kill(pid, signal.SIGINT)
         output = read_until_eof(master_fd)
 
     pid, status = os.waitpid(pid, 0)
     assert output == u'complete'
     assert os.WEXITSTATUS(status) == 0
-    assert math.floor(time.time() - stime) == 1.0
+    assert math.floor(time.time() - stime) == 0
 
 
 def test_kbhit_no_kb():
@@ -122,6 +129,19 @@ def test_kbhit_no_kb():
         assert term._keyboard_fd is None
         assert not term.kbhit(timeout=1.1)
         assert math.floor(time.time() - stime) == 1.0
+    child()
+
+
+def test_kbhit_no_tty():
+    """kbhit() returns False immediately if HAS_TTY is False"""
+    import blessed.terminal
+    @as_subprocess
+    def child():
+        with mock.patch('blessed.terminal.HAS_TTY', False):
+            term = TestTerminal(stream=six.StringIO())
+            stime = time.time()
+            assert term.kbhit(timeout=1.1) is False
+            assert math.floor(time.time() - stime) == 0
     child()
 
 
@@ -562,15 +582,26 @@ def test_get_location_0s():
 
 def test_get_location_0s_under_raw():
     """0-second get_location call without response under raw mode."""
-    @as_subprocess
-    def child():
-        term = TestTerminal(stream=six.StringIO())
+    import pty
+    pid, master_fd = pty.fork()
+    if pid == 0:
+        cov = init_subproc_coverage('test_get_location_0s_under_raw')
+        term = TestTerminal()
         with term.raw():
             stime = time.time()
             y, x = term.get_location(timeout=0)
             assert (math.floor(time.time() - stime) == 0.0)
             assert (y, x) == (-1, -1)
-    child()
+
+        if cov is not None:
+            cov.stop()
+            cov.save()
+        os._exit(0)
+
+    stime = time.time()
+    pid, status = os.waitpid(pid, 0)
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
 
 
 def test_get_location_0s_reply_via_ungetch():
@@ -584,15 +615,52 @@ def test_get_location_0s_reply_via_ungetch():
 
         y, x = term.get_location(timeout=0.01)
         assert (math.floor(time.time() - stime) == 0.0)
+        assert (y, x) == (9, 9)
+    child()
+
+
+def test_get_location_0s_nonstandard_u6():
+    """u6 without %i should not be decremented."""
+    from blessed.formatters import ParameterizingString
+    @as_subprocess
+    def child():
+        term = TestTerminal(stream=six.StringIO())
+
+        stime = time.time()
+        # monkey patch in an invalid response !
+        term.ungetch(u'\x1b[10;10R')
+
+        with mock.patch.object(term, 'u6') as mock_u6:
+            mock_u6.return_value = ParameterizingString(u'\x1b[%d;%dR', term.normal, 'u6')
+            y, x = term.get_location(timeout=0.01)
+        assert (math.floor(time.time() - stime) == 0.0)
         assert (y, x) == (10, 10)
+    child()
+
+
+def test_get_location_styling_indifferent():
+    """Ensure get_location() behavior is the same regardless of styling"""
+    @as_subprocess
+    def child():
+        term = TestTerminal(stream=six.StringIO(), force_styling=True)
+        term.ungetch(u'\x1b[10;10R')
+        y, x = term.get_location(timeout=0.01)
+        assert (y, x) == (9, 9)
+
+        term = TestTerminal(stream=six.StringIO(), force_styling=False)
+        term.ungetch(u'\x1b[10;10R')
+        y, x = term.get_location(timeout=0.01)
+        assert (y, x) == (9, 9)
     child()
 
 
 def test_get_location_0s_reply_via_ungetch_under_raw():
     """0-second get_location call with response under raw mode."""
-    @as_subprocess
-    def child():
-        term = TestTerminal(stream=six.StringIO())
+    import pty
+    pid, master_fd = pty.fork()
+    if pid == 0:
+        cov = init_subproc_coverage('test_get_location_0s_reply_via_ungetch_under_raw')
+        term = TestTerminal()
         with term.raw():
             stime = time.time()
             # monkey patch in an invalid response !
@@ -600,7 +668,31 @@ def test_get_location_0s_reply_via_ungetch_under_raw():
 
             y, x = term.get_location(timeout=0.01)
             assert (math.floor(time.time() - stime) == 0.0)
-            assert (y, x) == (10, 10)
+            assert (y, x) == (9, 9)
+
+        if cov is not None:
+            cov.stop()
+            cov.save()
+        os._exit(0)
+
+    stime = time.time()
+    pid, status = os.waitpid(pid, 0)
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
+
+
+def test_get_location_timeout():
+    """0-second get_location call with response."""
+    @as_subprocess
+    def child():
+        term = TestTerminal(stream=six.StringIO())
+        stime = time.time()
+        # monkey patch in an invalid response !
+        term.ungetch(u'\x1b[0n')
+
+        y, x = term.get_location(timeout=0.2)
+        assert (math.floor(time.time() - stime) == 0.0)
+        assert (y, x) == (-1, -1)
     child()
 
 
@@ -670,3 +762,26 @@ def test_keystroke_1s_cbreak_noinput_nokb():
             assert (inp == u'')
             assert (math.floor(time.time() - stime) == 1.0)
     child()
+
+
+@pytest.mark.skipif(six.PY2, reason="Python 3 only")
+def test_detached_stdout():
+    """Ensure detached __stdout__ does not raise an exception"""
+    import pty
+    pid, master_fd = pty.fork()
+    if pid == 0:
+        cov = init_subproc_coverage('test_detached_stdout')
+        sys.__stdout__.detach()
+        term = TestTerminal()
+        assert term._init_descriptor is None
+        assert term.does_styling is False
+
+        if cov is not None:
+            cov.stop()
+            cov.save()
+        os._exit(0)
+
+    stime = time.time()
+    pid, status = os.waitpid(pid, 0)
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0

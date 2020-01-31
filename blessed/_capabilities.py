@@ -123,6 +123,7 @@ CAPABILITIES_RAW_MIXIN = {
 
 CAPABILITIES_ADDITIVES = {
     'color256': ('color', re.escape('\x1b') + r'\[38;5;\d+m'),
+    'on_color256': ('color', re.escape('\x1b') + r'\[48;5;\d+m'),
     'color_rgb': ('color_rgb', re.escape('\x1b') + r'\[38;2;\d+;\d+;\d+m'),
     'on_color_rgb': ('color_rgb', re.escape('\x1b') + r'\[48;2;\d+;\d+;\d+m'),
     'shift_in': ('', re.escape('\x0f')),

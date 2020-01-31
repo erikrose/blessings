@@ -512,3 +512,28 @@ def test_split_seqs(all_terms):
             assert result == expected
 
     child(all_terms)
+
+
+def test_formatting_other_string(all_terms):
+    """FormattingOtherString output depends on how it's called"""
+    @as_subprocess
+    def child(kind):
+        t = TestTerminal(stream=six.StringIO(), kind=kind, force_styling=True)
+
+        assert (t.move_left == t.cub1)
+        assert (t.move_left() == t.cub1)
+        assert (t.move_left(2) == t.cub(2))
+
+        assert (t.move_right == t.cuf1)
+        assert (t.move_right() == t.cuf1)
+        assert (t.move_right(2) == t.cuf(2))
+
+        assert (t.move_up == t.cuu1)
+        assert (t.move_up() == t.cuu1)
+        assert (t.move_up(2) == t.cuu(2))
+
+        assert (t.move_down == t.cud1)
+        assert (t.move_down() == t.cud1)
+        assert (t.move_down(2) == t.cud(2))
+
+    child(all_terms)
