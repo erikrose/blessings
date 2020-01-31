@@ -9,6 +9,7 @@ import platform
 
 # 3rd party
 import six
+import mock
 import pytest
 
 # local
@@ -596,6 +597,25 @@ def test_get_location_0s_reply_via_ungetch():
         y, x = term.get_location(timeout=0.01)
         assert (math.floor(time.time() - stime) == 0.0)
         assert (y, x) == (9, 9)
+    child()
+
+
+def test_get_location_0s_nonstandard_u6():
+    """u6 without %i should not be decremented."""
+    from blessed.formatters import ParameterizingString
+    @as_subprocess
+    def child():
+        term = TestTerminal(stream=six.StringIO())
+
+        stime = time.time()
+        # monkey patch in an invalid response !
+        term.ungetch(u'\x1b[10;10R')
+
+        with mock.patch.object(term, 'u6') as mock_u6:
+            mock_u6.return_value = ParameterizingString(u'\x1b[%d;%dR', term.normal, 'u6')
+            y, x = term.get_location(timeout=0.01)
+        assert (math.floor(time.time() - stime) == 0.0)
+        assert (y, x) == (10, 10)
     child()
 
 
