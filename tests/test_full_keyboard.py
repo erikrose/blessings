@@ -743,3 +743,26 @@ def test_keystroke_1s_cbreak_noinput_nokb():
             assert (inp == u'')
             assert (math.floor(time.time() - stime) == 1.0)
     child()
+
+
+@pytest.mark.skipif(six.PY2, reason="Python 3 only")
+def test_detached_stdout():
+    """Ensure detached __stdout__ does not raise an exception"""
+    import pty
+    pid, master_fd = pty.fork()
+    if pid == 0:
+        cov = init_subproc_coverage('test_detached_stdout')
+        sys.__stdout__.detach()
+        term = TestTerminal()
+        assert term._init_descriptor is None
+        assert term.does_styling is False
+
+        if cov is not None:
+            cov.stop()
+            cov.save()
+        os._exit(0)
+
+    stime = time.time()
+    pid, status = os.waitpid(pid, 0)
+    assert os.WEXITSTATUS(status) == 0
+    assert math.floor(time.time() - stime) == 0.0
