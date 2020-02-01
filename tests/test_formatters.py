@@ -2,10 +2,15 @@
 """Tests string formatting functions."""
 # std imports
 import platform
+import multiprocessing
+import pickle
 
 # 3rd party
 import mock
 import pytest
+
+# local
+from .accessories import TestTerminal, as_subprocess
 
 if platform.system() != 'Windows':
     import curses
@@ -365,14 +370,27 @@ def test_resolve_attribute_recursive_compoundables(monkeypatch):
     assert pstr('text') == 'seq-6808seq-6502textseq-normal'
 
 
+def test_basic_pickling():
+    """Test pickle-ability of a FormattingString."""
+    @as_subprocess
+    def child():
+        t = TestTerminal(force_styling=True)
+        # basic pickle
+        pickle.loads(pickle.dumps(t.red))('orange') == t.red('orange')
+        pickle.loads(pickle.dumps(t.normal)) == t.normal
+        # pickle through multiprocessing
+        r, w = multiprocessing.Pipe()
+        w.send(t.normal)
+        assert r.recv() == t.normal
+    child()
+
+
 def test_pickled_parameterizing_string(monkeypatch):
     """Test pickle-ability of a formatters.ParameterizingString."""
     from blessed.formatters import ParameterizingString
 
     # simply send()/recv() over multiprocessing Pipe, a simple
     # pickle.loads(dumps(...)) did not reproduce this issue,
-    from multiprocessing import Pipe
-    import pickle
 
     # first argument to tparm() is the sequence name, returned as-is;
     # subsequent arguments are usually Integers.
@@ -382,7 +400,7 @@ def test_pickled_parameterizing_string(monkeypatch):
     pstr = ParameterizingString(u'seqname', u'norm', u'cap-name')
 
     # multiprocessing Pipe implicitly pickles.
-    r, w = Pipe()
+    r, w = multiprocessing.Pipe()
 
     # exercise picklability of ParameterizingString
     for proto_num in range(pickle.HIGHEST_PROTOCOL):

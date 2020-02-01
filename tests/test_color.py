@@ -10,6 +10,7 @@ import pytest
 # local
 from blessed.color import COLOR_DISTANCE_ALGORITHMS
 from blessed.colorspace import RGBColor
+
 # local
 from .accessories import TestTerminal, as_subprocess
 
@@ -22,31 +23,25 @@ def all_algorithms(request):
 
 def test_same_color(all_algorithms):
     """The same color should have 0 distance."""
-    def child(algo):
-        color = (0, 0, 0)
-        assert COLOR_DISTANCE_ALGORITHMS[algo](color, color) == 0
-        color = (255, 255, 255)
-        assert COLOR_DISTANCE_ALGORITHMS[algo](color, color) == 0
-        color = (55, 234, 102)
-        assert COLOR_DISTANCE_ALGORITHMS[algo](color, color) == 0
-
-    child(all_algorithms)
+    color = (0, 0, 0)
+    assert COLOR_DISTANCE_ALGORITHMS[all_algorithms](color, color) == 0
+    color = (255, 255, 255)
+    assert COLOR_DISTANCE_ALGORITHMS[all_algorithms](color, color) == 0
+    color = (55, 234, 102)
+    assert COLOR_DISTANCE_ALGORITHMS[all_algorithms](color, color) == 0
 
 
 def test_different_color(all_algorithms):
     """Different colors should have positive distance."""
-    def child(algo):
-        color1 = (0, 0, 0)
-        color2 = (0, 0, 1)
-        assert COLOR_DISTANCE_ALGORITHMS[algo](color1, color2) > 0
-        color1 = (25, 30, 4)
-        color2 = (4, 30, 25)
-        assert COLOR_DISTANCE_ALGORITHMS[algo](color1, color2) > 0
-        color1 = (200, 200, 200)
-        color2 = (100, 100, 101)
-        assert COLOR_DISTANCE_ALGORITHMS[algo](color1, color2) > 0
-
-    child(all_algorithms)
+    color1 = (0, 0, 0)
+    color2 = (0, 0, 1)
+    assert COLOR_DISTANCE_ALGORITHMS[all_algorithms](color1, color2) > 0
+    color1 = (25, 30, 4)
+    color2 = (4, 30, 25)
+    assert COLOR_DISTANCE_ALGORITHMS[all_algorithms](color1, color2) > 0
+    color1 = (200, 200, 200)
+    color2 = (100, 100, 101)
+    assert COLOR_DISTANCE_ALGORITHMS[all_algorithms](color1, color2) > 0
 
 
 def test_color_rgb():
@@ -119,5 +114,5 @@ def test_set_color_distance_algorithm():
 
 def test_RGBColor():
     """Ensure string is hex color representation"""
-    color = RGBColor(90, 5, 203)
+    color = RGBColor(0x5a, 0x05, 0xcb)
     assert str(color) == '#5a05cb'
