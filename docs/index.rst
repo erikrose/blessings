@@ -9,12 +9,15 @@ Contents:
    :glob:
 
    intro
-   overview
+   terminal
+   colors
+   keyboard
+   location
+   styles
+   measuring
    examples
-   further
-   pains
    api
-   contributing
+   project
    history
 
 =======

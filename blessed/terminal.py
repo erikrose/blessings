@@ -531,7 +531,7 @@ class Terminal(object):
         :arg float timeout: Return after time elapsed in seconds with value
             ``(-1, -1)`` indicating that the remote end did not respond.
         :rtype: tuple
-        :returns: cursor position as tuple in form of (row, column).
+        :returns: cursor position as tuple in form of ``(x, y)``.
 
         The location of the cursor is determined by emitting the ``u7``
         terminal capability, or VT100 `Query Cursor Position

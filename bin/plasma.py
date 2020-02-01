@@ -10,7 +10,9 @@ import contextlib
 # local
 import blessed
 
+
 def scale_255(val): return int(round(val * 255))
+
 
 def rgb_at_xy(term, x, y, t):
     h, w = term.height, term.width

@@ -13,8 +13,16 @@ def sort_colors():
         else:
             colors[rgb_color] = [color_name]
 
+    def sortby_hv(rgb_item):
+        # sort by hue, then value, except shades of grey -- by value, only
+        rgb, name = rgb_item
+        hsv = colorsys.rgb_to_hsv(*rgb)
+        if rgb[0] == rgb[1] == rgb[2]:
+            return -1, hsv[2]
+        return hsv[0], hsv[2]
+
     return sorted(colors.items(),
-                  key=lambda rgb: colorsys.rgb_to_hsv(*rgb[0]),
+                  key=sortby_hv,
                   reverse=True)
 
 

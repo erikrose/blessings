@@ -63,6 +63,8 @@ from blessed.terminal import *  # isort:skip # noqa
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'sphinx.ext.viewcode',
+              # 'sphinxcontrib.napoleon',
+              'sphinxcontrib.manpage',
               'github',
               'sphinx_paramlinks',
               ]

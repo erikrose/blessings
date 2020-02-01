@@ -1,14 +1,28 @@
 Examples
 ========
 
-A few programs are provided with blessed to help interactively
-test the various API features, but also serve as examples of using
-blessed to develop applications.
+A few programs are provided with blessed to help interactively test the various API features, but
+also serve as examples of using blessed to develop applications.
 
-These examples are not distributed with the package -- they are
-only available in the github repository.  You can retrieve them
-by cloning the repository, or simply downloading the "raw" file
+These examples are not distributed with the package -- they are only available in the github
+repository.  You can retrieve them by cloning the repository, or simply downloading the "raw" file
 link.
+
+
+.. note:
+
+   to make these animated gif's, I used apple's quicktime to capture a portion of the screen, then
+   trim and use ffmpeg and gifsicle:
+
+   ffmpeg -i blessed_demo_6.mov -pix_fmt rgb8 -r 24 -f gif - | gifsicle --optimize=3 --delay=3 --resize-width 800 > blessed_demo_6.gif
+
+bounce.py
+---------
+
+https://github.com/jquast/blessed/blob/master/bin/editor.py
+
+This is a very brief, basic primitive non-interactive version of a "classic tennis" video game. It
+demonstrates basic timed refresh of a bouncing terminal cell.
 
 editor.py
 ---------

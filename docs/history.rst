@@ -268,13 +268,11 @@ Version History
 1.0
   * Extracted Blessed from `nose-progressive`_.
 
-
 .. _`nose-progressive`: http://pypi.python.org/pypi/nose-progressive/
 .. _`erikrose/blessings`: https://github.com/erikrose/blessings
 .. _`jquast/blessed`: https://github.com/jquast/blessed
 .. _`issue tracker`: https://github.com/jquast/blessed/issues/
 .. _curses: https://docs.python.org/library/curses.html
-.. _couleur: https://pypi.python.org/pypi/couleur
 .. _colorama: https://pypi.python.org/pypi/colorama
 .. _wcwidth: https://pypi.python.org/pypi/wcwidth
 .. _`cbreak(3)`: http://www.openbsd.org/cgi-bin/man.cgi?query=cbreak&apropos=0&sektion=3
@@ -283,7 +281,6 @@ Version History
 .. _`terminfo(5)`: http://www.openbsd.org/cgi-bin/man.cgi?query=terminfo&apropos=0&sektion=5
 .. _tigetstr: http://www.openbsd.org/cgi-bin/man.cgi?query=tigetstr&sektion=3
 .. _tparm: http://www.openbsd.org/cgi-bin/man.cgi?query=tparm&sektion=3
-.. _SIGWINCH: https://en.wikipedia.org/wiki/SIGWINCH
 .. _`API Documentation`: http://blessed.rtfd.org
 .. _`PDCurses`: http://www.lfd.uci.edu/~gohlke/pythonlibs/#curses
 .. _`ansi`: https://github.com/tehmaze/ansi

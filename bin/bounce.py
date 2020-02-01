@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 """Classic game of tennis."""
+# std imports
 from math import floor
+
+# local
 from blessed import Terminal
+
+
 def roundxy(x, y):
     return int(floor(x)), int(floor(y))
+
+
 term = Terminal()
+
 x, y, xs, ys = 2, 2, 0.4, 0.3
 with term.cbreak(), term.hidden_cursor():
     # clear the screen
