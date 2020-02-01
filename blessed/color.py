@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """
 Sub-module providing color functions.
 
@@ -32,7 +32,7 @@ def rgb_to_xyz(red, green, blue):
     """
     rgb = []
     for val in red, green, blue:
-        val /= 255
+        val /= 255.0
         if val > 0.04045:
             val = pow((val + 0.055) / 1.055, 2.4)
         else:
@@ -64,9 +64,9 @@ def xyz_to_lab(x_val, y_val, z_val):
     for val, ref in (x_val, 95.047), (y_val, 100.0), (z_val, 108.883):
         val /= ref
         if val > 0.008856:
-            val = pow(val, 1 / 3)
+            val = pow(val, 1 / 3.0)
         else:
-            val = 7.787 * val + 16 / 116
+            val = 7.787 * val + 16 / 116.0
         xyz.append(val)
 
     x_val, y_val, z_val = xyz  # pylint: disable=unbalanced-tuple-unpacking
@@ -129,7 +129,7 @@ def dist_rgb_weighted(rgb1, rgb2):
     For efficiency, the square of the distance is returned
     which is sufficient for comparisons
     """
-    red_mean = (rgb1[0] + rgb2[0]) / 2
+    red_mean = (rgb1[0] + rgb2[0]) / 2.0
 
     return ((2 + red_mean / 256) * pow(rgb1[0] - rgb2[0], 2) +
             4 * pow(rgb1[1] - rgb2[1], 2) +

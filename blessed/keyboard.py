@@ -288,31 +288,26 @@ def _read_until(term, pattern, timeout):
     # concerned about OOM conditions: only (human) keyboard input and terminal
     # response sequences are expected.
 
-    while True:
+    while True:  # pragma: no branch
         # block as long as necessary to ensure at least one character is
         # received on input or remaining timeout has elapsed.
         ucs = term.inkey(timeout=_time_left(stime, timeout))
-        if ucs:
+        # while the keyboard buffer is "hot" (has input), we continue to
+        # aggregate all awaiting data.  We do this to ensure slow I/O
+        # calls do not unnecessarily give up within the first 'while' loop
+        # for short timeout periods.
+        while ucs:
             buf += ucs
-            # while the keyboard buffer is "hot" (has input), we continue to
-            # aggregate all awaiting data.  We do this to ensure slow I/O
-            # calls do not unnecessarily give up within the first 'while' loop
-            # for short timeout periods.
-            while True:
-                ucs = term.inkey(timeout=0)
-                if not ucs:
-                    break
-                buf += ucs
+            ucs = term.inkey(timeout=0)
 
         match = re.search(pattern=pattern, string=buf)
         if match is not None:
             # match
             break
 
-        if timeout is not None:
-            if not _time_left(stime, timeout):
-                # timeout
-                break
+        if timeout is not None and not _time_left(stime, timeout):
+            # timeout
+            break
 
     return match, buf
 

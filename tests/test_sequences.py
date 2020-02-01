@@ -512,3 +512,52 @@ def test_split_seqs(all_terms):
             assert result == expected
 
     child(all_terms)
+
+
+def test_formatting_other_string(all_terms):
+    """FormattingOtherString output depends on how it's called"""
+    @as_subprocess
+    def child(kind):
+        t = TestTerminal(stream=six.StringIO(), kind=kind, force_styling=True)
+
+        assert (t.move_left == t.cub1)
+        assert (t.move_left() == t.cub1)
+        assert (t.move_left(2) == t.cub(2))
+
+        assert (t.move_right == t.cuf1)
+        assert (t.move_right() == t.cuf1)
+        assert (t.move_right(2) == t.cuf(2))
+
+        assert (t.move_up == t.cuu1)
+        assert (t.move_up() == t.cuu1)
+        assert (t.move_up(2) == t.cuu(2))
+
+        assert (t.move_down == t.cud1)
+        assert (t.move_down() == t.cud1)
+        assert (t.move_down(2) == t.cud(2))
+
+    child(all_terms)
+
+
+def test_termcap_match_optional():
+    """When match_optional is given, numeric matches are optional"""
+    from blessed.sequences import Termcap
+    @as_subprocess
+    def child():
+        t = TestTerminal(force_styling=True)
+        cap = Termcap.build('move_right', t.cuf, 'cuf', nparams=1,
+                            match_grouped=True, match_optional=True)
+
+        # Digits absent
+        assert cap.re_compiled.match(t.cuf1).group(1) is None
+
+        # Digits present
+        assert cap.re_compiled.match(t.cuf()).group(1) == '0'
+        assert cap.re_compiled.match(t.cuf(1)).group(1) == '1'
+        assert cap.re_compiled.match(t.cuf(22)).group(1) == '22'
+
+        # Make sure match is not too generalized
+        assert cap.re_compiled.match(t.cub(2)) is None
+        assert cap.re_compiled.match(t.cub1) is None
+
+    child()

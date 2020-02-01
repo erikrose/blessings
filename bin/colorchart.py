@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """Utility to show X11 colors in 24-bit and downconverted to 256, 16, and 8 color The time to
 generate the table is displayed to give an indication of how long each algorithm takes compared to
 the others."""

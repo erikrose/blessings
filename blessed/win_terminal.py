@@ -1,4 +1,4 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
 """Module containing Windows version of :class:`Terminal`."""
 
 from __future__ import absolute_import
