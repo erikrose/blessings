@@ -328,31 +328,24 @@ class Sequence(six.text_type):
         Some characters may consume more than one cell, mainly those CJK
         Unified Ideographs (Chinese, Japanese, Korean) defined by Unicode
         as half or full-width characters.
+
+        For example:
+
+            >>> from blessed import Terminal
+            >>> from blessed.sequences import Sequence
+            >>> term = Terminal()
+            >>> msg = term.clear + term.red(u'コンニチハ'), term
+            >>> Sequence(msg).length()
+            10
+
+        .. note:: Although accounted for, strings containing sequences such
+            as ``term.clear`` will not give accurate returns, it is not
+            considered lengthy (a length of 0).
         """
         # because control characters may return -1, "clip" their length to 0.
         clip = functools.partial(max, 0)
         return sum(clip(wcwidth.wcwidth(w_char))
                    for w_char in self.strip_seqs())
-
-    # we require ur"" for the docstring, but it is not supported by all
-    # python versions.
-    # This may no longer be needed
-    if length.__doc__ is not None:  # pylint: disable=no-member
-        length.__doc__ += (  # pylint: disable=no-member
-            u"""
-            For example:
-
-                >>> from blessed import Terminal
-                >>> from blessed.sequences import Sequence
-                >>> term = Terminal()
-                >>> msg = term.clear + term.red(u'コンニチハ'), term
-                >>> Sequence(msg).length()
-                10
-
-            .. note:: Although accounted for, strings containing sequences such
-               as ``term.clear`` will not give accurate returns, it is not
-               considered lengthy (a length of 0).
-            """)
 
     def strip(self, chars=None):
         """
