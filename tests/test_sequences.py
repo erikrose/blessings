@@ -537,3 +537,27 @@ def test_formatting_other_string(all_terms):
         assert (t.move_down(2) == t.cud(2))
 
     child(all_terms)
+
+
+def test_termcap_match_optional():
+    """When match_optional is given, numeric matches are optional"""
+    from blessed.sequences import Termcap
+    @as_subprocess
+    def child():
+        t = TestTerminal(force_styling=True)
+        cap = Termcap.build('move_right', t.cuf, 'cuf', nparams=1,
+                            match_grouped=True, match_optional=True)
+
+        # Digits absent
+        assert cap.re_compiled.match(t.cuf1).group(1) is None
+
+        # Digits present
+        assert cap.re_compiled.match(t.cuf()).group(1) == '0'
+        assert cap.re_compiled.match(t.cuf(1)).group(1) == '1'
+        assert cap.re_compiled.match(t.cuf(22)).group(1) == '22'
+
+        # Make sure match is not too generalized
+        assert cap.re_compiled.match(t.cub(2)) is None
+        assert cap.re_compiled.match(t.cub1) is None
+
+    child()
