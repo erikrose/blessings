@@ -13,7 +13,6 @@ Contents:
    colors
    keyboard
    location
-   styles
    measuring
    examples
    api

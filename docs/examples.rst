@@ -9,12 +9,12 @@ repository.  You can retrieve them by cloning the repository, or simply download
 link.
 
 
-.. note:
+.. note: Made using the following CLI example:
 
-   to make these animated gif's, I used apple's quicktime to capture a portion of the screen, then
-   trim and use ffmpeg and gifsicle:
+   ffmpeg -i blessed_demo_6.mov -pix_fmt rgb8 -r 24 -f gif - \
+      | gifsicle --optimize=3 --delay=3 --resize-width 800 > blessed_demo_6.gif
 
-   ffmpeg -i blessed_demo_6.mov -pix_fmt rgb8 -r 24 -f gif - | gifsicle --optimize=3 --delay=3 --resize-width 800 > blessed_demo_6.gif
+.. _bounce.py:
 
 bounce.py
 ---------
@@ -24,6 +24,8 @@ https://github.com/jquast/blessed/blob/master/bin/editor.py
 This is a very brief, basic primitive non-interactive version of a "classic tennis" video game. It
 demonstrates basic timed refresh of a bouncing terminal cell.
 
+.. _editor.py:
+
 editor.py
 ---------
 https://github.com/jquast/blessed/blob/master/bin/editor.py
@@ -31,6 +33,8 @@ https://github.com/jquast/blessed/blob/master/bin/editor.py
 This program demonstrates using the directional keys and noecho input
 mode. It acts as a (very dumb) fullscreen editor, with support for
 saving a file, as well as including a rudimentary line-editor.
+
+.. _keymatrix.py:
 
 keymatrix.py
 ------------
@@ -41,6 +45,8 @@ constants. When the key is depressed, it is highlighted, as well
 as displaying the unicode sequence, integer code, and friendly-name
 of any key pressed.
 
+.. _on_resize.py:
+
 on_resize.py
 ------------
 https://github.com/jquast/blessed/blob/master/bin/on_resize.py
@@ -49,6 +55,8 @@ This program installs a SIGWINCH signal handler, which detects
 screen resizes while also polling for input, displaying keypresses.
 
 This demonstrates how a program can react to screen resize events.
+
+.. _progress_bar.py:
 
 progress_bar.py
 ---------------
@@ -72,6 +80,8 @@ the given style.  This shows how a program could provide
 user-customizable compound formatting names to configure a program's
 styling.
 
+.. _worms.py:
+
 worms.py
 --------
 https://github.com/jquast/blessed/blob/master/bin/worms.py
@@ -80,6 +90,8 @@ This program demonstrates how an interactive game could be made
 with blessed.  It is similar to `NIBBLES.BAS
 <https://github.com/tangentstorm/tangentlabs/blob/master/qbasic/NIBBLES.BAS>`_
 or "snake" of early mobile platforms.
+
+.. _resize.py:
 
 resize.py
 ---------
@@ -101,3 +113,12 @@ https://github.com/jquast/blessed/blob/master/bin/detect-multibyte.py
 This program also demonstrates how the :meth:`~.get_location` method
 can be used to reliably test whether the terminal emulator of the connecting
 client is capable of rendering multibyte characters as a single cell.
+
+.. _x11_colorpicker.py:
+
+x11_colorpicker.py
+------------------
+https://github.com/jquast/blessed/blob/master/bin/x11_colorpicker.py
+
+This program shows all of the X11 colors, demonstrates a basic keyboard-interactive program and
+color selection, but is also a useful utility to pick colors!

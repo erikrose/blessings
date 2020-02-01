@@ -3,8 +3,8 @@
 Introduction
 ============
 
-Blessed is an easy, practical library for making terminal apps, by providing Colors_, Styles_,
-interactive Keyboard_ input, and screen Positioning_ capabilities.
+Blessed is an easy, practical library for making terminal apps, by providing Colors_, interactive
+Keyboard_ input, and screen Positioning_ capabilities.
 
 .. code-block:: python
 
@@ -27,10 +27,37 @@ a blast making it!
 Examples
 --------
 
-Some stellar first and third-party examples_:
+.. figure:: https://dxtz6bzwq9sxx.cloudfront.net/blessed_demo_intro.gif
+   alt: Animations of x11-colorpicker.py, bounce.py, worms.py, and plasma.py
 
+   x11-colorpicker.py_, bounce.py_, worms.py_, and plasma.py_, from our repository.
 
-.. todo: XXX
+Exemplary 3rd-party examples which use *blessed*,
+
+.. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_voltron.png
+   alt: Screenshot of 'Voltron' (By the author of Voltron, from their README).
+
+   Voltron_ is an extensible debugger UI toolkit written in Python
+
+.. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_cursewords.gif
+   alt: Animation of 'cursewords' (By the author of cursewords, from their README).
+
+   cursewords_ is "graphical" command line program for solving crossword puzzles in the terminal.
+
+.. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_githeat.gif
+   alt: Animation of 'githeat.interactive', using blessed repository at the time of capture.
+
+   GitHeat_ is a uses your local machine to parse the git-log of your repo and build an interactive
+   heatmap in your terminal. 
+
+.. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_dashing.gif
+   alt: Animations from 'Dashing' (By the author of Dashing, from their README)
+
+   Dashing_ is a library to quickly create terminal-based dashboards.
+
+.. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_enlighten.gif
+ 
+   Enlighten_ Progress Bar is a console progress bar module.
 
 Requirements
 ------------
@@ -156,10 +183,16 @@ Full documentation at http://blessed.readthedocs.org/en/latest/
 .. _`Terminal.raw()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.raw
 .. _`Terminal.inkey()`: https://blessed.readthedocs.io/en/stable/api.html#blessed.terminal.Terminal.inkey
 .. _Colors: https://blessed.readthedocs.io/en/stable/colors.html
-.. _Styles: https://blessed.readthedocs.io/en/stable/styles.html
 .. _Keyboard: https://blessed.readthedocs.io/en/stable/keyboard.html
 .. _Positioning: https://blessed.readthedocs.io/en/stable/positioning.html
 .. _Examples: https://blessed.readthedocs.io/en/stable/examples.html
+.. _Voltron: https://github.com/snare/voltron
+.. _x11-colorpicker.py: https://blessed.readthedocs.io/en/stable/examples.html#x11-colorpicker-py
+.. _bounce.py: https://blessed.readthedocs.io/en/stable/examples.html#bounce-py
+.. _worms.py: https://blessed.readthedocs.io/en/stable/examples.html#worms-py
+.. _plasma.py: https://blessed.readthedocs.io/en/stable/examples.html#plasma-py
+.. _GitHeat: https://github.com/AmmsA/Githeat
+.. _Dashing: https://github.com/FedericoCeratto/dashing
 .. |pypi_downloads| image:: https://img.shields.io/pypi/dm/blessed.svg?logo=pypi
     :alt: Downloads
     :target: https://pypi.python.org/pypi/blessed
