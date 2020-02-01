@@ -47,8 +47,7 @@ Exemplary 3rd-party examples which use *blessed*,
 .. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_githeat.gif
    :alt: Animation of 'githeat.interactive', using blessed repository at the time of capture.
 
-   GitHeat_ is a uses your local machine to parse the git-log of your repo and build an interactive
-   heatmap in your terminal. 
+   GitHeat_ builds an interactive heatmap of git history.
 
 .. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_dashing.gif
    :alt: Animations from 'Dashing' (By the author of Dashing, from their README)
@@ -59,6 +58,11 @@ Exemplary 3rd-party examples which use *blessed*,
    :alt: Animations from 'Enlighten' (By the author of Enlighten, from their README)
  
    Enlighten_ Progress Bar is a console progress bar module.
+
+.. figure:: https://dxtz6bzwq9sxx.cloudfront.net/blessed_3rdparty_macht.gif
+   :alt: Demonstration of 'macht', a 2048 clone
+
+   macht_ is a clone of the (briefly popular) puzzle game, 2048.
 
 Requirements
 ------------
@@ -187,7 +191,6 @@ Full documentation at http://blessed.readthedocs.org/en/latest/
 .. _Keyboard: https://blessed.readthedocs.io/en/stable/keyboard.html
 .. _Positioning: https://blessed.readthedocs.io/en/stable/positioning.html
 .. _Examples: https://blessed.readthedocs.io/en/stable/examples.html
-.. _Voltron: https://github.com/snare/voltron
 .. _x11-colorpicker.py: https://blessed.readthedocs.io/en/stable/examples.html#x11-colorpicker-py
 .. _bounce.py: https://blessed.readthedocs.io/en/stable/examples.html#bounce-py
 .. _worms.py: https://blessed.readthedocs.io/en/stable/examples.html#worms-py
@@ -197,6 +200,7 @@ Full documentation at http://blessed.readthedocs.org/en/latest/
 .. _GitHeat: https://github.com/AmmsA/Githeat
 .. _Dashing: https://github.com/FedericoCeratto/dashing
 .. _Enlighten: https://github.com/Rockhopper-Technologies/enlighten
+.. _macht: https://github.com/rolfmorel/macht
 .. |pypi_downloads| image:: https://img.shields.io/pypi/dm/blessed.svg?logo=pypi
     :alt: Downloads
     :target: https://pypi.python.org/pypi/blessed
