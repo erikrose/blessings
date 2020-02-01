@@ -28,34 +28,35 @@ Examples
 --------
 
 .. figure:: https://dxtz6bzwq9sxx.cloudfront.net/blessed_demo_intro.gif
-   alt: Animations of x11-colorpicker.py, bounce.py, worms.py, and plasma.py
+   :alt: Animations of x11-colorpicker.py, bounce.py, worms.py, and plasma.py
 
    x11-colorpicker.py_, bounce.py_, worms.py_, and plasma.py_, from our repository.
 
 Exemplary 3rd-party examples which use *blessed*,
 
 .. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_voltron.png
-   alt: Screenshot of 'Voltron' (By the author of Voltron, from their README).
+   :alt: Screenshot of 'Voltron' (By the author of Voltron, from their README).
 
    Voltron_ is an extensible debugger UI toolkit written in Python
 
 .. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_cursewords.gif
-   alt: Animation of 'cursewords' (By the author of cursewords, from their README).
+   :alt: Animation of 'cursewords' (By the author of cursewords, from their README).
 
    cursewords_ is "graphical" command line program for solving crossword puzzles in the terminal.
 
 .. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_githeat.gif
-   alt: Animation of 'githeat.interactive', using blessed repository at the time of capture.
+   :alt: Animation of 'githeat.interactive', using blessed repository at the time of capture.
 
    GitHeat_ is a uses your local machine to parse the git-log of your repo and build an interactive
    heatmap in your terminal. 
 
 .. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_dashing.gif
-   alt: Animations from 'Dashing' (By the author of Dashing, from their README)
+   :alt: Animations from 'Dashing' (By the author of Dashing, from their README)
 
    Dashing_ is a library to quickly create terminal-based dashboards.
 
 .. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_enlighten.gif
+   :alt: Animations from 'Enlighten' (By the author of Enlighten, from their README)
  
    Enlighten_ Progress Bar is a console progress bar module.
 
