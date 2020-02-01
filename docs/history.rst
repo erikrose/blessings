@@ -5,13 +5,12 @@ Version History
     color foreground method :meth:`~Terminal.color_rgb` and background method
     :meth:`~Terminal.on_color_rgb`, as well as 676 common X11 color attribute names are now
     possible, such as ``term.aquamarine_on_wheat``, :ghissue:`60`.
-  * introduced: ``term.move_xy``, recommended over built-in ``move`` capability, as the return
-    positional arguments, ``(x, y)`` match the return value of :meth:`~.Terminal.get_location`,
-    and all other common graphics library calls, :ghissue:`65`.
-    values over the b``term.move``.
+  * introduced: ``term.move_xy``, recommended over built-in ``move`` capability, as the
+    argument order, ``(x, y)`` matches the return value of :meth:`~.Terminal.get_location`, and all
+    other common graphics library calls, :ghissue:`65`.
   * introduced: :meth:`~.Terminal.move_up`, :meth:`~Terminal.move_down`, :meth:`Terminal.move_left`,
     :meth:`~Terminal.move_right` which are strings that move the cursor one cell in the respective
-    direction, are now also callables for moving *n* cells to the given direction, such as
+    direction, are now **also** callables for moving *n* cells to the given direction, such as
     ``term.move_right(9)``.
   * bugfix: prevent error condition, ``ValueError: underlying buffer has been detached`` in rare
     conditions where sys.__stdout__ has been detached in test frameworks. :ghissue:`126`.
@@ -23,7 +22,7 @@ Version History
     :meth:`~Terminal.keypad` now flush the stream after writing their sequences.
   * bugfix: ``chr(127)``, ``\x7f`` has changed from keycode ``term.DELETE`` to the more common
     match, ``term.BACKSPACE``, :ghissue:115` by :ghuser:`jwezel`.
-  * deprecated: the direct curses ``move()`` capability is no longer recommended, suggest to use
+  * deprecated: the curses ``move()`` capability is no longer recommended, suggest to use
     :meth:`~.Terminal.move_xy()`, which matches the return value of :meth:`~.Terminal.get_location`.
   * deprecated: ``superscript``, ``subscript``, ``shadow``, and ``dim`` are no longer "compoundable"
     with colors, such as in phrase ``Terminal.blue_subscript('a')``.  These attributes are not
@@ -43,10 +42,6 @@ Version History
 
 1.15
   * enhancement: disable timing integration tests for keyboard routines.
-
-    They work perfectly fine for regression testing for contributing
-    developers, but people run our tests on build farms and open issues when
-    they fail. So we comment out these useful tests. :ghissue:`100`.
   * enhancement: Support python 3.7. :ghissue:`102`.
   * enhancement: Various fixes to test automation :ghissue:`108`
 
