@@ -191,8 +191,11 @@ Full documentation at http://blessed.readthedocs.org/en/latest/
 .. _bounce.py: https://blessed.readthedocs.io/en/stable/examples.html#bounce-py
 .. _worms.py: https://blessed.readthedocs.io/en/stable/examples.html#worms-py
 .. _plasma.py: https://blessed.readthedocs.io/en/stable/examples.html#plasma-py
+.. _Voltron: https://github.com/snare/voltron
+.. _cursewords: https://github.com/thisisparker/cursewords
 .. _GitHeat: https://github.com/AmmsA/Githeat
 .. _Dashing: https://github.com/FedericoCeratto/dashing
+.. _Enlighten: https://github.com/Rockhopper-Technologies/enlighten
 .. |pypi_downloads| image:: https://img.shields.io/pypi/dm/blessed.svg?logo=pypi
     :alt: Downloads
     :target: https://pypi.python.org/pypi/blessed
