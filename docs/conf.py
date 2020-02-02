@@ -2,9 +2,10 @@
 import os
 import sys
 import json
+import runpy
 import functools
 
-# local
+# 3rd party
 import sphinx_rtd_theme
 import sphinx.environment
 from docutils.utils import get_source_line
@@ -53,6 +54,15 @@ import contextlib  # isort:skip # noqa
 contextlib.wraps = no_op_wraps
 from blessed.terminal import *  # isort:skip # noqa
 
+# and finally, don't you just wish readthedocs.org could run tox? :) it can't,
+# so we do a bit of script injection, here.
+for script in ('generate-x11-colorchart.py', 'generate-keycodes.py'):
+    script_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), os.path.pardir, 'bin', script))
+    print(f"Run {script_path}")
+    runpy.run_path(script_path)['main']()
+
+
 # -- General configuration ----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -63,6 +73,8 @@ from blessed.terminal import *  # isort:skip # noqa
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'sphinx.ext.viewcode',
+              # 'sphinxcontrib.napoleon',
+              'sphinxcontrib.manpage',
               'github',
               'sphinx_paramlinks',
               ]
@@ -107,7 +119,7 @@ release = version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -125,7 +137,7 @@ add_module_names = False
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'native'
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []

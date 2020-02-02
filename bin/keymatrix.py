@@ -128,7 +128,7 @@ def main():
             inps.append(inp)
 
     with term.cbreak():
-        echo(term.move_yx(term.height))
+        echo(term.move_y(term.height))
         echo(
             u'{term.clear_eol}Your final score was {score} '
             u'at level {level}{term.clear_eol}\n'

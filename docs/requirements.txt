@@ -1,4 +1,6 @@
-Sphinx==2.3.1
-sphinx_rtd_theme
+Pillow
+Sphinx
+jinxed
 sphinx-paramlinks
-jinxed>=0.5.4
+sphinx_rtd_theme
+sphinxcontrib-manpage

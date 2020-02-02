@@ -2,19 +2,18 @@
 Welcome to Blessed documentation!
 =================================
 
-Contents:
-
 .. toctree::
    :maxdepth: 3
-   :glob:
 
    intro
-   overview
+   terminal
+   colors
+   keyboard
+   location
+   measuring
    examples
-   further
-   pains
    api
-   contributing
+   project
    history
 
 =======
