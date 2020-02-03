@@ -182,7 +182,7 @@ class Terminal(object):
         if self.does_styling:
             # Initialize curses (call setupterm), so things like tigetstr() work.
             try:
-                curses.setupterm(self._kind, open(os.devnull).fileno())
+                curses.setupterm(self._kind, self._init_descriptor)
             except curses.error as err:
                 msg = 'Failed to setupterm(kind={0!r}): {1}'.format(self._kind, err)
                 warnings.warn(msg)
@@ -210,6 +210,8 @@ class Terminal(object):
         self.__init__keycodes()
 
     def __init__streams(self):
+        # pylint: disable=too-complex
+        #         Agree to disagree !
         stream_fd = None
 
         # Default stream is stdout
@@ -234,7 +236,10 @@ class Terminal(object):
 
         # Keyboard valid as stdin only when output stream is stdout or stderr and is a tty.
         if self._stream in (sys.__stdout__, sys.__stderr__):
-            self._keyboard_fd = sys.__stdin__.fileno()
+            try:
+                self._keyboard_fd = sys.__stdin__.fileno()
+            except ValueError:
+                pass
 
         # _keyboard_fd only non-None if both stdin and stdout is a tty.
         self._keyboard_fd = (self._keyboard_fd
@@ -833,6 +838,32 @@ class Terminal(object):
             return self._normal
         self._normal = resolve_capability(self, 'normal')
         return self._normal
+
+    def link(self, url, text, url_id=''):
+        """
+        Display ``text`` that when touched or clicked, navigates to ``url``.
+
+        Optional ``url_id`` may be specified, so that non-adjacent cells can reference a single
+        target, all cells painted with the same "id" will highlight on hover, rather than any
+        individual one, as described in "Hovering and underlining the id parameter of gist
+        https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda.
+
+        :param str url: Hyperlink URL.
+        :param str text: Clickable text.
+        :param str url_id: Optional 'id'.
+        :rtype: str
+        :returns: String of ``text`` as a hyperlink to ``url``.
+        """
+        assert len(url) < 2000, (len(url), url)
+        if url_id:
+            assert len(str(url_id)) < 250, (len(str(url_id)), url_id)
+            params = 'id={0}'.format(url_id)
+        else:
+            params = ''
+        if not self.does_styling:
+            return text
+        return ('\x1b]8;{0};{1}\x1b\\{2}'
+                '\x1b]8;;\x1b\\'.format(params, url, text))
 
     @property
     def stream(self):

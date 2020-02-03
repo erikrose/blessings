@@ -1,6 +1,7 @@
 Version History
 ===============
 1.17
+  * introduced: :ref:`hyperlinks`, method :meth:`~Terminal.link`, :ghissue:`116`.
   * introduced: 24-bit color support, detected by ``term.number_of_colors == 1 << 24``, and 24-bit
     color foreground method :meth:`~Terminal.color_rgb` and background method
     :meth:`~Terminal.on_color_rgb`, as well as 676 common X11 color attribute names are now
@@ -12,6 +13,8 @@ Version History
     :meth:`~Terminal.move_right` which are strings that move the cursor one cell in the respective
     direction, are now **also** callables for moving *n* cells to the given direction, such as
     ``term.move_right(9)``.
+  * bugfix: prevent ``ValueError: I/O operation on closed file`` on ``sys.stdin`` in multiprocessing
+    environments, where the keyboard wouldn't work, anyway.
   * bugfix: prevent error condition, ``ValueError: underlying buffer has been detached`` in rare
     conditions where sys.__stdout__ has been detached in test frameworks. :ghissue:`126`.
   * bugfix: off-by-one error in :meth:`~.Terminal.get_location`, now accounts for ``%i`` in
@@ -29,8 +32,8 @@ Version History
     typically supported, anyway.  Use Unicode text or 256 or 24-bit color codes instead.
   * deprecated: additional key names, such as ``KEY_TAB``, are no longer "injected" into the curses
     module namespace.
-  * deprecated: :func:`curses.setupterm` is now called with :attr:`os.devnull` as the file
-    descriptor, let us know if this causes any issues. :ghissue:`59`.
+  * bugfix: briefly tried calling :func:`curses.setupterm` with :attr:`os.devnull` as the file
+    descriptor, reverted. :ghissue:`59`.
   * deprecated: :meth:`~Terminal.inkey` no longer raises RuntimeError when :attr:`~Terminal.stream`
     is not a terminal, programs using :meth:`~Terminal.inkey` to block indefinitely if a keyboard is
     not attached. :ghissue:`69`.

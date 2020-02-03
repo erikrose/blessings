@@ -115,17 +115,17 @@ CAPABILITIES_RAW_MIXIN = {
     'scroll_forward': re.escape('\n'),
     'set0_des_seq': re.escape('\x1b(B'),
     'tab': re.escape('\t'),
-    # one could get carried away, such as by adding '\x1b#8' (dec tube
-    # alignment test) by reversing basic vt52, ansi, and xterm sequence
-    # parsers.  There is plans to do just that for ANSI.SYS support.
 }
-
+_ANY_NOTESC = '[^' + re.escape('\x1b') + ']*'
 
 CAPABILITIES_ADDITIVES = {
+    'link': ('link',
+             re.escape('\x1b') + r'\]8;' + _ANY_NOTESC + ';' +
+             _ANY_NOTESC + re.escape('\x1b') + '\\\\'),
     'color256': ('color', re.escape('\x1b') + r'\[38;5;\d+m'),
-    'on_color256': ('color', re.escape('\x1b') + r'\[48;5;\d+m'),
+    'on_color256': ('on_color', re.escape('\x1b') + r'\[48;5;\d+m'),
     'color_rgb': ('color_rgb', re.escape('\x1b') + r'\[38;2;\d+;\d+;\d+m'),
-    'on_color_rgb': ('color_rgb', re.escape('\x1b') + r'\[48;2;\d+;\d+;\d+m'),
+    'on_color_rgb': ('on_color_rgb', re.escape('\x1b') + r'\[48;2;\d+;\d+;\d+m'),
     'shift_in': ('', re.escape('\x0f')),
     'shift_out': ('', re.escape('\x0e')),
     # sgr(...) outputs strangely, use the basic ANSI/EMCA-48 codes here.

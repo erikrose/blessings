@@ -20,26 +20,6 @@ And combine two colors using "``_on_``", as in "``foreground_on_background``":
 
     >>> print(term.peru_on_seagreen('All systems functioning within defined parameters.'))
 
-Styles
-------
-
-In addition to :doc:`colors`, blessed also supports the limited amount of *styles* that terminals
-can do. These are:
-
-``bold``
-  Turn on 'extra bright' mode.
-``reverse``
-  Switch fore and background attributes.
-``normal``
-  Reset attributes to default.
-``underline``
-  Enable underline mode.
-``no_underline``
-  Disable underline mode.
-
-.. note:: While the inverse of *underline* is *no_underline*, the only way to turn off *bold* or
-    *reverse* is *normal*, which also cancels any custom colors.
-
 24-bit Colors
 -------------
 
