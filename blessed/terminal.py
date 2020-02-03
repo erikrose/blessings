@@ -210,7 +210,7 @@ class Terminal(object):
         self.__init__keycodes()
 
     def __init__streams(self):
-        # pylint: disable=too-complex
+        # pylint: disable=too-complex,too-many-branches
         #         Agree to disagree !
         stream_fd = None
 
@@ -228,7 +228,7 @@ class Terminal(object):
             except ValueError as err:
                 # The stream is not a file, such as the case of StringIO, or, when it has been
                 # "detached", such as might be the case of stdout in some test scenarios.
-                self.errors.append('Unable to determine stream file descriptor: %s' % err)
+                self.errors.append('Unable to determine output stream file descriptor: %s' % err)
             else:
                 self._is_a_tty = os.isatty(stream_fd)
                 if not self._is_a_tty:
@@ -238,14 +238,18 @@ class Terminal(object):
         if self._stream in (sys.__stdout__, sys.__stderr__):
             try:
                 self._keyboard_fd = sys.__stdin__.fileno()
-            except ValueError:
-                pass
-
-        # _keyboard_fd only non-None if both stdin and stdout is a tty.
-        self._keyboard_fd = (self._keyboard_fd
-                             if self._keyboard_fd is not None and
-                             self.is_a_tty and os.isatty(self._keyboard_fd)
-                             else None)
+            except ValueError as err:
+                self.errors.append('Unable to determine input stream file descriptor: %s' % err)
+            else:
+                # _keyboard_fd only non-None if both stdin and stdout is a tty.
+                if not self.is_a_tty:
+                    self.errors.append('Output stream is not a TTY')
+                    self._keyboard_fd = None
+                elif not os.isatty(self._keyboard_fd):
+                    self.errors.append('Input stream is not a TTY')
+                    self._keyboard_fd = None
+        else:
+            self.errors.append('Output stream is not a default stream')
 
         # The descriptor to direct terminal initialization sequences to.
         self._init_descriptor = stream_fd
