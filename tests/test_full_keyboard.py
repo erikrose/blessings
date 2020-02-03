@@ -302,8 +302,9 @@ def test_keystroke_0s_cbreak_multibyte_utf8():
     assert math.floor(time.time() - stime) == 0.0
 
 
-@pytest.mark.skipif(os.environ.get('TRAVIS', None) is not None,
-                    reason="travis-ci does not handle ^C very well.")
+# Avylove: Added delay which should account for race contition. Re-add skip if randomly fail
+# @pytest.mark.skipif(os.environ.get('TRAVIS', None) is not None,
+#                     reason="travis-ci does not handle ^C very well.")
 def test_keystroke_0s_raw_input_ctrl_c():
     """0-second keystroke with raw allows receiving ^C."""
     import pty
@@ -325,6 +326,7 @@ def test_keystroke_0s_raw_input_ctrl_c():
         os.write(master_fd, SEND_SEMAPHORE)
         # ensure child is in raw mode before sending ^C,
         read_until_semaphore(master_fd)
+        time.sleep(0.05)
         os.write(master_fd, u'\x03'.encode('latin1'))
         stime = time.time()
         output = read_until_eof(master_fd)
