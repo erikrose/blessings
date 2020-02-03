@@ -67,7 +67,7 @@ Exemplary 3rd-party examples which use *blessed*,
 .. figure:: https://dxtz6bzwq9sxx.cloudfront.net/demo_3rdparty_enlighten.gif
    :alt: Animations from 'Enlighten' (By the author of Enlighten, from their README)
 
-   Enlighten_ Progress Bar is a console progress bar module.
+   Enlighten_ is a console progress bar library that allows simultaneous output without redirection.
 
 .. figure:: https://dxtz6bzwq9sxx.cloudfront.net/blessed_3rdparty_macht.gif
    :alt: Demonstration of 'macht', a 2048 clone
