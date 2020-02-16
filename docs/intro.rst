@@ -28,7 +28,7 @@ It's meant to be *fun* and *easy*, to do basic terminal graphics and styling wit
 *blessed*. Terminal_ is the only class you need to import and the only object you should need for
 Terminal capabilities.
 
-Whether you want to improve CLI apps with colors, or making fullscreen applications or games,
+Whether you want to improve CLI apps with colors, or make fullscreen applications or games,
 *blessed* should help get you started quickly. Your users will love it because it works on Windows,
 Mac, and Linux, and you will love it because it has plenty of documentation and examples!
 
