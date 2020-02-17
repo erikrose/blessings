@@ -108,7 +108,7 @@ the same above with the same API, as well as following **enhancements**:
   supports application/arrow keys.
 * 24-bit color support, using `Terminal.color_rgb()`_ and `Terminal.on_color_rgb()`_ and all X11
   Colors_ by name, and not by number.
-* Determine cursor location using `Terminal.location()`, enter key-at-a-time input mode using
+* Determine cursor location using `Terminal.get_location()`_, enter key-at-a-time input mode using
   `Terminal.cbreak()`_ or `Terminal.raw()`_ context managers, and read timed key presses using
   `Terminal.inkey()`_.
 * Allows the *printable length* of strings that contain sequences to be determined by
@@ -179,6 +179,7 @@ The same program with *Blessed* is simply:
 .. _textwrap.wrap(): https://docs.python.org/3/library/textwrap.html#textwrap.wrap
 .. _Terminal: https://blessed.readthedocs.io/en/stable/terminal.html
 .. _`Terminal.fullscreen()`: https://blessed.readthedocs.io/en/latest/api/terminal.html#blessed.terminal.Terminal.fullscreen
+.. _`Terminal.get_location()`: https://blessed.readthedocs.io/en/latest/location.html#finding-the-cursor
 .. _`Terminal.color_rgb()`: https://blessed.readthedocs.io/en/stable/api/terminal.html#blessed.terminal.Terminal.color_rgb
 .. _`Terminal.hidden_cursor()`: https://blessed.readthedocs.io/en/latest/api/terminal.html#blessed.terminal.Terminal.hidden_cursor
 .. _`Terminal.on_color_rgb()`: https://blessed.readthedocs.io/en/stable/api/terminal.html#blessed.terminal.Terminal.on_color_rgb
