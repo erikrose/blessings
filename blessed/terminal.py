@@ -371,7 +371,7 @@ class Terminal(object):
         <https://invisible-island.net/ncurses/man/terminfo.5.html>`_ for a
         complete list of capabilities and their arguments.
         """
-        if not self.does_styling:
+        if not self._does_styling:
             return NullCallableString()
         # Fetch the missing 'attribute' into some kind of curses-resolved
         # capability, and cache by attaching to this Terminal class instance.
@@ -427,6 +427,24 @@ class Terminal(object):
         """
         return self._height_and_width().ws_col
 
+    @property
+    def pixel_height(self):
+        """
+        Read-only property: Height ofthe terminal (in pixels).
+
+        :rtype: int
+        """
+        return self._height_and_width().ws_ypixel
+
+    @property
+    def pixel_width(self):
+        """
+        Read-only property: Width of terminal (in pixels).
+
+        :rtype: int
+        """
+        return self._height_and_width().ws_xpixel
+
     @staticmethod
     def _winsize(fd):
         """
@@ -473,10 +491,13 @@ class Terminal(object):
         directly maps to the return value of the :const:`termios.TIOCGWINSZ`
         ioctl return value. The return parameters are:
 
-            - ``ws_row``: width of terminal by its number of character cells.
-            - ``ws_col``: height of terminal by its number of character cells.
+            - ``ws_row``: height of terminal by its number of cell rows.
+            - ``ws_col``: width of terminal by its number of cell columns.
             - ``ws_xpixel``: width of terminal by pixels (not accurate).
             - ``ws_ypixel``: height of terminal by pixels (not accurate).
+
+            .. note:: the peculiar (height, width, width, height) order, which
+               matches the return order of TIOCGWINSZ!
         """
         for fd in (self._init_descriptor, sys.__stdout__):
             try:
@@ -495,14 +516,22 @@ class Terminal(object):
         """
         Context manager for temporarily moving the cursor.
 
-        Move the cursor to a certain position on entry, let you print stuff
-        there, then return the cursor to its original position::
+        :arg int x: horizontal position, from left, *0*, to right edge of screen, *self.width - 1*.
+        :arg int y: vertical position, from top, *0*, to bottom of screen, *self.height - 1*.
+        :return: a context manager.
+        :rtype: Iterator
+
+        Move the cursor to a certain position on entry, do any kind of I/O, and upon exit
+        let you print stuff there, then return the cursor to its original position:
+
+
+        .. code-block:: python
 
             term = Terminal()
-            with term.location(2, 5):
-                for x in xrange(10):
-                    print('I can do it %i times!' % x)
-            print('We're back to the original location.')
+            with term.location(y=0, x=0):
+                for row_num in range(term.height-1):
+                    print('Row #{row_num}')
+            print(term.clear_eol + 'Back to original location.')
 
         Specify ``x`` to move to a certain column, ``y`` to move to a certain
         row, both, or neither. If you specify neither, only the saving and
@@ -510,9 +539,11 @@ class Terminal(object):
         simply want to restore your place after doing some manual cursor
         movement.
 
-        .. note:: The store- and restore-cursor capabilities used internally
-            provide no stack. This means that :meth:`location` calls cannot be
-            nested: only one should be entered at a time.
+        Calls cannot be nested: only one should be entered at a time.
+
+        .. note:: The argument order *(x, y)* differs from the return value order *(y, x)*
+            of :meth:`get_location`, or argument order *(y, x)* of :meth:`move`. This is
+            for API Compaibility with the blessings library, sorry for the trouble!
         """
         # pylint: disable=invalid-name
         #         Invalid argument name "x"
@@ -537,29 +568,33 @@ class Terminal(object):
         r"""
         Return tuple (row, column) of cursor position.
 
-        :arg float timeout: Return after time elapsed in seconds with value
-            ``(-1, -1)`` indicating that the remote end did not respond.
+        :arg float timeout: Return after time elapsed in seconds with value ``(-1, -1)`` indicating
+            that the remote end did not respond.
         :rtype: tuple
-        :returns: cursor position as tuple in form of ``(x, y)``.
+        :returns: cursor position as tuple in form of ``(y, x)``.  When a timeout is specified,
+            always ensure the return value is checked for ``(-1, -1)``.
 
-        The location of the cursor is determined by emitting the ``u7``
-        terminal capability, or VT100 `Query Cursor Position
-        <http://www.termsys.demon.co.uk/vtansi.htm#status>`_ when such
-        capability is undefined, which elicits a response from a reply string
-        described by capability ``u6``, or again VT100's definition of
-        ``\x1b[%i%d;%dR`` when undefined.
+        The location of the cursor is determined by emitting the ``u7`` terminal capability, or
+        VT100 `Query Cursor Position <http://www.termsys.demon.co.uk/vtansi.htm#status>`_ when such
+        capability is undefined, which elicits a response from a reply string described by
+        capability ``u6``, or again VT100's definition of ``\x1b[%i%d;%dR`` when undefined.
 
-        The ``(row, col)`` return value matches the parameter order of the
-        ``move`` capability, so that the following sequence should cause the
-        cursor to not move at all::
+        The ``(y, x)`` return value matches the parameter order of the :meth:`move_xy` capability.
+        The following sequence should cause the cursor to not move at all::
 
             >>> term = Terminal()
-            >>> term.move(*term.get_location()))
+            >>> term.move_yx(*term.get_location()))
 
-        .. warning:: You might first test that a terminal is capable of
-           informing you of its location, while using a timeout, before
-           later calling.  When a timeout is specified, always ensure the
-           return value is conditionally checked for ``(-1, -1)``.
+        And the following should assert True with a terminal:
+
+            >>> term = Terminal()
+            >>> given_y, given_x = 10, 20
+            >>> with term.location(y=given_y, x=given_x):
+            ...     result_y, result_x = term.get_location()
+            ...
+            >>> assert given_x == result_x, (given_x, result_x)
+            >>> assert given_y == result_y, (given_y, result_y)
+
         """
         # Local lines attached by termios and remote login protocols such as
         # ssh and telnet both provide a means to determine the window
@@ -684,8 +719,8 @@ class Terminal(object):
         """
         A callable string that moves the cursor to the given ``(x, y)`` screen coordinates.
 
-        :arg int x: horizontal position.
-        :arg int y: vertical position.
+        :arg int x: horizontal position, from left, *0*, to right edge of screen, *self.width - 1*.
+        :arg int y: vertical position, from top, *0*, to bottom of screen, *self.height - 1*.
         :rtype: ParameterizingString
         :returns: Callable string that moves the cursor to the given coordinates
         """
@@ -699,8 +734,8 @@ class Terminal(object):
         """
         A callable string that moves the cursor to the given ``(y, x)`` screen coordinates.
 
-        :arg int x: horizontal position.
-        :arg int y: vertical position.
+        :arg int y: vertical position, from top, *0*, to bottom of screen, *self.height - 1*.
+        :arg int x: horizontal position, from left, *0*, to right edge of screen, *self.width - 1*.
         :rtype: ParameterizingString
         :returns: Callable string that moves the cursor to the given coordinates
         """
@@ -849,7 +884,7 @@ class Terminal(object):
 
         Optional ``url_id`` may be specified, so that non-adjacent cells can reference a single
         target, all cells painted with the same "id" will highlight on hover, rather than any
-        individual one, as described in "Hovering and underlining the id parameter of gist
+        individual one, as described in "Hovering and underlining the id parameter" of gist
         https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda.
 
         :param str url: Hyperlink URL.

@@ -99,16 +99,12 @@ def test_parameterizing_string_type_error(monkeypatch):
         pstr('XYZ')
         assert False, "previous call should have raised TypeError"
     except TypeError as err:
-        assert (err.args[0] == (  # py3x
-            "A native or nonexistent capability template, "
-            "'cap-name' received invalid argument ('XYZ',): "
-            "custom_err. You probably misspelled a "
-            "formatting call like `bright_red'") or
-            err.args[0] == (
-                "A native or nonexistent capability template, "
-                "u'cap-name' received invalid argument ('XYZ',): "
-                "custom_err. You probably misspelled a "
-                "formatting call like `bright_red'"))
+        assert err.args[0] in ((
+            "Unknown terminal capability, 'cap-name', or, TypeError "
+            "for arguments ('XYZ',): custom_err"  # py3x
+        ), (
+            "Unknown terminal capability, u'cap-name', or, TypeError "
+            "for arguments ('XYZ',): custom_err"))  # py2
 
     # ensure TypeError when given an integer raises its natural exception
     try:
@@ -153,16 +149,19 @@ def test_nested_formattingstring_type_error(monkeypatch):
 
     # given,
     pstr = FormattingString(u'a-', u'n-')
-    expected_msg = (
-        "Positional argument #1 is {0} expected any of "
-        .format(type(1)))
+    expected_msgs = ((
+        "TypeError for FormattingString argument, 291, at position 1: "
+        "expected type str, got int"  # py3x
+    ), ("TypeError for FormattingString argument, 291, at position 1: "
+        "expected type basestring, got int"
+        ))  # py2
 
     # exercise,
     with pytest.raises(TypeError) as err:
-        pstr('text', 1, '...')
+        pstr('text', 0x123, '...')
 
     # verify,
-    assert expected_msg in str(err.value)
+    assert str(err.value) in expected_msgs
 
 
 def test_nullcallablestring(monkeypatch):
@@ -370,7 +369,7 @@ def test_resolve_attribute_recursive_compoundables(monkeypatch):
     assert pstr('text') == 'seq-6808seq-6502textseq-normal'
 
 
-def test_basic_pickling():
+def test_formattingstring_picklability():
     """Test pickle-ability of a FormattingString."""
     @as_subprocess
     def child():
@@ -378,10 +377,57 @@ def test_basic_pickling():
         # basic pickle
         pickle.loads(pickle.dumps(t.red))('orange') == t.red('orange')
         pickle.loads(pickle.dumps(t.normal)) == t.normal
-        # pickle through multiprocessing
+
+        # and, pickle through multiprocessing
         r, w = multiprocessing.Pipe()
         w.send(t.normal)
         assert r.recv() == t.normal
+
+    child()
+
+
+def test_formattingotherstring_picklability():
+    """Test pickle-ability of a FormattingOtherString."""
+    @as_subprocess
+    def child():
+        from blessed.formatters import ParameterizingString
+        t = TestTerminal(force_styling=True)
+        # basic pickle
+        pickle.loads(pickle.dumps(t.move_left)) == t.move_left
+        pickle.loads(pickle.dumps(t.move_left(3))) == t.move_left(3)
+        pickle.loads(pickle.dumps(t.move_left))(3) == t.move_left(3)
+
+        # and, pickle through multiprocessing
+        r, w = multiprocessing.Pipe()
+        w.send(t.move_left)
+        assert r.recv()(3) == t.move_left(3)
+        w.send(t.move_left(3))
+        assert r.recv() == t.move_left(3)
+
+    child()
+
+
+def test_paramterizingstring_picklability():
+    """Test pickle-ability of ParameterizingString."""
+    @as_subprocess
+    def child():
+        from blessed.formatters import ParameterizingString
+        t = TestTerminal(force_styling=True)
+
+        color = ParameterizingString(t.color, t.normal, 'color')
+        pickle.loads(pickle.dumps(color)) == color
+        pickle.loads(pickle.dumps(color(3))) == color(3)
+        pickle.loads(pickle.dumps(color))(3) == color(3)
+
+        # and, pickle through multiprocessing
+        r, w = multiprocessing.Pipe()
+        w.send(color)
+        assert r.recv() == color
+        w.send(color(3))
+        assert r.recv() == color(3)
+        w.send(t.color)
+        assert r.recv()(3) == t.color(3)
+
     child()
 
 
