@@ -49,7 +49,7 @@ will return as soon as input is available, as explained in :linuxman:`cbreak(3)`
 combined with :meth:`~.Terminal.inkey` to decode multibyte sequences, such as ``\0x1bOA``, into
 a unicode-derived :class:`~.Keystroke` instance.
 
-The :class:`~.Keystrok` returned by :meth:`~.Terminal.inkey` is unicode -- it may be printed, joined
+The :class:`~.Keystroke` returned by :meth:`~.Terminal.inkey` is unicode -- it may be printed, joined
 with, or compared to any other unicode strings. It also has these provides the special attributes:
 
 - :attr:`~.Keystroke.is_sequence` (bool): Whether it is an "application" key.
