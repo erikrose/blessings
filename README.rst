@@ -371,6 +371,14 @@ Blessings provides syntactic sugar over some screen-clearing capabilities:
 ``clear_eos``
   Clear to the end of screen.
 
+For example:
+
+.. code:: python
+
+    print(term.clear())
+
+
+
 Full-Screen Mode
 ----------------
 
