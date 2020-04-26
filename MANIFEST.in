@@ -1,4 +1,4 @@
-include docs/*.rst
+graft docs
 include LICENSE
 include version.json
 include *.txt
