@@ -457,7 +457,7 @@ def resolve_attribute(term, attr):
     :arg Terminal term: :class:`~.Terminal` instance.
     :arg str attr: Sugary, ordinary, or compound formatted terminal
         capability, such as "red_on_white", "normal", "red", or
-        "bold_on_black", respectively.
+        "bold_on_black".
     :returns: a string class instance which emits the terminal sequence
         for the given terminal capability, or may be used as a callable to
         wrap the given string with such sequence.
@@ -478,7 +478,7 @@ def resolve_attribute(term, attr):
     # call for each compounding section, joined and returned as
     # a completed completed FormattingString.
     formatters = split_compound(attr)
-    if all(fmt in (COLORS | COMPOUNDABLES) for fmt in formatters):
+    if all((fmt in COLORS or fmt in COMPOUNDABLES) for fmt in formatters):
         resolution = (resolve_attribute(term, fmt) for fmt in formatters)
         return FormattingString(u''.join(resolution), term.normal)
 

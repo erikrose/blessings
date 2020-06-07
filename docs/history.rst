@@ -15,6 +15,9 @@ Version History
     ``term.move_right(9)``.
   * introduced: :attr:`~Terminal.pixel_width` and :attr:`~Terminal.pixel_height` for libsixel
     support or general curiosity.
+  * introduced: :meth:`~.Terminal.formatter` which returns callable formatters for valid text
+    formatters such as  'red' or 'bold_on_red', returning a
+    :class:`~blessed.formatters.NullCallableString` if passed an invalid text formatter.
   * bugfix: prevent ``ValueError: I/O operation on closed file`` on ``sys.stdin`` in multiprocessing
     environments, where the keyboard wouldn't work, anyway.
   * bugfix: prevent error condition, ``ValueError: underlying buffer has been detached`` in rare
