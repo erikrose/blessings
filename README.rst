@@ -214,7 +214,7 @@ no effect: the foreground and background colors will stay as they were. You can
 get fancy and do different things depending on the supported colors by checking
 `number_of_colors`_.
 
-.. _`number_of_colors`: http://packages.python.org/blessings/#blessings.Terminal.number_of_colors
+.. _`number_of_colors`: https://blessings.readthedocs.io/en/latest/#blessings.Terminal.number_of_colors
 
 Compound Formatting
 -------------------
