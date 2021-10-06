@@ -411,6 +411,11 @@ class Terminal(object):
         return FormattingString(formatting, self.normal)
 
     def approximate_rgb(self, r, g, b):
+        """
+        Return a 256-color code which is closest to the given r/g/b values.
+
+        Based on https://old.reddit.com/r/programming/comments/yeudv/blessings_15_a_python_replacement_for_curses/c5v05eo/
+        """
         if self.number_of_colors != 256:
             return self.color(7)
 
