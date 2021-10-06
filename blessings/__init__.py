@@ -420,9 +420,8 @@ class Terminal(object):
         else:
             roundint = lambda n, p: (n + p / 2) / p * p
 
-        # Technically this ought to clamp to 0x5f, 0x87, 0xaf, and 0xd7
-        # rather than 0x33, 0x66, 0x99, and 0xcc, but who the hell came
-        # up with that? Seriously.
+        # Due to an implementation detail, the values have to be clamped to
+        # 0x33, 0x66 and 0x99 and 0xcc rather than 0x5f, 0x87, 0xaf, and 0xd7
         clamped_r = roundint(r, 0x33)
         clamped_g = roundint(g, 0x33)
         clamped_b = roundint(b, 0x33)
