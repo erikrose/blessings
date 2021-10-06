@@ -12,10 +12,11 @@ xterm-256color exists.
 from curses import tigetstr, tparm
 from functools import partial
 import sys
+import os
 
 from nose import SkipTest
-from nose.tools import eq_
 from six import StringIO
+from nose.tools import eq_, assert_in
 
 # This tests that __all__ is correct, since we use below everything that should
 # be imported:
@@ -276,3 +277,29 @@ def test_null_callable_string():
     eq_(t.clear, '')
     eq_(t.move(1, 2), '')
     eq_(t.move_x(1), '')
+
+
+def test_256color():
+    """Test 256 Color Support"""
+    if os.name != "posix":
+        # Blatantly assuming this won't work on non-posix systems.
+        raise SkipTest
+
+    t = TestTerminal()
+
+    for x in range(8):
+        assert_in(unicode(x + 30), t.color(x))
+
+    for x in range(8):
+        assert_in(unicode(x + 90), t.color(x + 8))
+
+    for x in range(16, 255):
+        assert_in(unicode(x), t.color(x))
+
+
+def test_approximate_color():
+    """Test Approximate Colors"""
+    t = TestTerminal()
+    assert_in(u'196m', t.approximate_rgb(255, 0, 0))
+    assert_in(u'46m', t.approximate_rgb(0, 255, 0))
+    assert_in(u'21m', t.approximate_rgb(0, 0, 255))
