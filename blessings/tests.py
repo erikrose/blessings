@@ -13,8 +13,6 @@ from curses import tigetstr, tparm
 from functools import partial
 import sys
 
-from nose import SkipTest
-from nose.tools import eq_
 from six import StringIO
 
 # This tests that __all__ is correct, since we use below everything that should
@@ -44,27 +42,27 @@ def test_capability():
     """
     t = TestTerminal()
     sc = unicode_cap('sc')
-    eq_(t.save, sc)
-    eq_(t.save, sc)  # Make sure caching doesn't screw it up.
+    assert t.save == sc
+    assert t.save == sc  # Make sure caching doesn't screw it up.
 
 
 def test_capability_without_tty():
     """Assert capability templates are '' when stream is not a tty."""
     t = TestTerminal(stream=StringIO())
-    eq_(t.save, u'')
-    eq_(t.red, u'')
+    assert t.save == u''
+    assert t.red == u''
 
 
 def test_capability_with_forced_tty():
     """If we force styling, capabilities had better not (generally) be
     empty."""
     t = TestTerminal(stream=StringIO(), force_styling=True)
-    eq_(t.save, unicode_cap('sc'))
+    assert t.save == unicode_cap('sc')
 
 
 def test_parametrization():
     """Test parametrizing a capability."""
-    eq_(TestTerminal().cup(3, 4), unicode_parm('cup', 3, 4))
+    assert TestTerminal().cup(3, 4), unicode_parm('cup', 3 == 4)
 
 
 def test_height_and_width():
@@ -77,7 +75,7 @@ def test_height_and_width():
 def test_stream_attr():
     """Make sure Terminal exposes a ``stream`` attribute that defaults to
     something sane."""
-    eq_(Terminal().stream, sys.__stdout__)
+    assert Terminal().stream == sys.__stdout__
 
 
 def test_location():
@@ -87,7 +85,7 @@ def test_location():
     with t.location(3, 4):
         t.stream.write(u'hi')
 
-    eq_(t.stream.getvalue(), unicode_cap('sc') +
+    assert t.stream.getvalue() == unicode_cap('sc' +
                              unicode_parm('cup', 4, 3) +
                              u'hi' +
                              unicode_cap('rc'))
@@ -98,7 +96,7 @@ def test_horizontal_location():
     t = TestTerminal(stream=StringIO(), force_styling=True)
     with t.location(x=5):
         pass
-    eq_(t.stream.getvalue(), unicode_cap('sc') +
+    assert t.stream.getvalue() == unicode_cap('sc' +
                              unicode_parm('hpa', 5) +
                              unicode_cap('rc'))
 
@@ -108,7 +106,7 @@ def test_null_location():
     t = TestTerminal(stream=StringIO(), force_styling=True)
     with t.location():
         pass
-    eq_(t.stream.getvalue(), unicode_cap('sc') +
+    assert t.stream.getvalue() == unicode_cap('sc' +
                              unicode_cap('rc'))
 
 
@@ -117,7 +115,7 @@ def test_zero_location():
     t = TestTerminal(stream=StringIO(), force_styling=True)
     with t.location(0, 0):
         pass
-    eq_(t.stream.getvalue(), unicode_cap('sc') +
+    assert t.stream.getvalue() == unicode_cap('sc' +
                              unicode_parm('cup', 0, 0) +
                              unicode_cap('rc'))
 
@@ -131,7 +129,7 @@ def test_null_fileno():
     out = StringIO()
     out.fileno = None
     t = TestTerminal(stream=out)
-    eq_(t.save, u'')
+    assert t.save == u''
 
 
 def test_mnemonic_colors():
@@ -145,54 +143,53 @@ def test_mnemonic_colors():
     # Avoid testing red, blue, yellow, and cyan, since they might someday
     # change depending on terminal type.
     t = TestTerminal()
-    eq_(t.white, color(7))
-    eq_(t.green, color(2))  # Make sure it's different than white.
-    eq_(t.on_black, on_color(0))
-    eq_(t.on_green, on_color(2))
-    eq_(t.bright_black, color(8))
-    eq_(t.bright_green, color(10))
-    eq_(t.on_bright_black, on_color(8))
-    eq_(t.on_bright_green, on_color(10))
+    assert t.white == color(7)
+    assert t.green == color(2)  # Make sure it's different than white.
+    assert t.on_black == on_color(0)
+    assert t.on_green == on_color(2)
+    assert t.bright_black == color(8)
+    assert t.bright_green == color(10)
+    assert t.on_bright_black == on_color(8)
+    assert t.on_bright_green == on_color(10)
 
 
 def test_callable_numeric_colors():
     """``color(n)`` should return a formatting wrapper."""
     t = TestTerminal()
-    eq_(t.color(5)('smoo'), t.magenta + 'smoo' + t.normal)
-    eq_(t.color(5)('smoo'), t.color(5) + 'smoo' + t.normal)
-    eq_(t.on_color(2)('smoo'), t.on_green + 'smoo' + t.normal)
-    eq_(t.on_color(2)('smoo'), t.on_color(2) + 'smoo' + t.normal)
+    assert t.color(5)('smoo') == t.magenta + 'smoo' + t.normal
+    assert t.color(5)('smoo') == t.color(5) + 'smoo' + t.normal
+    assert t.on_color(2)('smoo') == t.on_green + 'smoo' + t.normal
+    assert t.on_color(2)('smoo') == t.on_color(2) + 'smoo' + t.normal
 
 
 def test_null_callable_numeric_colors():
     """``color(n)`` should be a no-op on null terminals."""
     t = TestTerminal(stream=StringIO())
-    eq_(t.color(5)('smoo'), 'smoo')
-    eq_(t.on_color(6)('smoo'), 'smoo')
+    assert t.color(5)('smoo') == 'smoo'
+    assert t.on_color(6)('smoo') == 'smoo'
 
 
 def test_naked_color_cap():
     """``term.color`` should return a stringlike capability."""
     t = TestTerminal()
-    eq_(t.color + '', t.setaf + '')
+    assert t.color + '' == t.setaf + ''
 
 
 def test_number_of_colors_without_tty():
     """``number_of_colors`` should return 0 when there's no tty."""
     # Hypothesis: once setupterm() has run and decided the tty supports 256
     # colors, it never changes its mind.
-    raise SkipTest
 
     t = TestTerminal(stream=StringIO())
-    eq_(t.number_of_colors, 0)
+    assert t.number_of_colors == 0
     t = TestTerminal(stream=StringIO(), force_styling=True)
-    eq_(t.number_of_colors, 0)
+    assert t.number_of_colors == 0
 
 
 def test_number_of_colors_with_tty():
     """``number_of_colors`` should work."""
     t = TestTerminal()
-    eq_(t.number_of_colors, 256)
+    assert t.number_of_colors == 256
 
 
 def test_formatting_functions():
@@ -200,36 +197,30 @@ def test_formatting_functions():
     t = TestTerminal()
     # By now, it should be safe to use sugared attributes. Other tests test
     # those.
-    eq_(t.bold(u'hi'), t.bold + u'hi' + t.normal)
-    eq_(t.green('hi'), t.green + u'hi' + t.normal)  # Plain strs for Python 2.x
+    assert t.bold(u'hi') == t.bold + u'hi' + t.normal
+    assert t.green('hi') == t.green + u'hi' + t.normal  # Plain strs for Python 2.x
     # Test some non-ASCII chars, probably not necessary:
-    eq_(t.bold_green(u'boö'), t.bold + t.green + u'boö' + t.normal)
-    eq_(t.bold_underline_green_on_red('boo'),
-        t.bold + t.underline + t.green + t.on_red + u'boo' + t.normal)
+    assert t.bold_green(u'boö') == t.bold + t.green + u'boö' + t.normal
+    assert t.bold_underline_green_on_red('boo') == t.bold + t.underline + t.green + t.on_red + u'boo' + t.normal
     # Don't spell things like this:
-    eq_(t.on_bright_red_bold_bright_green_underline('meh'),
-        t.on_bright_red + t.bold + t.bright_green + t.underline + u'meh' +
-                          t.normal)
+    assert t.on_bright_red_bold_bright_green_underline('meh') == t.on_bright_red + t.bold + t.bright_green + t.underline + u'meh' + t.normal
     # Add also some negated vversions
-    eq_(t.bold_no_underline_green_on_red('boo'),
-        t.bold + t.no_underline + t.green + t.on_red + u'boo' + t.normal)
-    eq_(t.on_bright_red_no_italic_bright_green_underline('meh'),
-        t.on_bright_red + t.no_italic + t.bright_green + t.underline +
-        u'meh' + t.normal)
+    assert t.bold_no_underline_green_on_red('boo') == t.bold + t.no_underline + t.green + t.on_red + u'boo' + t.normal
+    assert t.on_bright_red_no_italic_bright_green_underline('meh') == t.on_bright_red + t.no_italic + t.bright_green + t.underline + u'meh' + t.normal
 
 
 def test_formatting_functions_without_tty():
     """Test crazy-ass formatting wrappers when there's no tty."""
     t = TestTerminal(stream=StringIO())
-    eq_(t.bold(u'hi'), u'hi')
-    eq_(t.green('hi'), u'hi')
+    assert t.bold(u'hi') == u'hi'
+    assert t.green('hi') == u'hi'
     # Test non-ASCII chars, no longer really necessary:
-    eq_(t.bold_green(u'boö'), u'boö')
-    eq_(t.bold_underline_green_on_red('loo'), u'loo')
-    eq_(t.on_bright_red_bold_bright_green_underline('meh'), u'meh')
+    assert t.bold_green(u'boö') == u'boö'
+    assert t.bold_underline_green_on_red('loo') == u'loo'
+    assert t.on_bright_red_bold_bright_green_underline('meh') == u'meh'
     # Add some negated expressions
-    eq_(t.bold_no_underline_green_on_red('loo'), u'loo')
-    eq_(t.on_bright_red_bold_bright_green_no_underline('meh'), u'meh')
+    assert t.bold_no_underline_green_on_red('loo') == u'loo'
+    assert t.on_bright_red_bold_bright_green_no_underline('meh') == u'meh'
 
 
 def test_nice_formatting_errors():
@@ -259,20 +250,20 @@ def test_nice_formatting_errors():
 def test_init_descriptor_always_initted():
     """We should be able to get a height and width even on no-tty Terminals."""
     t = Terminal(stream=StringIO())
-    eq_(type(t.height), int)
+    assert type(t.height) == int
 
 
 def test_force_styling_none():
     """If ``force_styling=None`` is passed to the constructor, don't ever do
     styling."""
     t = TestTerminal(force_styling=None)
-    eq_(t.save, '')
+    assert t.save == ''
 
 
 def test_null_callable_string():
     """Make sure NullCallableString tolerates all numbers and kinds of args it
     might receive."""
     t = TestTerminal(stream=StringIO())
-    eq_(t.clear, '')
-    eq_(t.move(1, 2), '')
-    eq_(t.move_x(1), '')
+    assert t.clear == ''
+    assert t.move(1, 2) == ''
+    assert t.move_x(1) == ''
