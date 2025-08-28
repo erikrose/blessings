@@ -13,8 +13,7 @@ from curses import tigetstr, tparm
 from functools import partial
 import sys
 
-from nose import SkipTest
-from nose.tools import eq_
+import pytest
 from six import StringIO
 
 # This tests that __all__ is correct, since we use below everything that should
@@ -23,6 +22,11 @@ from blessings import *
 
 
 TestTerminal = partial(Terminal, kind='xterm-256color')
+
+
+def eq_(a, b):
+    """Assert equality of two objects."""
+    assert a == b
 
 
 def unicode_cap(cap):
@@ -181,7 +185,7 @@ def test_number_of_colors_without_tty():
     """``number_of_colors`` should return 0 when there's no tty."""
     # Hypothesis: once setupterm() has run and decided the tty supports 256
     # colors, it never changes its mind.
-    raise SkipTest
+    pytest.skip()
 
     t = TestTerminal(stream=StringIO())
     eq_(t.number_of_colors, 0)
